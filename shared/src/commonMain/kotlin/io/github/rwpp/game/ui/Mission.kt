@@ -1,0 +1,91 @@
+package io.github.rwpp.game.ui
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import io.github.rwpp.LocalController
+import io.github.rwpp.game.base.Difficulty
+import io.github.rwpp.game.map.Mission
+import io.github.rwpp.ui.BorderCard
+import io.github.rwpp.ui.ExitButton
+import io.github.rwpp.ui.LargeDividingLine
+import io.github.rwpp.ui.LargeDropdownMenu
+
+@Composable
+fun MissionView(onExit: () -> Unit) {
+    BorderCard(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(10.dp)
+    ) {
+        ExitButton(onExit)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text("Missions", style = MaterialTheme.typography.displayLarge)
+        }
+
+        Spacer(Modifier.size(5.dp))
+
+        var selectedIndex0 by remember { mutableStateOf(0) }
+        var selectedIndex1 by remember { mutableStateOf(0) }
+
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+        ) {
+            with(LocalController.current) {
+                LargeDropdownMenu(
+                    modifier = Modifier.wrapContentSize().padding(5.dp),
+                    label = "Mission Type",
+                    items = getAllMissionTypes(),
+                    selectedIndex = selectedIndex0,
+                    onItemSelected = { index, _ -> selectedIndex0 = index }
+                )
+            }
+
+            LargeDropdownMenu(
+                modifier = Modifier.wrapContentSize().padding(5.dp),
+                label = "Difficulty",
+                items = Difficulty.entries,
+                selectedIndex = selectedIndex1,
+                onItemSelected = { index, _ -> selectedIndex1 = index }
+            )
+        }
+
+        LargeDividingLine { 5.dp }
+
+        with(LocalController.current) {
+            var missions by remember { mutableStateOf(listOf<Mission>()) }
+            LaunchedEffect(selectedIndex0) {
+                missions = getMissionsByType(getAllMissionTypes()[selectedIndex0])
+            }
+
+            val state = rememberLazyListState()
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(5),
+            ) {
+                items(
+                    count = missions.size,
+                    key = { missions[it].id }
+                ) {
+                    val mission = missions[it]
+                    val difficulty = Difficulty.entries[selectedIndex1]
+                    MapItem(it, state, mission.name, mission.image) { startNewMissionGame(difficulty, mission) }
+                }
+            }
+        }
+    }
+}
+

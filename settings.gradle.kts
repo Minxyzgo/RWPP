@@ -1,8 +1,8 @@
-rootProject.name = "MyApplication"
+rootProject.name = "RWPP"
 
-include(":androidApp")
+include(":android")
 include(":shared")
-include(":desktopApp")
+include(":desktop")
 
 pluginManagement {
     repositories {

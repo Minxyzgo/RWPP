@@ -1,0 +1,211 @@
+package io.github.rwpp.game.ui
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import io.github.rwpp.LocalController
+import io.github.rwpp.ui.BorderCard
+import io.github.rwpp.ui.ExitButton
+import io.github.rwpp.ui.RWSingleOutlinedTextField
+import io.github.rwpp.ui.RWSliderColors
+
+@Composable
+fun SettingsView(onExit: () -> Unit) {
+    val current = LocalController.current
+    Scaffold(
+        containerColor = Color.Transparent,
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    current.saveConfig()
+                    onExit()
+                },
+                shape = CircleShape,
+                modifier = Modifier.padding(5.dp),
+                containerColor = Color(151, 188, 98),
+            ) {
+                Icon(Icons.Default.Done, null)
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End
+    ) {
+        BorderCard(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp)
+        ) {
+            Column {
+                ExitButton(onExit)
+
+                LazyColumn {
+                    item {
+                        SettingsGroup("graphics") {
+                            SettingsSwitchComp("showUnitWaypoints")
+                            SettingsSwitchComp("showHp", "alwayUnitHealth") // I don't why they are different
+                            SettingsSwitchComp("showUnitIcons", "unitIcons")
+                            SettingsSwitchComp("renderVsync")
+                            SettingsSwitchComp("renderClouds")
+                            SettingsSwitchComp("shaderEffects")
+                            SettingsSwitchComp("enableMouseCapture")
+                            SettingsSwitchComp("quickRally")
+                            SettingsSwitchComp("doubleClickToAttackMove")
+                        }
+                    }
+
+                    item {
+                        SettingsGroup("gameplay") {
+                            SettingsSwitchComp("showSelectedUnitsList")
+                            SettingsSwitchComp("useMinimapAllyColors")
+                            SettingsSwitchComp("showWarLogOnScreen")
+                            SettingsSwitchComp("smartSelection_v2", "smartSelection") //v2 ???
+                            SettingsSwitchComp("forceEnglish")
+                            var teamUnitCapSinglePlayer by remember { mutableStateOf(current.getConfig<Int?>("teamUnitCapSinglePlayer")) }
+                            RWSingleOutlinedTextField("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer?.toString() ?: "", modifier = Modifier.fillMaxWidth(), lengthLimitCount = 6, typeInNumberOnly = true, typeInOnlyInteger = true) {
+                                teamUnitCapSinglePlayer = it.toIntOrNull()
+                                current.setConfig("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer ?: 100)
+                            }
+                            var teamUnitCapHostedGame by remember { mutableStateOf(current.getConfig<Int?>("teamUnitCapHostedGame")) }
+                            RWSingleOutlinedTextField("teamUnitCapHostedGame", teamUnitCapHostedGame?.toString() ?: "", modifier = Modifier.fillMaxWidth(), lengthLimitCount = 6, typeInNumberOnly = true, typeInOnlyInteger = true) {
+                                teamUnitCapHostedGame = it.toIntOrNull()
+                                current.setConfig("teamUnitCapHostedGame", teamUnitCapHostedGame ?: 100)
+                            }
+                        }
+                    }
+
+                    item {
+                        SettingsGroup("audio") {
+                            SettingsSlider("masterVolume", 0f..1f)
+                            SettingsSlider("gameVolume", 0f..1f)
+                            SettingsSlider("interfaceVolume", 0f..1f)
+                            SettingsSlider("musicVolume", 0f..1f)
+                        }
+                    }
+
+                    item {
+                        SettingsGroup("developer") {
+                            SettingsSwitchComp("showFps")
+                        }
+                    }
+
+                    item {
+                        SettingsGroup("networking") {
+                            var port by remember { mutableStateOf(current.getConfig<Int?>("networkPort")) }
+                            RWSingleOutlinedTextField("port", port?.toString() ?: "", modifier = Modifier.fillMaxWidth(), lengthLimitCount = 5, typeInNumberOnly = true) {
+                                port = it.toIntOrNull()
+                                current.setConfig("networkPort", port ?: 5123)
+                            }
+                            SettingsSwitchComp("udpInMultiplayer")
+                            SettingsSwitchComp("showChatAndPingShortcuts")
+                            SettingsSwitchComp("showMapPingsOnBattlefield")
+                            SettingsSwitchComp("showMapPingsOnMinimap")
+                            SettingsSwitchComp("showPlayerChatInGame")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsGroup(
+    name: String,
+    content: @Composable ColumnScope.() -> Unit
+) = with(LocalController.current) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text(
+            i18n("menus.settings.heading.$name"),
+            style = MaterialTheme.typography.headlineLarge,
+            color = Color(151, 188, 98),
+            modifier = Modifier.padding(start = 5.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Surface(
+            color = Color.DarkGray.copy(.6f),
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(4),
+        ) {
+            Column {
+                content()
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSwitchComp(
+    name: String,
+    labelName: String = name
+) = with(LocalController.current) {
+    var state by remember { mutableStateOf(getConfig<Boolean>(name)) }
+    val onClick = {
+        state = !state
+        setConfig(name, state)
+    }
+    Surface(
+        color = Color.Transparent,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        onClick = onClick,
+    ) {
+
+        Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = i18n("menus.settings.option.$labelName"),
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Start,
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Switch(
+                    checked = state,
+                    onCheckedChange = { onClick() },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
+                )
+            }
+            Divider()
+        }
+    }
+}
+
+@Composable
+private fun SettingsSlider(
+    name: String,
+    valueRange: ClosedFloatingPointRange<Float>,
+) = with(LocalController.current) {
+    Column(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
+        Text(
+            i18n("menus.settings.option.$name"),
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(5.dp)
+        )
+        var value by remember { mutableStateOf(getConfig<Float>(name)) }
+        Slider(value, {
+            value = it
+            setConfig(name, value)
+        }, modifier = Modifier.weight(1f).padding(5.dp), colors = RWSliderColors, valueRange = valueRange)
+        Spacer(modifier = Modifier.size(20.dp))
+    }
+}

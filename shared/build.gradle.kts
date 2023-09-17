@@ -1,8 +1,96 @@
+@file:OptIn(LibRequiredApi::class)
+
+import com.github.minxyzgo.rwij.LibRequiredApi
+import com.github.minxyzgo.rwij.Libs
+import com.github.minxyzgo.rwij.ProxyFactory.with
+import com.github.minxyzgo.rwij.injectionMultiplatform
+import javassist.ClassMap
+import javassist.CtClass
+import javassist.Modifier
+
 plugins {
     kotlin("multiplatform")
-    kotlin("native.cocoapods")
     id("com.android.library")
     id("org.jetbrains.compose")
+}
+
+buildscript {
+    dependencies {
+        val rwijVersion = findProperty("rwij.version") as String
+        classpath("com.github.minxyzgo.rw-injection:com.github.minxyzgo.rwij.gradle.plugin:$rwijVersion")
+    }
+
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://jitpack.io")
+        gradlePluginPortal()
+    }
+}
+
+apply<com.github.minxyzgo.rwij.GradlePlugin>()
+
+injectionMultiplatform {
+    enable = true
+    com.github.minxyzgo.rwij.Libs.Companion.includes.add(com.github.minxyzgo.rwij.Libs.`android-game-lib`)
+    com.github.minxyzgo.rwij.Builder.releaseLibActions[com.github.minxyzgo.rwij.Libs.`android-game-lib`] = { _, fi, _ ->
+        if(!fi.exists()) {
+            File(com.github.minxyzgo.rwij.Builder.libDir).mkdirs()
+            fi.createNewFile()
+        }
+        fi.writeBytes(File(projectDir.absolutePath + "/android-game-lib-template.jar").readBytes())
+    }
+    android {
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.game.i".with("n"))
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.j.ae".with("X", "d(Ljava/lang/String;Ljava/lang/String;)"))
+        action {
+            Libs.`android-game-lib`.classTree.defPool["com.corrodinggames.rts.gameFramework.j.ae"].apply {
+                //make accessible
+                getDeclaredMethod("f", arrayOf(CtClass.intType)).let {
+                    it.modifiers = javassist.Modifier.setPublic(it.modifiers)
+                }
+
+                declaredMethods.filter { it.name == "a" }.forEach {
+                    it.modifiers = javassist.Modifier.setPublic(it.modifiers)
+                }
+
+                getDeclaredField("bD").let {
+                    it.modifiers = javassist.Modifier.setPublic(it.modifiers)
+                }
+            }
+
+            val tag = listOf("anim", "array", "attr", "color", "drawable", "id", "layout", "raw", "string", "style", "styleable", "xml")
+            val classMap = ClassMap().apply {
+                put("com.corrodinggames.rts.R", "cn.minxyzgo.rwpp.android.R")
+                tag.forEach {
+                    put("com.corrodinggames.rts.R\$$it", "cn.minxyzgo.rwpp.android.R\$$it")
+                }
+            }
+            com.github.minxyzgo.rwij.Libs.`android-game-lib`.classTree.allClasses.forEach {
+                it.replaceClassName(classMap)
+            }
+        }
+    }
+    jvm {
+        target = "desktopMain"
+        setProxy(Libs.`game-lib`,
+            "com.corrodinggames.librocket.scripts.Root".with("showMainMenu", "showBattleroom", "receiveChatMessage", "makeSendMessagePopup", "makeSendTeamMessagePopupWithDefaultText"),
+            "com.corrodinggames.rts.java.Main".with("c()", "b()"),
+            "com.corrodinggames.rts.java.b.a".with("p")
+        )
+        action {
+            // set all members of Main to public
+            com.github.minxyzgo.rwij.Libs.`game-lib`.classTree.defPool["com.corrodinggames.rts.java.Main"].apply {
+                this.declaredMethods.forEach {
+                    it.modifiers = Modifier.setPublic(it.modifiers)
+                }
+
+                this.declaredFields.forEach {
+                    it.modifiers = Modifier.setPublic(it.modifiers)
+                }
+            }
+        }
+    }
 }
 
 kotlin {
@@ -10,31 +98,23 @@ kotlin {
 
     jvm("desktop")
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-
-    cocoapods {
-        version = "1.0.0"
-        summary = "Some description for the Shared Module"
-        homepage = "Link to the Shared Module homepage"
-        ios.deploymentTarget = "14.1"
-        podfile = project.file("../iosApp/Podfile")
-        framework {
-            baseName = "shared"
-            isStatic = true
-        }
-        extraSpecAttributes["resources"] = "['src/commonMain/resources/**', 'src/iosMain/resources/**']"
-    }
-
     sourceSets {
         val commonMain by getting {
+
             dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material)
+                api(compose.preview)
+                api(compose.runtime)
+                api(compose.foundation)
+                //api(compose.material)
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                implementation(compose.components.resources)
+                api(compose.components.resources)
+                api(compose.ui)
+                api(compose.material3)
+                api("com.halilibo.compose-richtext:richtext-ui:0.17.0")
+                api("com.squareup.okhttp3:okhttp:4.11.0")
+                //api("com.github.nanihadesuka:LazyColumnScrollbar:1.7.2")
+                //api("com.google.code.gson:gson:2.10.1")
+                //api("io.github.oleksandrbalan:modalsheet:0.5.0")
             }
         }
         val androidMain by getting {
@@ -44,15 +124,7 @@ kotlin {
                 api("androidx.core:core-ktx:1.9.0")
             }
         }
-        val iosX64Main by getting
-        val iosArm64Main by getting
-        val iosSimulatorArm64Main by getting
-        val iosMain by creating {
-            dependsOn(commonMain)
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
-        }
+
         val desktopMain by getting {
             dependencies {
                 implementation(compose.desktop.common)
@@ -80,4 +152,9 @@ android {
     kotlin {
         jvmToolchain(11)
     }
+}
+
+dependencies {
+    val rwijVersion = findProperty("rwij.version") as String
+    commonMainApi("com.github.minxyzgo.rw-injection:core:$rwijVersion")
 }
