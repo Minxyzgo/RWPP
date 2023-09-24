@@ -1,10 +1,15 @@
+/*
+ * Copyright 2023 RWPP contributors
+ * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ */
+
 package io.github.rwpp
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -23,10 +28,8 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halilibo.richtext.ui.*
@@ -38,15 +41,10 @@ import io.github.rwpp.event.events.QuestionReplyEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.ui.*
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.platform.deliciousFonts
 import org.jetbrains.compose.resources.*
 
-
 var LocalController = staticCompositionLocalOf<ContextController> { null!! }
-@Preview
-@Composable
-internal fun preview() {
-    App()
-}
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -57,11 +55,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
         ShaderBrush(ImageShader(image.orEmpty(), TileMode.Repeated, TileMode.Repeated))
     }
 
-    val deliciousFont = FontFamily(
-        Font("font/Delicious-Bold.otf", FontWeight.Bold),
-        Font("font/Delicious-BoldItalic.otf", FontWeight.Bold, FontStyle.Italic),
-        Font("font/Delicious-Italic.otf", FontWeight.Normal, FontStyle.Italic)
-    )
+    val deliciousFont = deliciousFonts()
 
     val typography = Typography(
         displayLarge = TextStyle(

@@ -1,28 +1,27 @@
+/*
+ * Copyright 2023 RWPP contributors
+ * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ */
+
 package io.github.rwpp.android
 
-import android.app.Activity
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
-import android.os.Bundle
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.ComposeView
-import com.corrodinggames.rts.appFramework.*
-import com.corrodinggames.rts.gameFramework.h.a
+import com.corrodinggames.rts.appFramework.ClosingActivity
+import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.k
 import com.github.minxyzgo.rwij.setFunction
-import io.github.rwpp.App
-import io.github.rwpp.LocalController
 import io.github.rwpp.R
-import io.github.rwpp.android.impl.GameContextControllerImpl
-import io.github.rwpp.android.impl.KClass
-import java.lang.reflect.Method
-import kotlin.system.exitProcess
+import io.github.rwpp.event.broadCastIn
+import io.github.rwpp.event.events.RefreshUIEvent
 
-
+//internal lateinit var mainMenuActivityInstance: MainMenuActivity
 fun doProxy() {
 //    Game::class.setFunction {
 //        addProxy("n") { _: Game ->
@@ -30,44 +29,51 @@ fun doProxy() {
 //        }
 //    }
 
-    MainMenuActivity::class.setFunction {
-        val gameViewField = MainMenuActivity::class.java.getDeclaredField("ab").apply { isAccessible = true }
-        addProxy("onCreate") { activity: MainMenuActivity, _ : Bundle ->
-            val method: Method? =
-                IntroScreen::class.java.getMethod("overridePendingTransition", Integer.TYPE, Integer.TYPE)
-            if(method != null) {
-                try {
-                    method.invoke(this, Integer.valueOf(R.anim.mainfadein), Integer.valueOf(R.anim.splashfadeout))
-                } catch(e: Exception) {
-                }
-            }
+//    MainMenuActivity::class.setFunction {
+//        val gameViewField = MainMenuActivity::class.java.getDeclaredField("gameView").apply { isAccessible = true }
+//        addProxy("onCreate", android.os.Bundle::class) { activity: MainMenuActivity, _ : Bundle? ->
+//            mainMenuActivityInstance = activity
+//            val method: Method? =
+//                IntroScreen::class.java.getMethod("overridePendingTransition", Integer.TYPE, Integer.TYPE)
+//            if(method != null) {
+//                try {
+//                    method.invoke(this, Integer.valueOf(R.anim.mainfadein), Integer.valueOf(R.anim.splashfadeout))
+//                } catch(e: Exception) {
+//                }
+//            }
+//
+//            if(d.b(activity, true)) {
+//                activity.setContentView(
+//                    ComposeView(activity).apply {
+//                        setContent {
+//                            CompositionLocalProvider(
+//                                LocalController provides GameContextControllerImpl { exitProcess(0) }
+//                            ) {
+//                                App()
+//                            }
+//                        }
+//                    }
+//                )
+//
+//                gameViewField.set(activity, d.b(activity))
+//                SettingsActivity.askAboutLastDebugOption()
+//            }
+//        }
+//
+//        addProxy("onResume") { activity: MainMenuActivity ->
+//            val t: k? = GameEngine.t()
+//            if(t != null) {
+//                gameViewField.set(activity, d.a(activity, gameViewField.get(activity) as ab))
+//                t.a(activity, gameViewField.get(activity) as ab, true)
+//            }
+//            d.a(activity, true)
+//            a.c()
+//        }
+//    }
 
-            if(d.b(activity, true)) {
-                activity.setContentView(
-                    ComposeView(activity).apply {
-                        setContent {
-                            CompositionLocalProvider(
-                                LocalController provides GameContextControllerImpl { exitProcess(0) }
-                            ) {
-                                App()
-                            }
-                        }
-                    }
-                )
-
-                gameViewField.set(activity, d.b(activity))
-                SettingsActivity.askAboutLastDebugOption()
-            }
-        }
-
-        addProxy("onResume") { activity: MainMenuActivity ->
-            val t: k? = KClass.t()
-            if(t != null) {
-                gameViewField.set(activity, d.a(activity, gameViewField.get(activity) as ab))
-                t.a(activity, gameViewField.get(activity) as ab, true)
-            }
-            d.a(activity, true)
-            a.c()
+    MultiplayerBattleroomActivity::class.setFunction {
+        addProxy(MultiplayerBattleroomActivity::updateUI) {
+            RefreshUIEvent().broadCastIn()
         }
     }
 

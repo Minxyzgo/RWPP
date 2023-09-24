@@ -1,13 +1,20 @@
+/*
+ * Copyright 2023 RWPP contributors
+ * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ */
+
 package io.github.rwpp.desktop.impl
 
 import android.content.ServerContext
 import android.graphics.Point
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.Root
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
+import com.corrodinggames.rts.game.units.custom.logicBooleans.VariableScope
 import com.corrodinggames.rts.gameFramework.ac
 import com.corrodinggames.rts.gameFramework.l
 import com.corrodinggames.rts.gameFramework.n
@@ -30,15 +37,13 @@ import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
 import io.github.rwpp.ui.LoadingContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.lwjgl.opengl.Display
 import java.io.File
 import java.io.IOException
 import javax.imageio.ImageIO
 import javax.swing.SwingUtilities
+
 
 class GameImpl : Game {
     private val mapPrefixRegex = Regex("""^\[.*?\]""")
@@ -76,14 +81,13 @@ class GameImpl : Game {
                 override val mapType: MapType
                     get() = MapType.entries[a.ordinal]
                 override var selectedMap: GameMap
-                    get() = getAllMaps().firstOrNull { it.tmx.absolutePath.replace("\\", "/").endsWith(B.bX.ay.b ?: "") }
+                    get() = getAllMaps().firstOrNull { it.tmx!!.absolutePath.replace("\\", "/").endsWith(B.bX.ay.b ?: "") }
                         ?: NetworkMap(mapNameFormatMethod.invoke(null, B.bX.ay.b) as String)
                     set(value) {
-                        val realPath = value.tmx.path.replace("\\", "/")
+                        val realPath = value.tmx!!.path.replace("\\", "/")
                         B.bX.az = realPath
-                        B.bX.ay.b = value.tmx.path.replace("\\", "/")
                         B.bX.ay.a = com.corrodinggames.rts.gameFramework.j.ai.entries[value.mapType.ordinal]
-                        b = value.tmx.name
+                        b = value.tmx!!.name
                     }
                 override var startingCredits: Int
                     get() = c
@@ -125,7 +129,7 @@ class GameImpl : Game {
                     }
                 }
 
-                override fun roomDetails(): String {
+                override suspend fun roomDetails(): String {
                     return B.bX.at()
                 }
 
@@ -309,7 +313,7 @@ class GameImpl : Game {
             guiEngine.b(true)
             guiEngine.c(false)
             val met = IClass::class.java.getDeclaredMethod("a", String::class.java, Boolean::class.java, Int::class.java, Int::class.java, Boolean::class.java, Boolean::class.java)
-            met.invoke(null, "maps/normal/${mission.tmx.name}", false, 0, 0, true, false)
+            met.invoke(null, "maps/normal/${mission.tmx!!.name}", false, 0, 0, true, false)
 
             guiEngine.f()
             libRocket.closeActiveDocument()
@@ -331,14 +335,22 @@ class GameImpl : Game {
 
         container.post {
             val nHelper = object : n() {
+                val method = ScriptEngine::class.java.getDeclaredMethod("addRunnableToQueue")
                 override fun a(p0: String, p1: Int) {
                     if(p0.startsWith("kicked", ignoreCase = true)) {
                         KickedEvent(p0).broadCastIn()
+                    } else {
+                        method.invoke(ScriptEngine.getInstance(), Runnable {
+                            main.p.b(
+                                VariableScope.nullOrMissingString,
+                                p0
+                            )
+                        })
                     }
                 }
 
                 override fun a(p0: String, p1: String) {
-                    println("printing $p0 b: $p1")
+                    KickedEvent("$p0: $p1").broadCastIn()
                 }
 
                 override fun a(p0: String, p1: Boolean) {

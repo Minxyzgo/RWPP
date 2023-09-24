@@ -1,3 +1,10 @@
+/*
+ * Copyright 2023 RWPP contributors
+ * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ */
+
 package io.github.rwpp.android.impl
 
 import com.corrodinggames.rts.game.units.custom.ag
@@ -19,13 +26,13 @@ class ModManagerImpl : ModManager {
 
     override fun modUpdate() {
         //LClass.B().bZ.k()
-        KClass.t().bW.j()
+        GameEngine.t().bW.j()
         mods = null
         mods = getAllMods()
     }
 
     override suspend fun modSaveChange() {
-        val t = KClass.t()
+        val t = GameEngine.t()
         t.bW.d()
         t.bN.save()
         val a2: Int = t.bW.a()
@@ -42,7 +49,7 @@ class ModManagerImpl : ModManager {
     @Suppress("unchecked_cast")
     override fun getAllMods(): List<Mod> {
         if(mods != null) return mods!!
-        val mods = KClass.t().bW.e as ArrayList<com.corrodinggames.rts.gameFramework.i.b>
+        val mods = GameEngine.t().bW.e as ArrayList<com.corrodinggames.rts.gameFramework.i.b>
 
         return buildList {
             mods.forEach {

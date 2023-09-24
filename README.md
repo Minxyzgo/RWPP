@@ -15,3 +15,13 @@ Desktop version is ready to use
 Android version isn't yet implemented
 
 doc...
+
+# Build
+run task `shared:rebuildJar` to build necessary libs at first.
+
+for desktop, run task `desktop:packageReleaseUberJarForCurrentOS`
+
+# Run
+- install Java 17
+- Copy RWPP to your rw root directory.
+- Run launcher.bat (you may need to change the rwpp jar name)

@@ -1,3 +1,10 @@
+/*
+ * Copyright 2023 RWPP contributors
+ * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ */
+
 package io.github.rwpp.game.ui
 
 import androidx.compose.animation.core.tween
@@ -157,7 +164,12 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
                             .padding(10.dp),
                         backgroundColor = Color.DarkGray.copy(.7f)
                     ) {
-                        val details = remember(update) { room.roomDetails().split("\n").filter { !it.startsWith("Map:") }.joinToString("\n") }
+                        var details by remember { mutableStateOf("Getting details...") }
+
+                        remember(update) {
+                            scope.launch { details = room.roomDetails().split("\n").filter { !it.startsWith("Map:") }.joinToString("\n") }
+                        }
+
                         Row(modifier = Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.Center) {
                             Text(
                                 details,
@@ -392,7 +404,8 @@ private fun PlayerOverrideDialog(
         BorderCard(
             modifier = Modifier
                 .fillMaxSize(0.6f)
-                .then(m),
+                .then(m)
+                .verticalScroll(rememberScrollState()),
             backgroundColor = Color.Gray.copy(.7f)
         ) {
             ExitButton(dismiss)
@@ -403,106 +416,98 @@ private fun PlayerOverrideDialog(
                 color = Color(151, 188, 98)
             )
             LargeDividingLine { 5.dp }
-            LazyColumn {
-                item {
-                    var expanded by remember { mutableStateOf(false) }
-                    RWSingleOutlinedTextField(
-                        "Spawn Point",
-                        if(playerSpawnPoint == -3) "Spectator" else playerSpawnPoint?.toString() ?: "",
-                        lengthLimitCount = 3,
-                        modifier = Modifier.padding(10.dp),
-                        typeInNumberOnly = true,
-                        typeInOnlyInteger = true,
-                        trailingIcon = {
-                            val icon =
-                                if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
-                            Icon(
-                                icon,
-                                "",
-                                modifier = Modifier.clickable(!expanded) { expanded = !expanded })
-                        },
-                        appendedContent = {
-                            BasicDropdownMenu(
-                                expanded,
-                                buildList<Any> { addAll(1..10); add("Spectator") },
-                                onItemSelected = { i, v ->
-                                    playerSpawnPoint = if(v != "Spectator") i + 1 else -3
-                                }
-                            ) {
-                                expanded = false
+            Column {
+                var expanded0 by remember { mutableStateOf(false) }
+                RWSingleOutlinedTextField(
+                    "Spawn Point",
+                    if(playerSpawnPoint == -3) "Spectator" else playerSpawnPoint?.toString() ?: "",
+                    lengthLimitCount = 3,
+                    modifier = Modifier.padding(10.dp),
+                    typeInNumberOnly = true,
+                    typeInOnlyInteger = true,
+                    trailingIcon = {
+                        val icon =
+                            if(expanded0) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                        Icon(
+                            icon,
+                            "",
+                            modifier = Modifier.clickable(!expanded0) { expanded0 = !expanded0 })
+                    },
+                    appendedContent = {
+                        BasicDropdownMenu(
+                            expanded0,
+                            buildList<Any> { addAll(1..10); add("Spectator") },
+                            onItemSelected = { i, v ->
+                                playerSpawnPoint = if(v != "Spectator") i + 1 else -3
                             }
+                        ) {
+                            expanded0 = false
                         }
-                    ) {
-                        val n = it.toIntOrNull()
-                        if(n == null || n < room.maxPlayerCount) playerSpawnPoint = n
                     }
+                ) {
+                    val n = it.toIntOrNull()
+                    if(n == null || n < room.maxPlayerCount) playerSpawnPoint = n
                 }
 
-                item {
-                    Text(
-                        "The spawn point controls where on the map this player starts. Most maps use old-even spawn points.",
-                        modifier = Modifier.padding(5.dp),
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
 
-                item {
-                    var expanded by remember { mutableStateOf(false) }
-                    RWSingleOutlinedTextField(
-                        "Team",
-                        if(playerTeam == -1) "auto" else playerTeam?.toString() ?: "",
-                        lengthLimitCount = 3,
-                        modifier = Modifier.padding(10.dp),
-                        typeInNumberOnly = true,
-                        typeInOnlyInteger = true,
-                        trailingIcon = {
-                            val icon =
-                                if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
-                            Icon(
-                                icon,
-                                "",
-                                modifier = Modifier.clickable(!expanded) { expanded = !expanded })
-                        },
-                        appendedContent = {
-                            BasicDropdownMenu(
-                                expanded,
-                                buildList<Any> { add("auto"); addAll(1..10) },
-                                onItemSelected = { _, v ->
-                                    playerTeam = if(v == "auto") -1 else (v as Int)
-                                }
-                            ) {
-                                expanded = false
+
+                Text(
+                    "The spawn point controls where on the map this player starts. Most maps use old-even spawn points.",
+                    modifier = Modifier.padding(5.dp),
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+
+                var expanded by remember { mutableStateOf(false) }
+                RWSingleOutlinedTextField(
+                    "Team",
+                    if(playerTeam == -1) "auto" else playerTeam?.toString() ?: "",
+                    lengthLimitCount = 3,
+                    modifier = Modifier.padding(10.dp),
+                    typeInNumberOnly = true,
+                    typeInOnlyInteger = true,
+                    trailingIcon = {
+                        val icon =
+                            if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                        Icon(
+                            icon,
+                            "",
+                            modifier = Modifier.clickable(!expanded) { expanded = !expanded })
+                    },
+                    appendedContent = {
+                        BasicDropdownMenu(
+                            expanded,
+                            buildList<Any> { add("auto"); addAll(1..10) },
+                            onItemSelected = { _, v ->
+                                playerTeam = if(v == "auto") -1 else (v as Int)
                             }
+                        ) {
+                            expanded = false
                         }
-                    ) {
-                        playerTeam = it.toIntOrNull()
                     }
+                ) {
+                    playerTeam = it.toIntOrNull()
                 }
 
-                item {
-                    Text(
-                        "Players with the same team will be allied together.",
-                        modifier = Modifier.padding(5.dp),
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyLarge
+                Text(
+                    "Players with the same team will be allied together.",
+                    modifier = Modifier.padding(5.dp),
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                if(player.isAI) {
+                    LargeDropdownMenu(
+                        modifier = Modifier.padding(20.dp),
+                        label = "Difficulty",
+                        items = Difficulty.entries,
+                        selectedIndex = aiDifficulty.ordinal,
+                        onItemSelected = { _, v -> aiDifficulty = v }
                     )
-                }
-
-                item {
-                    if(player.isAI) {
-                        LargeDropdownMenu(
-                            modifier = Modifier.padding(20.dp),
-                            label = "Difficulty",
-                            items = Difficulty.entries,
-                            selectedIndex = aiDifficulty.ordinal,
-                            onItemSelected = { _, v -> aiDifficulty = v }
-                        )
-                    }
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
 
             Row(modifier = Modifier.fillMaxWidth().padding(10.dp),
                  horizontalArrangement = Arrangement.Center) {

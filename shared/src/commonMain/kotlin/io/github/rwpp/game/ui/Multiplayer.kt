@@ -1,11 +1,15 @@
+/*
+ * Copyright 2023 RWPP contributors
+ * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ */
+
 package io.github.rwpp.game.ui
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -17,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,16 +50,16 @@ fun MultiplayerView(
     var throwable by remember { mutableStateOf<Throwable?>(null) }
     val context = LocalController.current
 
-    var userName by rememberSaveable {
+    var userName by remember {
         val lastName = context.getConfig<String?>("lastNetworkPlayerName")
-        mutableStateOf((lastName ?: "Unnamed${(0..999).random()}").also { context.setUserName(it) })
+        mutableStateOf((lastName ?: "RWPP${(0..999).random()}").also { context.setUserName(it) })
     }
-    var selectedSourceIndex by rememberSaveable { mutableStateOf(0) }
-    val sources = rememberSaveable { mutableStateListOf(MasterSource) }
-    var enableModFilter by rememberSaveable { mutableStateOf(false) }
-    var mapNameFilter by rememberSaveable { mutableStateOf("") }
-    var creatorNameFilter by rememberSaveable { mutableStateOf("") }
-    var playerLimitRange by rememberSaveable { mutableStateOf(0..100) }
+    var selectedSourceIndex by remember { mutableStateOf(0) }
+    val sources = remember { mutableStateListOf(MasterSource) }
+    var enableModFilter by remember { mutableStateOf(false) }
+    var mapNameFilter by remember { mutableStateOf("") }
+    var creatorNameFilter by remember { mutableStateOf("") }
+    var playerLimitRange by remember { mutableStateOf(0..100) }
 
     var serverAddress by remember { mutableStateOf("") }
     var isConnecting by remember { mutableStateOf(false) }
@@ -79,6 +82,8 @@ fun MultiplayerView(
             message("That server no longer exists")
             return@LoadingView false
         }
+
+        context.setUserName(userName)
 
         val result = context.directJoinServer(serverAddress, selectedRoomDescription?.uuid2, this)
         selectedRoomDescription = null
@@ -104,7 +109,8 @@ fun MultiplayerView(
             modifier = Modifier
                 .fillMaxSize(0.5f)
                 .padding(10.dp)
-                .then(m),
+                .then(m)
+                .verticalScroll(rememberScrollState()),
             backgroundColor = Color.Gray
         ) {
             Text(
@@ -253,7 +259,7 @@ fun MultiplayerView(
                                     Color.White
                                 } else if(desc.gameVersion != LocalController.current.gameVersion) {
                                     Color.Gray
-                                } else if(desc.requiredPassword) {
+                                } else if(desc.isLocal) {
                                     Color(255, 127, 80)
                                 } else if(desc.isOpen) {
                                     Color(200, 200, 200)
@@ -262,6 +268,8 @@ fun MultiplayerView(
                                 }
                             val open: String =
                                 if(desc.requiredPassword) {
+                                    "P"
+                                } else if(desc.isLocal) {
                                     "L"
                                 } else if(desc.isOpen) {
                                     "Y"
@@ -573,7 +581,6 @@ fun MultiplayerView(
                             onValueChange =
                             {
                                 userName = it
-                                context.setUserName(it.trim())
                             },
                         )
 
@@ -789,7 +796,8 @@ private fun JoinServerRequestDialog(
         modifier = Modifier
             .fillMaxSize(0.5f)
             .padding(10.dp)
-            .then(m),
+            .then(m)
+            .verticalScroll(rememberScrollState()),
         backgroundColor = Color.Gray
     ) {
         ExitButton(dismiss)

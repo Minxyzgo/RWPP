@@ -41,6 +41,8 @@ injectionMultiplatform {
         fi.writeBytes(File(projectDir.absolutePath + "/android-game-lib-template.jar").readBytes())
     }
     android {
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity"
+            .with("updateUI"))
         setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.game.i".with("n"))
         setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.j.ae".with("X", "d(Ljava/lang/String;Ljava/lang/String;)"))
         action {
@@ -61,9 +63,9 @@ injectionMultiplatform {
 
             val tag = listOf("anim", "array", "attr", "color", "drawable", "id", "layout", "raw", "string", "style", "styleable", "xml")
             val classMap = ClassMap().apply {
-                put("com.corrodinggames.rts.R", "cn.minxyzgo.rwpp.android.R")
+                put("com.corrodinggames.rts.R", "io.github.rwpp.R")
                 tag.forEach {
-                    put("com.corrodinggames.rts.R\$$it", "cn.minxyzgo.rwpp.android.R\$$it")
+                    put("com.corrodinggames.rts.R\$$it", "io.github.rwpp.R\$$it")
                 }
             }
             com.github.minxyzgo.rwij.Libs.`android-game-lib`.classTree.allClasses.forEach {
@@ -135,7 +137,7 @@ kotlin {
 
 android {
     compileSdk = (findProperty("android.compileSdk") as String).toInt()
-    namespace = "com.myapplication.common"
+    namespace = "io.github.rwpp.android"
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
