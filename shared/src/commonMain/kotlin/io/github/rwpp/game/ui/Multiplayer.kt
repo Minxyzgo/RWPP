@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,10 +31,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
+import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.config.MasterSource
 import io.github.rwpp.config.Source
 import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.sorted
+import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -44,6 +47,8 @@ fun MultiplayerView(
     onExit: () -> Unit,
     onOpenRoomView: () -> Unit
 ) {
+    BackHandler(true, onExit)
+
     val refresh = remember { Channel<Unit>(1) }
     var isRefreshing by remember { mutableStateOf(false) }
     var currentViewList by remember { mutableStateOf<List<RoomDescription>>(listOf()) }
@@ -67,6 +72,12 @@ fun MultiplayerView(
     var selectedRoomDescription by remember { mutableStateOf<RoomDescription?>(null) }
     var showJoinRequestDialog by remember { mutableStateOf(false) }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            context.setUserName(userName)
+        }
+    }
+
     JoinServerRequestDialog(showJoinRequestDialog, { showJoinRequestDialog = false },
         mapName = selectedRoomDescription?.mapName ?: "",
         creatorName = selectedRoomDescription?.creator ?: "",
@@ -77,13 +88,14 @@ fun MultiplayerView(
         dismiss()
     }
 
-    LoadingView(isConnecting, onLoaded = { context.cancelJoinServer(); isConnecting = false }) {
+    LoadingView(isConnecting, onLoaded = { context.cancelJoinServer(); isConnecting = false }, cancellable = true) {
         if(serverAddress.isBlank()) {
             message("That server no longer exists")
             return@LoadingView false
         }
 
         context.setUserName(userName)
+        context.setConfig("lastNetworkIP", serverAddress)
 
         val result = context.directJoinServer(serverAddress, selectedRoomDescription?.uuid2, this)
         selectedRoomDescription = null
@@ -107,7 +119,7 @@ fun MultiplayerView(
     ) { m, dismiss ->
         BorderCard(
             modifier = Modifier
-                .fillMaxSize(0.5f)
+                .fillMaxSize(if(LocalWindowManager.current == WindowManager.Large) 0.6f else 0.85f)
                 .padding(10.dp)
                 .then(m)
                 .verticalScroll(rememberScrollState()),
@@ -145,7 +157,7 @@ fun MultiplayerView(
                 RWTextButton("Host Private", modifier = Modifier.padding(5.dp)) {
                     dismiss()
                     if(hostByRCN) {
-                        context.onRcnCallback(if(enableMods) "mod" else "new")
+                        context.onQuestionCallback(if(enableMods) "mod" else "new")
                         serverAddress = rcnAddress
                         isConnecting = true
                     } else {
@@ -158,7 +170,7 @@ fun MultiplayerView(
                 RWTextButton("Host Public", modifier = Modifier.padding(5.dp)) {
                     dismiss()
                     if(hostByRCN) {
-                        context.onRcnCallback(if(enableMods) "modup" else "newup")
+                        context.onQuestionCallback(if(enableMods) "modup" else "newup")
                         serverAddress = rcnAddress
                         isConnecting = true
                     } else {
@@ -384,7 +396,7 @@ fun MultiplayerView(
     @Composable
     fun ColumnScope.FilterSurface() {
         BorderCard(
-            modifier = Modifier.weight(1f).fillMaxWidth().padding(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(10.dp),
             backgroundColor = Color.DarkGray.copy(.7f)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -399,120 +411,103 @@ fun MultiplayerView(
 
                 val state = rememberLazyListState()
 
-                LazyColumn(
-                    state = state,
-                    modifier = Modifier
-                        .weight(1f)
+
+                var selectedSource by remember(selectedSourceIndex) {
+                    mutableStateOf(sources[selectedSourceIndex])
+                }
+                var showSourceDialog by remember {
+                    mutableStateOf(false)
+                }
+                LargeOutlinedButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Source") },
+                    value = selectedSource.name
                 ) {
-                    item {
-                        var selectedSource by remember(selectedSourceIndex) {
-                            mutableStateOf(sources[selectedSourceIndex])
-                        }
-                        var showSourceDialog by remember {
-                            mutableStateOf(false)
-                        }
-                        LargeOutlinedButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Source") },
-                            value = selectedSource.name
-                        ) {
-                            showSourceDialog = true
-                        }
+                    showSourceDialog = true
+                }
 
-                        SourceTargetDialog(showSourceDialog, { selectedSource = it }) { showSourceDialog = false }
-                    }
+                SourceTargetDialog(showSourceDialog, { selectedSource = it }) { showSourceDialog = false }
 
-                    item {
-                        OutlinedTextField(
-                            label = {
-                                Text(
-                                    "GameMap Name Filter",
-                                    fontFamily = MaterialTheme.typography.headlineLarge.fontFamily
-                                )
-                            },
-                            textStyle = MaterialTheme.typography.headlineLarge,
-                            colors = RWOutlinedTextColors,
-                            value = mapNameFilter,
-                            enabled = true,
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth().padding(5.dp),
-                            onValueChange =
-                            {
-                                mapNameFilter = it
-                            },
+                OutlinedTextField(
+                    label = {
+                        Text(
+                            "GameMap Name Filter",
+                            fontFamily = MaterialTheme.typography.headlineLarge.fontFamily
                         )
-                    }
+                    },
+                    textStyle = MaterialTheme.typography.headlineLarge,
+                    colors = RWOutlinedTextColors,
+                    value = mapNameFilter,
+                    enabled = true,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(5.dp),
+                    onValueChange =
+                    {
+                        mapNameFilter = it
+                    },
+                )
 
-                    item {
-                        OutlinedTextField(
-                            label = {
-                                Text(
-                                    "Creator Name Filter",
-                                    fontFamily = MaterialTheme.typography.headlineLarge.fontFamily
-                                )
-                            },
-                            textStyle = MaterialTheme.typography.headlineLarge,
-                            colors = RWOutlinedTextColors,
-                            value = creatorNameFilter,
-                            enabled = true,
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth().padding(5.dp, 0.dp, 5.dp, 5.dp),
-                            onValueChange =
-                            {
-                                creatorNameFilter = it
-                            },
+                OutlinedTextField(
+                    label = {
+                        Text(
+                            "Creator Name Filter",
+                            fontFamily = MaterialTheme.typography.headlineLarge.fontFamily
                         )
-                    }
+                    },
+                    textStyle = MaterialTheme.typography.headlineLarge,
+                    colors = RWOutlinedTextColors,
+                    value = creatorNameFilter,
+                    enabled = true,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(5.dp, 0.dp, 5.dp, 5.dp),
+                    onValueChange =
+                    {
+                        creatorNameFilter = it
+                    },
+                )
 
-                    item {
-                        var range by remember { mutableStateOf(playerLimitRange) }
-                        Column(modifier = Modifier.wrapContentSize()) {
-                            Text(
-                                "Player Limit : $range",
-                                modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 5.dp, 0.dp, 5.dp)
-                            )
-                            RangeSlider(
-                                valueRange = 0f..100f,
-                                modifier = Modifier.fillMaxWidth().padding(0.dp, 0.dp, 0.dp, 5.dp),
-                                steps = 101,
-                                value = range.first.toFloat()..range.last.toFloat(),
-                                colors = RWSliderColors,
-                                onValueChange = { range = it.start.roundToInt()..it.endInclusive.roundToInt() },
-                                onValueChangeFinished = { playerLimitRange = range }
-                            )
-                        }
-                    }
+                var range by remember { mutableStateOf(playerLimitRange) }
+                Column(modifier = Modifier.wrapContentSize()) {
+                    Text(
+                        "Player Limit : $range",
+                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 5.dp, 0.dp, 5.dp)
+                    )
+                    RangeSlider(
+                        valueRange = 0f..100f,
+                        modifier = Modifier.fillMaxWidth().padding(0.dp, 0.dp, 0.dp, 5.dp),
+                        steps = 101,
+                        value = range.first.toFloat()..range.last.toFloat(),
+                        colors = RWSliderColors,
+                        onValueChange = { range = it.start.roundToInt()..it.endInclusive.roundToInt() },
+                        onValueChangeFinished = { playerLimitRange = range }
+                    )
+                }
 
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(IntrinsicSize.Min)
-                                .padding(5.dp)
-                        ) {
-                            Text(
-                                "Enabled Mods", style = MaterialTheme.typography.headlineLarge,
-                                modifier = Modifier
-                                    .padding(5.dp)
-                                    .weight(1f)
-                            )
-                            Switch(
-                                checked = enableModFilter,
-                                onCheckedChange = { enableModFilter = it },
-                                colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
-                            )
-                        }
-                    }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min)
+                        .padding(5.dp)
+                ) {
+                    Text(
+                        "Enabled Mods", style = MaterialTheme.typography.headlineLarge,
+                        modifier = Modifier
+                            .padding(5.dp)
+                            .weight(1f)
+                    )
+                    Switch(
+                        checked = enableModFilter,
+                        onCheckedChange = { enableModFilter = it },
+                        colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
+                    )
+                }
 
-                    item {
-                        LargeOutlinedButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Reset") },
-                            value = ""
-                        ) {
-                            resetFilter()
-                        }
-                    }
+                LargeOutlinedButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Reset") },
+                    value = ""
+                ) {
+                    resetFilter()
                 }
             }
         }
@@ -569,7 +564,7 @@ fun MultiplayerView(
                 Row(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Column(modifier = Modifier.weight(0.4f)) {
+                    Column(modifier = Modifier.weight(0.4f).verticalScroll(rememberScrollState())) {
                         OutlinedTextField(
                             label = { Text("User Name", fontFamily = MaterialTheme.typography.headlineLarge.fontFamily) },
                             textStyle = MaterialTheme.typography.headlineLarge,
@@ -589,7 +584,9 @@ fun MultiplayerView(
                             "Host new game",
                             modifier = Modifier.padding(5.dp).fillMaxWidth()
                         ) { hostDialogVisible = true }
-                        HostGameDialog(hostDialogVisible, { hostDialogVisible = false }) { onExit(); onOpenRoomView() }
+                        HostGameDialog(hostDialogVisible, { hostDialogVisible = false }) {
+                            onExit(); onOpenRoomView(); context.setUserName(userName)
+                        }
 
                         RWTextButton(
                             label = "Watch Reply",
@@ -610,7 +607,7 @@ fun MultiplayerView(
                         FilterSurface()
                     }
 
-                    var joinServerAddress by remember { mutableStateOf(context.getConfig<String?>("lastNetworkIP")) }
+                    var joinServerAddress by rememberSaveable { mutableStateOf("") }
 
                     Column(
                         modifier = Modifier
@@ -631,7 +628,6 @@ fun MultiplayerView(
                                         null,
                                         modifier = Modifier.clickable {
                                             if(!joinServerAddress.isNullOrBlank()) {
-                                                context.setConfig("lastNetworkIP", joinServerAddress)
                                                 serverAddress = joinServerAddress!!
                                                 isConnecting = true
                                             }

@@ -8,10 +8,7 @@
 package io.github.rwpp.ui
 
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
@@ -39,6 +36,19 @@ val RWSliderColors
             inactiveTrackColor = Color.White,
             inactiveTickColor = Color.Black
         )
+
+val RWButtonColors
+    @Composable get() = ButtonDefaults.buttonColors(
+        containerColor = Color.Transparent,
+        contentColor = Color.Black.copy(.7f),
+        disabledContainerColor = Color.Black.copy(.7f),
+        disabledContentColor = Color.Black.copy(.7f))
+
+val RWSelectionColors
+    @Composable get() = TextSelectionColors(
+        Color(151, 188, 98),
+        Color(151, 188, 98)
+    )
 
 val RWCheckBoxColors
     @Composable get() = CheckboxDefaults.colors(checkedColor = Color(151, 188, 98))

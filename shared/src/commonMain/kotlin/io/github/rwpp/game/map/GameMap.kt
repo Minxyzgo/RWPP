@@ -20,5 +20,11 @@ interface GameMap {
     val tmx: File?
 
     val mapType: MapType
+
+    fun displayName() = mapName.replace(mapPrefixRegex, "")
+
+    companion object {
+        private val mapPrefixRegex = Regex("""^\[.*?\]""")
+    }
 }
 

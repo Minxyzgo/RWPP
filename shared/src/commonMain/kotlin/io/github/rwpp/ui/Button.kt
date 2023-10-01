@@ -23,20 +23,28 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.platform.BackHandler
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun MenuButton(content: String, onClick: () -> Unit) {
+fun MenuButton(content: String, enabled: Boolean = true, onClick: () -> Unit) {
     var isPressed by remember { mutableStateOf(false) }
     val colors by remember(isPressed) {
-        mutableStateOf(listOf(Color(173, 243, 177), Color(162, 195, 171), Color(141, 221, 143)))
+        mutableStateOf(
+            if(enabled) listOf(Color(173, 243, 177), Color(162, 195, 171), Color(141, 221, 143))
+            else listOf(Color.DarkGray, Color.Gray, Color.DarkGray)
+        )
     }
 
     val gradient by remember(colors) { mutableStateOf(Brush.horizontalGradient(colors)) }
+    val pxValue = with(LocalDensity.current) {
+        (MaterialTheme.typography.headlineLarge.fontSize.value + 5).toDp() + 20.dp
+    }
 
     Row(
         modifier =
@@ -45,11 +53,11 @@ fun MenuButton(content: String, onClick: () -> Unit) {
             .shadow(10.dp),
     ) {
         Image(
+            modifier = Modifier.requiredHeight(pxValue),
+            contentScale = ContentScale.FillHeight,
             painter = painterResource("btn_left.png"),
             contentDescription = null,
         )
-
-        val pxValue = with(LocalDensity.current) { 40.toDp() }
 
         Button(
             modifier = Modifier
@@ -78,6 +86,8 @@ fun MenuButton(content: String, onClick: () -> Unit) {
         }
 
         Image(
+            modifier = Modifier.requiredHeight(pxValue),
+            contentScale = ContentScale.FillHeight,
             painter = painterResource("btn_right.png"),
             contentDescription = null,
         )

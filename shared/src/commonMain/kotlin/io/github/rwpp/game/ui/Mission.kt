@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.Mission
+import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.BorderCard
 import io.github.rwpp.ui.ExitButton
 import io.github.rwpp.ui.LargeDividingLine
@@ -26,6 +27,8 @@ import io.github.rwpp.ui.LargeDropdownMenu
 
 @Composable
 fun MissionView(onExit: () -> Unit) {
+    BackHandler(true, onExit)
+
     BorderCard(
         modifier = Modifier
             .fillMaxSize()

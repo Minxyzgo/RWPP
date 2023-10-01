@@ -19,13 +19,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
+import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
+    BackHandler(true, onExit)
+
     var mods by remember { mutableStateOf(getAllMods()) }
     var updated by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
@@ -68,6 +75,7 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                 .fillMaxSize()
                 .padding(10.dp)
         ) {
+
             Column {
                 ExitButton(onExit)
                 var filter by remember { mutableStateOf("") }
@@ -84,7 +92,7 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
 
 
                 remember(filter, updated) {
-                    if(filter.isNotBlank() || updated) mods = getAllMods().filter { it.name.contains(filter) }
+                    if(filter.isNotBlank() || updated) mods = getAllMods().filter { it.name.uppercase().contains(filter.uppercase()) }
                     if(filter.isBlank()) mods = getAllMods()
                     updated = false
                 }
@@ -134,8 +142,23 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                                     Text(mod.name, modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = Color(151, 188, 98))
                                 }
 
+                                val expandedStyle = remember {
+                                    SpanStyle(
+                                        fontWeight = FontWeight.W500,
+                                        color = Color(173, 216, 230),
+                                        fontStyle = FontStyle.Italic,
+                                        textDecoration = TextDecoration.Underline
+                                    )
+                                }
+
                                 SelectionContainer {
-                                    Text(mod.description, style = MaterialTheme.typography.bodyLarge)
+                                    ExpandableText(
+                                        text = mod.description,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        textModifier = Modifier.padding(top = 5.dp),
+                                        showMoreStyle = expandedStyle,
+                                        showLessStyle = expandedStyle
+                                    )
                                 }
 
                                 Spacer(modifier = Modifier.size(10.dp))

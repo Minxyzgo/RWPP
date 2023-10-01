@@ -42,8 +42,10 @@ injectionMultiplatform {
     }
     android {
         setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity"
-            .with("updateUI"))
-        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.game.i".with("n"))
+            .with("updateUI", "askPasswordInternal", "refreshChatLog", "addMessageToChatLog", "startGame"))
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.k".with("g(Ljava/lang/String;)"))
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.bb".with("onClick"))
+        //setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.game.i".with("n")) version
         setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.j.ae".with("X", "d(Ljava/lang/String;Ljava/lang/String;)"))
         action {
             Libs.`android-game-lib`.classTree.defPool["com.corrodinggames.rts.gameFramework.j.ae"].apply {
@@ -77,7 +79,7 @@ injectionMultiplatform {
         target = "desktopMain"
         setProxy(Libs.`game-lib`,
             "com.corrodinggames.librocket.scripts.Root".with("showMainMenu", "showBattleroom", "receiveChatMessage", "makeSendMessagePopup", "makeSendTeamMessagePopupWithDefaultText"),
-            "com.corrodinggames.rts.java.Main".with("c()", "b()"),
+            "com.corrodinggames.rts.java.Main".with("c", "b()"),
             "com.corrodinggames.rts.java.b.a".with("p")
         )
         action {

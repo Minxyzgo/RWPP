@@ -42,7 +42,7 @@ interface Game {
 
     fun cancelJoinServer()
 
-    fun onRcnCallback(option: String)
+    fun onQuestionCallback(option: String)
 
     fun setTeamUnitCapHostGame(cap: Int)
 

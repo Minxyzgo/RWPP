@@ -5,5 +5,11 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.ui.platform
+package io.github.rwpp.platform
 
+import androidx.compose.runtime.Composable
+
+@Composable
+actual fun BackHandler(enabled: Boolean, onBack: () -> Unit) {
+    // do nothing
+}

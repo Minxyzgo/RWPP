@@ -7,6 +7,16 @@
         android:largeScreens="true"
         android:resizeable="true"
         android:xlargeScreens="true"/>
+    <!-- 拥有完全的网络访问权限 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- 访问WiFi网络状态信息 -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_*"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <!-- 修改或删除您共享存储空间中的内容 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="com.android.vending.CHECK_LICENSE"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <application
             android:allowBackup="false"
             android:supportsRtl="true"
@@ -118,13 +128,5 @@
             android:exported="true"
             android:configChanges="screenSize|orientation|keyboardHidden"/>
     </application>
-    <!-- 拥有完全的网络访问权限 -->
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- 访问WiFi网络状态信息 -->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <!-- 修改或删除您共享存储空间中的内容 -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="com.android.vending.CHECK_LICENSE"/>
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 </manifest>
 

@@ -15,8 +15,6 @@ class RefreshUIEvent : GameEvent()
 
 class ReturnMainMenuEvent : GameEvent()
 
-class ReturnBattleRoomEvent : GameEvent()
-
 class StartGameEvent : GameEvent()
 
 class ChatMessageEvent(val sender: String, val message: String, val spawn: Int) : GameEvent()

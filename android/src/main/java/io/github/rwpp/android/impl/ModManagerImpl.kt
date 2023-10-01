@@ -8,6 +8,7 @@
 package io.github.rwpp.android.impl
 
 import com.corrodinggames.rts.game.units.custom.ag
+import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
 
@@ -15,13 +16,14 @@ class ModManagerImpl : ModManager {
     private var mods: List<Mod>? = null
 
     override suspend fun modReload() {
-//        GameImpl.container.waitPost {
-//            val B = LClass.B()
-//            B.bZ.e()
-//            B.bQ.save()
-//            B.bZ.l()
-//        }
-        TODO("Not yet implemented")
+        val t = GameEngine.t()
+        modSaveChange()
+        val aVar = t.bW
+        t.bo = true
+        t.f()
+        aVar.a(false, false)
+        t.bo = false
+        t.q()
     }
 
     override fun modUpdate() {
@@ -36,9 +38,14 @@ class ModManagerImpl : ModManager {
         t.bW.d()
         t.bN.save()
         val a2: Int = t.bW.a()
-        if(t.bU.C)
-            return
-        ag.b(true)
+        if(t.bU.C) {
+
+        } else if(!ag.b(true)) {
+
+        } else if(a2 == 0) {
+            t.bW.b()
+        }
+
     }
 
     override fun getModByName(name: String): Mod {
@@ -63,8 +70,8 @@ class ModManagerImpl : ModManager {
                     override val minVersion: String
                         get() = it.t ?: ""
                     override var isEnabled: Boolean
-                        get() = !it.A
-                        set(value) { it.A = !value }
+                        get() = !it.f
+                        set(value) { it.f = !value }
                 })
             }
         }

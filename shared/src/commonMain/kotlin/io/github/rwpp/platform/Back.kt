@@ -5,10 +5,10 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.ui.platform
+package io.github.rwpp.platform
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.font.FontFamily
 
 @Composable
-expect fun deliciousFonts(): FontFamily
+expect fun BackHandler(enabled: Boolean, onBack: () -> Unit)
+

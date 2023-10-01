@@ -105,7 +105,7 @@ fun MapViewDialog(
                     key = { maps[it].id }
                 ) {
                     val map = maps[it]
-                    MapItem(it, state, map.mapName, map.image, mapType != MapType.SavedGame) { onSelectedMap(it, map); d() }
+                    MapItem(it, state, map.displayName(), map.image, mapType != MapType.SavedGame) { onSelectedMap(it, map); d() }
                 }
             }
         }

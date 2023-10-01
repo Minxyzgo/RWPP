@@ -13,10 +13,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import com.corrodinggames.rts.appFramework.InGameActivity
+import com.corrodinggames.rts.appFramework.LevelGroupSelectActivity
 import com.corrodinggames.rts.appFramework.LevelSelectActivity
 import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.MainActivity
+import io.github.rwpp.android.questionOption
+import io.github.rwpp.event.broadCastIn
+import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.base.Difficulty
@@ -32,7 +36,6 @@ import kotlin.coroutines.CoroutineContext
 
 
 class GameImpl : Game, CoroutineScope {
-    private val mapPrefixRegex = Regex("""^\[.*?\]""")
     private var connectingJob: Deferred<String?>? = null
     private var _missions: List<Mission>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
@@ -47,21 +50,29 @@ class GameImpl : Game, CoroutineScope {
         LevelSelectActivity.loadSinglePlayerMapRaw("maps/normal/${mission.mapName}.tmx", false, 0, 0, true, false)
         val intent = Intent(MainActivity.instance, InGameActivity::class.java)
         intent.putExtra("level", t.di)
-        MainActivity.instance.startActivityForResult(intent, 0)
+        MainActivity.gameLauncher.launch(intent)
     }
 
-    override suspend fun load(context: LoadingContext) {
-        context.message("loading")
+    override suspend fun load(context: LoadingContext) = withContext(Dispatchers.IO) {
+        val job = launch {
+            while(GameEngine.t()?.bg != true) {
+                context.message(GameEngine.t()?.dF ?: "loading...")
+            }
+        }
+
         GameEngine.c(MainActivity.instance)
+        Unit
     }
 
     override fun hostStartWithPasswordAndMods(isPublic: Boolean, password: String?, useMods: Boolean) {
         val t: k = GameEngine.t()
         t.bU.n = password
         t.bU.o = useMods
-        t.bU.g = isPublic
+        t.bU.q = isPublic
         launch(Dispatchers.IO) {
             t.bU.t()
+            delay(100)
+            RefreshUIEvent().broadCastIn()
         }
 
         GameEngine.t().bU.aA.a = at.a
@@ -92,8 +103,8 @@ class GameImpl : Game, CoroutineScope {
         connectingJob = null
     }
 
-    override fun onRcnCallback(option: String) {
-        TODO("Not yet implemented")
+    override fun onQuestionCallback(option: String) {
+        questionOption = option
     }
 
     override fun setTeamUnitCapHostGame(cap: Int) {
@@ -133,35 +144,53 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override fun getAllMaps(): List<GameMap> {
+        val assets = MainActivity.instance.assets
         if(_maps.isEmpty()) {
-            val mapFolders = mapOf(
-                MapType.SkirmishMap to File("maps/skirmish"),
-                MapType.CustomMap to File("/SD/rustedWarfare/maps"),
-                MapType.SavedGame to File("/SD/rustedWarfare/saves")
+            val t = GameEngine.t()
+            val levelDirs = com.corrodinggames.rts.gameFramework.e.a.a(LevelGroupSelectActivity.customLevelsDir, true)
+            val mapPaths = mapOf(
+                MapType.CustomMap to t.bW.a(levelDirs, LevelGroupSelectActivity.customLevelsDir),
+                MapType.SavedGame to arrayOf()
             )
 
-            for((type, folder) in mapFolders) {
+
+            val assetMaps = mutableListOf<GameMap>()
+            assets.list("maps/skirmish")!!
+                .filter { it.endsWith(".tmx") }
+                .forEachIndexed { i, f ->
+                    assetMaps.add(object : GameMap {
+                        override val id: Int = i
+                        override val image: Painter =
+                            BitmapPainter(BitmapFactory.decodeStream(
+                                assets.open("maps/skirmish/${f.removeSuffix(".tmx") + "_map.png"}")
+                            ).asImageBitmap())
+                        override val mapName: String
+                            get() = f.removeSuffix(".tmx")
+                        override val tmx: File? = null
+                        override val mapType: MapType
+                            get() = MapType.SkirmishMap
+                    })
+                }
+            _maps[MapType.SkirmishMap]= assetMaps
+
+            for((type, path) in mapPaths) {
                 val maps = mutableListOf<GameMap>()
-                folder
-                    .walk()
-                    .filter { it.name.endsWith(".tmx") }
-                    .forEachIndexed { i, f ->
+                path.forEachIndexed { i, name ->
                         maps.add(object : GameMap {
                             override val id: Int = i
                             override val image: Painter? =
-                                if(mapType != MapType.SavedGame) File(f.parent!! + "/" + f.name.removeSuffix(".tmx") + "_map.png")
-                                    .let {
-                                        if(it.exists()) {
-                                            BitmapPainter(BitmapFactory.decodeFile(it.absolutePath).asImageBitmap())
-                                        } else null }
-                                else null
+                                if(type == MapType.CustomMap) {
+                                    com.corrodinggames.rts.appFramework.d.d(
+                                        "/SD/rusted_warfare_maps/$name"
+                                    )?.asImageBitmap()?.let { BitmapPainter(it) }
+                                } else null
                             override val mapName: String
-                                get() = tmx.nameWithoutExtension.let {
-                                    if(type == MapType.SkirmishMap) it.replace(mapPrefixRegex, "") else it
-                                }
-                            override val tmx: File = f
+                                get() = name.removeSuffix(".tmx")
+                            override val tmx: File? = null
                             override val mapType: MapType
                                 get() = type
+
+                            override fun displayName(): String = LevelSelectActivity.convertLevelFileNameForDisplay(mapName)
                         })
                     }
                 _maps[type] = maps.toList()

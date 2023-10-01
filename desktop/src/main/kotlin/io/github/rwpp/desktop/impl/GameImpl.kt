@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.Root
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
-import com.corrodinggames.rts.game.units.custom.logicBooleans.VariableScope
 import com.corrodinggames.rts.gameFramework.ac
 import com.corrodinggames.rts.gameFramework.l
 import com.corrodinggames.rts.gameFramework.n
@@ -37,6 +36,7 @@ import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
 import io.github.rwpp.ui.LoadingContext
+import io.github.rwpp.welcomeMessage
 import kotlinx.coroutines.channels.Channel
 import org.lwjgl.opengl.Display
 import java.io.File
@@ -84,7 +84,12 @@ class GameImpl : Game {
                     get() = getAllMaps().firstOrNull { it.tmx!!.absolutePath.replace("\\", "/").endsWith(B.bX.ay.b ?: "") }
                         ?: NetworkMap(mapNameFormatMethod.invoke(null, B.bX.ay.b) as String)
                     set(value) {
-                        val realPath = value.tmx!!.path.replace("\\", "/")
+                        val realPath = (
+                                when(value.mapType) {
+                                    MapType.SkirmishMap -> "maps/skirmish/"
+                                    MapType.CustomMap -> "mods/maps/"
+                                    else -> ""
+                                }) + value.tmx!!.name.replace("\\", "/")
                         B.bX.az = realPath
                         B.bX.ay.a = com.corrodinggames.rts.gameFramework.j.ai.entries[value.mapType.ordinal]
                         b = value.tmx!!.name
@@ -216,8 +221,6 @@ class GameImpl : Game {
                     } as com.corrodinggames.librocket.b
                     libRocket.closeActiveDocument()
                     libRocket.clearHistory()
-
-                    ReturnBattleRoomEvent().broadCastIn()
                 }
             }
 
@@ -242,6 +245,16 @@ class GameImpl : Game {
         Main::class.setFunction {
             addProxy("c") {
                 RefreshUIEvent().broadCastIn()
+            }
+
+            addProxy("c", com.corrodinggames.rts.gameFramework.j.c::class, String::class, String::class) { _: Any?, c: com.corrodinggames.rts.gameFramework.j.c, _: Any?, _: Any? ->
+                val rwOutputStream = RwOutputStream()
+                rwOutputStream.c(welcomeMessage)
+                rwOutputStream.c(3)
+                rwOutputStream.b("RWPP")
+                rwOutputStream.a(null as com.corrodinggames.rts.gameFramework.j.c?)
+                rwOutputStream.a(-1)
+                LClass.B().bX.a(c, rwOutputStream.b(141))
             }
 
             addProxy("b", "()") { m: Main ->
@@ -335,17 +348,18 @@ class GameImpl : Game {
 
         container.post {
             val nHelper = object : n() {
-                val method = ScriptEngine::class.java.getDeclaredMethod("addRunnableToQueue")
+                //val method = ScriptEngine::class.java.getDeclaredMethod("addRunnableToQueue")
+
                 override fun a(p0: String, p1: Int) {
                     if(p0.startsWith("kicked", ignoreCase = true)) {
                         KickedEvent(p0).broadCastIn()
                     } else {
-                        method.invoke(ScriptEngine.getInstance(), Runnable {
-                            main.p.b(
-                                VariableScope.nullOrMissingString,
-                                p0
-                            )
-                        })
+                        if(isGaming) {
+//                            main.p.b(
+//                                VariableScope.nullOrMissingString,
+//                                p0
+//                            )
+                        }
                     }
                 }
 
@@ -517,7 +531,7 @@ class GameImpl : Game {
         threadConnector?.a()
     }
 
-    override fun onRcnCallback(option: String) {
+    override fun onQuestionCallback(option: String) {
         rcnOption = option
     }
 

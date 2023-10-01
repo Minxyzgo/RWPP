@@ -11,7 +11,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Info
@@ -40,11 +40,22 @@ import io.github.rwpp.event.events.QuestionDialogEvent
 import io.github.rwpp.event.events.QuestionReplyEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.ui.*
+import io.github.rwpp.platform.deliciousFonts
 import io.github.rwpp.ui.*
-import io.github.rwpp.ui.platform.deliciousFonts
 import org.jetbrains.compose.resources.*
 
 var LocalController = staticCompositionLocalOf<ContextController> { null!! }
+var LocalWindowManager = staticCompositionLocalOf<WindowManager> { WindowManager.Large }
+
+val welcomeMessage
+    get() = """
+            这是一个使用[RWPP]所开始的房间
+            [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
+            开源地址请访问 https://github.com/Minxyzgo/RWPP 
+            bug反馈与交流加入群: 150450999
+            当前版本: 1.0.0-alpha (不稳定)
+            Copyright 2023 RWPP contributors
+        """.trimIndent()
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -91,158 +102,189 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
         typography = typography,
         colorScheme = lightColorScheme()
     ) {
-        Box(
+
+        BoxWithConstraints(
             modifier = Modifier
                 .then(sizeModifier)
                 .background(brush),
         ) {
-            LoadingView(isLoading, onLoaded = { isLoading = false }) {
-                context.load(this)
-                true
-            }
-
-            AnimatedVisibility(
-                !(showMultiplayerView || showSinglePlayerView || isLoading || showSettingsView || showModsView || showRoomView)
+            CompositionLocalProvider(
+                LocalTextSelectionColors provides RWSelectionColors,
+                LocalWindowManager provides ConstraintWindowManager(maxWidth, maxHeight)
             ) {
-                MainMenu(
-                    multiplayer = {
-                        showMultiplayerView = true
-                    },
-                    mission = {
-                        showSinglePlayerView = true
-                    },
-                    settings = {
-                        showSettingsView = true
-                    },
-                    mods = {
-                        showModsView = true
-                    }
-                )
-            }
-
-            AnimatedVisibility(
-                showSinglePlayerView
-            ) {
-                MissionView { showSinglePlayerView = false }
-            }
-
-            AnimatedVisibility(
-                showMultiplayerView
-            ) {
-                MultiplayerView({ showMultiplayerView = false }) { showRoomView = true }
-            }
-
-            AnimatedVisibility(
-                showSettingsView
-            ) {
-                SettingsView { showSettingsView = false }
-            }
-
-            AnimatedVisibility(
-                showModsView
-            ) {
-                ModsView { showModsView = false }
-            }
-
-            AnimatedVisibility(
-                showRoomView
-            ) {
-                MultiplayerRoomView {
-                    showRoomView = false
-                    context.cancelJoinServer()
-                    context.gameRoom.disconnect()
-                    showMultiplayerView = true
+                LoadingView(isLoading, onLoaded = { isLoading = false }) {
+                    context.load(this)
+                    true
                 }
-            }
 
-            var kickedDialogVisible by remember { mutableStateOf(false) }
-            var kickedReason by remember { mutableStateOf("") }
-            GlobalEventChannel.filter(KickedEvent::class).onDispose {
-                subscribeAlways {
-                    showRoomView = false
-                    showMultiplayerView = true
-                    kickedDialogVisible = true
-                    kickedReason = it.reason
-                }
-            }
-
-            AnimatedAlertDialog(kickedDialogVisible, onDismissRequest = { kickedDialogVisible = false }) { modifier, dismiss ->
-                BorderCard(
-                    modifier = Modifier.fillMaxSize(0.3f).then(modifier),
-                    backgroundColor = Color.Gray
+                AnimatedVisibility(
+                    !(showMultiplayerView || showSinglePlayerView || isLoading || showSettingsView || showModsView || showRoomView)
                 ) {
-                    ExitButton(dismiss)
-                    Column(
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(Icons.Default.Warning, null, tint = Color.Red, modifier = Modifier.size(50.dp))
-                        Text(kickedReason, modifier = Modifier.padding(5.dp), color = Color.Red, style = MaterialTheme.typography.headlineLarge)
+                    MainMenu(
+                        multiplayer = {
+                            showMultiplayerView = true
+                        },
+                        mission = {
+                            showSinglePlayerView = true
+                        },
+                        settings = {
+                            showSettingsView = true
+                        },
+                        mods = {
+                            showModsView = true
+                        }
+                    )
+                }
+
+                AnimatedVisibility(
+                    showSinglePlayerView
+                ) {
+                    MissionView { showSinglePlayerView = false }
+                }
+
+                AnimatedVisibility(
+                    showMultiplayerView
+                ) {
+                    MultiplayerView({ showMultiplayerView = false }) { showRoomView = true }
+                }
+
+                AnimatedVisibility(
+                    showSettingsView
+                ) {
+                    SettingsView { showSettingsView = false }
+                }
+
+                AnimatedVisibility(
+                    showModsView
+                ) {
+                    ModsView { showModsView = false }
+                }
+
+                AnimatedVisibility(
+                    showRoomView
+                ) {
+                    MultiplayerRoomView {
+                        showRoomView = false
+                        context.cancelJoinServer()
+                        context.gameRoom.disconnect()
+                        showMultiplayerView = true
                     }
                 }
-            }
 
-            var questionDialogVisible by remember { mutableStateOf(false) }
-            var questionEvent by remember { mutableStateOf(QuestionDialogEvent("", "")) }
-            GlobalEventChannel.filter(QuestionDialogEvent::class).onDispose {
-                subscribeAlways {
-                    questionDialogVisible = true
-                    questionEvent = it
-                }
-            }
-
-            AnimatedAlertDialog(questionDialogVisible,
-                onDismissRequest = {
-                    questionDialogVisible = false
-                    QuestionReplyEvent("", true).broadCastIn()
-                    if(showRoomView) {
+                var kickedDialogVisible by remember { mutableStateOf(false) }
+                var kickedReason by remember { mutableStateOf("") }
+                GlobalEventChannel.filter(KickedEvent::class).onDispose {
+                    subscribeAlways {
                         showRoomView = false
                         showMultiplayerView = true
+                        kickedDialogVisible = true
+                        kickedReason = it.reason
                     }
                 }
-            ) { modifier, dismiss ->
-                BorderCard(
-                    modifier = Modifier.fillMaxSize(0.5f).then(modifier),
-                    backgroundColor = Color.Gray
-                ) {
-                    ExitButton(dismiss)
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Info, null, modifier = Modifier.size(25.dp).padding(5.dp))
-                        Text(questionEvent.title, modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = Color(151, 188, 98))
+
+                AnimatedAlertDialog(
+                    kickedDialogVisible,
+                    onDismissRequest = { kickedDialogVisible = false }) { modifier, dismiss ->
+                    BorderCard(
+                        modifier = Modifier.fillMaxSize(0.3f).then(modifier),
+                        backgroundColor = Color.Gray
+                    ) {
+                        ExitButton(dismiss)
+                        Column(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Default.Warning, null, tint = Color.Red, modifier = Modifier.size(50.dp))
+                            Text(
+                                kickedReason,
+                                modifier = Modifier.padding(5.dp),
+                                color = Color.Red,
+                                style = MaterialTheme.typography.headlineLarge
+                            )
+                        }
                     }
-                    LargeDividingLine { 5.dp }
-                    Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(questionEvent.message, modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-                        var message by remember { mutableStateOf("") }
-                        RWSingleOutlinedTextField(
-                            label = "Reply",
-                            value = message,
-                            modifier = Modifier.fillMaxWidth().padding(10.dp)
-                                .onKeyEvent {
-                                    if(it.key == androidx.compose.ui.input.key.Key.Enter && message.isNotEmpty()) {
-                                        QuestionReplyEvent(message, false).broadCastIn()
-                                        message = ""
-                                        questionDialogVisible = false
-                                        true
-                                    } else false
+                }
+
+                var questionDialogVisible by remember { mutableStateOf(false) }
+                var questionEvent by remember { mutableStateOf(QuestionDialogEvent("", "")) }
+                GlobalEventChannel.filter(QuestionDialogEvent::class).onDispose {
+                    subscribeAlways {
+                        questionDialogVisible = true
+                        questionEvent = it
+                    }
+                }
+
+                AnimatedAlertDialog(questionDialogVisible,
+                    onDismissRequest = {
+                        questionDialogVisible = false
+                        QuestionReplyEvent("", true).broadCastIn()
+                        if(showRoomView) {
+                            showRoomView = false
+                            showMultiplayerView = true
+                        }
+                    }
+                ) { modifier, dismiss ->
+                    BorderCard(
+                        modifier = Modifier.fillMaxSize(0.5f).then(modifier),
+                        backgroundColor = Color.Gray
+                    ) {
+                        ExitButton(dismiss)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Info, null, modifier = Modifier.size(25.dp).padding(5.dp))
+                            Text(
+                                questionEvent.title,
+                                modifier = Modifier.padding(5.dp),
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = Color(151, 188, 98)
+                            )
+                        }
+                        LargeDividingLine { 5.dp }
+                        Column(
+                            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                questionEvent.message,
+                                modifier = Modifier.padding(5.dp),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White
+                            )
+                            var message by remember { mutableStateOf("") }
+                            RWSingleOutlinedTextField(
+                                label = "Reply",
+                                value = message,
+                                modifier = Modifier.fillMaxWidth().padding(10.dp)
+                                    .onKeyEvent {
+                                        if(it.key == androidx.compose.ui.input.key.Key.Enter && message.isNotEmpty()) {
+                                            QuestionReplyEvent(message, false).broadCastIn()
+                                            message = ""
+                                            questionDialogVisible = false
+                                            true
+                                        } else false
+                                    },
+                                trailingIcon = {
+                                    Icon(
+                                        Icons.Default.ArrowForward,
+                                        null,
+                                        modifier = Modifier.clickable {
+                                            QuestionReplyEvent(message, false).broadCastIn()
+                                            message = ""
+                                            questionDialogVisible = false
+                                        }
+                                    )
                                 },
-                            trailingIcon = {
-                                Icon(
-                                    Icons.Default.ArrowForward,
-                                    null,
-                                    modifier = Modifier.clickable {
-                                        QuestionReplyEvent(message, false).broadCastIn()
-                                        message = ""
-                                        questionDialogVisible = false
-                                    }
-                                )
-                            },
-                            onValueChange =
-                            {
-                                message = it
-                            },
-                        )
+                                onValueChange =
+                                {
+                                    message = it
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -258,6 +300,7 @@ fun MainMenu(
     settings: () -> Unit,
     mods: () -> Unit
 ) {
+    MaterialTheme.colorScheme
     val deliciousFont = MaterialTheme.typography.headlineLarge.fontFamily!!
     Row(modifier = Modifier.fillMaxSize()) {
         BorderCard(
@@ -273,7 +316,7 @@ fun MainMenu(
             ) {
                 item {
                     Text(
-                        "Update news - v1.15",
+                        "RWPP Update news - 1.0.0-alpha",
                         fontFamily = deliciousFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 36.sp
@@ -327,71 +370,33 @@ fun MainMenu(
                             }
                         }
 
-                        Heading(1, "New units, shaders, performance and features.")
+                        Heading(1, "Contact")
                         CodeBlock(
-                            """
-                                        Added Heavy anti-air mech, Spy Drone units. Shader effects (enable in settings). 
-                                        Over 100% faster rendering (in tests with high numbers of units). 
-                                        New modding features such as streaming resources, 3d voxel units, decals, easier logic, etc.
-                                    """.trimIndent()
+                           """
+                               QQ Group: 150450999
+                               Github: https://github.com/Minxyzgo/RWPP
+                           """.trimIndent()
                         )
-                        Heading(1, "New units, maps and features.")
+                        Heading(1, "Notes")
                         CodeBlock(
                             """
-                                        Large Modular Spider starting unit. Lots of new units. Better performance. 
-                                        Tons of new modding features. 
-                                        iOS version out very soon (with android and PC crossplay).
-                                    """.trimIndent()
+                                Sandbox editor and watching replay haven't yet been implemented.
+                                RWPP currently couldn't be host in Official Server and RW-HPS.
+                                Only support for English now.
+                                Some player config options like color and staring-units aren't implemented.
+                                Saved game couldn't be loaded yet.
+                                For android, start a new game and pause to open the setting to use external folder.
+                                
+                                These will be fixed in the future...
+                            """.trimIndent()
                         )
-                        Heading(1, "Faster, new modding features, handles more mods.")
+                        Heading(1, "Features")
                         CodeBlock(
                             """
-                                        Reduced memory use loading larger maps, 2x-3x pathfinding performance, 
-                                        lots of new mods features including creating new resource types.
-                                    """.trimIndent()
-                        )
-                        Heading(1, "New Units & Maps! Much more Modding! Faster!")
-                        CodeBlock(
-                            """
-                                        8 new units, 3 maps and 1 mission. 
-                                        Optimisations to handle 10,000+ units and large maps. 
-                                        Smarter AI. 
-                                        Huge set of modding features added. 
-                                        Reduced memory usage. Patrol/Guard orders.
-                                    """.trimIndent()
-                        )
-                        Heading(1, "Workshop support added for new Maps & Units!")
-                        CodeBlock(
-                            """
-                                        Also new units, 
-                                        queue lines of buildings, 
-                                        performance boost, fixes, 
-                                        and many more graphical effects.
-                                    """.trimIndent()
-                        )
-                        Heading(1, "Multiplayer Replays! More Mechs!")
-                        CodeBlock(
-                            """
-                                        Watch back your multiplayer games. 
-                                        More mechs added. New mission - spider battle. 
-                                        Lots of optimisations.
-                                    """.trimIndent()
-                        )
-                        Heading(1, "Shared control, Mech units, Lots more!")
-                        CodeBlock(
-                            """
-                                        Shared control option. 
-                                        Mech factory added with a set of initial mechs. 
-                                        AI and path finding fixes. 
-                                        New placement system.
-                                        Better mod support. Lots more.
-                                    """.trimIndent()
-                        )
-                        Heading(1, "Sandbox editor has been added")
-                        CodeBlock(
-                            """
-                                        Saves from the sandbox can be shared and played in singleplayer or multiplayer.
-                                    """.trimIndent()
+                                The desktop version of RWPP will make it easier for you to enter Chinese (also included other languages requiring IME)
+                                More options for host.
+                                Mod Menu Improvement & Server list Filter
+                            """.trimIndent()
                         )
                     }
                 }
@@ -410,56 +415,56 @@ fun MainMenu(
                     .fillMaxSize()
             ) {
                 item { Image(painter = painterResource("title.png"), "title", modifier = Modifier.padding(15.dp)) }
-                item { MenuButton("Mission", mission) }
-                item { MenuButton("Sandbox Editor") {} }
-                item { MenuButton("Multiplayer", multiplayer) }
-                item { MenuButton("Mods", mods) }
-                item { MenuButton("Settings", settings) }
+                item { MenuButton("Mission", onClick = mission) }
+                item { MenuButton("Sandbox Editor", false) {} }
+                item { MenuButton("Multiplayer", onClick = multiplayer) }
+                item { MenuButton("Mods", onClick = mods) }
+                item { MenuButton("Settings", onClick = settings) }
                 item {
                     with(LocalController.current) {
                         MenuButton("Exit") { exit() }
                     }
                 }
                 item { Spacer(Modifier.size(50.dp)) }
-                item {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        OutlinedButton(
-                            onClick = { },
-                            modifier = Modifier
-                                .wrapContentSize()
-                                .padding(10.dp),
-                            border = BorderStroke(2.dp, Color.DarkGray),
-                            shape = CircleShape,
-                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Gray)
-                        ) {
-                            Image(
-                                modifier = Modifier
-                                    .size(40.dp),
-                                painter = painterResource("GitHub-Mark.png"),
-                                contentDescription = null
-                            )
-                        }
-
-                        OutlinedButton(
-                            onClick = { },
-                            modifier = Modifier
-                                .wrapContentSize()
-                                .padding(10.dp),
-                            border = BorderStroke(2.dp, Color.DarkGray),
-                            shape = CircleShape,
-                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Gray)
-                        ) {
-                            Image(
-                                modifier = Modifier
-                                    .size(40.dp),
-                                painter = painterResource("qq-icon.png"),
-                                contentDescription = null
-                            )
-                        }
-                    }
-                }
+//                item {
+//                    Row(
+//                        horizontalArrangement = Arrangement.Center,
+//                    ) {
+//                        OutlinedButton(
+//                            onClick = { },
+//                            modifier = Modifier
+//                                .wrapContentSize()
+//                                .padding(10.dp),
+//                            border = BorderStroke(2.dp, Color.DarkGray),
+//                            shape = CircleShape,
+//                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Gray)
+//                        ) {
+//                            Image(
+//                                modifier = Modifier
+//                                    .size(40.dp),
+//                                painter = painterResource("GitHub-Mark.png"),
+//                                contentDescription = null
+//                            )
+//                        }
+//
+//                        OutlinedButton(
+//                            onClick = { },
+//                            modifier = Modifier
+//                                .wrapContentSize()
+//                                .padding(10.dp),
+//                            border = BorderStroke(2.dp, Color.DarkGray),
+//                            shape = CircleShape,
+//                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Gray)
+//                        ) {
+//                            Image(
+//                                modifier = Modifier
+//                                    .size(40.dp),
+//                                painter = painterResource("qq-icon.png"),
+//                                contentDescription = null
+//                            )
+//                        }
+//                    }
+//                }
             }
         }
     }

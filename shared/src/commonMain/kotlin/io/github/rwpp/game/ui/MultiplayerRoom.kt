@@ -16,10 +16,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -29,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -36,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
+import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.events.ChatMessageEvent
 import io.github.rwpp.event.events.RefreshUIEvent
@@ -45,6 +44,8 @@ import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
+import io.github.rwpp.game.mod.Mod
+import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -87,6 +88,8 @@ object ConnectingPlayer : Player {
 @OptIn(ExperimentalResourceApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun MultiplayerRoomView(onExit: () -> Unit) {
+    BackHandler(true, onExit)
+
     val context = LocalController.current
     val room = context.gameRoom
     var update by remember { mutableStateOf(false) }
@@ -149,225 +152,330 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
 
     PlayerOverrideDialog(playerOverrideVisible, { playerOverrideVisible = false }, updateAction, room, selectedPlayer)
 
-    BorderCard(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp)
-    ) {
-        Column {
-            ExitButton(onExit)
-            Column(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    BorderCard(
-                        modifier = Modifier
-                            .weight(.4f)
-                            .padding(10.dp),
-                        backgroundColor = Color.DarkGray.copy(.7f)
-                    ) {
-                        var details by remember { mutableStateOf("Getting details...") }
-
-                        remember(update) {
-                            scope.launch { details = room.roomDetails().split("\n").filter { !it.startsWith("Map:") }.joinToString("\n") }
+    @Composable
+    fun ContentView() {
+        @Composable
+        fun MessageTextField() {
+            var chatMessage by remember { mutableStateOf("") }
+            RWSingleOutlinedTextField(
+                label = "Send Message",
+                value = chatMessage,
+                modifier = Modifier.fillMaxWidth().padding(10.dp)
+                    .onKeyEvent {
+                        if(it.key == androidx.compose.ui.input.key.Key.Enter && chatMessage.isNotEmpty()) {
+                            room.sendChatMessage(chatMessage)
+                            chatMessage = ""
+                            true
+                        } else false
+                    },
+                trailingIcon = {
+                    Icon(
+                        Icons.Default.ArrowForward,
+                        null,
+                        modifier = Modifier.clickable {
+                            room.sendChatMessage(chatMessage)
+                            chatMessage = ""
                         }
+                    )
+                },
+                onValueChange =
+                {
+                    chatMessage = it
+                },
+            )
+        }
 
-                        Row(modifier = Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.Center) {
+        @Composable
+        fun MessageView(modifier: Modifier = Modifier) {
+            SelectionContainer {
+                if(LocalWindowManager.current == WindowManager.Large) {
+                    val listState = rememberLazyListState()
+                    LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+                        items(chatMessages.size) {
                             Text(
-                                details,
-                                color = Color.White,
+                                chatMessages[chatMessages.size - 1 - it],
                                 style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(10.dp)
+                                modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp)
                             )
-                            Image(
-                                selectedMap.image ?: painterResource("error_missingmap.png"),
-                                null,
-                                modifier = Modifier.weight(0.6f).padding(10.dp)
-                                    .border(BorderStroke(2.dp, Color.DarkGray))
-                                    .clickable(isHost) { showMapSelectView = true }
-                            )
-                        }
-
-                        val mapType = remember(update) { room.mapType }
-                        Text(
-                            mapType.name,
-                            modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
-                            style = MaterialTheme.typography.headlineLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = Color(151, 188, 98)
-                        )
-
-                        Text(
-                            selectedMap.mapName,
-                            modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
-                            style = MaterialTheme.typography.headlineLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = Color.White
-                        )
-
-                        if(isHost) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                RWTextButton(
-                                    "Select Map",
-                                    modifier = Modifier.padding(5.dp)
-                                ) { showMapSelectView = true }
-                                RWTextButton(
-                                    "Option",
-                                    modifier = Modifier.padding(5.dp)
-                                ) { optionVisible = true }
-                                RWTextButton(
-                                    "Start",
-                                    modifier = Modifier.padding(5.dp)
-                                ) { room.startGame() }
-                            }
                         }
                     }
-
-                    val playerNameWeight = .6f
-                    val playerSpawnWeight = .1f
-                    val playerTeamWeight = .1f
-                    val playerPingWeight = .2f
-
-                    BorderCard(
-                        modifier = Modifier.weight(.7f).padding(10.dp),
-                        backgroundColor = Color.DarkGray.copy(.7f)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(5.dp)
-                                .border(BorderStroke(2.dp, Color(199, 234, 70)), CircleShape)
-                                .fillMaxWidth()
-                        ) {
-                            TableCell("name", playerNameWeight, drawStroke = false)
-                            TableCell("spawn", playerSpawnWeight)
-                            TableCell("team", playerTeamWeight)
-                            TableCell("ping", playerPingWeight, drawStroke = false)
+                } else {
+                    Column {
+                        for(i in chatMessages.indices) {
+                            if(i >= 100) break
+                            Text(
+                                chatMessages[chatMessages.size - 1 - i],
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp)
+                            )
                         }
+                    }
+                }
+            }
+        }
+
+        BorderCard(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp)
+        ) {
+            Column {
+                ExitButton(onExit)
+                Column(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        BorderCard(
+                            modifier = Modifier
+                                .weight(.4f)
+                                .padding(10.dp),
+                            backgroundColor = Color.DarkGray.copy(.7f)
+                        ) {
+                            var details by remember { mutableStateOf("Getting details...") }
+
+                            @Composable
+                            fun MapImage(modifier: Modifier = Modifier) {
+                                Image(
+                                    selectedMap.image ?: painterResource("error_missingmap.png"),
+                                    null,
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.then(modifier).padding(10.dp)
+                                        .border(BorderStroke(2.dp, Color.DarkGray))
+                                        .clickable(isHost) { showMapSelectView = true }
+                                )
+                            }
+
+                            remember(update) {
+                                scope.launch { details = room.roomDetails().split("\n").filter { !it.startsWith("Map:") }.joinToString("\n") }
+                            }
+
+                            Row(modifier = Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.Center) {
+                                Text(
+                                    details,
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(10.dp)
+                                )
+                                if(LocalWindowManager.current == WindowManager.Large) MapImage(Modifier.weight(.6f))
+                            }
+
+                            if(LocalWindowManager.current != WindowManager.Large) MapImage(Modifier.weight(1f).fillMaxWidth())
+
+                            val mapType = remember(update) { room.mapType }
+                            Text(
+                                mapType.name,
+                                modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
+                                style = MaterialTheme.typography.headlineLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = Color(151, 188, 98)
+                            )
+
+                            Text(
+                                selectedMap.displayName(),
+                                modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
+                                style = MaterialTheme.typography.headlineLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = Color.White
+                            )
+
+                            if(isHost) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                    if(LocalWindowManager.current == WindowManager.Large) RWTextButton(
+                                        "Select Map",
+                                        modifier = Modifier.padding(5.dp)
+                                    ) { showMapSelectView = true }
+                                    if(LocalWindowManager.current != WindowManager.Large) {
+                                        var isLocked by remember { mutableStateOf(false) }
+                                        IconButton(
+                                            { isLocked = !isLocked; room.lockedRoom = isLocked },
+                                            enabled = isHost,
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp)
+                                        ) {
+                                            Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else Color.White)
+                                        }
+                                    }
+                                    RWTextButton(
+                                        "Option",
+                                        modifier = Modifier.padding(5.dp)
+                                    ) { optionVisible = true }
+                                    RWTextButton(
+                                        "Start",
+                                        modifier = Modifier.padding(5.dp)
+                                    ) { room.startGame() }
+                                }
+                            }
+                        }
+
+                        val playerNameWeight = .6f
+                        val playerSpawnWeight = .1f
+                        val playerTeamWeight = .1f
+                        val playerPingWeight = .2f
 
                         val state = rememberLazyListState()
 
-                        LazyColumnWithScrollbar(
-                            state = state,
-                            data = players,
-                            modifier = Modifier.fillMaxWidth()
+                        Column(
+                            modifier = Modifier.weight(.7f).padding(10.dp).then(
+                                if(LocalWindowManager.current != WindowManager.Large) Modifier.verticalScroll(rememberScrollState())
+                                else Modifier
+                            ),
                         ) {
-                            items(
-                                count = players.size,
-                                //key = { players[it].connectHexId }
-                            ) { index ->
-                                val player = players[index]
-                                val (delay, easing) = state.calculateDelayAndEasing(index, 1)
-                                val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
-                                val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
-                                val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
+                            BorderCard(
+                                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 200.dp).padding(5.dp),
+                                backgroundColor = Color.DarkGray.copy(.7f)
+                            ) {
                                 Row(
                                     modifier = Modifier
-                                        .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
-                                        .animateItemPlacement()
                                         .padding(5.dp)
                                         .border(BorderStroke(2.dp, Color(199, 234, 70)), CircleShape)
                                         .fillMaxWidth()
-                                        .clickable(room.isHost || room.localPlayer == player) {
-                                            selectedPlayer = player
-                                            playerOverrideVisible = true
-                                        }
                                 ) {
-                                    TableCell(player.name, playerNameWeight, drawStroke = false)
-                                    TableCell(
-                                        if(player.isSpectator)
-                                            "S"
-                                        else (player.spawnPoint + 1).toString(),
-                                        playerSpawnWeight,
-                                        color = if(player.isSpectator)
-                                            Color.Black
-                                        else Player.getTeamColor(player.spawnPoint)
-                                    )
-                                    TableCell(player.teamAlias(), playerTeamWeight, color = Player.getTeamColor(player.team))
-                                    val ping = remember(update) { player.ping }
-                                    TableCell(ping, playerPingWeight, drawStroke = false)
+                                    TableCell("name", playerNameWeight, drawStroke = false)
+                                    TableCell("spawn", playerSpawnWeight)
+                                    TableCell("team", playerTeamWeight)
+                                    TableCell("ping", playerPingWeight, drawStroke = false)
+                                }
+
+                                @Composable
+                                fun ColumnScope.PlayerTable(index: Int) {
+                                    val player = players[index]
+                                    var (delay, easing) = state.calculateDelayAndEasing(index, 1)
+                                    if(LocalWindowManager.current != WindowManager.Large) delay = 0
+                                    val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
+                                    val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
+                                    val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
+                                    Row(
+                                        modifier = Modifier
+                                            .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+                                            .padding(5.dp)
+                                            .border(BorderStroke(2.dp, Color(199, 234, 70)), CircleShape)
+                                            .fillMaxWidth()
+                                            .clickable(room.isHost || room.localPlayer == player) {
+                                                selectedPlayer = player
+                                                playerOverrideVisible = true
+                                            }
+                                    ) {
+                                        TableCell(player.name, playerNameWeight, drawStroke = false)
+                                        TableCell(
+                                            if(player.isSpectator)
+                                                "S"
+                                            else (player.spawnPoint + 1).toString(),
+                                            playerSpawnWeight,
+                                            color = if(player.isSpectator)
+                                                Color.Black
+                                            else Player.getTeamColor(player.spawnPoint)
+                                        )
+                                        TableCell(player.teamAlias(), playerTeamWeight, color = Player.getTeamColor(player.team))
+                                        val ping = remember(update) { player.ping }
+                                        TableCell(ping, playerPingWeight, drawStroke = false)
+                                    }
+                                }
+
+                                if(LocalWindowManager.current != WindowManager.Large) {
+                                    for(i in players.indices) {
+                                        PlayerTable(i)
+                                    }
+                                } else {
+                                    LazyColumnWithScrollbar(
+                                        state = state,
+                                        data = players,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        items(
+                                            count = players.size,
+                                            //key = { players[it].connectHexId }
+                                        ) { index ->
+                                            PlayerTable(index)
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(LocalWindowManager.current != WindowManager.Large) {
+                                BorderCard(
+                                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 200.dp).padding(5.dp),
+                                    backgroundColor = Color.DarkGray.copy(.7f)
+                                ) {
+                                    MessageTextField()
+                                    MessageView()
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            BorderCard(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(10.dp)
-            ) {
-                Column {
-                    Row(modifier = Modifier.fillMaxWidth()
-                        .height(IntrinsicSize.Max)
-                        .padding(5.dp)) {
-                        RWTextButton(
-                            "Change Site",
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
-                        ) {
-                            if(players.isNotEmpty()) {
-                                selectedPlayer = room.localPlayer
-                                playerOverrideVisible = true
-                            }
-                        }
-                        if(isHost) {
-                            RWTextButton(
-                                "Add AI",
-                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
-                            ) { room.addAI() }
-                        }
-
-                        var isLocked by remember(update) { mutableStateOf(room.lockedRoom) }
-                        IconButton(
-                            { isLocked = !isLocked; room.lockedRoom = isLocked },
-                            enabled = isHost,
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
-                        ) {
-                            Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else Color.White)
-                        }
-
-                        var chatMessage by remember { mutableStateOf("") }
-                        RWSingleOutlinedTextField(
-                            label = "Send Message",
-                            value = chatMessage,
-                            modifier = Modifier.fillMaxWidth().padding(10.dp)
-                                .onKeyEvent {
-                                    if(it.key == androidx.compose.ui.input.key.Key.Enter && chatMessage.isNotEmpty()) {
-                                        room.sendChatMessage(chatMessage)
-                                        chatMessage = ""
-                                        true
-                                    } else false
-                                },
-                            trailingIcon = {
-                                Icon(
-                                    Icons.Default.ArrowForward,
-                                    null,
-                                    modifier = Modifier.clickable {
-                                        room.sendChatMessage(chatMessage)
-                                        chatMessage = ""
+                if(LocalWindowManager.current == WindowManager.Large) {
+                    BorderCard(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(10.dp)
+                    ) {
+                        Column {
+                            Row(modifier = Modifier.fillMaxWidth()
+                                .height(IntrinsicSize.Max)
+                                .padding(5.dp)) {
+                                RWTextButton(
+                                    "Change Site",
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
+                                ) {
+                                    if(players.isNotEmpty()) {
+                                        selectedPlayer = room.localPlayer
+                                        playerOverrideVisible = true
                                     }
-                                )
-                            },
-                            onValueChange =
-                            {
-                                chatMessage = it
-                            },
-                        )
-                    }
-
-                    val listState = rememberLazyListState()
-                    BorderCard(modifier = Modifier.padding(10.dp).weight(1f), backgroundColor = Color.DarkGray) {
-                        SelectionContainer {
-                            LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                                items(chatMessages.size) {
-                                    Text(chatMessages[chatMessages.size - 1 - it], style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp))
                                 }
+                                if(isHost) {
+                                    RWTextButton(
+                                        "Add AI",
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
+                                    ) { room.addAI() }
+                                }
+
+                                var isLocked by remember(update) { mutableStateOf(room.lockedRoom) }
+                                IconButton(
+                                    { isLocked = !isLocked; room.lockedRoom = isLocked },
+                                    enabled = isHost,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
+                                ) {
+                                    Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else Color.White)
+                                }
+
+                                MessageTextField()
+                            }
+
+                            BorderCard(
+                                modifier = Modifier
+                                    .padding(5.dp),
+                                backgroundColor = Color.DarkGray.copy(.7f)
+                            ) {
+                                MessageView(Modifier.weight(1f))
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    if(LocalWindowManager.current != WindowManager.Large) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            floatingActionButton = {
+                if(isHost) {
+                    FloatingActionButton(
+                        onClick = { room.addAI() },
+                        shape = CircleShape,
+                        modifier = Modifier.padding(5.dp),
+                        containerColor = Color(151, 188, 98),
+                    ) {
+                        Icon(Icons.Default.Add, null)
+                    }
+                }
+            },
+            floatingActionButtonPosition = FabPosition.End
+        ) {
+            ContentView()
+        }
+    } else {
+        ContentView()
     }
 }
 
@@ -403,10 +511,9 @@ private fun PlayerOverrideDialog(
     ) { m, dismiss ->
         BorderCard(
             modifier = Modifier
-                .fillMaxSize(0.6f)
-                .then(m)
-                .verticalScroll(rememberScrollState()),
-            backgroundColor = Color.Gray.copy(.7f)
+                .fillMaxSize(if(LocalWindowManager.current == WindowManager.Large) 0.6f else 0.85f)
+                .then(m),
+            backgroundColor = Color.Gray
         ) {
             ExitButton(dismiss)
             Text(
@@ -416,7 +523,7 @@ private fun PlayerOverrideDialog(
                 color = Color(151, 188, 98)
             )
             LargeDividingLine { 5.dp }
-            Column {
+            Column(modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
                 var expanded0 by remember { mutableStateOf(false) }
                 RWSingleOutlinedTextField(
                     "Spawn Point",
@@ -487,7 +594,7 @@ private fun PlayerOverrideDialog(
                         }
                     }
                 ) {
-                    playerTeam = it.toIntOrNull()
+                    playerTeam = it.toIntOrNull()?.coerceAtMost(100)
                 }
 
                 Text(
@@ -509,16 +616,17 @@ private fun PlayerOverrideDialog(
             }
 
 
-            Row(modifier = Modifier.fillMaxWidth().padding(10.dp),
+            LargeDividingLine { 5.dp }
+            Row(modifier = Modifier.fillMaxWidth().padding(end = 10.dp),
                  horizontalArrangement = Arrangement.Center) {
 
                 if(player != room.localPlayer && room.isHost)
-                    RWTextButton("Kick", Modifier.padding(10.dp)) {
+                    RWTextButton("Kick", Modifier.padding(5.dp)) {
                         room.kickPlayer(player)
                         dismiss()
                     }
 
-                RWTextButton("Apply", Modifier.padding(10.dp)) {
+                RWTextButton("Apply", Modifier.padding(5.dp)) {
                     player.applyConfigChange(
                         if(playerSpawnPoint == -3) -3 else ((playerSpawnPoint ?: 1) - 1).coerceAtLeast(0),
                         if(playerTeam == -1) 0 else if((playerTeam ?: 0) > 10) (playerTeam ?: 0) + 1 else (playerTeam ?: 1),
@@ -547,9 +655,9 @@ private fun MultiplayerOptionDialog(
 ) { m, _ ->
     BorderCard(
         modifier = Modifier
-            .fillMaxSize(0.5f)
+            .fillMaxSize(if(LocalWindowManager.current == WindowManager.Large) 0.6f else 0.85f)
             .then(m),
-        backgroundColor = Color.Gray.copy(.7f)
+        backgroundColor = Color.Gray
     ) {
 
         LazyColumn(modifier = Modifier.padding(10.dp)) {

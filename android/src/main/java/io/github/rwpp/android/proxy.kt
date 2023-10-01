@@ -7,21 +7,30 @@
 
 package io.github.rwpp.android
 
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
 import com.corrodinggames.rts.appFramework.ClosingActivity
+import com.corrodinggames.rts.appFramework.InGameActivity
 import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
+import com.corrodinggames.rts.gameFramework.h.a
 import com.corrodinggames.rts.gameFramework.j.ae
+import com.corrodinggames.rts.gameFramework.j.ao
 import com.corrodinggames.rts.gameFramework.k
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.R
+import io.github.rwpp.android.impl.GameEngine
+import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
-import io.github.rwpp.event.events.RefreshUIEvent
+import io.github.rwpp.event.events.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 //internal lateinit var mainMenuActivityInstance: MainMenuActivity
+var questionOption: String? = null
 fun doProxy() {
 //    Game::class.setFunction {
 //        addProxy("n") { _: Game ->
@@ -70,10 +79,81 @@ fun doProxy() {
 //            a.c()
 //        }
 //    }
-
+    @Suppress("unchecked_cast")
     MultiplayerBattleroomActivity::class.setFunction {
+        val messagesField = com.corrodinggames.rts.gameFramework.j.a::class.java.getDeclaredField("a").apply {
+            isAccessible = true
+        }
+        val spawnField = com.corrodinggames.rts.gameFramework.j.b::class.java.getDeclaredField("a").apply {
+            isAccessible = true
+        }
+        val senderField = com.corrodinggames.rts.gameFramework.j.b::class.java.getDeclaredField("b").apply {
+            isAccessible = true
+        }
+        val messageField = com.corrodinggames.rts.gameFramework.j.b::class.java.getDeclaredField("c").apply {
+            isAccessible = true
+        }
         addProxy(MultiplayerBattleroomActivity::updateUI) {
             RefreshUIEvent().broadCastIn()
+        }
+
+        addProxy(MultiplayerBattleroomActivity::startGame) {
+            if(!MainActivity.isGaming) MainActivity.controller.gameRoom.startGame()
+        }
+
+        addProxy(MultiplayerBattleroomActivity::refreshChatLog) {
+            val messages = messagesField.get(GameEngine.t().bU.aE) as ConcurrentLinkedQueue<com.corrodinggames.rts.gameFramework.j.b>
+            messages.clear() // 暂时忽略
+        }
+
+        addProxy(MultiplayerBattleroomActivity::addMessageToChatLog) {
+            val messages = messagesField.get(GameEngine.t().bU.aE) as ConcurrentLinkedQueue<com.corrodinggames.rts.gameFramework.j.b>
+            val last = messages.poll()
+            val sender = senderField.get(last) as String?
+            val spawn = spawnField.get(last) as Int
+            val message = messageField.get(last) as String
+            ChatMessageEvent(sender ?: "", message, spawn).broadCastIn()
+        }
+
+        addProxy(MultiplayerBattleroomActivity::askPasswordInternal) { ae: ao? ->
+            if(ae == null) return@addProxy
+            if(questionOption != null) {
+                ae.a(questionOption)
+                questionOption = null
+                return@addProxy
+            }
+            QuestionDialogEvent(
+                if(ae.b != null)
+                    "Server Question"
+                else ae.e ?: "Password Required",
+                if(ae.b != null)
+                    a.b(ae.b)
+                else "This server requires a password to join"
+            ).broadCastIn()
+            GlobalEventChannel.filter(QuestionReplyEvent::class).subscribeOnce {
+                if(!it.cancel) {
+                    ae.a(it.message!!)
+                } else {
+                    ae.a()
+                }
+            }
+        }
+    }
+
+    GameEngine::class.setFunction {
+        addProxy("g", String::class) { _ : Any?, msg: String ->
+            KickedEvent(msg).broadCastIn()
+        }
+    }
+
+    Class.forName("com.corrodinggames.rts.appFramework.bb").kotlin.setFunction {
+        addProxy("onClick", DialogInterface::class, Int::class) { self: Any, _: Any?, _: Any? ->
+            MainActivity.controller.gameRoom.disconnect()
+//            (self::class.java.getDeclaredField("a").apply {
+//                isAccessible = true
+//            }.get(self) as Activity).finish()
+            GameEngine.t().an.inGameActivity.finish()
+            ReturnMainMenuEvent().broadCastIn()
         }
     }
 

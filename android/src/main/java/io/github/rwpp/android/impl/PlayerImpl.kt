@@ -7,6 +7,8 @@
 
 package io.github.rwpp.android.impl
 
+import com.corrodinggames.rts.appFramework.ga
+import com.corrodinggames.rts.game.p
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
@@ -49,8 +51,7 @@ class PlayerImpl(
     override val difficulty: Difficulty?
         get() = if(isAI) player.y.let { Difficulty.entries[it + 2] } else null
 
-    private val aeMethod = com.corrodinggames.rts.gameFramework.j.ae::class.java.getDeclaredMethod("P")
-        .apply { isAccessible = true }
+
     override fun applyConfigChange(
         spawnPoint: Int,
         team: Int,
@@ -60,132 +61,108 @@ class PlayerImpl(
         changeTeamFromSpawn: Boolean
     ) {
         val t = GameEngine.t()
-        var intValue: Int = spawnPoint
-        var z = false
-        var i = 0
-        var z2 = false
-        val valueOf: Int?
-        val valueOf2: Int?
-        val valueOf3: Int?
-        if(intValue == -3) {
-            z2 = true
-        } else {
-            if(intValue < 0) {
-                intValue = 1
-            }
-            if(intValue > PlayerInternal.c - 1) {
-                intValue = PlayerInternal.c - 1
-            }
-        }
-        var z3 = false
-        if(z2) {
-            i = -3
-            z = true
-        } else if(changeTeamFromSpawn) {
-            i = intValue % 2
-            //player.u = false
-            z = true
-        } else {
-            z = false
-            i = this.team
-            try {
-                i = team - 1
-            } catch(e: NumberFormatException) {
-                e.printStackTrace()
-            }
-            //player.u = true
-        }
-        if(this.team != i) {
-            if(room.isHost) {
-                z3 = true
-            } else if(room.isHost || room.localPlayer == this) {
-                z3 = true
-            } else {
-                // l.b("row.setOnClickListener", "Clicked but not server or proxy controller")
-            }
-        }
-        try {
-            if(this.spawnPoint != intValue) {
-                if(room.isHost) {
-                    z3 = false
-                    t.bU.a(player, intValue)
-                    player.l = i
-                } else if(room.isHost || room.localPlayer == this) {
-                    z3 = false
-                    var i2: Int = i
-                    if(z) {
-                        i2 = -1
+        var bl: Boolean
+        var n: Int
+        var n2: Int
+        var n3: Int
+        var n4: Int
+        run block31@{
+            run block29@{
+                run block30@{
+                    n4 = 1;
+                    n3 = (aiDifficulty?.ordinal?.minus(2)) ?: -99
+                    //k.d("newAiDifficultyValue:".concat(String.valueOf(n3)));
+                    if(t.bU.D) {
+                        player.A = if(n3 == -99) null else Integer.valueOf(n3);
                     }
-                    t.bU.a(player, intValue)
+                    n3 = startingUnits ?: -99
+                    //k.d("startingUnits:" + this.c);
+                    if(t.bU.D) {
+                        player.B = if(n3 == -99) null else Integer.valueOf(n3);
+                    }
+                    n3 = color ?: -99
+                    //k.d("newPlayerColorValue:".concat(String.valueOf(n3)));
+                    if(t.bU.D) {
+                        player.D = if(n3 == -99) null else Integer.valueOf(n3);
+                    }
+                    n3 = spawnPoint
+                    if(n3 == -3 || n3 > p.c - 1) {
+                        n2 = -3;
+                        n3 = 1;
+                    } else {
+                        n2 = n3;
+                        if(n3 < 0) {
+                            n2 = 0;
+                        }
+                        if(n2 > p.c - 1) {
+                            n2 = p.c - 1;
+                            n3 = 0;
+                        } else {
+                            n3 = 0;
+                        }
+                    }
+                    n = team
+                    n3 = if(n3 != 0) -3 else n;
+                    if(n3 == 0) {
+                        n3 = n2 % 2;
+                        bl = true;
+                    } else if(n3 != -1) {
+                        --n3;
+                        bl = false;
+                    } else {
+                        bl = false;
+                    }
+                    if(n3 == -1 || player.s == n3) return@block29
+                    if(!t.bU.D) return@block30
+                    player.s = n3;
+                    n = 0;
+                    return@block31
+                }
+                n = n4;
+                if(t.bU.I) return@block31
+                n = n4;
+                if(t.bU.A == player) return@block31
+                //t.a("row.setOnClickListener", "Clicked but not server or proxy controller");
+            }
+            n = 0;
+        }
+        n4 = n;
+        if(player.l != n2) {
+            n4 = n;
+            if(n2 != -1) {
+                if(t.bU.D) {
+                    t.bU.a(player, n2);
+                    n4 = n;
+                } else if(t.bU.I || t.bU.A == player) {
+                    n = if(bl) -1 else n3;
+                    val ae2 = t.bU;
+                    val p2 = player;
+                    var n5: Integer? = Integer(n);
+                    var obj = "";
+                    if(n5 != null) {
+                        obj = " " + n5;
+                    }
+                    if(!ae2.I && ae2.A == p2) {
+                        ae2.i("-self_move " + (n2 + 1) + obj);
+                        n4 = 0;
+                    } else {
+                        ae2.i("-move " + (p2.l + 1) + " " + (n2 + 1) + obj);
+                        n4 = 0;
+                    }
                 } else {
-                    // l.b("row.setOnClickListener", "Clicked but not server or proxy controller")
+                    //k.a("row.setOnClickListener", "Clicked but not server or proxy controller");
+                    n4 = n;
                 }
             }
-        } catch(e2: NumberFormatException) {
-            e2.printStackTrace()
         }
-        if(isAI) {
-            val intValue2: Int = (aiDifficulty?.ordinal?.minus(2)) ?: -99
-            valueOf3 = if(intValue2 == -99) {
-                null
+        if(n4 != 0) {
+            if(bl) {
+                t.bU.b(player, -1);
             } else {
-                intValue2
-            }
-            if(player.y != valueOf3) {
-                if(room.isHost) {
-                    player.y = intValue2
-                } else {
-                    //l.e("aiDifficultyOverride: not server or proxy controller")
-                }
+                t.bU.b(player, n3);
             }
         }
-        val intValue3 = startingUnits
-        // l.e("startingUnits now: $intValue3")
-        if(intValue3 != null) {
-            if(intValue3 == -99) {
-                valueOf = null
-            } else {
-                valueOf = intValue3
-            }
-            if(player.B != valueOf) {
-                if(room.isHost) {
-                    player.B = valueOf
-                } else {
-                    // l.e("startingUnitOverride: not server or proxy controller")
-                }
-            }
-        } else {
-            player.B = null
-        }
-
-        val intValue4 = color
-        // l.e("playerColor now: $intValue4")
-        if(intValue4 != null) {
-            if(intValue4 == -99) {
-                valueOf2 = null
-            } else {
-                valueOf2 = intValue4
-            }
-            if(player.D != valueOf2) {
-                if(room.isHost) {
-                    player.D = valueOf2
-                } else {
-                    // l.e("colorOverride: not server or proxy controller")
-                }
-            }
-        }
-
-        if(z3) {
-            if(room.isHost) {
-                player.r = i
-            } else if(z) {
-                t.bU.b(player, -1)
-            } else {
-                t.bU.b(player, i)
-            }
-        }
-
-        t.bU.b()
-        aeMethod.invoke(t.bU)
+        t.bU.b();
+        t.bU.p();
     }
 }

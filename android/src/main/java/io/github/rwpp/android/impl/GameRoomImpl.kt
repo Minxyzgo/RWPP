@@ -7,11 +7,14 @@
 
 package io.github.rwpp.android.impl
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import com.corrodinggames.rts.appFramework.InGameActivity
 import com.corrodinggames.rts.appFramework.LevelSelectActivity
 import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
 import com.corrodinggames.rts.game.a.a
+import com.corrodinggames.rts.gameFramework.j.ae
+import com.corrodinggames.rts.gameFramework.j.bg
 import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.MainActivity
@@ -24,13 +27,13 @@ import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.map.NetworkMap
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.net.InetAddress
+import io.github.rwpp.welcomeMessage
+import java.util.concurrent.ConcurrentLinkedQueue
 
 
 class GameRoomImpl(private val game: GameImpl) : GameRoom {
     private var playerCacheMap = mutableMapOf<PlayerInternal, Player>()
+    private val emptyLineRegex = Regex("\n\\s*\n")
     override var maxPlayerCount: Int
         get() = PlayerInternal.c
         set(value) { PlayerInternal.b(value, true) }
@@ -56,7 +59,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         get() = game.getAllMaps().firstOrNull { (it.mapName + ".tmx").replace("\\", "/").endsWith(GameEngine.t().bU.aA.b ?: "") }
             ?: NetworkMap(LevelSelectActivity.convertLevelFileNameForDisplay(GameEngine.t().bU.aA.b))
         set(value) {
-            val realPath = (value.mapName + ".tmx").replace("\\", "/")
+            val realPath = (if(value.mapType == MapType.SkirmishMap) "maps/skirmish/" else "") + (value.mapName + ".tmx").replace("\\", "/")
             GameEngine.t().bU.aB = realPath
             GameEngine.t().bU.aA.a = com.corrodinggames.rts.gameFramework.j.at.entries[value.mapType.ordinal]
             GameEngine.t().bU.aA.b = (value.mapName + ".tmx")
@@ -73,7 +76,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override val revealedMap: Boolean
         get() = GameEngine.t().bU.aA.e
     override var aiDifficulty: Difficulty
-        get() = Difficulty.entries[GameEngine.t().bU.aA.f]
+        get() = Difficulty.entries[GameEngine.t().bU.aA.f + 2]
         set(value) {  GameEngine.t().bU.aA.f = value.ordinal - 2}
     override var incomeMultiplier: Float
         get() = GameEngine.t().bU.aA.h
@@ -94,22 +97,201 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override fun getPlayers(): List<Player> {
         return PlayerInternal.j.mapNotNull {
             if(it == null) return@mapNotNull null
-            playerCacheMap.getOrPut(it) { PlayerImpl(it, this) }
+            playerCacheMap.getOrPut(it) {
+                PlayerImpl(it, this)
+                    .also { sendWelcomeMessage(it) }
+            }
         }
     }
 
-    override suspend fun roomDetails(): String = withContext(Dispatchers.IO) {
-        val t = GameEngine.t()
-        val bU = GameEngine.t().bU
-        """
-            ${if(isHost) "Local IP address: ${InetAddress.getLocalHost().hostAddress} port: ${bU.m}" else ""}
-            ${if(isHost) "Your public address is <${if(bU.aW != null && bU.aW == true) "OPEN" else "CLOSED"}> to the internet" else ""}
-            Starting Credits: ${com.corrodinggames.rts.gameFramework.j.ae.c(bU.aA.g)}
-            Fog: ${fogMode.name}
-            ${incomeMultiplier}X income
-            ${if(noNukes) "No nukes" else ""}
-            Shared control: $sharedControl
-        """.trimIndent()
+    @SuppressLint("SuspiciousIndentation")
+    override suspend fun roomDetails(): String {
+        val n = 0;
+        val t = k.t();
+        val bu = t.bU;
+        val t2 = k.t();
+            run Label_1604@{
+//                if(!t2.bU.D || t2.bU.G) {
+//                    return@Label_1604;
+//                }
+                var y = ae.y();
+                var s: String? = null
+                if(y == null || y.size == 0) {
+                    s = null;
+                } else {
+                    s = "";
+                    val iterator = y.iterator();
+                    var n2 = 1;
+                    while(iterator.hasNext()) {
+                        var s2 = iterator.next();
+                        if(n2 != 0) {
+                            n2 = 0;
+                        } else {
+                            s += ", ";
+                        }
+                        s += s2;
+                    }
+                }
+                var s3: String? = null;
+                if(bu.E) {
+                    if(bu.F == null) {
+                        return@Label_1604;
+                    }
+                    s3 = "" + bu.F;
+                } else if(s != null) {
+                    var string = "Local IP address: " + s + " port: " + t2.bU.m + "\n";
+                    var s4: String? = null;
+                    if(t2.bU.aX != null) {
+                        if(!t2.bU.aX) {
+                            s4 = string + "Unable to get a public IP address, check your internet connection" + "\n";
+                        } else {
+                            s4 = string;
+                            if(t2.bU.aV != null) {
+                                s4 = string;
+                                if(t2.bU.aW != null) {
+                                    val append = StringBuilder().append(string).append("Your public address is ");
+                                    var s5: String? = null;
+                                    if(t2.bU.aW) {
+                                        s5 = "<Open>";
+                                    } else {
+                                        s5 = "<CLOSED>";
+                                    }
+                                    s4 = append.append(s5).append(" to the internet" + "\n").toString();
+                                }
+                            }
+                        }
+                    } else {
+                        s4 = string + if(isHost) "Retrieving your public IP..." + "\n" else "";
+                    }
+                    s3 = "" + s4 ;
+                } else {
+                    s3 = "" + "You do not have a network connection" + "\n";
+                }
+                var s6 = s3;
+                if(t2.G()) {
+                    if(bu.p) {
+                        s6 = s3 + "SandBox Mode! \\n Place any unit, Control all teams, Special powers" + "\n";
+                    } else {
+                        s6 = s3 + "Local skirmish" + "\n";
+                    }
+                }
+                var n3 = 0;
+                if(k.X() && t2.bU.D) {
+                    n3 = 0;
+                } else {
+                    n3 = 1;
+                }
+                var s7 = s6;
+                if(s6.length != 0) {
+                    s7 = s6 + ""
+                    val s8 = s7
+
+                    if(k.Z()) {
+                        s7 = s8 + "";
+                    }
+                }
+                var string2: String? = null;
+                run Label_0977@{
+                    if(!t2.bU.ax) {
+                        string2 = s7;
+                        if(!t2.bU.D) {
+                            return@Label_0977;
+                        }
+                    }
+                    var string3: String = s7;
+                    if(n3 != 0) {
+                        var string4 = s7;
+                        if(t2.bU.aA.a != null) {
+                            string4 = s7 + "Game Mode: " + t2.bU.aA.a.a() + "\n";
+                        }
+                        string3 = string4;
+                        if(t2.bU.aA.b != null) {
+                            string3 =
+                                string4 + "Map: " + LevelSelectActivity.convertLevelFileNameForDisplay(t2.bU.aA.b) + "\n";
+                        }
+                    }
+                    val append2 = StringBuilder().append(string3).append("\n" + "Starting Credits: ");
+
+                    val bu2 = t2.bU;
+                    var s9: String? = null;
+                    if(bu2.aA.c == 0) {
+                        s9 = "Default ($" + bu2.e() + ")";
+                    } else {
+                        s9 = "$" + bu2.e();
+                    }
+                    val append3 = StringBuilder().append(append2.append(s9).toString()).append("\n" + "Fog: ");
+                    val bu3 = t2.bU;
+                    var s10: String? = null
+                    if(bu3.aA.d == 0) {
+                        s10 = "No fog";
+                    } else if(bu3.aA.d == 1) {
+                        s10 = "Basic fog";
+                    } else if(bu3.aA.d == 2) {
+                        s10 = "Line of Sight";
+                    } else {
+                        s10 = "Unknown";
+                    }
+                    var s12: String? = null;
+                    s12 = append3.append(s10).toString();
+                    val s11 = s12
+                    if(t2.bU.aA.g != 1) {
+                        s12 = s11 + "Starting Units: " + ae.c(t2.bU.aA.g);
+                    }
+                    var string5 = s12;
+                    if(t2.bU.aA.h != 1.0f) {
+                        string5 = s12 + "\n" + incomeMultiplier + "X income";
+                    }
+                    var string6 = string5;
+                    if(t2.bU.aA.i) {
+                        string6 = string5 + "\n" + "No nukes" ;
+                    }
+                    var string7 = string6;
+                    if(t2.bU.aA.l) {
+                        string7 = string6 + "\n" + "Shared control: On";
+                    }
+                    string2 = string7;
+                    if(bu.D) {
+                        var string8 = string7;
+                        if(t2.bU.n != null) {
+                            string8 = string7 + "Password Protection: On" + "\n";
+                        }
+                        var string9 = string8;
+                        if(!t2.bU.q) {
+                            string9 = string8;
+                            if(!t2.bU.G) {
+                                string9 = string8 + "Server Visibility: Hidden" + "\n";
+                            }
+                        }
+
+
+                        if(t2.bU.o) {
+                            string2 = string9;
+                            if(!t2.bU.G) {
+                                val i = t2.bW.i();
+                                var s13 = string9 + "-- Required Mods: --" + "\n";
+                                val iterator2 = i.iterator();
+                                var n4 = n;
+                                while(iterator2.hasNext()) {
+                                    val b = iterator2.next();
+                                    if(n4 > 2 && n4 < i.size - 1) {
+                                        string2 = s13 + (i.size - n4) + " more mods...";
+                                        return@Label_0977;
+                                    }
+                                    ++n4;
+                                    var b2 = (b as com.corrodinggames.rts.gameFramework.i.b).b();
+                                    b2.replace("\"", "'");
+                                    b2.replace(";", ".");
+                                    s13 = s13 + " mod: $b2";
+                                }
+                                string2 = s13;
+                            }
+                        }
+                    }
+                }
+                return string2!!
+            }
+
+        return "Getting details..."
     }
 
     override fun sendChatMessage(message: String) {
@@ -174,15 +356,21 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
 
     override fun startGame() {
         val t: k = GameEngine.t()
+        MainActivity.isGaming = true
+
+        if(isHost) {
+            t.bU.q()
+            t.bU.n()
+            t.bU.a(null, false)
+        }
+
         MultiplayerBattleroomActivity.startGameCommon()
         if(t.bI != null && t.bI.X) {
             t.bU.bf = true
             //GameEngine.K()
             val intent = Intent(MainActivity.instance, InGameActivity::class.java)
             intent.putExtra("level", t.di)
-            MainActivity.instance.startActivityForResult(intent, 0)
-
-            //MainActivity.gameLauncher.launch(intent)
+            MainActivity.gameLauncher.launch(intent)
             return
         }
         //d("Not starting multiplayer game because map failed to load")
@@ -195,7 +383,17 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         }
         aeVar.aY = false
         aeVar.h("Map load failed.")
+    }
 
-
+    private fun sendWelcomeMessage(p: PlayerImpl) {
+        val conn = (GameEngine.t().bU.aO as ConcurrentLinkedQueue<c>).firstOrNull { it.A == p.player } ?: return
+        val bgVar = bg()
+        bgVar.b(welcomeMessage)
+        bgVar.b(3)
+        bgVar.a("RWPP")
+        bgVar.a(null as c?)
+        bgVar.c(-1)
+        val a2 = bgVar.a(141)
+        conn.a(a2)
     }
 }

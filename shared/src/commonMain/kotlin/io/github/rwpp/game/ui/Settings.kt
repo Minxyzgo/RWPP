@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
+import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.BorderCard
 import io.github.rwpp.ui.ExitButton
 import io.github.rwpp.ui.RWSingleOutlinedTextField
@@ -29,6 +30,8 @@ import io.github.rwpp.ui.RWSliderColors
 
 @Composable
 fun SettingsView(onExit: () -> Unit) {
+    BackHandler(true, onExit)
+
     val current = LocalController.current
     Scaffold(
         containerColor = Color.Transparent,

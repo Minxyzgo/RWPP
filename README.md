@@ -10,9 +10,7 @@
 
 ## Progress
 
-Desktop version is ready to use
-
-Android version isn't yet implemented
+To see 'Notes'
 
 doc...
 

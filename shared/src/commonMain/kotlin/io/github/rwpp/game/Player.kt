@@ -47,7 +47,7 @@ interface Player {
             Color.Cyan,
             Color(249, 246, 238),
             Color.Black,
-            Color(255, 192, 203),
+            Color(255, 0, 255),
             Color(237, 112, 20),
             Color(51, 0, 102)
         )

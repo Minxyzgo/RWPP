@@ -5,19 +5,20 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.ui.platform
+package io.github.rwpp.platform
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
+import io.github.rwpp.android.R
 
 @Composable
 actual fun deliciousFonts(): FontFamily {
     return FontFamily(
-        Font("font/Delicious-Bold.otf", FontWeight.Bold),
-        Font("font/Delicious-BoldItalic.otf", FontWeight.Bold, FontStyle.Italic),
-        Font("font/Delicious-Italic.otf", FontWeight.Normal, FontStyle.Italic)
+        Font(R.font.deliciousbold, FontWeight.Bold),
+        Font(R.font.deliciousbolditalic, FontWeight.Bold, FontStyle.Italic),
+        Font(R.font.deliciousitalic, FontWeight.Normal, FontStyle.Italic)
     )
 }
