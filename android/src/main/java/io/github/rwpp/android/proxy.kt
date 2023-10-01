@@ -178,7 +178,7 @@ fun doProxy() {
                         t.al, 0, Intent(
                             t.al,
                             ClosingActivity::class.java
-                        ), 2
+                        ), PendingIntent.FLAG_UPDATE_CURRENT
                     )
                 }
                 val notificationManager =
@@ -237,7 +237,7 @@ fun doProxy() {
                             t.al, 0, Intent(
                                 t.al,
                                 ClosingActivity::class.java
-                            ), 2
+                            ), PendingIntent.FLAG_UPDATE_CURRENT
                         )
                     }
                     if (Build.VERSION.SDK_INT >= 11) {

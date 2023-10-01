@@ -16,6 +16,7 @@ dependencies {
 
 android {
     compileSdk = (findProperty("android.compileSdk") as String).toInt()
+    buildToolsVersion = "34.0.0"
     namespace = "io.github.rwpp"
 
     useLibrary("org.apache.http.legacy")
