@@ -54,7 +54,7 @@ val welcomeMessage
             [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
             开源地址请访问 https://github.com/Minxyzgo/RWPP 
             bug反馈与交流加入群: 150450999
-            当前版本: 1.0.0-alpha (不稳定)
+            当前版本: 1.0.1-alpha (不稳定)
             Copyright 2023 RWPP contributors
         """.trimIndent()
 
