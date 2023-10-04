@@ -22,7 +22,7 @@ class PlayerImpl(
     override val team: Int
         get() = player.r
     override val name: String
-        get() = player.v
+        get() = player.v ?: ""
     override val ping: String
         get() = player.z()
     override val startingUnit: Int

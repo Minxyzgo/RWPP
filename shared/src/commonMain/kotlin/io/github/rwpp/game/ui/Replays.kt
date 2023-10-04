@@ -5,18 +5,11 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.config
+package io.github.rwpp.game.ui
 
-import kotlin.reflect.KClass
+import androidx.compose.runtime.Composable
 
-interface ConfigHandler {
-    fun <T> getConfig(name: String): T
+@Composable
+fun ReplaysViewDialog() {
 
-    fun setConfig(name: String, value: Any?)
-
-    fun <T : Any> getRWPPConfig(clazz: KClass<T>): T?
-
-    fun setRWPPConfig(value: Any)
-
-    fun saveConfig()
 }

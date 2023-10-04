@@ -15,10 +15,10 @@ import androidx.compose.ui.graphics.painter.Painter
 import com.corrodinggames.rts.appFramework.InGameActivity
 import com.corrodinggames.rts.appFramework.LevelGroupSelectActivity
 import com.corrodinggames.rts.appFramework.LevelSelectActivity
+import com.corrodinggames.rts.appFramework.LoadLevelActivity
 import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.MainActivity
-import io.github.rwpp.android.questionOption
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
@@ -28,6 +28,7 @@ import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.map.Mission
 import io.github.rwpp.game.map.MissionType
+import io.github.rwpp.game.units.GameInternalUnits
 import io.github.rwpp.ui.LoadingContext
 import kotlinx.coroutines.*
 import java.io.File
@@ -36,6 +37,7 @@ import kotlin.coroutines.CoroutineContext
 
 
 class GameImpl : Game, CoroutineScope {
+
     private var connectingJob: Deferred<String?>? = null
     private var _missions: List<Mission>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
@@ -54,13 +56,16 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override suspend fun load(context: LoadingContext) = withContext(Dispatchers.IO) {
-        val job = launch {
+        launch {
             while(GameEngine.t()?.bg != true) {
                 context.message(GameEngine.t()?.dF ?: "loading...")
             }
         }
 
         GameEngine.c(MainActivity.instance)
+        GameEngine.t().bU.aA.a = at.a
+        GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
+        GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
         Unit
     }
 
@@ -71,13 +76,26 @@ class GameImpl : Game, CoroutineScope {
         t.bU.q = isPublic
         launch(Dispatchers.IO) {
             t.bU.t()
+            GameEngine.t().bU.aA.a = at.a
+            GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
+            GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
             delay(100)
             RefreshUIEvent().broadCastIn()
         }
+    }
 
+    override fun hostNewSandbox() {
+        val t = GameEngine.t()
+        LevelSelectActivity.loadSinglePlayerMapRaw("skirmish/[z;p10]Crossing Large (10p).tmx", true, 3, 1, true, true)
+        t.bU.b("starting singleplayer (sandbox)")
+        t.bU.y = "You"
+        t.bU.o = true
+        t.bU.r()
+        MainActivity.isSandboxGame = true
         GameEngine.t().bU.aA.a = at.a
         GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
         GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
+        RefreshUIEvent().broadCastIn()
     }
 
     override fun setUserName(name: String) {
@@ -91,8 +109,11 @@ class GameImpl : Game, CoroutineScope {
         }
 
         val result = connectingJob?.await()
+
         return when {
-            result == null -> Result.success("")
+            result == null -> {
+                Result.success("")
+            }
             com.corrodinggames.rts.gameFramework.j.ae.u() -> Result.failure(IOException("Connection failed: Target server may not be open to the internet."))
             else -> Result.failure(IOException("Connection failed."))
         }
@@ -148,9 +169,9 @@ class GameImpl : Game, CoroutineScope {
         if(_maps.isEmpty()) {
             val t = GameEngine.t()
             val levelDirs = com.corrodinggames.rts.gameFramework.e.a.a(LevelGroupSelectActivity.customLevelsDir, true)
-            val mapPaths = mapOf(
+            val mapPaths = mapOf<MapType, Array<String>?>(
                 MapType.CustomMap to t.bW.a(levelDirs, LevelGroupSelectActivity.customLevelsDir),
-                MapType.SavedGame to arrayOf()
+                MapType.SavedGame to LoadLevelActivity.getGameSaves()
             )
 
 
@@ -175,7 +196,7 @@ class GameImpl : Game, CoroutineScope {
 
             for((type, path) in mapPaths) {
                 val maps = mutableListOf<GameMap>()
-                path.forEachIndexed { i, name ->
+                path?.forEachIndexed { i, name ->
                         maps.add(object : GameMap {
                             override val id: Int = i
                             override val image: Painter? =
@@ -185,7 +206,7 @@ class GameImpl : Game, CoroutineScope {
                                     )?.asImageBitmap()?.let { BitmapPainter(it) }
                                 } else null
                             override val mapName: String
-                                get() = name.removeSuffix(".tmx")
+                                get() = name.removeSuffix(".tmx").removeSuffix(".rwsave")
                             override val tmx: File? = null
                             override val mapType: MapType
                                 get() = type
@@ -206,6 +227,11 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override fun getMissionsByType(type: MissionType): List<Mission> = getAllMissions()
+    override fun onBanUnits(units: List<GameInternalUnits>) {
+        MainActivity.bannedUnitList = units
+        if(units.isNotEmpty()) gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.joinToString(", ")}")
+    }
+
     override val coroutineContext: CoroutineContext = Job()
 
 }

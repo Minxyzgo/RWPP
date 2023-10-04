@@ -33,7 +33,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 class GameRoomImpl(private val game: GameImpl) : GameRoom {
     private var playerCacheMap = mutableMapOf<PlayerInternal, Player>()
-    private val emptyLineRegex = Regex("\n\\s*\n")
     override var maxPlayerCount: Int
         get() = PlayerInternal.c
         set(value) { PlayerInternal.b(value, true) }
@@ -89,7 +88,10 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         set(value) { GameEngine.t().bU.aA.o = value }
     override var lockedRoom: Boolean
         get() = GameEngine.t().bU.aA.p
-        set(value) {  GameEngine.t().bU.aA.p = value }
+        set(value) {
+            GameEngine.t().bU.aA.p = value
+            if(isHost && value) sendSystemMessage("Room has been locked. Now player can't join the room")
+        }
     override var teamLock: Boolean
         get() = GameEngine.t().bU.aA.m
         set(value) { GameEngine.t().bU.aA.m = value }
@@ -132,41 +134,45 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                         s += s2;
                     }
                 }
-                var s3: String? = null;
+                var s3: String = ""
                 if(bu.E) {
                     if(bu.F == null) {
                         return@Label_1604;
                     }
                     s3 = "" + bu.F;
-                } else if(s != null) {
-                    var string = "Local IP address: " + s + " port: " + t2.bU.m + "\n";
-                    var s4: String? = null;
-                    if(t2.bU.aX != null) {
-                        if(!t2.bU.aX) {
-                            s4 = string + "Unable to get a public IP address, check your internet connection" + "\n";
-                        } else {
-                            s4 = string;
-                            if(t2.bU.aV != null) {
+                } else if(isHost && !MainActivity.isSandboxGame) {
+                    if(s != null) {
+                        var string = "Local IP address: " + s + " port: " + t2.bU.m + "\n";
+                        var s4: String? = null;
+                        if(t2.bU.aX != null) {
+                            if(!t2.bU.aX) {
+                                s4 =
+                                    string + "Unable to get a public IP address, check your internet connection" + "\n";
+                            } else {
                                 s4 = string;
-                                if(t2.bU.aW != null) {
-                                    val append = StringBuilder().append(string).append("Your public address is ");
-                                    var s5: String? = null;
-                                    if(t2.bU.aW) {
-                                        s5 = "<Open>";
-                                    } else {
-                                        s5 = "<CLOSED>";
+                                if(t2.bU.aV != null) {
+                                    s4 = string;
+                                    if(t2.bU.aW != null) {
+                                        val append = StringBuilder().append(string).append("Your public address is ");
+                                        var s5: String? = null;
+                                        if(t2.bU.aW) {
+                                            s5 = "<Open>";
+                                        } else {
+                                            s5 = "<CLOSED>";
+                                        }
+                                        s4 = append.append(s5).append(" to the internet" + "\n").toString();
                                     }
-                                    s4 = append.append(s5).append(" to the internet" + "\n").toString();
                                 }
                             }
+                        } else {
+                            s4 = string + if(isHost) "Retrieving your public IP..." + "\n" else "";
                         }
+                        s3 = "" + s4;
                     } else {
-                        s4 = string + if(isHost) "Retrieving your public IP..." + "\n" else "";
+                        s3 = "" + "You do not have a network connection" + "\n";
                     }
-                    s3 = "" + s4 ;
-                } else {
-                    s3 = "" + "You do not have a network connection" + "\n";
                 }
+
                 var s6 = s3;
                 if(t2.G()) {
                     if(bu.p) {
@@ -351,6 +357,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     }
 
     override fun disconnect() {
+        MainActivity.isSandboxGame = false
         GameEngine.t().bU.b("exited")
     }
 
@@ -358,7 +365,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         val t: k = GameEngine.t()
         MainActivity.isGaming = true
 
-        if(isHost) {
+        if(isHost || MainActivity.isSandboxGame) {
             t.bU.q()
             t.bU.n()
             t.bU.a(null, false)

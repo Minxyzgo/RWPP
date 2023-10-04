@@ -5,29 +5,36 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.android
+package io.github.rwpp.android.impl
 
 import android.app.Activity
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
+import android.view.ViewGroup
 import com.corrodinggames.rts.appFramework.ClosingActivity
-import com.corrodinggames.rts.appFramework.InGameActivity
+import com.corrodinggames.rts.appFramework.GameView
+import com.corrodinggames.rts.appFramework.GameViewOpenGL
+import com.corrodinggames.rts.appFramework.GameViewThreaded
 import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
 import com.corrodinggames.rts.gameFramework.h.a
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.ao
 import com.corrodinggames.rts.gameFramework.k
+import com.github.minxyzgo.rwij.InjectMode
+import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.R
-import io.github.rwpp.android.impl.GameEngine
+import io.github.rwpp.android.MainActivity
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.*
+import io.github.rwpp.game.units.GameCommandActions
+import io.github.rwpp.game.units.GameInternalUnits
 import java.util.concurrent.ConcurrentLinkedQueue
+
 
 //internal lateinit var mainMenuActivityInstance: MainMenuActivity
 var questionOption: String? = null
@@ -144,16 +151,36 @@ fun doProxy() {
         addProxy("g", String::class) { _ : Any?, msg: String ->
             KickedEvent(msg).broadCastIn()
         }
+
+        addProxy("d", String::class, mode = InjectMode.InsertBefore) { str: String ->
+            if(str == "----- returnToBattleroom -----") {
+                MainActivity.isReturnToBattleRoom = true
+            }
+
+            Unit
+        }
     }
 
-    Class.forName("com.corrodinggames.rts.appFramework.bb").kotlin.setFunction {
-        addProxy("onClick", DialogInterface::class, Int::class) { self: Any, _: Any?, _: Any? ->
-            MainActivity.controller.gameRoom.disconnect()
-//            (self::class.java.getDeclaredField("a").apply {
-//                isAccessible = true
-//            }.get(self) as Activity).finish()
-            GameEngine.t().an.inGameActivity.finish()
-            ReturnMainMenuEvent().broadCastIn()
+    com.corrodinggames.rts.appFramework.d::class.setFunction {
+        addProxy("b", Activity::class) { activity: Activity ->
+            val viewGroup = activity.getWindow().getDecorView().getRootView() as ViewGroup
+            val i = com.corrodinggames.rts.appFramework.d.d;
+            var i2 = i;
+            val bMethod = com.corrodinggames.rts.appFramework.d::class.java.getDeclaredMethod("b").apply { isAccessible = true }
+            if (i == com.corrodinggames.rts.appFramework.l.f) {
+                i2 = bMethod.invoke(null) as Int
+            }
+            val gameViewThreaded =
+                if(i2 == com.corrodinggames.rts.appFramework.l.c)
+                    GameViewThreaded(activity, null)
+                else if(i2 == com.corrodinggames.rts.appFramework.l.e) GameViewOpenGL(activity, null)
+                else if(i2 == com.corrodinggames.rts.appFramework.l.a) GameView(activity, null)
+                else if(i2 == com.corrodinggames.rts.appFramework.l.b)
+                    if(Build.VERSION.SDK_INT >= 26) GameView(activity, null)
+                    else RWPPGameViewNonSurface(activity, null)
+                else RWPPGameViewNonSurface(activity, null);
+            viewGroup.addView(gameViewThreaded, 0, ViewGroup.LayoutParams(-1, -1));
+            gameViewThreaded
         }
     }
 
@@ -255,6 +282,33 @@ fun doProxy() {
                     }
                 }
             }
+        }
+
+        addProxy("x", mode = InjectMode.InsertBefore) { _: Any? ->
+            MainActivity.isReturnToBattleRoom = true
+            Unit
+        }
+        addProxy("a", com.corrodinggames.rts.gameFramework.e::class, mode = InjectMode.InsertBefore) { _: Any?, b3: com.corrodinggames.rts.gameFramework.e ->
+            val actionString = b3.k.b
+            if(actionString.startsWith("u_")) {
+                val realUnit = runCatching {
+                    GameInternalUnits.valueOf(
+                        actionString.removePrefix("u_").removePrefix("c_")
+                    )
+                }.getOrNull()
+                if(realUnit != null && realUnit in MainActivity.bannedUnitList) {
+                    return@addProxy InterruptResult(Unit)
+                }
+            }
+            if(b3.j == null) return@addProxy Unit
+            val realAction = GameCommandActions.from(b3.j.a.ordinal)
+            val u = b3.j.b
+            if(u is com.corrodinggames.rts.game.units.cj) {
+                val realUnit = GameInternalUnits.from(u.ordinal)
+                if(realAction == GameCommandActions.BUILD && realUnit in MainActivity.bannedUnitList) {
+                    InterruptResult(Unit)
+                } else Unit
+            } else Unit
         }
     }
 }

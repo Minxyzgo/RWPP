@@ -9,10 +9,7 @@ package io.github.rwpp.desktop
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Icon
@@ -29,6 +26,7 @@ import io.github.rwpp.App
 import io.github.rwpp.LocalController
 import io.github.rwpp.desktop.impl.GameContextControllerImpl
 import io.github.rwpp.ui.RWSingleOutlinedTextField
+import io.github.rwpp.ui.RWTextButton
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
@@ -80,43 +78,55 @@ fun composeApplication() = application {
         onCloseRequest = { gameContext.exit() },
         state = windowState,
         title = "RWPP",
-        resizable = false
+        resizable = true
     ) {
+        mainJFrame = window
+
         val panel = ComposePanel()
         panel.isVisible = true
         panel.size = Dimension(600, 200)
         panel.isOpaque = false
         panel.isFocusable = true
         panel.setContent {
-            var chatMessage by remember { mutableStateOf("") }
-            RWSingleOutlinedTextField(
-                label = "Send Message",
-                value = chatMessage,
-                modifier = Modifier.fillMaxWidth().padding(10.dp)
-                    .onKeyEvent {
-                        if(it.key == androidx.compose.ui.input.key.Key.Enter && chatMessage.isNotEmpty()) {
-                            gameContext.gameRoom.sendChatMessage(chatMessage)
-                            chatMessage = ""
-                            sendMessageDialog.isVisible = false
-                            true
-                        } else false
+            Column {
+                var chatMessage by remember { mutableStateOf("") }
+                RWSingleOutlinedTextField(
+                    label = "Send Message",
+                    value = chatMessage,
+                    modifier = Modifier.fillMaxWidth().padding(10.dp)
+                        .onKeyEvent {
+                            if(it.key == androidx.compose.ui.input.key.Key.Enter && chatMessage.isNotEmpty()) {
+                                gameContext.gameRoom.sendChatMessage(chatMessage)
+                                chatMessage = ""
+                                sendMessageDialog.isVisible = false
+                                true
+                            } else false
+                        },
+                    trailingIcon = {
+                        Icon(
+                            Icons.Default.ArrowForward,
+                            null,
+                            modifier = Modifier.clickable {
+                                gameContext.gameRoom.sendChatMessage(chatMessage)
+                                chatMessage = ""
+                                sendMessageDialog.isVisible = false
+                            }
+                        )
                     },
-                trailingIcon = {
-                    Icon(
-                        Icons.Default.ArrowForward,
-                        null,
-                        modifier = Modifier.clickable {
-                            gameContext.gameRoom.sendChatMessage(chatMessage)
-                            chatMessage = ""
-                            sendMessageDialog.isVisible = false
-                        }
-                    )
-                },
-                onValueChange =
-                {
-                    chatMessage = it
-                },
-            )
+                    onValueChange =
+                    {
+                        chatMessage = it
+                    },
+                )
+
+                RWTextButton("Send Team") {
+                    gameContext.gameRoom.sendChatMessage("-t $chatMessage")
+                    chatMessage = ""
+                    sendMessageDialog.isVisible = false
+                }
+            }
+
+
         }
         sendMessageDialog = Dialog(window)
         sendMessageDialog.isUndecorated = true
@@ -124,7 +134,6 @@ fun composeApplication() = application {
         sendMessageDialog.isVisible = false
         sendMessageDialog.isAlwaysOnTop = true
         sendMessageDialog.setSize(600, 200)
-        sendMessageDialog.setLocation(window.x / 2, window.y / 2)
         sendMessageDialog.add(panel)
         window.minimumSize = Dimension(800, 600)
         CompositionLocalProvider(

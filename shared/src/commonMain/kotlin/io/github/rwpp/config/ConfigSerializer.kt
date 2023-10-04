@@ -5,18 +5,12 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.config
+package io.github.rwpp.config
 
-import kotlin.reflect.KClass
+import io.github.rwpp.ContextController
 
-interface ConfigHandler {
-    fun <T> getConfig(name: String): T
+interface ConfigSerializer {
+    fun readFromContext(context: ContextController)
 
-    fun setConfig(name: String, value: Any?)
-
-    fun <T : Any> getRWPPConfig(clazz: KClass<T>): T?
-
-    fun setRWPPConfig(value: Any)
-
-    fun saveConfig()
+    fun writeFromContext(context: ContextController)
 }

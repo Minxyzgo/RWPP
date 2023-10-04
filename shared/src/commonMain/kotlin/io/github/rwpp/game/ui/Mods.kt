@@ -83,7 +83,7 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                     RWSingleOutlinedTextField(
                         "Filter",
                         filter,
-                        modifier = Modifier.fillMaxWidth(.4f),
+                        modifier = Modifier.fillMaxWidth(.5f),
                         leadingIcon = { Icon(Icons.Default.Search, null) }
                     ) {
                         filter = it

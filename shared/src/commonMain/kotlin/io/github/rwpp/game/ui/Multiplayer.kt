@@ -13,7 +13,6 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -32,12 +31,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
-import io.github.rwpp.config.MasterSource
-import io.github.rwpp.config.Source
+import io.github.rwpp.config.Blacklist
+import io.github.rwpp.config.Blacklists
+import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.instance
 import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.sorted
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -59,18 +61,35 @@ fun MultiplayerView(
         val lastName = context.getConfig<String?>("lastNetworkPlayerName")
         mutableStateOf((lastName ?: "RWPP${(0..999).random()}").also { context.setUserName(it) })
     }
-    var selectedSourceIndex by remember { mutableStateOf(0) }
-    val sources = remember { mutableStateListOf(MasterSource) }
+
+    val blacklists = remember { mutableStateListOf<Blacklist>().apply { addAll(Blacklists.blacklists) } }
+
+    val instance = MultiplayerPreferences.instance
     var enableModFilter by remember { mutableStateOf(false) }
-    var mapNameFilter by remember { mutableStateOf("") }
-    var creatorNameFilter by remember { mutableStateOf("") }
-    var playerLimitRange by remember { mutableStateOf(0..100) }
+    var mapNameFilter by remember { mutableStateOf(instance.mapNameFilter) }
+    var creatorNameFilter by remember { mutableStateOf(instance.creatorNameFilter) }
+    var playerLimitRange by remember { mutableStateOf(instance.playerLimitRangeFrom..instance.playerLimitRangeTo) }
+    var joinServerAddress by rememberSaveable { mutableStateOf(instance.joinServerAddress) }
 
     var serverAddress by remember { mutableStateOf("") }
     var isConnecting by remember { mutableStateOf(false) }
 
     var selectedRoomDescription by remember { mutableStateOf<RoomDescription?>(null) }
     var showJoinRequestDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    remember(blacklists.size) {
+        Blacklists.blacklists = blacklists.toMutableList()
+    }
+
+
+    remember(mapNameFilter) { instance.mapNameFilter = mapNameFilter }
+    remember(creatorNameFilter) { instance.creatorNameFilter = creatorNameFilter }
+    remember(joinServerAddress) { instance.joinServerAddress = joinServerAddress }
+    remember(playerLimitRange) {
+        instance.playerLimitRangeFrom = playerLimitRange.first
+        instance.playerLimitRangeTo = playerLimitRange.last
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -79,9 +98,7 @@ fun MultiplayerView(
     }
 
     JoinServerRequestDialog(showJoinRequestDialog, { showJoinRequestDialog = false },
-        mapName = selectedRoomDescription?.mapName ?: "",
-        creatorName = selectedRoomDescription?.creator ?: "",
-        version = selectedRoomDescription?.version ?: ""
+       selectedRoomDescription, blacklists
     ) { dismiss ->
         serverAddress = selectedRoomDescription!!.addressProvider()
         isConnecting = true
@@ -96,6 +113,8 @@ fun MultiplayerView(
 
         context.setUserName(userName)
         context.setConfig("lastNetworkIP", serverAddress)
+
+        scope.launch(Dispatchers.IO) { context.saveConfig() }
 
         val result = context.directJoinServer(serverAddress, selectedRoomDescription?.uuid2, this)
         selectedRoomDescription = null
@@ -198,25 +217,26 @@ fun MultiplayerView(
             val versionWeight = .2f
             val openWeight = .1f
             val realDescriptions = remember(
-                descriptions, enableModFilter, playerLimitRange, mapNameFilter, creatorNameFilter
+                descriptions, enableModFilter, playerLimitRange, mapNameFilter, creatorNameFilter, blacklists.size
             ) {
-                descriptions.filter {
+                descriptions.filter { room ->
+                    if(blacklists.any { it.uuid == room.uuid}) return@filter false
                     if(enableModFilter) {
-                        if(!it.version.contains("mod", true) && it.mods.isBlank()) {
+                        if(!room.version.contains("mod", true) && room.mods.isBlank()) {
                             return@filter false
                         }
                     }
 
                     if(mapNameFilter.isNotBlank()) {
-                        return@filter it.mapName.contains(mapNameFilter, true)
+                        return@filter room.mapName.contains(mapNameFilter, true)
                     }
 
                     if(creatorNameFilter.isNotBlank()) {
-                        return@filter it.mapName.contains(creatorNameFilter, true)
+                        return@filter room.mapName.contains(creatorNameFilter, true)
                     }
 
-                    if(it.playerMaxCount != null) {
-                        return@filter it.playerMaxCount in playerLimitRange || it.playerMaxCount > 100
+                    if(room.playerMaxCount != null) {
+                        return@filter room.playerMaxCount in playerLimitRange || room.playerMaxCount > 100
                     }
 
                     true
@@ -309,9 +329,6 @@ fun MultiplayerView(
     }
 
     fun resetFilter() {
-        selectedSourceIndex = 0
-        if(sources.size > 1) sources.removeRange(1, sources.size - 1)
-        sources[0] = MasterSource
         enableModFilter = false
         playerLimitRange = 0..100
         mapNameFilter = ""
@@ -319,21 +336,18 @@ fun MultiplayerView(
     }
 
     @Composable
-    fun SourceTargetDialog(
+    fun BlacklistTargetDialog(
         visible: Boolean,
-        onSelectedSource: (Source) -> Unit,
         onDismissRequest: () -> Unit,
     ) {
-        var showSourceInfo by remember { mutableStateOf(false) }
-        val selectedSource by remember(selectedSourceIndex, sources.size) { mutableStateOf(sources[selectedSourceIndex]) }
+        var showBlacklistInfo by remember { mutableStateOf(false) }
         var infoSelectedIndex by remember { mutableStateOf(0) }
-        var infoSelectedSource by remember(infoSelectedIndex, sources.size) { mutableStateOf(sources[infoSelectedIndex]) }
         var addMode by remember { mutableStateOf(false) }
 
         DisposableEffect(key1 = visible) {
             onDispose {
                 if(!visible) {
-                    showSourceInfo = false
+                    showBlacklistInfo = false
                     addMode = false
                 }
             }
@@ -342,51 +356,38 @@ fun MultiplayerView(
         AnimatedAlertDialog(
             visible = visible,
             onDismissRequest = { onDismissRequest() },
-        ) { modifier, dismiss ->
+        ) { modifier, _ ->
             BorderCard(
                 modifier = Modifier.fillMaxSize(0.5f).then(modifier),
                 backgroundColor = Color.Gray
             ) {
-                AnimatedSourceList(
-                    !showSourceInfo,
-                    sources,
-                    { selectedSourceIndex == it },
-                    { index ->
-                        selectedSourceIndex = index
-                        onSelectedSource(sources[selectedSourceIndex])
-                        dismiss()
-                    },
+                AnimatedBlackList(
+                    !showBlacklistInfo,
+                    blacklists,
                     {
-                        sources.removeAt(it)
+                        blacklists.removeAt(it)
                         infoSelectedIndex = 0
-                        selectedSourceIndex = if(selectedSourceIndex == it) {
-                            onSelectedSource(sources[0])
-                            0
-                        } else {
-                            sources.indexOf(selectedSource)
-                        }
                     },
                     { index  ->
                         infoSelectedIndex = index
-                        showSourceInfo = true
+                        showBlacklistInfo = true
                     },
                     {
                         addMode = true
-                        showSourceInfo = true
+                        showBlacklistInfo = true
                     }
                 )
 
                 if(addMode) {
-                    AnimatedSourceInfo(showSourceInfo, Source("", ""), {
-                        showSourceInfo = false
+                    AnimatedBlacklistInfo(showBlacklistInfo, Blacklist("", ""), {
+                        showBlacklistInfo = false
                         addMode = false
                     }) {
-                        sources.add(it)
+                        blacklists.add(it)
                     }
                 } else {
-                    AnimatedSourceInfo(showSourceInfo, infoSelectedSource, { showSourceInfo = false }) {
-                        infoSelectedSource = it
-                        sources[infoSelectedIndex] = it
+                    AnimatedBlacklistInfo(showBlacklistInfo, blacklists.getOrNull(infoSelectedIndex), { showBlacklistInfo = false }) {
+                        blacklists[infoSelectedIndex] = it
                     }
                 }
             }
@@ -409,24 +410,19 @@ fun MultiplayerView(
 
                 LargeDividingLine { 5.dp }
 
-                val state = rememberLazyListState()
-
-
-                var selectedSource by remember(selectedSourceIndex) {
-                    mutableStateOf(sources[selectedSourceIndex])
-                }
-                var showSourceDialog by remember {
+                var showBlacklistDialog by remember {
                     mutableStateOf(false)
                 }
+
                 LargeOutlinedButton(
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Source") },
-                    value = selectedSource.name
+                    label = {  },
+                    value = "Blacklist"
                 ) {
-                    showSourceDialog = true
+                    showBlacklistDialog = true
                 }
 
-                SourceTargetDialog(showSourceDialog, { selectedSource = it }) { showSourceDialog = false }
+                BlacklistTargetDialog(showBlacklistDialog) { showBlacklistDialog = false }
 
                 OutlinedTextField(
                     label = {
@@ -521,7 +517,7 @@ fun MultiplayerView(
                 isRefreshing = true
                 try {
                     currentViewList = getRoomListFromSourceUrl(
-                        sources[selectedSourceIndex].url.split(";")
+                        "http://gs1.corrodinggames.com/masterserver/1.4/interface?action=list&game_version=176&game_version_beta=false;http://gs4.corrodinggames.net/masterserver/1.4/interface?action=list&game_version=176&game_version_beta=false".split(";")
                     )
                 } catch(e: Throwable) {
                     throwable = e
@@ -531,9 +527,6 @@ fun MultiplayerView(
             }
         }
     }
-
-    val scope = rememberCoroutineScope()
-
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -607,8 +600,6 @@ fun MultiplayerView(
                         FilterSurface()
                     }
 
-                    var joinServerAddress by rememberSaveable { mutableStateOf("") }
-
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -620,15 +611,15 @@ fun MultiplayerView(
                         ) {
                             RWSingleOutlinedTextField(
                                 label = "Join Server",
-                                value = joinServerAddress ?: "",
+                                value = joinServerAddress,
                                 modifier = Modifier.fillMaxWidth().padding(10.dp),
                                 trailingIcon = {
                                     Icon(
                                         Icons.Default.ArrowForward,
                                         null,
                                         modifier = Modifier.clickable {
-                                            if(!joinServerAddress.isNullOrBlank()) {
-                                                serverAddress = joinServerAddress!!
+                                            if(joinServerAddress.isNotBlank()) {
+                                                serverAddress = joinServerAddress
                                                 isConnecting = true
                                             }
                                         })
@@ -663,42 +654,36 @@ fun MultiplayerView(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AnimatedSourceList(
+private fun AnimatedBlackList(
     visible: Boolean,
-    sources: SnapshotStateList<Source>,
-    whetherSelected: (Int) -> Boolean,
-    onSelected: (Int) -> Unit,
+    blacklists: SnapshotStateList<Blacklist>,
     onDeleteSource: (Int) -> Unit,
     onTapInfoButton: (Int) -> Unit,
     onTapAddButton: () -> Unit,
 ) = AnimatedVisibility(visible) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Source Target", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(15.dp))
+        Text("Blacklists", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(15.dp))
         LargeDividingLine { 5.dp }
 
         LazyColumn(
             modifier = Modifier.selectableGroup().weight(1f),
         ) {
-            items(count = sources.size) { index ->
-                val source = sources[index]
+            items(count = blacklists.size) { index ->
+                val blacklist = blacklists[index]
                 Row(modifier = Modifier
                     .wrapContentSize()
                     .animateItemPlacement()
-                    .selectable(
-                        selected = whetherSelected(index),
-                        onClick = { onSelected(index) }
-                    )
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            source.name,
+                            blacklist.name,
                             modifier = Modifier.padding(3.dp),
                             style = MaterialTheme.typography.headlineLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            source.url,
+                            blacklist.uuid,
                             modifier = Modifier.padding(3.dp),
                             style = MaterialTheme.typography.bodySmall,
                             maxLines = 1,
@@ -708,15 +693,10 @@ private fun AnimatedSourceList(
                     }
 
                     Row(horizontalArrangement = Arrangement.End) {
-                        AnimatedVisibility(
-                            sources.size > 1,
-                            enter = fadeIn() + scaleIn(),
-                            exit = shrinkOut() + scaleOut(),
-                        ) {
-                            Icon(Icons.Default.Delete, null, modifier = Modifier.padding(5.dp).clickable {
-                                onDeleteSource(index)
-                            })
-                        }
+                        Icon(Icons.Default.Delete, null, modifier = Modifier.padding(5.dp).clickable {
+                            onDeleteSource(index)
+                        })
+
                         Icon(
                             Icons.Default.Info,
                             null,
@@ -735,44 +715,47 @@ private fun AnimatedSourceList(
 }
 
 @Composable
-private fun AnimatedSourceInfo(
+private fun AnimatedBlacklistInfo(
     visible: Boolean,
-    source: Source,
+    blacklist: Blacklist?,
     onDismissRequest: () -> Unit,
-    onSourceChanged: (Source) -> Unit
-) = AnimatedVisibility(
-    visible
-){
-    var name by remember { mutableStateOf(source.name) }
-    var url by remember { mutableStateOf(source.url) }
+    onSourceChanged: (Blacklist) -> Unit
+) {
+    blacklist ?: return
+    AnimatedVisibility(
+        visible
+    ){
+        var name by remember { mutableStateOf(blacklist.name) }
+        var url by remember { mutableStateOf(blacklist.uuid) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        RWSingleOutlinedTextField(
-            "Name",
-            name,
-            modifier = Modifier.fillMaxWidth().padding(10.dp)
-        ) { name = it }
+        Column(modifier = Modifier.fillMaxSize()) {
+            RWSingleOutlinedTextField(
+                "Name",
+                name,
+                modifier = Modifier.fillMaxWidth().padding(10.dp)
+            ) { name = it }
 
-        RWSingleOutlinedTextField(
-            "Url",
-            url,
-            modifier = Modifier.fillMaxWidth().padding(10.dp)
-        ) { url = it }
+            RWSingleOutlinedTextField(
+                "UUID",
+                url,
+                modifier = Modifier.fillMaxWidth().padding(10.dp)
+            ) { url = it }
 
-        Box(modifier = Modifier
-            .weight(1f)
-            .fillMaxWidth()
-        ) {
-            TextButton(
-                onClick =
-                {
-                    val cpy = source.copy(name = name, url = url)
-                    if(source != cpy) onSourceChanged(cpy)
-                    onDismissRequest()
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd),
-            ) { Text("Apply", style = MaterialTheme.typography.bodyLarge) }
+            Box(modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+            ) {
+                TextButton(
+                    onClick =
+                    {
+                        val cpy = blacklist.copy(name = name, uuid = url)
+                        if(blacklist != cpy) onSourceChanged(cpy)
+                        onDismissRequest()
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd),
+                ) { Text("Apply", style = MaterialTheme.typography.bodyLarge) }
+            }
         }
     }
 }
@@ -781,31 +764,42 @@ private fun AnimatedSourceInfo(
 private fun JoinServerRequestDialog(
     visible: Boolean,
     onDismissRequest: () -> Unit,
-    mapName: String,
-    creatorName: String,
-    version: String,
+    roomDescription: RoomDescription?,
+    blacklists: SnapshotStateList<Blacklist>,
     onJoin: (dismiss: () -> Unit) -> Unit,
-) = AnimatedAlertDialog(
-    visible, onDismissRequest = onDismissRequest
-) { m, dismiss ->
-    BorderCard(
-        modifier = Modifier
-            .fillMaxSize(0.5f)
-            .padding(10.dp)
-            .then(m)
-            .verticalScroll(rememberScrollState()),
-        backgroundColor = Color.Gray
-    ) {
-        ExitButton(dismiss)
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Info, null, modifier = Modifier.size(25.dp).padding(5.dp))
-            Text("Join Server?", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = Color(151, 188, 98))
+) {
+    roomDescription ?: return
+    AnimatedAlertDialog(
+        visible, onDismissRequest = onDismissRequest
+    ) { m, dismiss ->
+        BorderCard(
+            modifier = Modifier
+                .fillMaxSize(0.5f)
+                .padding(10.dp)
+                .then(m)
+                .verticalScroll(rememberScrollState()),
+            backgroundColor = Color.Gray
+        ) {
+            ExitButton(dismiss)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Info, null, modifier = Modifier.size(25.dp).padding(5.dp))
+                Text("Join Server?", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = Color(151, 188, 98))
+            }
+            LargeDividingLine { 5.dp }
+            Text("creator: ${roomDescription.mapName}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Text("map: ${roomDescription.creator}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Text("version: ${roomDescription.version}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Spacer(modifier = Modifier.weight(1f))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                RWTextButton("Join", modifier = Modifier.padding(5.dp), onClick = { onJoin(dismiss) })
+                RWTextButton("Add to Blacklist", modifier = Modifier.padding(5.dp)) {
+                    blacklists.add(
+                        Blacklist("${roomDescription.creator}: ${roomDescription.mapName}", roomDescription.uuid)
+                    )
+
+                    dismiss()
+                }
+            }
         }
-        LargeDividingLine { 5.dp }
-        Text("creator: $mapName", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-        Text("map: $creatorName", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-        Text("version: $version", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-        Spacer(modifier = Modifier.weight(1f))
-        RWTextButton("Join", modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally), onClick = { onJoin(dismiss) })
     }
 }

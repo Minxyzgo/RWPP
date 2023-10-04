@@ -14,7 +14,9 @@ import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.Root
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
+import com.corrodinggames.rts.game.e
 import com.corrodinggames.rts.gameFramework.ac
+import com.corrodinggames.rts.gameFramework.j.au
 import com.corrodinggames.rts.gameFramework.l
 import com.corrodinggames.rts.gameFramework.n
 import com.corrodinggames.rts.java.Main
@@ -22,11 +24,10 @@ import com.corrodinggames.rts.java.audio.lwjgl.OpenALAudio
 import com.corrodinggames.rts.java.b
 import com.corrodinggames.rts.java.b.a
 import com.corrodinggames.rts.java.u
+import com.github.minxyzgo.rwij.InjectMode
+import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
-import io.github.rwpp.desktop.displaySize
-import io.github.rwpp.desktop.gameCanvas
-import io.github.rwpp.desktop.rwppVisibleSetter
-import io.github.rwpp.desktop.sendMessageDialog
+import io.github.rwpp.desktop.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.*
@@ -35,6 +36,8 @@ import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
+import io.github.rwpp.game.units.GameCommandActions
+import io.github.rwpp.game.units.GameInternalUnits
 import io.github.rwpp.ui.LoadingContext
 import io.github.rwpp.welcomeMessage
 import kotlinx.coroutines.channels.Channel
@@ -53,6 +56,8 @@ class GameImpl : Game {
         .apply { isAccessible = true }
     private var playerCacheMap = mutableMapOf<com.corrodinggames.rts.game.n, Player>()
     private var threadConnector: com.corrodinggames.rts.gameFramework.j.an? = null
+    private var isSandboxGame: Boolean = false
+    private var bannedUnitList: List<GameInternalUnits> = listOf()
 
     override val gameVersion: Int = 176
 
@@ -64,14 +69,14 @@ class GameImpl : Game {
                     get() = PlayerInternal.c
                     set(value) { PlayerInternal.b(value, true) }
                 override val isHost: Boolean
-                    get() =  B.bX.C
+                    get() =  B.bX.C || isSandboxGame
                 override val isHostServer: Boolean
                     get() = B.bX.H
                 override val localPlayer: Player
                     get() {
                         val p = playerCacheMap[B.bX.z]
                         if(p == null) getPlayers()
-                        return playerCacheMap[B.bX.z]!!
+                        return playerCacheMap[B.bX.z] ?: PlayerImpl(B.bs, this)
                     }
                 override var sharedControl: Boolean
                     get() = l
@@ -119,7 +124,10 @@ class GameImpl : Game {
                     set(value) { o = value }
                 override var lockedRoom: Boolean
                     get() = p
-                    set(value) { p = value }
+                    set(value) {
+                        p = value
+                        if(isHost && value) sendSystemMessage("Room has been locked. Now player can't join the room")
+                    }
                 override var teamLock: Boolean
                     get() = m
                     set(value) { m = value }
@@ -168,15 +176,19 @@ class GameImpl : Game {
 
                 override fun disconnect() {
                     playerCacheMap.clear()
+                    isSandboxGame = false
+                    bannedUnitList = listOf()
                     B.bX.b("exited")
                 }
 
                 override fun startGame() {
-                    if(isHost) {
+                    rwppVisibleSetter(false)
+                    gameCanvas.isVisible = true
+                    gameCanvas.requestFocus()
+                    isGaming = true
+
+                    if(isHost || isSandboxGame) {
                         B.bX.ae()
-                        rwppVisibleSetter(false)
-                        gameCanvas.isVisible = true
-                        gameCanvas.requestFocus()
                         isGaming = true
                     } else if(isHostServer) {
                         sendChatMessage("-qc -start")
@@ -190,10 +202,12 @@ class GameImpl : Game {
         Root::class.setFunction {
             addProxy(Root::showMainMenu) {
                 if(isGaming) {
+                    if(isSandboxGame) gameRoom.disconnect()
                     l.B().bS.u = false
                     gameCanvas.isVisible = false
                     rwppVisibleSetter(true)
                     isGaming = false
+                    com.corrodinggames.librocket.a.a().b()
 //                    game.bQ.slick2dFullScreen = false
 //                    GameImpl.game.g()
                     val libRocket = ScriptContext::class.java.getDeclaredField("libRocket").run {
@@ -232,12 +246,16 @@ class GameImpl : Game {
             addProxy(Root::makeSendMessagePopup) {
                 SwingUtilities.invokeLater {
                     sendMessageDialog.isVisible = true
+                    val window = mainJFrame
+                    sendMessageDialog.setLocation(window.x + window.width / 2, window.y + window.height / 2)
                 }
             }
 
             addProxy(Root::makeSendTeamMessagePopupWithDefaultText) { _, str ->
                 SwingUtilities.invokeLater {
                     sendMessageDialog.isVisible = true
+                    val window = mainJFrame
+                    sendMessageDialog.setLocation(window.x + window.width / 2, window.y + window.height / 2)
                 }
             }
         }
@@ -294,6 +312,31 @@ class GameImpl : Game {
             }
         }
 
+        com.corrodinggames.rts.gameFramework.j.ad::class.setFunction {
+            addProxy("a", com.corrodinggames.rts.gameFramework.e::class, mode = InjectMode.InsertBefore) { _: Any?, b3: com.corrodinggames.rts.gameFramework.e ->
+                val actionString = b3.k.a()
+                if(actionString.startsWith("u_")) {
+                    val realUnit = runCatching {
+                        GameInternalUnits.valueOf(
+                            actionString.removePrefix("u_").removePrefix("c_")
+                        )
+                    }.getOrNull()
+                    if(realUnit != null && realUnit in bannedUnitList) {
+                        return@addProxy InterruptResult(Unit)
+                    }
+                }
+                if(b3.j == null) return@addProxy Unit
+                val realAction = GameCommandActions.from(b3.j.d().ordinal)
+                val u = b3.j.a()
+                if(u is com.corrodinggames.rts.game.units.ar) {
+                    val realUnit = GameInternalUnits.from(u.ordinal)
+                    if(realAction == GameCommandActions.BUILD && realUnit in bannedUnitList) {
+                        InterruptResult(Unit)
+                    } else Unit
+                } else Unit
+            }
+        }
+
         GlobalEventChannel.filter(StartGameEvent::class).subscribeAlways {
             rwppVisibleSetter(false)
             gameCanvas.isVisible = true
@@ -344,27 +387,31 @@ class GameImpl : Game {
         gameThread.isDaemon = true
         gameThread.start()
 
+        Main::class.java.declaredConstructors[0].apply {
+            isAccessible = true
+            main = newInstance() as Main
+        }
+
         val receivedChannel = Channel<Unit>(1)
 
         container.post {
             val nHelper = object : n() {
-                //val method = ScriptEngine::class.java.getDeclaredMethod("addRunnableToQueue")
+                val i = com.corrodinggames.rts.java.i(main)
 
                 override fun a(p0: String, p1: Int) {
                     if(p0.startsWith("kicked", ignoreCase = true)) {
                         KickedEvent(p0).broadCastIn()
                     } else {
-                        if(isGaming) {
-//                            main.p.b(
-//                                VariableScope.nullOrMissingString,
-//                                p0
-//                            )
-                        }
+                        i.a(p0, p1)
                     }
                 }
 
                 override fun a(p0: String, p1: String) {
-                    KickedEvent("$p0: $p1").broadCastIn()
+                    if(p0.startsWith("Briefing", ignoreCase = true)) {
+                        i.a(p0, p1)
+                    } else {
+                        KickedEvent("$p0: $p1").broadCastIn()
+                    }
                 }
 
                 override fun a(p0: String, p1: Boolean) {
@@ -393,11 +440,6 @@ class GameImpl : Game {
             AMClass.a = com.corrodinggames.rts.java.l(openALAudio)
             com.corrodinggames.rts.gameFramework.j.n.d = com.corrodinggames.rts.java.k()
             ac.b = VClass()
-
-            Main::class.java.declaredConstructors[0].apply {
-                isAccessible = true
-                main = newInstance() as Main
-            }
 
             main.g()
 
@@ -491,6 +533,63 @@ class GameImpl : Game {
         }
     }
 
+    override fun hostNewSandbox() {
+        container.post {
+            val root = ScriptEngine.getInstance().root
+            val libRocket = ScriptContext::class.java.getDeclaredField("libRocket").run {
+                isAccessible = true
+                get(root)
+            } as com.corrodinggames.librocket.b
+            val guiEngine = ScriptContext::class.java.getDeclaredField("guiEngine").run {
+                isAccessible = true
+                get(root)
+            } as a
+
+            val game = l.B()
+            game.bQ.aiDifficulty = Difficulty.Hard.ordinal - 2 // fuck code
+
+            guiEngine.b(true)
+            guiEngine.c(false)
+
+            val met = IClass::class.java.getDeclaredMethod(
+                "a",
+                String::class.java,
+                Boolean::class.java,
+                Int::class.java,
+                Int::class.java,
+                Boolean::class.java,
+                Boolean::class.java
+            )
+            met.invoke(null, "maps/skirmish/[z;p10]Crossing Large (10p).tmx", false, 0, 0, true, false)
+
+            game.bX.ay.a = GameMapType.a
+            game.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
+            game.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
+
+            game.bL.E = false
+            game.bS.y()
+            game.bv = true
+
+
+            game.bX.y = "You"
+            game.bX.o = true
+            val S: Boolean = game.bX.R()
+
+            if(S) {
+                val e = game.bX.e()
+                if(e != null) {
+                    e.f = game.bQ.aiDifficulty
+                    game.bX.a(e)
+                }
+
+                isSandboxGame = true
+            }
+
+
+            RefreshUIEvent().broadCastIn()
+        }
+    }
+
     override fun setUserName(name: String) {
         l.B().bX.a(name)
     }
@@ -581,7 +680,7 @@ class GameImpl : Game {
                 val maps = mutableListOf<GameMap>()
                 folder
                     .walk()
-                    .filter { it.name.endsWith(".tmx") }
+                    .filter { it.name.endsWith(".tmx") || it.name.endsWith(".rwsave") }
                     .forEachIndexed { i, f ->
                         maps.add(object : GameMap {
                             override val id: Int = i
@@ -611,6 +710,10 @@ class GameImpl : Game {
     }
 
     override fun getMissionsByType(type: MissionType): List<Mission> = getAllMissions()
+    override fun onBanUnits(units: List<GameInternalUnits>) {
+        bannedUnitList = units
+        if(units.isNotEmpty()) gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.joinToString(", ")}")
+    }
 
     private fun restrictedString(str: String?): String? {
         return str?.replace("'", ".")?.replace("\"", ".")?.replace("(", ".")?.replace(")", ".")?.replace(",", ".")

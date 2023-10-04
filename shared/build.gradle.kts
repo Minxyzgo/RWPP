@@ -10,6 +10,7 @@ import javassist.Modifier
 
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization")
     id("com.android.library")
     id("org.jetbrains.compose")
 }
@@ -43,10 +44,12 @@ injectionMultiplatform {
     android {
         setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity"
             .with("updateUI", "askPasswordInternal", "refreshChatLog", "addMessageToChatLog", "startGame"))
-        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.k".with("g(Ljava/lang/String;)"))
-        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.bb".with("onClick"))
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.k".with("g(Ljava/lang/String;)", "d(Ljava/lang/String;)"))
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.d".with("b(Landroid/app/Activity;)"))
         //setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.game.i".with("n")) version
-        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.j.ae".with("X", "d(Ljava/lang/String;Ljava/lang/String;)"))
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.j.ae".with(
+            "X", "d(Ljava/lang/String;Ljava/lang/String;)", "x()", "a(Lcom/corrodinggames/rts/gameFramework/e;)"
+        ))
         action {
             Libs.`android-game-lib`.classTree.defPool["com.corrodinggames.rts.gameFramework.j.ae"].apply {
                 //make accessible
@@ -78,9 +81,12 @@ injectionMultiplatform {
     jvm {
         target = "desktopMain"
         setProxy(Libs.`game-lib`,
-            "com.corrodinggames.librocket.scripts.Root".with("showMainMenu", "showBattleroom", "receiveChatMessage", "makeSendMessagePopup", "makeSendTeamMessagePopupWithDefaultText"),
+            "com.corrodinggames.librocket.scripts.Root".with(
+                "showMainMenu", "showBattleroom", "receiveChatMessage", "makeSendMessagePopup", "makeSendTeamMessagePopupWithDefaultText"
+            ),
             "com.corrodinggames.rts.java.Main".with("c", "b()"),
-            "com.corrodinggames.rts.java.b.a".with("p")
+            "com.corrodinggames.rts.java.b.a".with("p"),
+            "com.corrodinggames.rts.gameFramework.j.ad".with("a(Lcom/corrodinggames/rts/gameFramework/e;)")
         )
         action {
             // set all members of Main to public
@@ -116,6 +122,7 @@ kotlin {
                 api(compose.material3)
                 api("com.halilibo.compose-richtext:richtext-ui:0.17.0")
                 api("com.squareup.okhttp3:okhttp:4.11.0")
+                api("net.peanuuutz.tomlkt:tomlkt:0.3.3")
                 //api("com.github.nanihadesuka:LazyColumnScrollbar:1.7.2")
                 //api("com.google.code.gson:gson:2.10.1")
                 //api("io.github.oleksandrbalan:modalsheet:0.5.0")

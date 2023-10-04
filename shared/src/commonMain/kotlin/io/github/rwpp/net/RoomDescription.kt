@@ -36,14 +36,13 @@ data class RoomDescription(
             return "$netWorkAddress:$port"
         }
         return "get|" + uuid2.replace("|", ".") + "|" + roomId + "|" + requiredPassword + "|" + port
-
     }
 }
 
 val List<RoomDescription>.sorted
     get() = this.sortedBy {
         when {
-            it.isUpperCase && it.netWorkAddress.startsWith("url:") -> 0
+            it.isUpperCase && it.netWorkAddress.startsWith("uuid:") -> 0
             //it.isUpperCase -> 1
             it.isLocal -> 2
             it.roomType.contains("battleroom") -> {

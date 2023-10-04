@@ -7,14 +7,21 @@
 
 package io.github.rwpp.android.impl
 
+import android.content.Context
 import com.corrodinggames.rts.gameFramework.SettingsEngine
 import io.github.rwpp.ContextController
+import io.github.rwpp.android.MainActivity
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.ModManager
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.serializer
+import net.peanuuutz.tomlkt.*
 import okhttp3.OkHttpClient
 import java.lang.reflect.Field
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.reflect.KClass
 
 class GameContextControllerImpl(private val _exit: () -> Unit)
     : ContextController, Game by GameImpl(), ModManager by ModManagerImpl() {
@@ -23,6 +30,7 @@ class GameContextControllerImpl(private val _exit: () -> Unit)
 
     init {
         Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
+        readAllConfig()
     }
 
     override fun i18n(str: String, vararg args: Any?): String {
@@ -40,11 +48,32 @@ class GameContextControllerImpl(private val _exit: () -> Unit)
         field.set(GameEngine.t().bN, value)
     }
 
+    @OptIn(InternalSerializationApi::class)
+    override fun <T : Any> getRWPPConfig(clazz: KClass<T>): T? {
+        val name = clazz.qualifiedName
+        val preferences = MainActivity.instance.getSharedPreferences(name, Context.MODE_PRIVATE)
+        val src = preferences.getString("src", "")
+        if(src.isNullOrBlank()) return null
+        return Toml.decodeFromString(clazz.serializer(), src)
+    }
+
+    @OptIn(InternalSerializationApi::class)
+    @Suppress("UNCHECKED_CAST")
+    override fun setRWPPConfig(value: Any) {
+        val clazz = value::class
+        val name = clazz.qualifiedName
+        val preferences = MainActivity.instance.getSharedPreferences(name, Context.MODE_PRIVATE)
+        val editor = preferences.edit()
+        editor.putString("src", Toml.encodeToString(clazz.serializer() as KSerializer<Any>, value))
+        editor.commit()
+    }
+
     override fun saveConfig() {
         GameEngine.t().bN.save()
     }
 
     override fun exit() {
+        saveAllConfig()
         GameEngine.t().bN.apply {
             numLoadsSinceRunningGameOrNormalExit = 0
             numIncompleteLoadAttempts = 0

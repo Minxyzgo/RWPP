@@ -5,18 +5,5 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.config
+package io.github.rwpp.game.map
 
-import kotlin.reflect.KClass
-
-interface ConfigHandler {
-    fun <T> getConfig(name: String): T
-
-    fun setConfig(name: String, value: Any?)
-
-    fun <T : Any> getRWPPConfig(clazz: KClass<T>): T?
-
-    fun setRWPPConfig(value: Any)
-
-    fun saveConfig()
-}

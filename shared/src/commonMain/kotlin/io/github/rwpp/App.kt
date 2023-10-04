@@ -20,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.ShaderBrush
@@ -90,6 +91,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
     )
 
     var isLoading by remember { mutableStateOf(true) }
+    var isSandboxGame by remember { mutableStateOf(false) }
     var showSinglePlayerView by remember { mutableStateOf(false) }
     var showMultiplayerView by remember { mutableStateOf(false) }
     var showSettingsView by remember { mutableStateOf(false) }
@@ -122,6 +124,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 ) {
                     MainMenu(
                         multiplayer = {
+                            isSandboxGame = false
                             showMultiplayerView = true
                         },
                         mission = {
@@ -132,6 +135,11 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                         },
                         mods = {
                             showModsView = true
+                        },
+                        sandbox = {
+                            isSandboxGame = true
+                            showRoomView = true
+                            context.hostNewSandbox()
                         }
                     )
                 }
@@ -163,11 +171,16 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 AnimatedVisibility(
                     showRoomView
                 ) {
-                    MultiplayerRoomView {
-                        showRoomView = false
-                        context.cancelJoinServer()
+                    MultiplayerRoomView(isSandboxGame) {
+                        if(!isSandboxGame) {
+                            context.cancelJoinServer()
+                            showMultiplayerView = true
+                        }
+
+                        context.onBanUnits(listOf())
                         context.gameRoom.disconnect()
-                        showMultiplayerView = true
+
+                        showRoomView = false
                     }
                 }
 
@@ -186,20 +199,31 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     kickedDialogVisible,
                     onDismissRequest = { kickedDialogVisible = false }) { modifier, dismiss ->
                     BorderCard(
-                        modifier = Modifier.fillMaxSize(0.3f).then(modifier),
+                        modifier = Modifier.fillMaxSize(0.5f).then(modifier),
                         backgroundColor = Color.Gray
                     ) {
                         ExitButton(dismiss)
+
+                        Row(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
+                            Divider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                            Box {
+                                Icon(Icons.Default.Warning, null, tint = Color(151, 188, 98), modifier = Modifier.size(50.dp).offset(5.dp, 5.dp).blur(2.dp))
+                                Icon(Icons.Default.Warning, null, tint = Color(0xFFb6d7a8), modifier = Modifier.size(50.dp))
+                            }
+                            Divider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                        }
+
+                        LargeDividingLine { 5.dp }
+
                         Column(
                             modifier = Modifier.weight(1f).fillMaxWidth(),
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(Icons.Default.Warning, null, tint = Color.Red, modifier = Modifier.size(50.dp))
                             Text(
                                 kickedReason,
                                 modifier = Modifier.padding(5.dp),
-                                color = Color.Red,
+                                color = Color.Black,
                                 style = MaterialTheme.typography.headlineLarge
                             )
                         }
@@ -298,7 +322,8 @@ fun MainMenu(
     multiplayer: () -> Unit,
     mission: () -> Unit,
     settings: () -> Unit,
-    mods: () -> Unit
+    mods: () -> Unit,
+    sandbox: () -> Unit
 ) {
     MaterialTheme.colorScheme
     val deliciousFont = MaterialTheme.typography.headlineLarge.fontFamily!!
@@ -380,11 +405,10 @@ fun MainMenu(
                         Heading(1, "Notes")
                         CodeBlock(
                             """
-                                Sandbox editor and watching replay haven't yet been implemented.
+                                watching replay haven't yet been implemented.
                                 RWPP currently couldn't be host in Official Server and RW-HPS.
                                 Only support for English now.
                                 Some player config options like color and staring-units aren't implemented.
-                                Saved game couldn't be loaded yet.
                                 For android, start a new game and pause to open the setting to use external folder.
                                 
                                 These will be fixed in the future...
@@ -416,7 +440,7 @@ fun MainMenu(
             ) {
                 item { Image(painter = painterResource("title.png"), "title", modifier = Modifier.padding(15.dp)) }
                 item { MenuButton("Mission", onClick = mission) }
-                item { MenuButton("Sandbox Editor", false) {} }
+                item { MenuButton("Sandbox Editor", onClick = sandbox) }
                 item { MenuButton("Multiplayer", onClick = multiplayer) }
                 item { MenuButton("Mods", onClick = mods) }
                 item { MenuButton("Settings", onClick = settings) }

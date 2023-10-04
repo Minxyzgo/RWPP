@@ -11,6 +11,7 @@ import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
+import io.github.rwpp.game.units.GameInternalUnits
 
 interface GameRoom {
     var maxPlayerCount: Int

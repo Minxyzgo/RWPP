@@ -7,6 +7,9 @@
 
 package io.github.rwpp
 
+import io.github.rwpp.config.Blacklists
+import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.instance
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.config.ConfigHandler
 import io.github.rwpp.game.mod.ModManager
@@ -14,6 +17,23 @@ import io.github.rwpp.net.Net
 
 interface ContextController : ConfigHandler, Game, Net, ModManager {
     fun i18n(str: String, vararg args: Any?): String
+
+    fun readAllConfig() {
+        Blacklists.readFromContext(this)
+        getRWPPConfig(MultiplayerPreferences::class)?.apply {
+            val instance = MultiplayerPreferences.instance
+            instance.creatorNameFilter = creatorNameFilter
+            instance.joinServerAddress = joinServerAddress
+            instance.mapNameFilter = mapNameFilter
+            instance.playerLimitRangeTo = playerLimitRangeTo
+            instance.playerLimitRangeFrom = playerLimitRangeFrom
+        }
+    }
+
+    fun saveAllConfig() {
+        Blacklists.writeFromContext(this)
+        setRWPPConfig(MultiplayerPreferences.instance)
+    }
 
     fun exit()
 }

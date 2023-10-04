@@ -44,7 +44,7 @@ import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
-import io.github.rwpp.game.mod.Mod
+import io.github.rwpp.game.units.GameInternalUnits
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.launch
@@ -85,9 +85,9 @@ object ConnectingPlayer : Player {
     ) {}
 }
 
-@OptIn(ExperimentalResourceApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalResourceApi::class)
 @Composable
-fun MultiplayerRoomView(onExit: () -> Unit) {
+fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     BackHandler(true, onExit)
 
     val context = LocalController.current
@@ -97,6 +97,8 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
     var selectedMap by remember(update) { mutableStateOf(room.selectedMap) }
 
     var optionVisible by remember { mutableStateOf(false) }
+    var banUnitVisible by remember { mutableStateOf(false) }
+    var selectedBanUnits by remember { mutableStateOf(listOf<GameInternalUnits>()) }
 
     var showMapSelectView by remember { mutableStateOf(false) }
     val players = remember(update) { room.getPlayers().sortedBy { it.team } }
@@ -123,12 +125,14 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
             scope.launch {
                 chatMessages.add(
                     buildAnnotatedString {
-                        withStyle(style = SpanStyle(color = Player.getTeamColor(it.spawn))) {
-                            append(it.sender)
+                        if(it.sender.isNotBlank()) {
+                            withStyle(style = SpanStyle(color = Player.getTeamColor(it.spawn))) {
+                                append(it.sender + ": ")
+                            }
                         }
 
                         withStyle(style = SpanStyle(color = Color.White)) {
-                            append(": ${it.message}")
+                            append(it.message)
                         }
                     }
                 )
@@ -147,8 +151,14 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
         { optionVisible = false },
         updateAction,
         room,
+        { banUnitVisible = true; optionVisible = false },
         players
     )
+
+    BanUnitViewDialog(banUnitVisible, { banUnitVisible = false }, selectedBanUnits) {
+        selectedBanUnits = it
+        context.onBanUnits(it)
+    }
 
     PlayerOverrideDialog(playerOverrideVisible, { playerOverrideVisible = false }, updateAction, room, selectedPlayer)
 
@@ -187,7 +197,7 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
 
         @Composable
         fun MessageView(modifier: Modifier = Modifier) {
-            SelectionContainer {
+            SelectionContainer(modifier) {
                 if(LocalWindowManager.current == WindowManager.Large) {
                     val listState = rememberLazyListState()
                     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
@@ -254,7 +264,7 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
                                     style = MaterialTheme.typography.bodyLarge,
                                     modifier = Modifier.padding(10.dp)
                                 )
-                                if(LocalWindowManager.current == WindowManager.Large) MapImage(Modifier.weight(.6f))
+                                if(LocalWindowManager.current == WindowManager.Large) MapImage(Modifier.weight(1f))
                             }
 
                             if(LocalWindowManager.current != WindowManager.Large) MapImage(Modifier.weight(1f).fillMaxWidth())
@@ -284,11 +294,10 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
                                         "Select Map",
                                         modifier = Modifier.padding(5.dp)
                                     ) { showMapSelectView = true }
-                                    if(LocalWindowManager.current != WindowManager.Large) {
+                                    if(LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
                                         var isLocked by remember { mutableStateOf(false) }
                                         IconButton(
                                             { isLocked = !isLocked; room.lockedRoom = isLocked },
-                                            enabled = isHost,
                                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp)
                                         ) {
                                             Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else Color.White)
@@ -390,12 +399,25 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
                                 }
                             }
 
-                            if(LocalWindowManager.current != WindowManager.Large) {
+                            if(LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
                                 BorderCard(
                                     modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 200.dp).padding(5.dp),
                                     backgroundColor = Color.DarkGray.copy(.7f)
                                 ) {
-                                    MessageTextField()
+                                    Row(modifier = Modifier.fillMaxWidth()) {
+                                        RWTextButton(
+                                            "Change Site",
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
+                                        ) {
+                                            if(players.isNotEmpty()) {
+                                                selectedPlayer = room.localPlayer
+                                                playerOverrideVisible = true
+                                            }
+                                        }
+
+                                        MessageTextField()
+                                    }
+
                                     MessageView()
                                 }
                             }
@@ -430,7 +452,7 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
                                 }
 
                                 var isLocked by remember(update) { mutableStateOf(room.lockedRoom) }
-                                IconButton(
+                                if(!isSandboxGame) IconButton(
                                     { isLocked = !isLocked; room.lockedRoom = isLocked },
                                     enabled = isHost,
                                     modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
@@ -438,10 +460,10 @@ fun MultiplayerRoomView(onExit: () -> Unit) {
                                     Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else Color.White)
                                 }
 
-                                MessageTextField()
+                                if(!isSandboxGame) MessageTextField()
                             }
 
-                            BorderCard(
+                            if(!isSandboxGame) BorderCard(
                                 modifier = Modifier
                                     .padding(5.dp),
                                 backgroundColor = Color.DarkGray.copy(.7f)
@@ -649,6 +671,7 @@ private fun MultiplayerOptionDialog(
     onDismissRequest: () -> Unit,
     update: () -> Unit,
     room: GameRoom,
+    onShowBanUnitDialog: () -> Unit,
     players: List<Player>
 ) = AnimatedAlertDialog(
     visible, onDismissRequest = { onDismissRequest(); update() }
@@ -875,6 +898,12 @@ private fun MultiplayerOptionDialog(
                     }
                 ) {
                     teamUnitCapHostedGame = it.toIntOrNull()
+                }
+            }
+
+            item {
+                RWTextButton("Ban Units", modifier = Modifier.padding(5.dp)) {
+                    onShowBanUnitDialog()
                 }
             }
         }

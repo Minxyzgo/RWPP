@@ -12,10 +12,16 @@ import com.corrodinggames.rts.gameFramework.SettingsEngine
 import io.github.rwpp.ContextController
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.ModManager
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.serializer
+import net.peanuuutz.tomlkt.Toml
 import okhttp3.OkHttpClient
+import java.io.File
 import java.lang.reflect.Field
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.reflect.KClass
 
 class GameContextControllerImpl(private val _exit: () -> Unit)
     : ContextController, Game by GameImpl(), ModManager by ModManagerImpl() {
@@ -24,6 +30,7 @@ class GameContextControllerImpl(private val _exit: () -> Unit)
 
     init {
         Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
+        readAllConfig()
     }
 
     override fun i18n(str: String, vararg args: Any?): String {
@@ -41,11 +48,32 @@ class GameContextControllerImpl(private val _exit: () -> Unit)
         field.set(LClass.B().bQ, value)
     }
 
+    @OptIn(InternalSerializationApi::class)
+    override fun <T : Any> getRWPPConfig(clazz: KClass<T>): T? {
+        val name = clazz.qualifiedName
+        val file = File("$name.toml")
+        if(!file.exists()) file.createNewFile()
+        val src = file.readText()
+        if(src.isBlank()) return null
+        return Toml.decodeFromString(clazz.serializer(), src)
+    }
+
+    @OptIn(InternalSerializationApi::class)
+    @Suppress("UNCHECKED_CAST")
+    override fun setRWPPConfig(value: Any) {
+        val clazz = value::class
+        val name = clazz.qualifiedName
+        val file = File("$name.toml")
+        if(!file.exists()) file.createNewFile()
+        file.writeText(Toml.encodeToString(clazz.serializer() as KSerializer<Any>, value))
+    }
+
     override fun saveConfig() {
         LClass.B().bQ.save()
     }
 
     override fun exit() {
+        saveAllConfig()
         LClass.B().bQ.apply {
             numLoadsSinceRunningGameOrNormalExit = 0
             numIncompleteLoadAttempts = 0

@@ -8,31 +8,37 @@
 package io.github.rwpp.ui
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.text.*
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun BorderCard(
@@ -337,6 +343,47 @@ fun ExpandableText(
     }
 }
 
+@OptIn(ExperimentalResourceApi::class, ExperimentalFoundationApi::class)
+@Composable
+fun LazyGridItemScope.MapItem(
+    index: Int,
+    state: LazyListState,
+    name: String,
+    image: Painter?,
+    showImage: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val (_, easing) = state.calculateDelayAndEasing(index, 5)
+    val animation = tween<Float>(durationMillis = 500, delayMillis = 0, easing = easing)
+    val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
+    val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
+
+    BorderCard(
+        modifier = Modifier
+            .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+            .animateItemPlacement()
+            .padding(10.dp)
+            .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
+            .clickable { onClick() },
+        backgroundColor = Color.DarkGray.copy(.7f)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if(showImage) Image(
+                modifier = Modifier.padding(5.dp).weight(1f),
+                painter = image ?: painterResource("error_missingmap.png"),
+                contentDescription = null
+            )
+            Text(
+                name,
+                modifier = Modifier.padding(5.dp),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
+}
 //@Composable
 //fun Modifier.simpleVerticalScrollbar(
 //    state: LazyListState,

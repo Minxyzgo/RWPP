@@ -14,19 +14,19 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.core.app.ActivityCompat
 import io.github.rwpp.App
 import io.github.rwpp.ContextController
 import io.github.rwpp.LocalController
 import io.github.rwpp.android.impl.GameContextControllerImpl
+import io.github.rwpp.android.impl.doProxy
+import io.github.rwpp.event.broadCastIn
+import io.github.rwpp.event.events.ReturnMainMenuEvent
+import io.github.rwpp.game.units.GameInternalUnits
 import kotlin.system.exitProcess
 
 
@@ -38,11 +38,13 @@ class MainActivity : ComponentActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) {
             isGaming = false
+            isSandboxGame = false
+            if(!isReturnToBattleRoom) ReturnMainMenuEvent().broadCastIn()
+            isReturnToBattleRoom = false
         }
         instance = this
 
         Log.i("RWPP", "check permission: ${checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED}")
-
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         doProxy()
@@ -60,13 +62,6 @@ class MainActivity : ComponentActivity() {
             )
         }
 
-
-//            ActivityCompat.requestPermissions(
-//                this,
-//                permissions,
-//                101
-//            )
-
         requestPermissions(permissions, 1)
 
         setContent {
@@ -76,43 +71,27 @@ class MainActivity : ComponentActivity() {
                 }
             ) {
                 App()
-
-//                val launcher = rememberLauncherForActivityResult(
-//                    ActivityResultContracts.RequestPermission()
-//                ) { isGranted: Boolean ->
-//                    if (isGranted) {
-//                        // Permission Accepted: Do something
-//                        Toast.makeText(this, "permission admitted", Toast.LENGTH_SHORT).show()
-//                    } else {
-//                        // Permission Denied: Do something
-//                    }
-//                }
-
-//                LaunchedEffect(Unit) {
-//                    if(checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-//                        launcher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-//                    }
-//                    launcher.launch(android.Manifest.permission.READ_MEDIA_AUDIO)
-//                    launcher.launch(android.Manifest.permission.READ_MEDIA_IMAGES)
-//                }
-
             }
         }
-
-//        requestPermissions(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), 1)
-//
-//        if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-//            != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
-//                1)
-//        }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        controller.saveAllConfig()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        controller.saveAllConfig()
+    }
 
     companion object {
         lateinit var controller: ContextController
         lateinit var instance: MainActivity
         lateinit var gameLauncher: ActivityResultLauncher<Intent>
+        var isSandboxGame: Boolean = false
         var isGaming = false
+        var isReturnToBattleRoom = false
+        var bannedUnitList: List<GameInternalUnits> = listOf()
     }
 }

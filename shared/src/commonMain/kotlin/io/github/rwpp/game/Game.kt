@@ -12,6 +12,7 @@ import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.map.Mission
 import io.github.rwpp.game.map.MissionType
+import io.github.rwpp.game.units.GameInternalUnits
 import io.github.rwpp.ui.LoadingContext
 
 interface Game {
@@ -36,6 +37,8 @@ interface Game {
         useMods: Boolean,
     )
 
+    fun hostNewSandbox()
+
     fun setUserName(name: String)
 
     suspend fun directJoinServer(address: String, uuid: String?, context: LoadingContext): Result<String>
@@ -55,4 +58,6 @@ interface Game {
     fun getAllMapsByMapType(mapType: MapType): List<GameMap>
 
     fun getMissionsByType(type: MissionType): List<Mission>
+
+    fun onBanUnits(units: List<GameInternalUnits>)
 }
