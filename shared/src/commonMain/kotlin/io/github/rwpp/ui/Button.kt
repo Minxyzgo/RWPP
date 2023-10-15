@@ -26,13 +26,16 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.platform.BackHandler
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun MenuButton(content: String, enabled: Boolean = true, onClick: () -> Unit) {
+fun MenuButton(
+    content: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
     var isPressed by remember { mutableStateOf(false) }
     val colors by remember(isPressed) {
         mutableStateOf(

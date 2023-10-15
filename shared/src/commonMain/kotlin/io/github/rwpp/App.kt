@@ -46,7 +46,7 @@ import io.github.rwpp.ui.*
 import org.jetbrains.compose.resources.*
 
 var LocalController = staticCompositionLocalOf<ContextController> { null!! }
-var LocalWindowManager = staticCompositionLocalOf<WindowManager> { WindowManager.Large }
+var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
 
 val welcomeMessage
     get() = """
@@ -54,7 +54,7 @@ val welcomeMessage
             [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
             开源地址请访问 https://github.com/Minxyzgo/RWPP 
             bug反馈与交流加入群: 150450999
-            当前版本: 1.0.1-alpha (不稳定)
+            当前版本: 1.0.3-alpha (不稳定)
             Copyright 2023 RWPP contributors
         """.trimIndent()
 
@@ -199,7 +199,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     kickedDialogVisible,
                     onDismissRequest = { kickedDialogVisible = false }) { modifier, dismiss ->
                     BorderCard(
-                        modifier = Modifier.fillMaxSize(0.5f).then(modifier),
+                        modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
                         backgroundColor = Color.Gray
                     ) {
                         ExitButton(dismiss)
@@ -250,7 +250,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     }
                 ) { modifier, dismiss ->
                     BorderCard(
-                        modifier = Modifier.fillMaxSize(0.5f).then(modifier),
+                        modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
                         backgroundColor = Color.Gray
                     ) {
                         ExitButton(dismiss)
@@ -341,7 +341,7 @@ fun MainMenu(
             ) {
                 item {
                     Text(
-                        "RWPP Update news - 1.0.0-alpha",
+                        "RWPP Update news - 1.0.3-alpha",
                         fontFamily = deliciousFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 36.sp
@@ -402,6 +402,10 @@ fun MainMenu(
                                Github: https://github.com/Minxyzgo/RWPP
                            """.trimIndent()
                         )
+                        Heading(1, "Changelogs")
+                        CodeBlock("""
+                            1.0.3-alpha: Improve menu and resize the layout on small screen device.
+                        """.trimIndent())
                         Heading(1, "Notes")
                         CodeBlock(
                             """

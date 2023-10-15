@@ -40,7 +40,7 @@ fun LoadingView(
 
     AnimatedAlertDialog(visible, onDismissRequest = onLoaded, enableDismiss = cancellable) { modifier, dismiss ->
         BorderCard(
-            modifier = Modifier.fillMaxSize(0.4f).then(modifier),
+            modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
             backgroundColor = Color.Gray
         ) {
             LaunchedEffect(Unit) {

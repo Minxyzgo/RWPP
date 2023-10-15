@@ -47,7 +47,7 @@ fun MapViewDialog(
     BorderCard(
         backgroundColor = Color.Gray,
         modifier = Modifier
-            .fillMaxSize(0.9f)
+            .fillMaxSize(0.95f)
             .padding(10.dp)
             .then(m)
     ) {
@@ -57,10 +57,8 @@ fun MapViewDialog(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-            Text("MapView", style = MaterialTheme.typography.displayLarge)
+            Text("MapView", style = MaterialTheme.typography.displayLarge.run { copy(fontSize = this.fontSize * scaleFitFloat()) })
         }
-
-        Spacer(Modifier.size(5.dp))
 
         var selectedIndex0 by remember { mutableStateOf(lastSelectedMapType.ordinal) }
 
@@ -69,6 +67,8 @@ fun MapViewDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
+                .padding(top = 5.dp)
+                .scaleFit()
         ) {
             LargeDropdownMenu(
                 modifier = Modifier.wrapContentSize().padding(5.dp),
@@ -132,7 +132,7 @@ fun LazyGridItemScope.MapItem(
             .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
             .animateItemPlacement()
             .padding(10.dp)
-            .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
+            .sizeIn(maxHeight = 200.dp * scaleFitFloat(), maxWidth = 200.dp * scaleFitFloat())
             .clickable { onClick() },
         backgroundColor = Color.DarkGray.copy(.7f)
     ) {

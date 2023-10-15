@@ -41,7 +41,7 @@ fun BanUnitViewDialog(
         BorderCard(
             backgroundColor = Color.Gray,
             modifier = Modifier
-                .fillMaxSize(if(LocalWindowManager.current == WindowManager.Large) 0.5f else 0.85f)
+                .fillMaxSize(LargeProportion())
                 .padding(10.dp)
                 .then(m)
         ) {

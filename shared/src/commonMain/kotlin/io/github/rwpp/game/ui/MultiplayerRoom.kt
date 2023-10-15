@@ -12,7 +12,9 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -85,6 +87,8 @@ object ConnectingPlayer : Player {
     ) {}
 }
 
+private val relayRegex = Regex("""R\d+""")
+
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
@@ -125,6 +129,14 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
             scope.launch {
                 chatMessages.add(
                     buildAnnotatedString {
+                        if(it.sender == "RELAY_CN-ADMIN") {
+                            val result = relayRegex.find(it.message)?.value
+
+                            if(!result.isNullOrBlank()) {
+                                context.setConfig("lastNetworkIP", result)
+                            }
+                        }
+
                         if(it.sender.isNotBlank()) {
                             withStyle(style = SpanStyle(color = Player.getTeamColor(it.spawn))) {
                                 append(it.sender + ": ")
@@ -236,7 +248,9 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                         BorderCard(
                             modifier = Modifier
                                 .weight(.4f)
-                                .padding(10.dp),
+                                .padding(10.dp)
+                                .then(if(LocalWindowManager.current == WindowManager.Small)
+                                        Modifier.verticalScroll(rememberScrollState()) else Modifier),
                             backgroundColor = Color.DarkGray.copy(.7f)
                         ) {
                             var details by remember { mutableStateOf("Getting details...") }
@@ -254,22 +268,27 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             }
 
                             remember(update) {
-                                scope.launch { details = room.roomDetails().split("\n").filter { !it.startsWith("Map:") }.joinToString("\n") }
+                                scope.launch { details = room.roomDetails().split("\n").filter { !it.startsWith("Map:") && it.isNotBlank() }.joinToString("\n") }
                             }
 
-                            Row(modifier = Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.Center) {
+                            Row(modifier = Modifier.fillMaxWidth().then(
+                                if(LocalWindowManager.current == WindowManager.Small)
+                                    Modifier else Modifier.weight(1f)
+                            ), horizontalArrangement = Arrangement.Center) {
                                 Text(
                                     details,
                                     color = Color.White,
                                     style = MaterialTheme.typography.bodyLarge,
                                     modifier = Modifier.padding(10.dp)
                                 )
-                                if(LocalWindowManager.current == WindowManager.Large) MapImage(Modifier.weight(1f))
+                                if(LocalWindowManager.current == WindowManager.Large) MapImage(Modifier.weight(.8f))
                             }
 
-                            if(LocalWindowManager.current != WindowManager.Large) MapImage(Modifier.weight(1f).fillMaxWidth())
+                            if(LocalWindowManager.current == WindowManager.Middle) MapImage(Modifier.weight(1f).fillMaxWidth())
+                            if(LocalWindowManager.current == WindowManager.Small) MapImage(Modifier.fillMaxWidth())
 
                             val mapType = remember(update) { room.mapType }
+
                             Text(
                                 mapType.name,
                                 modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
@@ -288,29 +307,40 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 color = Color.White
                             )
 
-                            if(isHost) {
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                    if(LocalWindowManager.current == WindowManager.Large) RWTextButton(
-                                        "Select Map",
-                                        modifier = Modifier.padding(5.dp)
-                                    ) { showMapSelectView = true }
-                                    if(LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
-                                        var isLocked by remember { mutableStateOf(false) }
-                                        IconButton(
-                                            { isLocked = !isLocked; room.lockedRoom = isLocked },
-                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp)
-                                        ) {
-                                            Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else Color.White)
-                                        }
+                            @Composable
+                            fun OptionButtons() {
+                                if(LocalWindowManager.current == WindowManager.Large) RWTextButton(
+                                    "Select Map",
+                                    modifier = Modifier.padding(5.dp)
+                                ) { showMapSelectView = true }
+                                if(LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
+                                    var isLocked by remember { mutableStateOf(false) }
+                                    IconButton(
+                                        { isLocked = !isLocked; room.lockedRoom = isLocked },
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp)
+                                    ) {
+                                        Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else Color.White)
                                     }
-                                    RWTextButton(
-                                        "Option",
-                                        modifier = Modifier.padding(5.dp)
-                                    ) { optionVisible = true }
-                                    RWTextButton(
-                                        "Start",
-                                        modifier = Modifier.padding(5.dp)
-                                    ) { room.startGame() }
+                                }
+                                RWTextButton(
+                                    "Option",
+                                    modifier = Modifier.padding(5.dp)
+                                ) { optionVisible = true }
+                                RWTextButton(
+                                    "Start",
+                                    modifier = Modifier.padding(5.dp)
+                                ) { room.startGame() }
+                            }
+
+                            if(isHost) {
+                                if(LocalWindowManager.current == WindowManager.Small) {
+                                    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                                        OptionButtons()
+                                    }
+                                } else {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                        OptionButtons()
+                                    }
                                 }
                             }
                         }
@@ -335,7 +365,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 Row(
                                     modifier = Modifier
                                         .padding(5.dp)
-                                        .border(BorderStroke(2.dp, Color(199, 234, 70)), CircleShape)
+                                        .border(BorderStroke(2.dp, Color(101, 147, 74)), CircleShape)
                                         .fillMaxWidth()
                                 ) {
                                     TableCell("name", playerNameWeight, drawStroke = false)
@@ -355,15 +385,16 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     Row(
                                         modifier = Modifier
                                             .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+                                            .height(IntrinsicSize.Max)
                                             .padding(5.dp)
-                                            .border(BorderStroke(2.dp, Color(199, 234, 70)), CircleShape)
+                                            .border(BorderStroke(2.dp, Color(160, 191, 124)), CircleShape)
                                             .fillMaxWidth()
                                             .clickable(room.isHost || room.localPlayer == player) {
                                                 selectedPlayer = player
                                                 playerOverrideVisible = true
                                             }
                                     ) {
-                                        TableCell(player.name, playerNameWeight, drawStroke = false)
+                                        TableCell(player.name, playerNameWeight, drawStroke = false, modifier = Modifier.fillMaxHeight())
                                         TableCell(
                                             if(player.isSpectator)
                                                 "S"
@@ -373,9 +404,9 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                                 Color.Black
                                             else Player.getTeamColor(player.spawnPoint)
                                         )
-                                        TableCell(player.teamAlias(), playerTeamWeight, color = Player.getTeamColor(player.team))
+                                        TableCell(player.teamAlias(), playerTeamWeight, color = Player.getTeamColor(player.team), modifier = Modifier.fillMaxHeight())
                                         val ping = remember(update) { player.ping }
-                                        TableCell(ping, playerPingWeight, drawStroke = false)
+                                        TableCell(ping, playerPingWeight, drawStroke = false, modifier = Modifier.fillMaxHeight())
                                     }
                                 }
 
@@ -511,7 +542,7 @@ private fun GameRoom.MultiplayerOptionDialog(label: String, property: KMutablePr
         enabled = isHost
     )
     Text(label,
-        modifier = Modifier.padding(5.dp),
+        modifier = Modifier.padding(top = 10.dp),
         style = MaterialTheme.typography.headlineLarge,
         color = Color(151, 188, 98)
     )
@@ -533,7 +564,7 @@ private fun PlayerOverrideDialog(
     ) { m, dismiss ->
         BorderCard(
             modifier = Modifier
-                .fillMaxSize(if(LocalWindowManager.current == WindowManager.Large) 0.6f else 0.85f)
+                .fillMaxSize(LargeProportion())
                 .then(m),
             backgroundColor = Color.Gray
         ) {
@@ -675,17 +706,17 @@ private fun MultiplayerOptionDialog(
     players: List<Player>
 ) = AnimatedAlertDialog(
     visible, onDismissRequest = { onDismissRequest(); update() }
-) { m, _ ->
+) { m, dismiss ->
     BorderCard(
         modifier = Modifier
-            .fillMaxSize(if(LocalWindowManager.current == WindowManager.Large) 0.6f else 0.85f)
+            .fillMaxSize(LargeProportion())
             .then(m),
         backgroundColor = Color.Gray
     ) {
-
+        ExitButton(dismiss)
         LazyColumn(modifier = Modifier.padding(10.dp)) {
             item {
-                LazyRow {
+                LazyRow(horizontalArrangement = Arrangement.Center) {
                     with(room) {
                         item { MultiplayerOptionDialog("No Nukes", room::noNukes) }
                         item { MultiplayerOptionDialog("Shared Control", room::sharedControl) }
@@ -694,115 +725,115 @@ private fun MultiplayerOptionDialog(
                     }
                 }
             }
-            item {
-                var selectedIndex1 by remember(room) { mutableStateOf(room.aiDifficulty.ordinal) }
-                LargeDropdownMenu(
-                    modifier = Modifier.wrapContentSize().padding(5.dp),
-                    label = "Difficulty",
-                    items = Difficulty.entries,
-                    selectedIndex = selectedIndex1,
-                    onItemSelected = { index, _ -> selectedIndex1 = index }
-                )
-
-                remember(selectedIndex1) {
-                    room.aiDifficulty = Difficulty.entries[selectedIndex1]
-                }
-            }
 
             item {
-                var selectedIndex1 by remember(room) { mutableStateOf(room.fogMode.ordinal) }
-                LargeDropdownMenu(
-                    modifier = Modifier.wrapContentSize().padding(5.dp),
-                    label = "Fog",
-                    items = FogMode.entries,
-                    selectedIndex = selectedIndex1,
-                    onItemSelected = { index, _ -> selectedIndex1 = index }
-                )
-
-                remember(selectedIndex1) {
-                    room.fogMode = FogMode.entries[selectedIndex1]
-                }
-            }
-
-            item {
-                var selectedIndex1 by remember(room) { mutableStateOf(room.startingUnits) }
-                val startingOptionList = remember {
-                    listOf(
-                        "Default",
-                        "Normal (1 builder)",
-                        "Small Arm",
-                        "3 Engineers",
-                        "3 Engineers (No Command Center)",
-                        "Experimental Spider"
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    var selectedIndex1 by remember(room) { mutableStateOf(room.aiDifficulty.ordinal) }
+                    LargeDropdownMenu(
+                        modifier = Modifier.weight(.3f).padding(5.dp),
+                        label = "Difficulty",
+                        items = Difficulty.entries,
+                        selectedIndex = selectedIndex1,
+                        onItemSelected = { index, _ -> selectedIndex1 = index }
                     )
-                }
-                LargeDropdownMenu(
-                    modifier = Modifier.wrapContentSize().padding(5.dp),
-                    label = "Starting Unit",
-                    items = startingOptionList,
-                    selectedIndex = selectedIndex1,
-                    onItemSelected = { index, _ -> selectedIndex1 = index }
-                )
 
-                remember(selectedIndex1) {
-                    room.startingUnits = selectedIndex1
-                }
-            }
-
-            item {
-                val startingUnitList = remember {
-                    listOf(
-                        "2 Teams (eg 5v5)",
-                        "3 Teams (eg 1v1v1)",
-                        "No teams (FFA)",
-                        "All spectators"
-                    )
-                }
-                LargeDropdownMenu(
-                    modifier = Modifier.wrapContentSize().padding(5.dp),
-                    label = "Set Team",
-                    items = startingUnitList,
-                    selectedIndex = 0,
-                    hasValue = false,
-                    onItemSelected = { index, _ ->
-                        when(index) {
-                            0 -> room.applyTeamChange("2t")
-                            1 -> room.applyTeamChange("3t")
-                            2 -> room.applyTeamChange("FFA")
-                            3 -> room.applyTeamChange("spectators")
-                            else -> throw RuntimeException()
-                        }
-
-                        update()
+                    remember(selectedIndex1) {
+                        room.aiDifficulty = Difficulty.entries[selectedIndex1]
                     }
-                )
+
+                    var selectedIndex2 by remember(room) { mutableStateOf(room.fogMode.ordinal) }
+                    LargeDropdownMenu(
+                        modifier = Modifier.weight(.3f).padding(5.dp),
+                        label = "Fog",
+                        items = FogMode.entries,
+                        selectedIndex = selectedIndex2,
+                        onItemSelected = { index, _ -> selectedIndex2 = index }
+                    )
+
+                    remember(selectedIndex2) {
+                        room.fogMode = FogMode.entries[selectedIndex2]
+                    }
+
+                    var selectedIndex3 by remember(room) { mutableStateOf(room.startingUnits) }
+                    val startingOptionList = remember {
+                        listOf(
+                            "Default",
+                            "Normal (1 builder)",
+                            "Small Arm",
+                            "3 Engineers",
+                            "3 Engineers (No Command Center)",
+                            "Experimental Spider"
+                        )
+                    }
+                    LargeDropdownMenu(
+                        modifier = Modifier.weight(.3f).padding(5.dp),
+                        label = "Starting Unit",
+                        items = startingOptionList,
+                        selectedIndex = selectedIndex3,
+                        onItemSelected = { index, _ -> selectedIndex3 = index }
+                    )
+
+                    remember(selectedIndex3) {
+                        room.startingUnits = selectedIndex3
+                    }
+                }
+
             }
 
             item {
-                var selectedIndex1 by remember(room) { mutableStateOf(room.startingCredits) }
-                val startingCreditList = remember {
-                    listOf(
-                        "Default (4000$)",
-                        "0$",
-                        "1000$",
-                        "2000$",
-                        "5000$",
-                        "10000$",
-                        "50000$",
-                        "100000$",
-                        "200000$"
-                    )
-                }
-                LargeDropdownMenu(
-                    modifier = Modifier.wrapContentSize().padding(5.dp),
-                    label = "Starting Credits",
-                    items = startingCreditList,
-                    selectedIndex = selectedIndex1,
-                    onItemSelected = { index, _ -> selectedIndex1 = index }
-                )
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    val startingUnitList = remember {
+                        listOf(
+                            "2 Teams (eg 5v5)",
+                            "3 Teams (eg 1v1v1)",
+                            "No teams (FFA)",
+                            "All spectators"
+                        )
+                    }
+                    LargeDropdownMenu(
+                        modifier = Modifier.weight(.5f).padding(5.dp),
+                        label = "Set Team",
+                        items = startingUnitList,
+                        selectedIndex = 0,
+                        hasValue = false,
+                        onItemSelected = { index, _ ->
+                            when(index) {
+                                0 -> room.applyTeamChange("2t")
+                                1 -> room.applyTeamChange("3t")
+                                2 -> room.applyTeamChange("FFA")
+                                3 -> room.applyTeamChange("spectators")
+                                else -> throw RuntimeException()
+                            }
 
-                remember(selectedIndex1) {
-                    room.startingCredits = selectedIndex1
+                            update()
+                        }
+                    )
+
+                    var selectedIndex1 by remember(room) { mutableStateOf(room.startingCredits) }
+                    val startingCreditList = remember {
+                        listOf(
+                            "Default (4000$)",
+                            "0$",
+                            "1000$",
+                            "2000$",
+                            "5000$",
+                            "10000$",
+                            "50000$",
+                            "100000$",
+                            "200000$"
+                        )
+                    }
+                    LargeDropdownMenu(
+                        modifier = Modifier.weight(.5f).padding(5.dp),
+                        label = "Starting Credits",
+                        items = startingCreditList,
+                        selectedIndex = selectedIndex1,
+                        onItemSelected = { index, _ -> selectedIndex1 = index }
+                    )
+
+                    remember(selectedIndex1) {
+                        room.startingCredits = selectedIndex1
+                    }
                 }
             }
 
@@ -830,79 +861,80 @@ private fun MultiplayerOptionDialog(
             }
 
             item {
-                var incomeMultiplier by remember { mutableStateOf(room.incomeMultiplier.toString()) }
-                var expanded by remember { mutableStateOf(false) }
-                RWSingleOutlinedTextField(
-                    "incomeMultiplier",
-                    incomeMultiplier,
-                    lengthLimitCount = 5,
-                    typeInNumberOnly = true,
-                    trailingIcon = {
-                        val icon =
-                            if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
-                        Icon(
-                            icon,
-                            "",
-                            modifier = Modifier.clickable(!expanded) { expanded = !expanded })
-                    },
-                    appendedContent = {
-                        BasicDropdownMenu(
-                            expanded,
-                            listOf(1f, 1.5f, 2f, 2.5f, 3f, 10f),
-                            onItemSelected = { _, v -> incomeMultiplier = v.toString() }
-                        ) {
-                            expanded = false
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    var incomeMultiplier by remember { mutableStateOf(room.incomeMultiplier.toString()) }
+                    var expanded by remember { mutableStateOf(false) }
+                    RWSingleOutlinedTextField(
+                        "incomeMultiplier",
+                        incomeMultiplier,
+                        lengthLimitCount = 5,
+                        typeInNumberOnly = true,
+                        modifier = Modifier.weight(.5f).padding(5.dp),
+                        trailingIcon = {
+                            val icon =
+                                if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                            Icon(
+                                icon,
+                                "",
+                                modifier = Modifier.clickable(!expanded) { expanded = !expanded })
+                        },
+                        appendedContent = {
+                            BasicDropdownMenu(
+                                expanded,
+                                listOf(1f, 1.5f, 2f, 2.5f, 3f, 10f),
+                                onItemSelected = { _, v -> incomeMultiplier = v.toString() }
+                            ) {
+                                expanded = false
+                            }
                         }
+                    ) {
+                        incomeMultiplier = it
                     }
-                ) {
-                    incomeMultiplier = it
-                }
 
+                    remember(incomeMultiplier) {
+                        room.incomeMultiplier = incomeMultiplier.toFloatOrNull() ?: 1f
+                    }
 
-                remember(incomeMultiplier) {
-                    room.incomeMultiplier = incomeMultiplier.toFloatOrNull() ?: 1f
+                    val context = LocalController.current
+                    var teamUnitCapHostedGame by remember { mutableStateOf(context.getConfig<Int?>("teamUnitCapHostedGame")) }
+                    var expanded1 by remember { mutableStateOf(false) }
+                    remember(teamUnitCapHostedGame) {
+                        val count = teamUnitCapHostedGame ?: 100
+                        context.setConfig("teamUnitCapHostedGame", count)
+                        context.setTeamUnitCapHostGame(count)
+                    }
+                    RWSingleOutlinedTextField(
+                        "teamUnitCapHostedGame",
+                        teamUnitCapHostedGame?.toString() ?: "",
+                        lengthLimitCount = 6,
+                        typeInNumberOnly = true,
+                        modifier = Modifier.weight(.5f).padding(5.dp),
+                        typeInOnlyInteger = true,
+                        trailingIcon = {
+                            val icon =
+                                if(expanded1) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                            Icon(
+                                icon,
+                                "",
+                                modifier = Modifier.clickable(!expanded1) { expanded1 = !expanded1 })
+                        },
+                        appendedContent = {
+                            BasicDropdownMenu(
+                                expanded1,
+                                listOf(100, 250, 500, 1000, 2000, 5000, 10000),
+                                onItemSelected = { _, v -> teamUnitCapHostedGame = v }
+                            ) {
+                                expanded1 = false
+                            }
+                        }
+                    ) {
+                        teamUnitCapHostedGame = it.toIntOrNull()
+                    }
                 }
             }
 
             item {
-                val context = LocalController.current
-                var teamUnitCapHostedGame by remember { mutableStateOf(context.getConfig<Int?>("teamUnitCapHostedGame")) }
-                var expanded by remember { mutableStateOf(false) }
-                remember(teamUnitCapHostedGame) {
-                    val count = teamUnitCapHostedGame ?: 100
-                    context.setConfig("teamUnitCapHostedGame", count)
-                    context.setTeamUnitCapHostGame(count)
-                }
-                RWSingleOutlinedTextField(
-                    "teamUnitCapHostedGame",
-                    teamUnitCapHostedGame?.toString() ?: "",
-                    lengthLimitCount = 6,
-                    typeInNumberOnly = true,
-                    typeInOnlyInteger = true,
-                    trailingIcon = {
-                        val icon =
-                            if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
-                        Icon(
-                            icon,
-                            "",
-                            modifier = Modifier.clickable(!expanded) { expanded = !expanded })
-                    },
-                    appendedContent = {
-                        BasicDropdownMenu(
-                            expanded,
-                            listOf(100, 250, 500, 1000, 2000, 5000, 10000),
-                            onItemSelected = { _, v -> teamUnitCapHostedGame = v }
-                        ) {
-                            expanded = false
-                        }
-                    }
-                ) {
-                    teamUnitCapHostedGame = it.toIntOrNull()
-                }
-            }
-
-            item {
-                RWTextButton("Ban Units", modifier = Modifier.padding(5.dp)) {
+                RWTextButton("Ban Units", modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally)) {
                     onShowBanUnitDialog()
                 }
             }

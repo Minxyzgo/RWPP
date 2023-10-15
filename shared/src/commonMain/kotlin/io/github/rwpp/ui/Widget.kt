@@ -37,13 +37,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.LocalWindowManager
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun BorderCard(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color.Gray.copy(.6f),
+    backgroundColor: Color = Color.Gray.copy(.85f),
     content: @Composable ColumnScope.() -> Unit
 ) = Card(
     shape = RoundedCornerShape(20.dp),
@@ -92,7 +93,7 @@ fun <T> LargeDropdownMenu(
     Box(
         modifier = modifier
             .height(IntrinsicSize.Min)
-            .requiredWidth(200.dp)
+            .width(IntrinsicSize.Max)
     ) {
         OutlinedTextField(
             label = { Text(label, fontFamily = MaterialTheme.typography.headlineLarge.fontFamily) },
@@ -212,6 +213,7 @@ fun RWSingleOutlinedTextField(
     Box(
         modifier = modifier
             .height(IntrinsicSize.Min)
+            .width(IntrinsicSize.Max)
     ) {
         OutlinedTextField(
             label = {
@@ -225,7 +227,7 @@ fun RWSingleOutlinedTextField(
             value = value,
             enabled = enabled,
             singleLine = true,
-            modifier = modifier,
+            modifier = Modifier.fillMaxWidth(),
             trailingIcon = trailingIcon,
             leadingIcon = leadingIcon,
             onValueChange = { if(it.length <= lengthLimitCount && (!typeInNumberOnly || !typeInOnlyInteger || it.all { s -> s.isDigit() })) onValueChange(it) },
@@ -237,13 +239,27 @@ fun RWSingleOutlinedTextField(
 }
 
 @Composable
-fun RWTextButton(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) = OutlinedButton(
+fun RWTextButton(
+    label: String,
+    modifier: Modifier = Modifier,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    onClick: () -> Unit
+) = OutlinedButton(
     onClick = onClick,
-    modifier = modifier,
     colors = RWButtonColors,
+    modifier = modifier.width(IntrinsicSize.Max),
+    elevation = ButtonDefaults.buttonElevation(),
     border = BorderStroke(1.dp, Color(151, 188, 98))
 ) {
-    Text(label, style = MaterialTheme.typography.headlineLarge)
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        if(LocalWindowManager.current != WindowManager.Small) leadingIcon?.let {
+            Box(modifier = Modifier.align(Alignment.CenterStart)) {
+                leadingIcon()
+            }
+        }
+
+        Text(label, style = MaterialTheme.typography.headlineLarge)
+    }
 }
 
 @Composable
@@ -263,7 +279,7 @@ fun RowScope.TableCell(
     color: Color = Color.White,
     drawStroke: Boolean = true,
     modifier: Modifier = Modifier,
-    strokeColor: Color = Color(199, 234, 70)
+    strokeColor: Color = Color(160, 191, 124)
 ) {
     val border = if(drawStroke) Modifier.border(1.dp, strokeColor) else Modifier
     Row(

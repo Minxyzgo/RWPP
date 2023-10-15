@@ -23,8 +23,8 @@ val RWOutlinedTextColors
             focusedLabelColor = Color.Black,
             disabledLabelColor = Color.Black,
             cursorColor = Color.Black,
-            focusedBorderColor = Color(44, 95, 45),
-            unfocusedBorderColor = Color(151, 188, 98)
+            focusedBorderColor = Color(151, 188, 98),
+            unfocusedBorderColor = Color.DarkGray
         )
 
 val RWSliderColors

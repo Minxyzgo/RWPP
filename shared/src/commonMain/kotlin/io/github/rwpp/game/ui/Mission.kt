@@ -20,10 +20,7 @@ import io.github.rwpp.LocalController
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.Mission
 import io.github.rwpp.platform.BackHandler
-import io.github.rwpp.ui.BorderCard
-import io.github.rwpp.ui.ExitButton
-import io.github.rwpp.ui.LargeDividingLine
-import io.github.rwpp.ui.LargeDropdownMenu
+import io.github.rwpp.ui.*
 
 @Composable
 fun MissionView(onExit: () -> Unit) {
@@ -37,13 +34,11 @@ fun MissionView(onExit: () -> Unit) {
         ExitButton(onExit)
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().scaleFit(),
             horizontalArrangement = Arrangement.Center
         ) {
             Text("Missions", style = MaterialTheme.typography.displayLarge)
         }
-
-        Spacer(Modifier.size(5.dp))
 
         var selectedIndex0 by remember { mutableStateOf(0) }
         var selectedIndex1 by remember { mutableStateOf(0) }
@@ -53,6 +48,8 @@ fun MissionView(onExit: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
+                .padding(top = 5.dp)
+                .scaleFit()
         ) {
             with(LocalController.current) {
                 LargeDropdownMenu(

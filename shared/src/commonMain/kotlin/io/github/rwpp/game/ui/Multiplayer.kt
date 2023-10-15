@@ -7,7 +7,7 @@
 
 package io.github.rwpp.game.ui
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -42,8 +42,11 @@ import io.github.rwpp.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MultiplayerView(
     onExit: () -> Unit,
@@ -138,12 +141,14 @@ fun MultiplayerView(
     ) { m, dismiss ->
         BorderCard(
             modifier = Modifier
-                .fillMaxSize(if(LocalWindowManager.current == WindowManager.Large) 0.6f else 0.85f)
+                .fillMaxSize(LargeProportion())
                 .padding(10.dp)
                 .then(m)
                 .verticalScroll(rememberScrollState()),
             backgroundColor = Color.Gray
         ) {
+            ExitButton(dismiss)
+
             Text(
                 "Host Game",
                 modifier = Modifier
@@ -247,7 +252,7 @@ fun MultiplayerView(
                 Row(
                     modifier = Modifier
                         .padding(5.dp)
-                        .border(BorderStroke(2.dp, Color(199, 234, 70)), CircleShape)
+                        .border(BorderStroke(2.dp, Color(101, 147, 74)), CircleShape)
                         .fillMaxWidth()
                 ) {
                     TableCell("status", statusWeight, drawStroke = false)
@@ -278,8 +283,9 @@ fun MultiplayerView(
                             modifier = Modifier
                                 .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
                                 .animateItemPlacement()
+                                .height(IntrinsicSize.Max)
                                 .padding(5.dp)
-                                .border(BorderStroke(2.dp, Color(199, 234, 70)), CircleShape)
+                                .border(BorderStroke(2.dp, Color(160, 191, 124)), CircleShape)
                                 .fillMaxWidth()
                                 .clickable {
                                     selectedRoomDescription = desc
@@ -310,17 +316,19 @@ fun MultiplayerView(
                                 }
 
 
-                            TableCell(desc.roomType, statusWeight, color = color, drawStroke = false)
-                            TableCell(desc.creator, creatorNameWeight, color = color)
+
+                            TableCell(desc.roomType, statusWeight, color = color, modifier = Modifier.fillMaxHeight(), drawStroke = false)
+                            TableCell(desc.creator, creatorNameWeight, modifier = Modifier.fillMaxHeight(), color = color)
                             TableCell(
                                 (desc.playerCurrentCount ?: "").toString() + "/" + desc.playerMaxCount.toString(),
                                 countWeight,
+                                modifier = Modifier.fillMaxHeight(),
                                 color = color
                             )
-                            TableCell(desc.mapName.removeSuffix(".tmx"), mapWeight, color = color)
-                            TableCell(desc.version, versionWeight, color = color)
+                            TableCell(desc.mapName.removeSuffix(".tmx"), mapWeight, modifier = Modifier.fillMaxHeight(), color = color)
+                            TableCell(desc.version, versionWeight, modifier = Modifier.fillMaxHeight(), color = color)
 
-                            TableCell(open, openWeight, drawStroke = false, color = color)
+                            TableCell(open, openWeight, drawStroke = false, modifier = Modifier.fillMaxHeight(), color = color)
                         }
                     }
                 }
@@ -358,7 +366,7 @@ fun MultiplayerView(
             onDismissRequest = { onDismissRequest() },
         ) { modifier, _ ->
             BorderCard(
-                modifier = Modifier.fillMaxSize(0.5f).then(modifier),
+                modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
                 backgroundColor = Color.Gray
             ) {
                 AnimatedBlackList(
@@ -392,6 +400,32 @@ fun MultiplayerView(
                 }
             }
         }
+    }
+
+    @Composable
+    fun JoinServerField() {
+        RWSingleOutlinedTextField(
+            label = "Join Server",
+            value = joinServerAddress,
+            modifier = Modifier.fillMaxWidth().padding(5.dp),
+            leadingIcon = { Icon(Icons.Default.Add, null, modifier = Modifier.size(30.dp)) },
+            trailingIcon = {
+                Icon(
+                    Icons.Default.ArrowForward,
+                    null,
+                    modifier = Modifier.clickable {
+                        if(joinServerAddress.isNotBlank()) {
+                            serverAddress = joinServerAddress
+                            isConnecting = true
+                        }
+                    })
+            },
+            onValueChange =
+            {
+                joinServerAddress = it
+                context.setConfig("lastNetworkIP", it)
+            },
+        )
     }
 
     @Composable
@@ -528,6 +562,8 @@ fun MultiplayerView(
         }
     }
 
+
+
     Scaffold(
         containerColor = Color.Transparent,
         floatingActionButton = {
@@ -565,6 +601,7 @@ fun MultiplayerView(
                             value = userName,
                             enabled = true,
                             singleLine = true,
+                            leadingIcon = { Icon(Icons.Default.Person, null, modifier = Modifier.size(30.dp)) },
                             modifier = Modifier.fillMaxWidth().padding(10.dp),
                             onValueChange =
                             {
@@ -572,9 +609,14 @@ fun MultiplayerView(
                             },
                         )
 
+                        if(LocalWindowManager.current == WindowManager.Small) {
+                            JoinServerField()
+                        }
+
                         var hostDialogVisible by remember { mutableStateOf(false) }
                         RWTextButton(
                             "Host new game",
+                            leadingIcon = { Icon(Icons.Default.Build, null, modifier = Modifier.size(30.dp)) },
                             modifier = Modifier.padding(5.dp).fillMaxWidth()
                         ) { hostDialogVisible = true }
                         HostGameDialog(hostDialogVisible, { hostDialogVisible = false }) {
@@ -583,11 +625,14 @@ fun MultiplayerView(
 
                         RWTextButton(
                             label = "Watch Reply",
+                            leadingIcon = { Image(painterResource("visibility.png"), null, modifier = Modifier.size(30.dp)) },
                             modifier = Modifier.padding(5.dp, 0.dp, 5.dp, 5.dp).fillMaxWidth(),
                         ) {}
 
+
                         RWTextButton(
                             label = "Join the last game",
+                            leadingIcon = { Image(painterResource("replay.png"), null, modifier = Modifier.size(30.dp)) },
                             modifier = Modifier.padding(5.dp, 0.dp, 5.dp, 5.dp).fillMaxWidth(),
                         ) {
                             val lastIp = context.getConfig<String?>("lastNetworkIP")
@@ -604,32 +649,14 @@ fun MultiplayerView(
                         modifier = Modifier
                             .weight(1f)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(IntrinsicSize.Min)
-                        ) {
-                            RWSingleOutlinedTextField(
-                                label = "Join Server",
-                                value = joinServerAddress,
-                                modifier = Modifier.fillMaxWidth().padding(10.dp),
-                                trailingIcon = {
-                                    Icon(
-                                        Icons.Default.ArrowForward,
-                                        null,
-                                        modifier = Modifier.clickable {
-                                            if(joinServerAddress.isNotBlank()) {
-                                                serverAddress = joinServerAddress
-                                                isConnecting = true
-                                            }
-                                        })
-                                },
-                                onValueChange =
-                                {
-                                    joinServerAddress = it
-                                    context.setConfig("lastNetworkIP", it)
-                                },
-                            )
+                        if(LocalWindowManager.current != WindowManager.Small) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(IntrinsicSize.Min)
+                            ) {
+                                JoinServerField()
+                            }
                         }
 
                         if(throwable != null) {
@@ -774,7 +801,7 @@ private fun JoinServerRequestDialog(
     ) { m, dismiss ->
         BorderCard(
             modifier = Modifier
-                .fillMaxSize(0.5f)
+                .fillMaxSize(GeneralProportion())
                 .padding(10.dp)
                 .then(m)
                 .verticalScroll(rememberScrollState()),
@@ -791,7 +818,6 @@ private fun JoinServerRequestDialog(
             Text("version: ${roomDescription.version}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
             Spacer(modifier = Modifier.weight(1f))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                RWTextButton("Join", modifier = Modifier.padding(5.dp), onClick = { onJoin(dismiss) })
                 RWTextButton("Add to Blacklist", modifier = Modifier.padding(5.dp)) {
                     blacklists.add(
                         Blacklist("${roomDescription.creator}: ${roomDescription.mapName}", roomDescription.uuid)
@@ -799,6 +825,7 @@ private fun JoinServerRequestDialog(
 
                     dismiss()
                 }
+                RWTextButton("Join", modifier = Modifier.padding(5.dp), onClick = { onJoin(dismiss) })
             }
         }
     }
