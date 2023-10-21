@@ -18,6 +18,8 @@ import com.corrodinggames.rts.gameFramework.j.bg
 import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.MainActivity
+import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.instance
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.GameRoom
@@ -393,6 +395,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     }
 
     private fun sendWelcomeMessage(p: PlayerImpl) {
+        if(MultiplayerPreferences.instance.showWelcomeMessage != true) return
         val conn = (GameEngine.t().bU.aO as ConcurrentLinkedQueue<c>).firstOrNull { it.A == p.player } ?: return
         val bgVar = bg()
         bgVar.b(welcomeMessage)

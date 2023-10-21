@@ -1,0 +1,44 @@
+[mission]
+title = "Missions"
+type = "Mission Type"
+
+[multiplayer]
+host = "Host new game"
+replay = "Watch Replay"
+joinLastGame = "Join the last game"
+blacklist = "blacklist"
+playerLimit = "Player Limit"
+enableMods = "Enable Mods"
+reset = "Reset"
+hostByRCN = "Host By RCN"
+
+[multiplayer.room]
+selectMap = "Select Map"
+option = "Option"
+start = "Start"
+changeSite = "Change Site"
+addAI = "Add AI"
+kick = "Kick"
+apply = "Apply"
+sendMessage = "Send Message"
+playerConfig = "Player Config"
+
+[menu]
+mission = "Mission"
+sandbox = "Sandbox Editor"
+multiplayer = "Multiplayer"
+mods = "Mods"
+settings = "Settings"
+exit = "Exit"
+notes = """
+watching replay haven't yet been implemented.
+RWPP currently couldn't be host in Official Server and RW-HPS.
+For android, start a new game and pause to open the setting to use external folder.
+
+These will be fixed in the future...
+"""
+
+[common]
+difficulty = "Difficulty"
+spawnPoint = "Spawn Point"
+team = "Team"

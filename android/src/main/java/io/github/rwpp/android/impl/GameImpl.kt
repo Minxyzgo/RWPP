@@ -12,10 +12,8 @@ import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
-import com.corrodinggames.rts.appFramework.InGameActivity
-import com.corrodinggames.rts.appFramework.LevelGroupSelectActivity
-import com.corrodinggames.rts.appFramework.LevelSelectActivity
-import com.corrodinggames.rts.appFramework.LoadLevelActivity
+import com.corrodinggames.rts.appFramework.*
+import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.MainActivity
@@ -227,6 +225,16 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override fun getMissionsByType(type: MissionType): List<Mission> = getAllMissions()
+    override fun getStartingUnitOptions(): List<Pair<Int, String>> {
+        val list = mutableListOf<Pair<Int, String>>()
+        val it: Iterator<*> = ae.d().iterator()
+        while(it.hasNext()) {
+            val num = it.next() as Int
+            list.add(num to ae.c(num))
+        }
+        return list
+    }
+
     override fun onBanUnits(units: List<GameInternalUnits>) {
         MainActivity.bannedUnitList = units
         if(units.isNotEmpty()) gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.joinToString(", ")}")

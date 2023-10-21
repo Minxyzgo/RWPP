@@ -7,17 +7,38 @@
 
 package io.github.rwpp.i18n
 
-import androidx.compose.runtime.Composable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import net.peanuuutz.tomlkt.Toml
+import net.peanuuutz.tomlkt.TomlTable
+import net.peanuuutz.tomlkt.asTomlLiteral
+import net.peanuuutz.tomlkt.asTomlTable
 import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.Resource
 import org.jetbrains.compose.resources.resource
-import java.util.Locale
+import java.util.*
+
+internal lateinit var i18nTable: TomlTable
 
 @OptIn(ExperimentalResourceApi::class)
-private var i18nResource: Resource? = null
+suspend fun parseI18n() {
+    val res = runCatching { resource("bundles/bundle_${Locale.getDefault().language}.toml") }
+        .getOrNull() ?: resource("bundles/bundle_en.toml")
+    i18nTable = Toml.parseToTomlTable(withContext(Dispatchers.IO) {
+        res.readBytes()
+    }.decodeToString().replace("\r", "\n"))
+}
 
-@Composable
-@OptIn(ExperimentalResourceApi::class)
-fun parseI18n() {
-    i18nResource = i18nResource ?: resource(Locale.getDefault().language)
+fun readI18n(path: String): String {
+    val strArray = path.split(".")
+    val iter = strArray.iterator()
+    var table: TomlTable = i18nTable
+    while(iter.hasNext()) {
+        val next = iter.next()
+        println(next)
+        if(!iter.hasNext()) {
+            return table[next]!!.asTomlLiteral().content
+        } else table = table[next]!!.asTomlTable()
+    }
+
+    return "null"
 }

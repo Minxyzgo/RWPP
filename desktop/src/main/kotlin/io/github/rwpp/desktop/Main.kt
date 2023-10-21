@@ -27,6 +27,8 @@ import io.github.rwpp.LocalController
 import io.github.rwpp.desktop.impl.GameContextControllerImpl
 import io.github.rwpp.ui.RWSingleOutlinedTextField
 import io.github.rwpp.ui.RWTextButton
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
@@ -58,6 +60,7 @@ fun main(args: Array<String>) {
     } else composeApplication()
 }
 
+@OptIn(ExperimentalResourceApi::class)
 fun composeApplication() = application {
     val windowState = rememberWindowState(placement = WindowPlacement.Maximized, position = WindowPosition(Alignment.Center))
     var gameVisible by remember { mutableStateOf(true) }
@@ -78,6 +81,7 @@ fun composeApplication() = application {
         onCloseRequest = { gameContext.exit() },
         state = windowState,
         title = "RWPP",
+        icon = painterResource("logo.png"),
         resizable = true
     ) {
         mainJFrame = window

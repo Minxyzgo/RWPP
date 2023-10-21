@@ -134,7 +134,7 @@ fun <T> LargeDropdownMenu(
         ) {
             items.forEachIndexed { index, t ->
                 DropdownMenuItem(
-                    text = { Text(t.toString()) },
+                    text = { Text(selectedItemToString(t)) },
                     onClick = {
                         onItemSelected(index, t)
                         expanded = false
@@ -251,13 +251,8 @@ fun RWTextButton(
     elevation = ButtonDefaults.buttonElevation(),
     border = BorderStroke(1.dp, Color(151, 188, 98))
 ) {
-    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        if(LocalWindowManager.current != WindowManager.Small) leadingIcon?.let {
-            Box(modifier = Modifier.align(Alignment.CenterStart)) {
-                leadingIcon()
-            }
-        }
-
+    leadingIcon?.invoke()
+    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.Center) {
         Text(label, style = MaterialTheme.typography.headlineLarge)
     }
 }

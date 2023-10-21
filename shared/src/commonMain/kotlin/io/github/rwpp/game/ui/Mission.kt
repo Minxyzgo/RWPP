@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.Mission
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
 
@@ -37,7 +38,7 @@ fun MissionView(onExit: () -> Unit) {
             modifier = Modifier.fillMaxWidth().scaleFit(),
             horizontalArrangement = Arrangement.Center
         ) {
-            Text("Missions", style = MaterialTheme.typography.displayLarge)
+            Text(readI18n("mission.title"), style = MaterialTheme.typography.displayLarge)
         }
 
         var selectedIndex0 by remember { mutableStateOf(0) }
@@ -54,7 +55,7 @@ fun MissionView(onExit: () -> Unit) {
             with(LocalController.current) {
                 LargeDropdownMenu(
                     modifier = Modifier.wrapContentSize().padding(5.dp),
-                    label = "Mission Type",
+                    label = readI18n("mission.type"),
                     items = getAllMissionTypes(),
                     selectedIndex = selectedIndex0,
                     onItemSelected = { index, _ -> selectedIndex0 = index }
@@ -63,7 +64,7 @@ fun MissionView(onExit: () -> Unit) {
 
             LargeDropdownMenu(
                 modifier = Modifier.wrapContentSize().padding(5.dp),
-                label = "Difficulty",
+                label = readI18n("common.difficulty"),
                 items = Difficulty.entries,
                 selectedIndex = selectedIndex1,
                 onItemSelected = { index, _ -> selectedIndex1 = index }

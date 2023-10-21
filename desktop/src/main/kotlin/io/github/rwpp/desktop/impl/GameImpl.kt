@@ -14,9 +14,7 @@ import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.Root
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
-import com.corrodinggames.rts.game.e
 import com.corrodinggames.rts.gameFramework.ac
-import com.corrodinggames.rts.gameFramework.j.au
 import com.corrodinggames.rts.gameFramework.l
 import com.corrodinggames.rts.gameFramework.n
 import com.corrodinggames.rts.java.Main
@@ -27,6 +25,8 @@ import com.corrodinggames.rts.java.u
 import com.github.minxyzgo.rwij.InjectMode
 import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
+import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.instance
 import io.github.rwpp.desktop.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
@@ -266,6 +266,7 @@ class GameImpl : Game {
             }
 
             addProxy("c", com.corrodinggames.rts.gameFramework.j.c::class, String::class, String::class) { _: Any?, c: com.corrodinggames.rts.gameFramework.j.c, _: Any?, _: Any? ->
+                if(MultiplayerPreferences.instance.showWelcomeMessage != true) return@addProxy Unit
                 val rwOutputStream = RwOutputStream()
                 rwOutputStream.c(welcomeMessage)
                 rwOutputStream.c(3)
@@ -710,6 +711,17 @@ class GameImpl : Game {
     }
 
     override fun getMissionsByType(type: MissionType): List<Mission> = getAllMissions()
+    override fun getStartingUnitOptions(): List<Pair<Int, String>> {
+        val B: l = LClass.B()
+        val list = mutableListOf<Pair<Int, String>>()
+        val it: Iterator<*> = B.bX.i().iterator()
+        while(it.hasNext()) {
+            val num = it.next() as Int
+            list.add(num to B.bX.d(num))
+        }
+        return list
+    }
+
     override fun onBanUnits(units: List<GameInternalUnits>) {
         bannedUnitList = units
         if(units.isNotEmpty()) gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.joinToString(", ")}")

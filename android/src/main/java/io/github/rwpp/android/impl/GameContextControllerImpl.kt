@@ -13,6 +13,8 @@ import io.github.rwpp.ContextController
 import io.github.rwpp.android.MainActivity
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.i18n.parseI18n
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
@@ -29,6 +31,7 @@ class GameContextControllerImpl(private val _exit: () -> Unit)
     override val client: OkHttpClient = OkHttpClient()
 
     init {
+        runBlocking { parseI18n() }
         Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
         readAllConfig()
     }

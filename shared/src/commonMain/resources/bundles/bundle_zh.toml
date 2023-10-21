@@ -1,0 +1,42 @@
+[mission]
+title = "战役"
+type = "战役类型"
+
+[multiplayer]
+host = "创建房间"
+replay = "观看回放"
+joinLastGame = "加入上一次游戏"
+blacklist = "黑名单"
+playerLimit = "玩家限制"
+enableMods = "启动模组"
+reset = "重置"
+hostByRCN = "以RCN创建房间"
+
+[multiplayer.room]
+selectMap = "选择地图"
+option = "选项"
+start = "开始"
+changeSite = "更换位置"
+addAI = "添加AI"
+kick = "踢出"
+apply = "应用"
+sendMessage = "发送消息"
+playerConfig = "玩家配置"
+
+[menu]
+mission = "战役"
+sandbox = "沙盒编辑器"
+multiplayer = "多人游戏"
+mods = "模组"
+settings = "设置"
+exit = "退出"
+notes = """
+观看回放还尚未实现.
+RWPP 目前不能在官方服务器和 RW-HPS 中作为房主 （但仍可通过命令控制房间）.
+对于安卓，开启一个新游戏然后打开设置以启用外部文件的访问权限.
+"""
+
+[common]
+difficulty = "难度"
+spawnPoint = "出生点"
+team = "队伍"

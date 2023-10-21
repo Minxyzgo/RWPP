@@ -35,15 +35,16 @@ import io.github.rwpp.config.Blacklist
 import io.github.rwpp.config.Blacklists
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.sorted
 import io.github.rwpp.platform.BackHandler
+import io.github.rwpp.platform.loadSvg
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.painterResource
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalResourceApi::class)
@@ -73,12 +74,14 @@ fun MultiplayerView(
     var creatorNameFilter by remember { mutableStateOf(instance.creatorNameFilter) }
     var playerLimitRange by remember { mutableStateOf(instance.playerLimitRangeFrom..instance.playerLimitRangeTo) }
     var joinServerAddress by rememberSaveable { mutableStateOf(instance.joinServerAddress) }
+    val showWelcomeMessage by remember { mutableStateOf(instance.showWelcomeMessage) }
 
     var serverAddress by remember { mutableStateOf("") }
     var isConnecting by remember { mutableStateOf(false) }
 
     var selectedRoomDescription by remember { mutableStateOf<RoomDescription?>(null) }
     var showJoinRequestDialog by remember { mutableStateOf(false) }
+    var showWelcomeMessageAdmittingDialog by remember { mutableStateOf(showWelcomeMessage == null) }
     val scope = rememberCoroutineScope()
 
     remember(blacklists.size) {
@@ -98,6 +101,12 @@ fun MultiplayerView(
         onDispose {
             context.setUserName(userName)
         }
+    }
+
+    WelcomeMessageAdmittingDialog(
+        showWelcomeMessageAdmittingDialog
+    ) {
+        showWelcomeMessageAdmittingDialog = false
     }
 
     JoinServerRequestDialog(showJoinRequestDialog, { showJoinRequestDialog = false },
@@ -163,12 +172,12 @@ fun MultiplayerView(
             var hostByRCN by remember { mutableStateOf(false) }
             Row {
                 RWCheckbox(enableMods, onCheckedChange = { enableMods = !enableMods }, modifier = Modifier.padding(5.dp))
-                Text("Enable Mods", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(5.dp))
+                Text(readI18n("multiplayer.enableMods"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(5.dp))
             }
 
             Row {
                 RWCheckbox(hostByRCN, onCheckedChange = { hostByRCN = !hostByRCN }, modifier = Modifier.padding(5.dp))
-                Text("Host By RCN", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(5.dp))
+                Text(readI18n("multiplayer.hostByRCN"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(5.dp))
             }
 
             var password by remember { mutableStateOf("") }
@@ -499,7 +508,7 @@ fun MultiplayerView(
                 var range by remember { mutableStateOf(playerLimitRange) }
                 Column(modifier = Modifier.wrapContentSize()) {
                     Text(
-                        "Player Limit : $range",
+                        "${readI18n("multiplayer.playerLimit")} : $range",
                         modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 5.dp, 0.dp, 5.dp)
                     )
                     RangeSlider(
@@ -520,7 +529,7 @@ fun MultiplayerView(
                         .padding(5.dp)
                 ) {
                     Text(
-                        "Enabled Mods", style = MaterialTheme.typography.headlineLarge,
+                        readI18n("multiplayer.enableMods"), style = MaterialTheme.typography.headlineLarge,
                         modifier = Modifier
                             .padding(5.dp)
                             .weight(1f)
@@ -534,7 +543,7 @@ fun MultiplayerView(
 
                 LargeOutlinedButton(
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Reset") },
+                    label = { Text(readI18n("multiplayer.reset")) },
                     value = ""
                 ) {
                     resetFilter()
@@ -615,7 +624,7 @@ fun MultiplayerView(
 
                         var hostDialogVisible by remember { mutableStateOf(false) }
                         RWTextButton(
-                            "Host new game",
+                            readI18n("multiplayer.host"),
                             leadingIcon = { Icon(Icons.Default.Build, null, modifier = Modifier.size(30.dp)) },
                             modifier = Modifier.padding(5.dp).fillMaxWidth()
                         ) { hostDialogVisible = true }
@@ -624,15 +633,15 @@ fun MultiplayerView(
                         }
 
                         RWTextButton(
-                            label = "Watch Reply",
-                            leadingIcon = { Image(painterResource("visibility.png"), null, modifier = Modifier.size(30.dp)) },
+                            label = readI18n("multiplayer.replay"),
+                            leadingIcon = { Icon(loadSvg("visibility"), null, modifier = Modifier.size(30.dp)) },
                             modifier = Modifier.padding(5.dp, 0.dp, 5.dp, 5.dp).fillMaxWidth(),
                         ) {}
 
 
                         RWTextButton(
-                            label = "Join the last game",
-                            leadingIcon = { Image(painterResource("replay.png"), null, modifier = Modifier.size(30.dp)) },
+                            label = readI18n("multiplayer.joinLastGame"),
+                            leadingIcon = { Icon(loadSvg("replay"), null, modifier = Modifier.size(30.dp)) },
                             modifier = Modifier.padding(5.dp, 0.dp, 5.dp, 5.dp).fillMaxWidth(),
                         ) {
                             val lastIp = context.getConfig<String?>("lastNetworkIP")
@@ -689,7 +698,7 @@ private fun AnimatedBlackList(
     onTapAddButton: () -> Unit,
 ) = AnimatedVisibility(visible) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Blacklists", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(15.dp))
+        Text(readI18n("multiplayer.blacklist"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(15.dp))
         LargeDividingLine { 5.dp }
 
         LazyColumn(
@@ -786,6 +795,75 @@ private fun AnimatedBlacklistInfo(
         }
     }
 }
+
+@Composable
+private fun WelcomeMessageAdmittingDialog(
+    visible: Boolean,
+    onDismissRequest: () -> Unit,
+) {
+    AnimatedAlertDialog(
+        visible, onDismissRequest = onDismissRequest, enableDismiss = false
+    ) { m, dismiss ->
+        BorderCard(
+            modifier = Modifier
+                .fillMaxSize(GeneralProportion())
+                .padding(5.dp)
+                .then(m),
+            backgroundColor = Color.Gray
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Info, null, modifier = Modifier.size(25.dp).padding(5.dp))
+                Text(
+                    "Admitting",
+                    modifier = Modifier.padding(5.dp),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = Color(151, 188, 98)
+                )
+            }
+            LargeDividingLine { 5.dp }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    """
+                    为了使RWPP能变得更好，我们希望您在开房时向进入的玩家发送一条消息用以推广RWPP
+                    您是否同意？(该对话框第一次显示后将不再显示，稍后可在 设置 - Show Welcome Message中更改)
+                    In order to make RWPP even better, we want you to send a message to joining players to promote RWPP when you are a host
+                    Do you agree? (The dialog will no longer be displayed, and can be changed later in Settings - Show Welcome Message)
+                """.trimIndent(),
+                    modifier = Modifier.padding(5.dp),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    RWTextButton("Yes", modifier = Modifier.padding(5.dp), leadingIcon = {
+                        Icon(Icons.Default.Done, null, modifier = Modifier.size(30.dp))
+                    }) {
+                        MultiplayerPreferences.instance.showWelcomeMessage = true
+                        dismiss()
+                    }
+
+                    RWTextButton("No", modifier = Modifier.padding(5.dp), leadingIcon = {
+                        Icon(Icons.Default.Close, null, modifier = Modifier.size(30.dp))
+                    }) {
+                        MultiplayerPreferences.instance.showWelcomeMessage = false
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun JoinServerRequestDialog(

@@ -18,6 +18,7 @@ data class MultiplayerPreferences(
     var playerLimitRangeFrom: Int = 0,
     var playerLimitRangeTo: Int = 100,
     var joinServerAddress: String = "",
+    var showWelcomeMessage: Boolean? = null,
 )
 
 val MultiplayerPreferences.Companion.instance

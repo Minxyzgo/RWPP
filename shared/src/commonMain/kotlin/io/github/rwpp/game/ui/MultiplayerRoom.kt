@@ -47,6 +47,7 @@ import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.units.GameInternalUnits
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.launch
@@ -180,7 +181,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         fun MessageTextField() {
             var chatMessage by remember { mutableStateOf("") }
             RWSingleOutlinedTextField(
-                label = "Send Message",
+                label = readI18n("multiplayer.room.sendMessage"),
                 value = chatMessage,
                 modifier = Modifier.fillMaxWidth().padding(10.dp)
                     .onKeyEvent {
@@ -310,7 +311,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             @Composable
                             fun OptionButtons() {
                                 if(LocalWindowManager.current == WindowManager.Large) RWTextButton(
-                                    "Select Map",
+                                    readI18n("multiplayer.room.selectMap"),
                                     modifier = Modifier.padding(5.dp)
                                 ) { showMapSelectView = true }
                                 if(LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
@@ -323,11 +324,11 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     }
                                 }
                                 RWTextButton(
-                                    "Option",
+                                    readI18n("multiplayer.room.option"),
                                     modifier = Modifier.padding(5.dp)
                                 ) { optionVisible = true }
                                 RWTextButton(
-                                    "Start",
+                                    readI18n("multiplayer.room.start"),
                                     modifier = Modifier.padding(5.dp)
                                 ) { room.startGame() }
                             }
@@ -376,6 +377,9 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
                                 @Composable
                                 fun ColumnScope.PlayerTable(index: Int) {
+                                    val options = remember {
+                                        context.getStartingUnitOptions()
+                                    }
                                     val player = players[index]
                                     var (delay, easing) = state.calculateDelayAndEasing(index, 1)
                                     if(LocalWindowManager.current != WindowManager.Large) delay = 0
@@ -394,7 +398,10 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                                 playerOverrideVisible = true
                                             }
                                     ) {
-                                        TableCell(player.name, playerNameWeight, drawStroke = false, modifier = Modifier.fillMaxHeight())
+                                        TableCell(player.name + if(player.startingUnit != -1) " - ${options.first { it.first == player.startingUnit }.second}" else "",
+                                            color = if(player.color != -1) Player.getTeamColor(player.color) else Color.White,
+                                            weight = playerNameWeight, drawStroke = false,
+                                            modifier = Modifier.fillMaxHeight())
                                         TableCell(
                                             if(player.isSpectator)
                                                 "S"
@@ -402,7 +409,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                             playerSpawnWeight,
                                             color = if(player.isSpectator)
                                                 Color.Black
-                                            else Player.getTeamColor(player.spawnPoint)
+                                            else Player.getTeamColor(player.spawnPoint),
+                                            modifier = Modifier.fillMaxHeight()
                                         )
                                         TableCell(player.teamAlias(), playerTeamWeight, color = Player.getTeamColor(player.team), modifier = Modifier.fillMaxHeight())
                                         val ping = remember(update) { player.ping }
@@ -437,7 +445,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 ) {
                                     Row(modifier = Modifier.fillMaxWidth()) {
                                         RWTextButton(
-                                            "Change Site",
+                                            readI18n("multiplayer.room.changeSite"),
                                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
                                         ) {
                                             if(players.isNotEmpty()) {
@@ -467,7 +475,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 .height(IntrinsicSize.Max)
                                 .padding(5.dp)) {
                                 RWTextButton(
-                                    "Change Site",
+                                    readI18n("multiplayer.room.changeSite"),
                                     modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
                                 ) {
                                     if(players.isNotEmpty()) {
@@ -477,7 +485,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 }
                                 if(isHost) {
                                     RWTextButton(
-                                        "Add AI",
+                                        readI18n("multiplayer.room.addAI"),
                                         modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
                                     ) { room.addAI() }
                                 }
@@ -556,12 +564,24 @@ private fun PlayerOverrideDialog(
     room: GameRoom,
     player: Player
 ) {
+    val context = LocalController.current
+    val items = remember {
+        buildList {
+            add(-1 to "Default")
+            addAll(context.getStartingUnitOptions())
+        }
+    }
+
     var playerSpawnPoint by remember(player) { mutableStateOf<Int?>(player.spawnPoint + 1) }
     var playerTeam by remember(player) { mutableStateOf<Int?>(-1) }
+    var playerColor by remember(player) { mutableStateOf(player.color) }
+    var playerStartingUnits by remember(player) { mutableStateOf(items.indexOfFirst { it.first == player.startingUnit }) }
     var aiDifficulty by remember(player) { mutableStateOf(player.difficulty ?: room.aiDifficulty) }
+
     AnimatedAlertDialog(
         visible, onDismissRequest = { onDismissRequest(); update() }
     ) { m, dismiss ->
+
         BorderCard(
             modifier = Modifier
                 .fillMaxSize(LargeProportion())
@@ -570,7 +590,7 @@ private fun PlayerOverrideDialog(
         ) {
             ExitButton(dismiss)
             Text(
-                "Player Config",
+                readI18n("multiplayer.room.playerConfig"),
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp),
                 style = MaterialTheme.typography.displayLarge,
                 color = Color(151, 188, 98)
@@ -579,7 +599,7 @@ private fun PlayerOverrideDialog(
             Column(modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
                 var expanded0 by remember { mutableStateOf(false) }
                 RWSingleOutlinedTextField(
-                    "Spawn Point",
+                    readI18n("common.spawnPoint"),
                     if(playerSpawnPoint == -3) "Spectator" else playerSpawnPoint?.toString() ?: "",
                     lengthLimitCount = 3,
                     modifier = Modifier.padding(10.dp),
@@ -609,8 +629,6 @@ private fun PlayerOverrideDialog(
                     if(n == null || n < room.maxPlayerCount) playerSpawnPoint = n
                 }
 
-
-
                 Text(
                     "The spawn point controls where on the map this player starts. Most maps use old-even spawn points.",
                     modifier = Modifier.padding(5.dp),
@@ -618,10 +636,9 @@ private fun PlayerOverrideDialog(
                     style = MaterialTheme.typography.bodyLarge
                 )
 
-
                 var expanded by remember { mutableStateOf(false) }
                 RWSingleOutlinedTextField(
-                    "Team",
+                    readI18n("common.team"),
                     if(playerTeam == -1) "auto" else playerTeam?.toString() ?: "",
                     lengthLimitCount = 3,
                     modifier = Modifier.padding(10.dp),
@@ -650,12 +667,46 @@ private fun PlayerOverrideDialog(
                     playerTeam = it.toIntOrNull()?.coerceAtMost(100)
                 }
 
+
+
                 Text(
                     "Players with the same team will be allied together.",
                     modifier = Modifier.padding(5.dp),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyLarge
                 )
+
+                if(room.isHost) {
+                    LargeDropdownMenu(
+                        modifier = Modifier.padding(20.dp),
+                        label = "Color",
+                        items = buildList {
+                            add("Default")
+                            add("Green")
+                            add("Red")
+                            add("Blue")
+                            add("Yellow")
+                            add("Cyan")
+                            add("White")
+                            add("Black")
+                            add("Pink")
+                            add("Orange")
+                            add("Purple")
+                        },
+                        selectedIndex = playerColor + 1,
+                        onItemSelected = { i, _ -> playerColor = i - 1 }
+                    )
+
+                    LargeDropdownMenu(
+                        modifier = Modifier.padding(20.dp),
+                        label = "Starting Units",
+                        items = items,
+                        selectedIndex = playerStartingUnits,
+                        onItemSelected = { i, _ -> playerStartingUnits = i },
+                        selectedItemToString = { (_, s) -> s }
+                    )
+                }
+
 
                 if(player.isAI) {
                     LargeDropdownMenu(
@@ -674,17 +725,17 @@ private fun PlayerOverrideDialog(
                  horizontalArrangement = Arrangement.Center) {
 
                 if(player != room.localPlayer && room.isHost)
-                    RWTextButton("Kick", Modifier.padding(5.dp)) {
+                    RWTextButton(readI18n("multiplayer.room.kick"), Modifier.padding(5.dp)) {
                         room.kickPlayer(player)
                         dismiss()
                     }
 
-                RWTextButton("Apply", Modifier.padding(5.dp)) {
+                RWTextButton(readI18n("multiplayer.room.apply"), Modifier.padding(5.dp)) {
                     player.applyConfigChange(
                         if(playerSpawnPoint == -3) -3 else ((playerSpawnPoint ?: 1) - 1).coerceAtLeast(0),
                         if(playerTeam == -1) 0 else if((playerTeam ?: 0) > 10) (playerTeam ?: 0) + 1 else (playerTeam ?: 1),
-                        null,
-                        null,
+                        if(playerColor > -1) playerColor else null,
+                        if(playerStartingUnits > 0) items[playerStartingUnits].first else null,
                         aiDifficulty,
                         playerTeam == -1
                     )
@@ -707,6 +758,8 @@ private fun MultiplayerOptionDialog(
 ) = AnimatedAlertDialog(
     visible, onDismissRequest = { onDismissRequest(); update() }
 ) { m, dismiss ->
+    val context = LocalController.current
+
     BorderCard(
         modifier = Modifier
             .fillMaxSize(LargeProportion())
@@ -754,27 +807,22 @@ private fun MultiplayerOptionDialog(
                         room.fogMode = FogMode.entries[selectedIndex2]
                     }
 
-                    var selectedIndex3 by remember(room) { mutableStateOf(room.startingUnits) }
                     val startingOptionList = remember {
-                        listOf(
-                            "Default",
-                            "Normal (1 builder)",
-                            "Small Arm",
-                            "3 Engineers",
-                            "3 Engineers (No Command Center)",
-                            "Experimental Spider"
-                        )
+                        context.getStartingUnitOptions()
                     }
+                    var selectedIndex3 by remember(room) { mutableStateOf(startingOptionList.indexOfFirst { it.first == room.startingUnits }) }
+
                     LargeDropdownMenu(
                         modifier = Modifier.weight(.3f).padding(5.dp),
                         label = "Starting Unit",
                         items = startingOptionList,
                         selectedIndex = selectedIndex3,
-                        onItemSelected = { index, _ -> selectedIndex3 = index }
+                        onItemSelected = { index, _ -> selectedIndex3 = index },
+                        selectedItemToString = { (_, s) -> s }
                     )
 
                     remember(selectedIndex3) {
-                        room.startingUnits = selectedIndex3
+                        room.startingUnits = startingOptionList[selectedIndex3].first
                     }
                 }
 
@@ -782,7 +830,7 @@ private fun MultiplayerOptionDialog(
 
             item {
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    val startingUnitList = remember {
+                    val teamList = remember {
                         listOf(
                             "2 Teams (eg 5v5)",
                             "3 Teams (eg 1v1v1)",
@@ -793,7 +841,7 @@ private fun MultiplayerOptionDialog(
                     LargeDropdownMenu(
                         modifier = Modifier.weight(.5f).padding(5.dp),
                         label = "Set Team",
-                        items = startingUnitList,
+                        items = teamList,
                         selectedIndex = 0,
                         hasValue = false,
                         onItemSelected = { index, _ ->

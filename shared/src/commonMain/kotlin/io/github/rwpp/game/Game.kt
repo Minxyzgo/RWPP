@@ -59,5 +59,7 @@ interface Game {
 
     fun getMissionsByType(type: MissionType): List<Mission>
 
+    fun getStartingUnitOptions(): List<Pair<Int, String>>
+
     fun onBanUnits(units: List<GameInternalUnits>)
 }

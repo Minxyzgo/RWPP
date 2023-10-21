@@ -26,9 +26,9 @@ class PlayerImpl(
     override val ping: String
         get() = player.z()
     override val startingUnit: Int
-        get() = player.A
+        get() = player.A ?: -1
     override val color: Int
-        get() = player.C
+        get() = player.C ?: -1
     override val isSpectator: Boolean
         get() = team == -3
     override val isAI: Boolean
@@ -158,7 +158,10 @@ class PlayerImpl(
                     // l.e("colorOverride: not server or proxy controller")
                 }
             }
+        } else {
+            player.C = null
         }
+
 
         if(z3) {
             if(room.isHost) {

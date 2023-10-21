@@ -41,6 +41,7 @@ import io.github.rwpp.event.events.QuestionDialogEvent
 import io.github.rwpp.event.events.QuestionReplyEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.ui.*
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.deliciousFonts
 import io.github.rwpp.ui.*
 import org.jetbrains.compose.resources.*
@@ -54,7 +55,7 @@ val welcomeMessage
             [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
             开源地址请访问 https://github.com/Minxyzgo/RWPP 
             bug反馈与交流加入群: 150450999
-            当前版本: 1.0.3-alpha (不稳定)
+            当前版本: 1.0.4-alpha (不稳定)
             Copyright 2023 RWPP contributors
         """.trimIndent()
 
@@ -341,7 +342,7 @@ fun MainMenu(
             ) {
                 item {
                     Text(
-                        "RWPP Update news - 1.0.3-alpha",
+                        "RWPP Update news - 1.0.4-alpha",
                         fontFamily = deliciousFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 36.sp
@@ -404,19 +405,12 @@ fun MainMenu(
                         )
                         Heading(1, "Changelogs")
                         CodeBlock("""
+                            1.0.4-alpha: Add i18n support. Player options
                             1.0.3-alpha: Improve menu and resize the layout on small screen device.
                         """.trimIndent())
                         Heading(1, "Notes")
                         CodeBlock(
-                            """
-                                watching replay haven't yet been implemented.
-                                RWPP currently couldn't be host in Official Server and RW-HPS.
-                                Only support for English now.
-                                Some player config options like color and staring-units aren't implemented.
-                                For android, start a new game and pause to open the setting to use external folder.
-                                
-                                These will be fixed in the future...
-                            """.trimIndent()
+                            readI18n("menu.notes")
                         )
                         Heading(1, "Features")
                         CodeBlock(
@@ -443,14 +437,14 @@ fun MainMenu(
                     .fillMaxSize()
             ) {
                 item { Image(painter = painterResource("title.png"), "title", modifier = Modifier.padding(15.dp)) }
-                item { MenuButton("Mission", onClick = mission) }
-                item { MenuButton("Sandbox Editor", onClick = sandbox) }
-                item { MenuButton("Multiplayer", onClick = multiplayer) }
-                item { MenuButton("Mods", onClick = mods) }
-                item { MenuButton("Settings", onClick = settings) }
+                item { MenuButton(readI18n("menu.mission"), onClick = mission) }
+                item { MenuButton(readI18n("menu.sandbox"), onClick = sandbox) }
+                item { MenuButton(readI18n("menu.multiplayer"), onClick = multiplayer) }
+                item { MenuButton(readI18n("menu.mods"), onClick = mods) }
+                item { MenuButton(readI18n("menu.settings"), onClick = settings) }
                 item {
                     with(LocalController.current) {
-                        MenuButton("Exit") { exit() }
+                        MenuButton(readI18n("menu.exit")) { exit() }
                     }
                 }
                 item { Spacer(Modifier.size(50.dp)) }

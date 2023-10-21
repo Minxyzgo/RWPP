@@ -27,6 +27,7 @@ interface ContextController : ConfigHandler, Game, Net, ModManager {
             instance.mapNameFilter = mapNameFilter
             instance.playerLimitRangeTo = playerLimitRangeTo
             instance.playerLimitRangeFrom = playerLimitRangeFrom
+            instance.showWelcomeMessage = showWelcomeMessage
         }
     }
 

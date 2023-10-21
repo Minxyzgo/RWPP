@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
+import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.instance
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.BorderCard
 import io.github.rwpp.ui.ExitButton
@@ -105,6 +107,9 @@ fun SettingsView(onExit: () -> Unit) {
                     item {
                         SettingsGroup("developer") {
                             SettingsSwitchComp("showFps")
+                            SettingsSwitchComp("Show Welcome Message",
+                                defaultValue = MultiplayerPreferences.instance.showWelcomeMessage ?: false
+                            ) { MultiplayerPreferences.instance.showWelcomeMessage = it }
                         }
                     }
 
@@ -156,10 +161,17 @@ private fun SettingsGroup(
 @Composable
 private fun SettingsSwitchComp(
     name: String,
-    labelName: String = name
+    labelName: String = name,
+    defaultValue: Boolean? = null,
+    customConfigSettingAction: ((Boolean) -> Unit)? = null
 ) = with(LocalController.current) {
-    var state by remember { mutableStateOf(getConfig<Boolean>(name)) }
-    val onClick = {
+    var state by remember { mutableStateOf(defaultValue ?: getConfig(name)) }
+    val onClick = customConfigSettingAction?.let{
+        {
+            state = !state
+            customConfigSettingAction(state)
+        }
+    } ?: {
         state = !state
         setConfig(name, state)
     }
@@ -180,7 +192,7 @@ private fun SettingsSwitchComp(
 
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = i18n("menus.settings.option.$labelName"),
+                        text = if(customConfigSettingAction != null) labelName else i18n("menus.settings.option.$labelName"),
                         modifier = Modifier.padding(16.dp),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Start,

@@ -41,9 +41,9 @@ class PlayerImpl(
             }
         }
     override val startingUnit: Int
-        get() = player.B
+        get() = player.B ?: -1
     override val color: Int
-        get() = player.D
+        get() = player.D ?: -1
     override val isSpectator: Boolean
         get() = team == -3
     override val isAI: Boolean
