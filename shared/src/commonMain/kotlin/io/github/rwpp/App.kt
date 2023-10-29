@@ -8,10 +8,13 @@
 package io.github.rwpp
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Info
@@ -22,9 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageShader
-import androidx.compose.ui.graphics.ShaderBrush
-import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalDensity
@@ -44,7 +44,8 @@ import io.github.rwpp.game.ui.*
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.deliciousFonts
 import io.github.rwpp.ui.*
-import org.jetbrains.compose.resources.*
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 
 var LocalController = staticCompositionLocalOf<ContextController> { null!! }
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
@@ -55,18 +56,17 @@ val welcomeMessage
             [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
             开源地址请访问 https://github.com/Minxyzgo/RWPP 
             bug反馈与交流加入群: 150450999
-            当前版本: 1.0.4-alpha (不稳定)
+            当前版本: 1.0.5-alpha (不稳定)
             Copyright 2023 RWPP contributors
         """.trimIndent()
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
-    val image = resource("metal.png").rememberImageBitmap()
-
-    val brush = remember(image) {
-        ShaderBrush(ImageShader(image.orEmpty(), TileMode.Repeated, TileMode.Repeated))
-    }
+//    val image = resource("metal.png").rememberImageBitmap()
+//
+//    val brush = remember(image) {
+//        ShaderBrush(ImageShader(image.orEmpty(), TileMode.Repeated, TileMode.Repeated))
+//    }
 
     val deliciousFont = deliciousFonts()
 
@@ -109,7 +109,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(
             modifier = Modifier
                 .then(sizeModifier)
-                .background(brush),
+                //.background(brush),
         ) {
             CompositionLocalProvider(
                 LocalTextSelectionColors provides RWSelectionColors,
@@ -405,6 +405,7 @@ fun MainMenu(
                         )
                         Heading(1, "Changelogs")
                         CodeBlock("""
+                            1.0.5-alpha: Ban units, Game layer
                             1.0.4-alpha: Add i18n support. Player options
                             1.0.3-alpha: Improve menu and resize the layout on small screen device.
                         """.trimIndent())

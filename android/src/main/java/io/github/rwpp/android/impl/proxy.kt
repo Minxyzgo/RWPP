@@ -27,7 +27,7 @@ import com.github.minxyzgo.rwij.InjectMode
 import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.R
-import io.github.rwpp.android.MainActivity
+import io.github.rwpp.android.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.*
@@ -35,57 +35,7 @@ import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.game.units.GameInternalUnits
 import java.util.concurrent.ConcurrentLinkedQueue
 
-
-//internal lateinit var mainMenuActivityInstance: MainMenuActivity
-var questionOption: String? = null
 fun doProxy() {
-//    Game::class.setFunction {
-//        addProxy("n") { _: Game ->
-//            "v1.15 Crazy Thursday V Me 50"
-//        }
-//    }
-
-//    MainMenuActivity::class.setFunction {
-//        val gameViewField = MainMenuActivity::class.java.getDeclaredField("gameView").apply { isAccessible = true }
-//        addProxy("onCreate", android.os.Bundle::class) { activity: MainMenuActivity, _ : Bundle? ->
-//            mainMenuActivityInstance = activity
-//            val method: Method? =
-//                IntroScreen::class.java.getMethod("overridePendingTransition", Integer.TYPE, Integer.TYPE)
-//            if(method != null) {
-//                try {
-//                    method.invoke(this, Integer.valueOf(R.anim.mainfadein), Integer.valueOf(R.anim.splashfadeout))
-//                } catch(e: Exception) {
-//                }
-//            }
-//
-//            if(d.b(activity, true)) {
-//                activity.setContentView(
-//                    ComposeView(activity).apply {
-//                        setContent {
-//                            CompositionLocalProvider(
-//                                LocalController provides GameContextControllerImpl { exitProcess(0) }
-//                            ) {
-//                                App()
-//                            }
-//                        }
-//                    }
-//                )
-//
-//                gameViewField.set(activity, d.b(activity))
-//                SettingsActivity.askAboutLastDebugOption()
-//            }
-//        }
-//
-//        addProxy("onResume") { activity: MainMenuActivity ->
-//            val t: k? = GameEngine.t()
-//            if(t != null) {
-//                gameViewField.set(activity, d.a(activity, gameViewField.get(activity) as ab))
-//                t.a(activity, gameViewField.get(activity) as ab, true)
-//            }
-//            d.a(activity, true)
-//            a.c()
-//        }
-//    }
     @Suppress("unchecked_cast")
     MultiplayerBattleroomActivity::class.setFunction {
         val messagesField = com.corrodinggames.rts.gameFramework.j.a::class.java.getDeclaredField("a").apply {
@@ -105,7 +55,7 @@ fun doProxy() {
         }
 
         addProxy(MultiplayerBattleroomActivity::startGame) {
-            if(!MainActivity.isGaming) MainActivity.controller.gameRoom.startGame()
+            if(!isGaming) controller.gameRoom.startGame()
         }
 
         addProxy(MultiplayerBattleroomActivity::refreshChatLog) {
@@ -154,7 +104,7 @@ fun doProxy() {
 
         addProxy("d", String::class, mode = InjectMode.InsertBefore) { str: String ->
             if(str == "----- returnToBattleroom -----") {
-                MainActivity.isReturnToBattleRoom = true
+                isReturnToBattleRoom = true
             }
 
             Unit
@@ -285,27 +235,24 @@ fun doProxy() {
         }
 
         addProxy("x", mode = InjectMode.InsertBefore) { _: Any? ->
-            MainActivity.isReturnToBattleRoom = true
+            isReturnToBattleRoom = true
             Unit
         }
         addProxy("a", com.corrodinggames.rts.gameFramework.e::class, mode = InjectMode.InsertBefore) { _: Any?, b3: com.corrodinggames.rts.gameFramework.e ->
             val actionString = b3.k.b
-            if(actionString.startsWith("u_")) {
-                val realUnit = runCatching {
-                    GameInternalUnits.valueOf(
-                        actionString.removePrefix("u_").removePrefix("c_")
-                    )
-                }.getOrNull()
-                if(realUnit != null && realUnit in MainActivity.bannedUnitList) {
-                    return@addProxy InterruptResult(Unit)
-                }
+
+            if(actionString.removePrefix("c_").removePrefix("u_") in bannedUnitList) {
+                return@addProxy InterruptResult(Unit)
             }
+
+            println("act: $actionString")
+            println(bannedUnitList.joinToString(","))
+
             if(b3.j == null) return@addProxy Unit
             val realAction = GameCommandActions.from(b3.j.a.ordinal)
             val u = b3.j.b
-            if(u is com.corrodinggames.rts.game.units.cj) {
-                val realUnit = GameInternalUnits.from(u.ordinal)
-                if(realAction == GameCommandActions.BUILD && realUnit in MainActivity.bannedUnitList) {
+            if(realAction == GameCommandActions.BUILD && u is com.corrodinggames.rts.game.units.el) {
+                if(u.i() in bannedUnitList) {
                     InterruptResult(Unit)
                 } else Unit
             } else Unit

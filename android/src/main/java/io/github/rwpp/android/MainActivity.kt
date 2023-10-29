@@ -8,7 +8,7 @@
 package io.github.rwpp.android
 
 import android.Manifest
-import android.content.Intent
+import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
@@ -16,19 +16,20 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import com.corrodinggames.rts.appFramework.d
 import io.github.rwpp.App
-import io.github.rwpp.ContextController
 import io.github.rwpp.LocalController
 import io.github.rwpp.android.impl.GameContextControllerImpl
+import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.doProxy
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.ReturnMainMenuEvent
-import io.github.rwpp.game.units.GameInternalUnits
 import kotlin.system.exitProcess
-
 
 class MainActivity : ComponentActivity() {
 
@@ -39,7 +40,7 @@ class MainActivity : ComponentActivity() {
         ) {
             isGaming = false
             isSandboxGame = false
-            if(!isReturnToBattleRoom) ReturnMainMenuEvent().broadCastIn()
+            if(!isReturnToBattleRoom) { ReturnMainMenuEvent().broadCastIn() }
             isReturnToBattleRoom = false
         }
         instance = this
@@ -64,12 +65,23 @@ class MainActivity : ComponentActivity() {
 
         requestPermissions(permissions, 1)
 
+        if(d.b(this@MainActivity, true, true)) {
+            gameView = d.b(this@MainActivity)
+        }
+
         setContent {
             CompositionLocalProvider(
                 LocalController provides GameContextControllerImpl { exitProcess(0) }.also {
                     controller = it
                 }
             ) {
+                val view = LocalView.current
+                val window = (view.context as Activity).window
+                WindowCompat.getInsetsController(window, view).hide(
+                    WindowInsetsCompat.Type.statusBars() or
+                            WindowInsetsCompat.Type.navigationBars()
+                )
+
                 App()
             }
         }
@@ -80,18 +92,34 @@ class MainActivity : ComponentActivity() {
         controller.saveAllConfig()
     }
 
+    override fun onPause() {
+        super.onPause()
+        GameEngine.t()?.b(gameView)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        activityResume()
+    }
+
     override fun onStop() {
         super.onStop()
         controller.saveAllConfig()
+        GameEngine.t()?.b(gameView)
     }
 
     companion object {
-        lateinit var controller: ContextController
+        private lateinit var gameView: com.corrodinggames.rts.appFramework.ab
         lateinit var instance: MainActivity
-        lateinit var gameLauncher: ActivityResultLauncher<Intent>
-        var isSandboxGame: Boolean = false
-        var isGaming = false
-        var isReturnToBattleRoom = false
-        var bannedUnitList: List<GameInternalUnits> = listOf()
+
+        fun activityResume() {
+            GameEngine.t()?.let {
+                gameView = d.a(instance, gameView)
+                it.a(instance, gameView, true)
+            }
+
+            d.a(instance, true)
+            com.corrodinggames.rts.gameFramework.h.a.c()
+        }
     }
 }

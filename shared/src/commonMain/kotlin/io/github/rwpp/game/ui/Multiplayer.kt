@@ -47,7 +47,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MultiplayerView(
     onExit: () -> Unit,
@@ -285,7 +284,7 @@ fun MultiplayerView(
                     ) { index ->
                         val desc = realDescriptions[index]
                         val (delay, easing) = state.calculateDelayAndEasing(index, 1)
-                        val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
+                        val animation = tween<Float>(durationMillis = 500, delayMillis = (delay * 0.8f).roundToInt(), easing = easing)
                         val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
                         val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
                         Row(
@@ -595,7 +594,7 @@ fun MultiplayerView(
         BorderCard(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(10.dp)
+                .padding(5.dp)
         ) {
             Column {
                 ExitButton(onExit)

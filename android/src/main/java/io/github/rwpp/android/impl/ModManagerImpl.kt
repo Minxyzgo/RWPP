@@ -8,7 +8,7 @@
 package io.github.rwpp.android.impl
 
 import com.corrodinggames.rts.game.units.custom.ag
-import com.corrodinggames.rts.gameFramework.k
+import io.github.rwpp.android.MainActivity
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
 
@@ -24,6 +24,8 @@ class ModManagerImpl : ModManager {
         aVar.a(false, false)
         t.bo = false
         t.q()
+
+        MainActivity.activityResume()
     }
 
     override fun modUpdate() {
@@ -45,7 +47,6 @@ class ModManagerImpl : ModManager {
         } else if(a2 == 0) {
             t.bW.b()
         }
-
     }
 
     override fun getModByName(name: String): Mod {

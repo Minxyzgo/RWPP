@@ -13,6 +13,7 @@ import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.map.Mission
 import io.github.rwpp.game.map.MissionType
 import io.github.rwpp.game.units.GameInternalUnits
+import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.ui.LoadingContext
 
 interface Game {
@@ -61,5 +62,7 @@ interface Game {
 
     fun getStartingUnitOptions(): List<Pair<Int, String>>
 
-    fun onBanUnits(units: List<GameInternalUnits>)
+    fun getAllUnits(): List<GameUnit>
+
+    fun onBanUnits(units: List<GameUnit>)
 }

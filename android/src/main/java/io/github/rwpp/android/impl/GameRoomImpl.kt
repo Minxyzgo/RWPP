@@ -18,6 +18,9 @@ import com.corrodinggames.rts.gameFramework.j.bg
 import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.MainActivity
+import io.github.rwpp.android.gameLauncher
+import io.github.rwpp.android.isGaming
+import io.github.rwpp.android.isSandboxGame
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
 import io.github.rwpp.event.broadCastIn
@@ -142,7 +145,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                         return@Label_1604;
                     }
                     s3 = "" + bu.F;
-                } else if(isHost && !MainActivity.isSandboxGame) {
+                } else if(isHost && !isSandboxGame) {
                     if(s != null) {
                         var string = "Local IP address: " + s + " port: " + t2.bU.m + "\n";
                         var s4: String? = null;
@@ -359,15 +362,16 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     }
 
     override fun disconnect() {
-        MainActivity.isSandboxGame = false
+        isSandboxGame = false
         GameEngine.t().bU.b("exited")
+        MainActivity.activityResume()
     }
 
     override fun startGame() {
         val t: k = GameEngine.t()
-        MainActivity.isGaming = true
+        isGaming = true
 
-        if(isHost || MainActivity.isSandboxGame) {
+        if(isHost || isSandboxGame) {
             t.bU.q()
             t.bU.n()
             t.bU.a(null, false)
@@ -379,7 +383,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             //GameEngine.K()
             val intent = Intent(MainActivity.instance, InGameActivity::class.java)
             intent.putExtra("level", t.di)
-            MainActivity.gameLauncher.launch(intent)
+            gameLauncher.launch(intent)
             return
         }
         //d("Not starting multiplayer game because map failed to load")

@@ -23,21 +23,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.game.units.GameInternalUnits
+import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.ui.*
 
 @Composable
 fun BanUnitViewDialog(
     visible: Boolean,
     onDismissRequest: () -> Unit,
-    lastSelectedUnits: List<GameInternalUnits>,
-    onSelectedUnits: (List<GameInternalUnits>) -> Unit
+    lastSelectedUnits: List<GameUnit>,
+    onSelectedUnits: (List<GameUnit>) -> Unit
 ) {
+    val context = LocalController.current
+
     AnimatedAlertDialog(
         visible = visible, onDismissRequest = onDismissRequest
     ) { m, d ->
-        val selectedUnits = remember { mutableListOf<GameInternalUnits>().apply { addAll(lastSelectedUnits) } }
+        val selectedUnits = remember { mutableListOf<GameUnit>().apply { addAll(lastSelectedUnits) } }
         BorderCard(
             backgroundColor = Color.Gray,
             modifier = Modifier
@@ -57,12 +61,11 @@ fun BanUnitViewDialog(
                 filter = it
             }
 
-            val allUnits = remember(filter) { GameInternalUnits.entries.filter { filter.isBlank() || it.name.contains(filter, ignoreCase = true) } }
+            val allUnits = remember(filter) { context.getAllUnits().filter { filter.isBlank() || it.displayName.contains(filter, ignoreCase = true) } }
 
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f).padding(5.dp), state = state) {
                 items(
                     allUnits.size,
-                    key = { allUnits[it].ordinal }
                 ) {
                     val unit = allUnits[it]
                     var checked by remember { mutableStateOf(selectedUnits.contains(unit)) }
@@ -70,7 +73,7 @@ fun BanUnitViewDialog(
                         it,
                         checked,
                         state,
-                        unit.name
+                        unit.displayName
                     ) { c ->
                         checked = c
                         if(c) {

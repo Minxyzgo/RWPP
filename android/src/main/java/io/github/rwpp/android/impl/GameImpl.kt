@@ -16,7 +16,7 @@ import com.corrodinggames.rts.appFramework.*
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.k
-import io.github.rwpp.android.MainActivity
+import io.github.rwpp.android.*
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
@@ -27,6 +27,7 @@ import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.map.Mission
 import io.github.rwpp.game.map.MissionType
 import io.github.rwpp.game.units.GameInternalUnits
+import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.ui.LoadingContext
 import kotlinx.coroutines.*
 import java.io.File
@@ -50,7 +51,7 @@ class GameImpl : Game, CoroutineScope {
         LevelSelectActivity.loadSinglePlayerMapRaw("maps/normal/${mission.mapName}.tmx", false, 0, 0, true, false)
         val intent = Intent(MainActivity.instance, InGameActivity::class.java)
         intent.putExtra("level", t.di)
-        MainActivity.gameLauncher.launch(intent)
+        gameLauncher.launch(intent)
     }
 
     override suspend fun load(context: LoadingContext) = withContext(Dispatchers.IO) {
@@ -89,7 +90,7 @@ class GameImpl : Game, CoroutineScope {
         t.bU.y = "You"
         t.bU.o = true
         t.bU.r()
-        MainActivity.isSandboxGame = true
+        isSandboxGame = true
         GameEngine.t().bU.aA.a = at.a
         GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
         GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
@@ -112,7 +113,7 @@ class GameImpl : Game, CoroutineScope {
             result == null -> {
                 Result.success("")
             }
-            com.corrodinggames.rts.gameFramework.j.ae.u() -> Result.failure(IOException("Connection failed: Target server may not be open to the internet."))
+            ae.u() -> Result.failure(IOException("Connection failed: Target server may not be open to the internet."))
             else -> Result.failure(IOException("Connection failed."))
         }
     }
@@ -235,9 +236,24 @@ class GameImpl : Game, CoroutineScope {
         return list
     }
 
-    override fun onBanUnits(units: List<GameInternalUnits>) {
-        MainActivity.bannedUnitList = units
-        if(units.isNotEmpty()) gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.joinToString(", ")}")
+    @Suppress("UNCHECKED_CAST")
+    override fun getAllUnits(): List<GameUnit> {
+        return (com.corrodinggames.rts.game.units.cj.ae as ArrayList<com.corrodinggames.rts.game.units.el>).map {
+            object : GameUnit {
+                override val name: String = it.i()
+                override val displayName: String = it.e()
+                override val description: String = it.f()
+            }
+        }
+    }
+
+    override fun onBanUnits(units: List<GameUnit>) {
+        bannedUnitList = units.map { it.name }
+        if(units.isNotEmpty()) gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${
+            units.joinToString(
+                ", "
+            ) { it.displayName }
+        }")
     }
 
     override val coroutineContext: CoroutineContext = Job()

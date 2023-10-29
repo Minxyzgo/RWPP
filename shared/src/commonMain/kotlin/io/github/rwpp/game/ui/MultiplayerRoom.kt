@@ -47,6 +47,7 @@ import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.units.GameInternalUnits
+import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
@@ -103,7 +104,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
     var optionVisible by remember { mutableStateOf(false) }
     var banUnitVisible by remember { mutableStateOf(false) }
-    var selectedBanUnits by remember { mutableStateOf(listOf<GameInternalUnits>()) }
+    var selectedBanUnits by remember { mutableStateOf(listOf<GameUnit>()) }
 
     var showMapSelectView by remember { mutableStateOf(false) }
     val players = remember(update) { room.getPlayers().sortedBy { it.team } }
@@ -198,7 +199,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                         modifier = Modifier.clickable {
                             room.sendChatMessage(chatMessage)
                             chatMessage = ""
-                        }
+                        },
+                        tint = Color.White
                     )
                 },
                 onValueChange =
@@ -240,7 +242,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         BorderCard(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(10.dp)
+                .padding(5.dp)
         ) {
             Column {
                 ExitButton(onExit)
