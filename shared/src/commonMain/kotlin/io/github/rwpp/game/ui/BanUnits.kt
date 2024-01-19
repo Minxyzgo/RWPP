@@ -41,7 +41,7 @@ fun BanUnitViewDialog(
     AnimatedAlertDialog(
         visible = visible, onDismissRequest = onDismissRequest
     ) { m, d ->
-        val selectedUnits = remember { mutableListOf<GameUnit>().apply { addAll(lastSelectedUnits) } }
+        val selectedUnits = remember(lastSelectedUnits) { mutableListOf<GameUnit>().apply { addAll(lastSelectedUnits) } }
         BorderCard(
             backgroundColor = Color.Gray,
             modifier = Modifier
@@ -68,7 +68,7 @@ fun BanUnitViewDialog(
                     allUnits.size,
                 ) {
                     val unit = allUnits[it]
-                    var checked by remember { mutableStateOf(selectedUnits.contains(unit)) }
+                    var checked by remember(lastSelectedUnits) { mutableStateOf(lastSelectedUnits.contains(unit)) }
                     BanUnitItem(
                         it,
                         checked,

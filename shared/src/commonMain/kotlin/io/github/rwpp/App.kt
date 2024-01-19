@@ -62,11 +62,7 @@ val welcomeMessage
 
 @Composable
 fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
-//    val image = resource("metal.png").rememberImageBitmap()
 //
-//    val brush = remember(image) {
-//        ShaderBrush(ImageShader(image.orEmpty(), TileMode.Repeated, TileMode.Repeated))
-//    }
 
     val deliciousFont = deliciousFonts()
 

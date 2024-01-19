@@ -38,6 +38,7 @@ import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.game.units.GameInternalUnits
+import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.ui.LoadingContext
 import io.github.rwpp.welcomeMessage
 import kotlinx.coroutines.channels.Channel
@@ -52,12 +53,15 @@ class GameImpl : Game {
     private val mapPrefixRegex = Regex("""^\[.*?\]""")
     private var _missions: List<Mission>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
+    private var _units: List<GameUnit>? = null
+    private var lastAllUnits: java.util.ArrayList<*>? = null
     private val asField = PlayerInternal::class.java.getDeclaredField("as")
         .apply { isAccessible = true }
     private var playerCacheMap = mutableMapOf<com.corrodinggames.rts.game.n, Player>()
     private var threadConnector: com.corrodinggames.rts.gameFramework.j.an? = null
     private var isSandboxGame: Boolean = false
-    private var bannedUnitList: List<GameInternalUnits> = listOf()
+    private var bannedUnitList: List<GameUnit> = listOf()
+
 
     override val gameVersion: Int = 176
 
@@ -315,26 +319,26 @@ class GameImpl : Game {
 
         com.corrodinggames.rts.gameFramework.j.ad::class.setFunction {
             addProxy("a", com.corrodinggames.rts.gameFramework.e::class, mode = InjectMode.InsertBefore) { _: Any?, b3: com.corrodinggames.rts.gameFramework.e ->
-                val actionString = b3.k.a()
-                if(actionString.startsWith("u_")) {
-                    val realUnit = runCatching {
-                        GameInternalUnits.valueOf(
-                            actionString.removePrefix("u_").removePrefix("c_")
-                        )
-                    }.getOrNull()
-                    if(realUnit != null && realUnit in bannedUnitList) {
-                        return@addProxy InterruptResult(Unit)
-                    }
-                }
-                if(b3.j == null) return@addProxy Unit
-                val realAction = GameCommandActions.from(b3.j.d().ordinal)
-                val u = b3.j.a()
-                if(u is com.corrodinggames.rts.game.units.ar) {
-                    val realUnit = GameInternalUnits.from(u.ordinal)
-                    if(realAction == GameCommandActions.BUILD && realUnit in bannedUnitList) {
-                        InterruptResult(Unit)
-                    } else Unit
-                } else Unit
+//                val actionString = b3.k.a()
+//                if(actionString.startsWith("u_")) {
+//                    val realUnit = runCatching {
+//                        GameInternalUnits.valueOf(
+//                            actionString.removePrefix("u_").removePrefix("c_")
+//                        )
+//                    }.getOrNull()
+//                    if(realUnit != null && realUnit in bannedUnitList) {
+//                        return@addProxy InterruptResult(Unit)
+//                    }
+//                }
+//                if(b3.j == null) return@addProxy Unit
+//                val realAction = GameCommandActions.from(b3.j.d().ordinal)
+//                val u = b3.j.a()
+//                if(u is com.corrodinggames.rts.game.units.ar) {
+//                    val realUnit = GameInternalUnits.from(u.ordinal)
+//                    if(realAction == GameCommandActions.BUILD && realUnit in bannedUnitList) {
+//                        InterruptResult(Unit)
+//                    } else Unit
+//                } else Unit
             }
         }
 
@@ -721,10 +725,31 @@ class GameImpl : Game {
         }
         return list
     }
+    @Suppress("UNCHECKED_CAST")
+    override fun getAllUnits(): List<GameUnit> {
+        val gameUnits = (com.corrodinggames.rts.game.units.ar.ae as ArrayList<com.corrodinggames.rts.game.units.`as`>)
+        if(_units == null || lastAllUnits != gameUnits) {
+            _units = gameUnits.map {
+                object : GameUnit {
+                    override val name: String
+                        get() = it.v()
+                    override val displayName: String
+                        get() = it.e()
+                    override val description: String
+                        get() = it.f()
+                }
+            }
 
-    override fun onBanUnits(units: List<GameInternalUnits>) {
+            lastAllUnits = gameUnits
+        }
+
+        return _units!!
+    }
+
+    override fun onBanUnits(units: List<GameUnit>) {
         bannedUnitList = units
-        if(units.isNotEmpty()) gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.joinToString(", ")}")
+        if(units.isNotEmpty())
+            gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.map(GameUnit::displayName).joinToString(", ")}")
     }
 
     private fun restrictedString(str: String?): String? {

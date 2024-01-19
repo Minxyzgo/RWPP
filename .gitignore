@@ -4,3 +4,4 @@
 build/
 /captures
 /android/release/
+/local.properties
