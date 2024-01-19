@@ -7,6 +7,7 @@
 
 package io.github.rwpp.desktop
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.awt.SwingPanel
+import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.unit.dp
@@ -27,11 +31,11 @@ import io.github.rwpp.LocalController
 import io.github.rwpp.desktop.impl.GameContextControllerImpl
 import io.github.rwpp.ui.RWSingleOutlinedTextField
 import io.github.rwpp.ui.RWTextButton
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.*
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
+import java.io.File
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
@@ -46,6 +50,9 @@ lateinit var rwppVisibleSetter: (Boolean) -> Unit
 
 fun main(args: Array<String>) {
     val isSwingApplication = args.contains("-swingApplication")
+    if(File("opengl32.dll").exists()) { // for only debug
+        System.loadLibrary("opengl32")
+    }
 
     displaySize =
         GraphicsEnvironment
@@ -143,14 +150,19 @@ fun composeApplication() = application {
         CompositionLocalProvider(
             LocalController provides gameContext
         ) {
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier.fillMaxSize(),
+            val image = resource("metal.png").rememberImageBitmap()
+
+            val brush = remember(image) {
+                ShaderBrush(ImageShader(image.orEmpty(), TileMode.Repeated, TileMode.Repeated))
+            }
+
+            Box(
+                modifier = Modifier.fillMaxSize().background(brush),
                 contentAlignment = Alignment.Center
             ) {
-
-                App(sizeModifier = if(gameVisible) Modifier.fillMaxSize().focusable() else Modifier.size(0.dp))
+                App(sizeModifier = if (gameVisible) Modifier.fillMaxSize().focusable() else Modifier.size(0.dp))
                 SwingPanel(
-                    modifier = if(gameVisible) Modifier.size(0.dp) else Modifier.fillMaxSize(),
+                    modifier = if (gameVisible) Modifier.size(0.dp) else Modifier.fillMaxSize(),
                     factory = { gameCanvas }
                 )
 

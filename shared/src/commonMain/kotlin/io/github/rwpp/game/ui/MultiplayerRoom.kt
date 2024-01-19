@@ -288,8 +288,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             }
 
                             if(LocalWindowManager.current == WindowManager.Middle) MapImage(Modifier.weight(1f).fillMaxWidth())
-                            if(LocalWindowManager.current == WindowManager.Small) MapImage(Modifier.fillMaxWidth())
-
+                            if(LocalWindowManager.current == WindowManager.Small) MapImage(Modifier.defaultMinSize(minHeight = 200.dp).fillMaxWidth())
                             val mapType = remember(update) { room.mapType }
 
                             Text(

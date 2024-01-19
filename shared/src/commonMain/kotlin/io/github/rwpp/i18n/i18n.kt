@@ -18,6 +18,7 @@ import org.jetbrains.compose.resources.resource
 import java.util.*
 
 internal lateinit var i18nTable: TomlTable
+private val cacheMap = mutableMapOf<String, String>()
 
 @OptIn(ExperimentalResourceApi::class)
 suspend fun parseI18n() {
@@ -29,14 +30,16 @@ suspend fun parseI18n() {
 }
 
 fun readI18n(path: String): String {
+    cacheMap[path]?.let { return it }
     val strArray = path.split(".")
     val iter = strArray.iterator()
     var table: TomlTable = i18nTable
     while(iter.hasNext()) {
         val next = iter.next()
-        println(next)
         if(!iter.hasNext()) {
-            return table[next]!!.asTomlLiteral().content
+            return table[next]!!.asTomlLiteral().content.also {
+                cacheMap[path] = it
+            }
         } else table = table[next]!!.asTomlTable()
     }
 

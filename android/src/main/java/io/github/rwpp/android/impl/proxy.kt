@@ -245,9 +245,6 @@ fun doProxy() {
                 return@addProxy InterruptResult(Unit)
             }
 
-            println("act: $actionString")
-            println(bannedUnitList.joinToString(","))
-
             if(b3.j == null) return@addProxy Unit
             val realAction = GameCommandActions.from(b3.j.a.ordinal)
             val u = b3.j.b
