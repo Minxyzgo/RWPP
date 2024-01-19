@@ -60,7 +60,7 @@ class GameImpl : Game {
     private var playerCacheMap = mutableMapOf<com.corrodinggames.rts.game.n, Player>()
     private var threadConnector: com.corrodinggames.rts.gameFramework.j.an? = null
     private var isSandboxGame: Boolean = false
-    private var bannedUnitList: List<GameUnit> = listOf()
+    private var bannedUnitList: List<String> = listOf()
 
 
     override val gameVersion: Int = 176
@@ -319,26 +319,20 @@ class GameImpl : Game {
 
         com.corrodinggames.rts.gameFramework.j.ad::class.setFunction {
             addProxy("a", com.corrodinggames.rts.gameFramework.e::class, mode = InjectMode.InsertBefore) { _: Any?, b3: com.corrodinggames.rts.gameFramework.e ->
-//                val actionString = b3.k.a()
-//                if(actionString.startsWith("u_")) {
-//                    val realUnit = runCatching {
-//                        GameInternalUnits.valueOf(
-//                            actionString.removePrefix("u_").removePrefix("c_")
-//                        )
-//                    }.getOrNull()
-//                    if(realUnit != null && realUnit in bannedUnitList) {
-//                        return@addProxy InterruptResult(Unit)
-//                    }
-//                }
-//                if(b3.j == null) return@addProxy Unit
-//                val realAction = GameCommandActions.from(b3.j.d().ordinal)
-//                val u = b3.j.a()
-//                if(u is com.corrodinggames.rts.game.units.ar) {
-//                    val realUnit = GameInternalUnits.from(u.ordinal)
-//                    if(realAction == GameCommandActions.BUILD && realUnit in bannedUnitList) {
-//                        InterruptResult(Unit)
-//                    } else Unit
-//                } else Unit
+                val actionString = b3.k.a()
+                if(actionString.startsWith("u_")) {
+                    if(actionString.removePrefix("u_").removePrefix("c_") in bannedUnitList) {
+                        return@addProxy InterruptResult(Unit)
+                    }
+                }
+                if(b3.j == null) return@addProxy Unit
+                val realAction = GameCommandActions.from(b3.j.d().ordinal)
+                val u = b3.j.a()
+                if(u is com.corrodinggames.rts.game.units.`as`) {
+                    if(realAction == GameCommandActions.BUILD && u.v() in bannedUnitList) {
+                        InterruptResult(Unit)
+                    } else Unit
+                } else Unit
             }
         }
 
@@ -747,7 +741,7 @@ class GameImpl : Game {
     }
 
     override fun onBanUnits(units: List<GameUnit>) {
-        bannedUnitList = units
+        bannedUnitList = units.map(GameUnit::name)
         if(units.isNotEmpty())
             gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.map(GameUnit::displayName).joinToString(", ")}")
     }

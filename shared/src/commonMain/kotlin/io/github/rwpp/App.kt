@@ -50,13 +50,15 @@ import org.jetbrains.compose.resources.painterResource
 var LocalController = staticCompositionLocalOf<ContextController> { null!! }
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
 
+val projectVersion = "1.0.5-alpha"
+
 val welcomeMessage
     get() = """
             这是一个使用[RWPP]所开始的房间
             [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
             开源地址请访问 https://github.com/Minxyzgo/RWPP 
             bug反馈与交流加入群: 150450999
-            当前版本: 1.0.5-alpha (不稳定)
+            当前版本: $projectVersion (不稳定)
             Copyright 2023 RWPP contributors
         """.trimIndent()
 
@@ -338,7 +340,7 @@ fun MainMenu(
             ) {
                 item {
                     Text(
-                        "RWPP Update news - 1.0.4-alpha",
+                        "RWPP Update news - $projectVersion",
                         fontFamily = deliciousFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 36.sp

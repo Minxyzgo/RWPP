@@ -8,8 +8,15 @@
 package io.github.rwpp.desktop.impl
 
 import com.corrodinggames.rts.java.u
+import org.newdawn.slick.GameContainer
 
 class RwInternalGameImpl(str: String) : u(str) {
+
+    override fun update(p0: GameContainer?, p1: Int) {
+        try {
+            super.update(p0, p1)
+        } catch (_: Exception){}
+    }
 
 
     override fun b() {
