@@ -27,6 +27,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import io.github.rwpp.App
+import io.github.rwpp.ContextController
 import io.github.rwpp.LocalController
 import io.github.rwpp.desktop.impl.GameContextControllerImpl
 import io.github.rwpp.ui.RWSingleOutlinedTextField
@@ -46,6 +47,7 @@ lateinit var mainJFrame: JFrame
 lateinit var gameCanvas: Canvas
 lateinit var displaySize: Dimension
 lateinit var sendMessageDialog: Dialog
+lateinit var gameContext: ContextController
 lateinit var rwppVisibleSetter: (Boolean) -> Unit
 
 fun main(args: Array<String>) {
@@ -82,7 +84,7 @@ fun composeApplication() = application {
 
     rwppVisibleSetter = { gameVisible = it }
 
-    val gameContext = GameContextControllerImpl(::exitApplication)
+    gameContext = GameContextControllerImpl(::exitApplication)
 
     Window(
         onCloseRequest = { gameContext.exit() },

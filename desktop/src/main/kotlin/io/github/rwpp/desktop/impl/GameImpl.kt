@@ -9,6 +9,8 @@ package io.github.rwpp.desktop.impl
 
 import android.content.ServerContext
 import android.graphics.Point
+import androidx.compose.ui.graphics.asComposeImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.Root
@@ -36,12 +38,14 @@ import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
+import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.units.GameCommandActions
-import io.github.rwpp.game.units.GameInternalUnits
 import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.ui.LoadingContext
 import io.github.rwpp.welcomeMessage
 import kotlinx.coroutines.channels.Channel
+import org.jetbrains.skia.Bitmap
 import org.lwjgl.opengl.Display
 import java.io.File
 import java.io.IOException
@@ -317,6 +321,7 @@ class GameImpl : Game {
             }
         }
 
+        // ban units proxy
         com.corrodinggames.rts.gameFramework.j.ad::class.setFunction {
             addProxy("a", com.corrodinggames.rts.gameFramework.e::class, mode = InjectMode.InsertBefore) { _: Any?, b3: com.corrodinggames.rts.gameFramework.e ->
                 val actionString = b3.k.a()
@@ -731,6 +736,20 @@ class GameImpl : Game {
                         get() = it.e()
                     override val description: String
                         get() = it.f()
+                    // Nevertheless, we can change it soon
+//                    override val painter: Painter? = (it as? com.corrodinggames.rts.game.units.custom.l)?.ad?.let {
+//                            runCatching {
+//                                ImageIO.read(File(it.a().replace("/", "\\"))).toPainter()
+//                            }.getOrElse { e ->
+//                                println("error on reading path:${it.a()}")
+//                                e.printStackTrace()
+//                                null
+//                            }
+//                        }
+                    override val movementType: MovementType
+                        get() = MovementType.valueOf(it.o().name)
+                    override val mod: Mod?
+                        get() = (it as? com.corrodinggames.rts.game.units.custom.l)?.J?.s?.let(gameContext::getModByName)
                 }
             }
 
@@ -765,11 +784,16 @@ class GameImpl : Game {
     class RWPPContainer : b(game, displaySize.width, displaySize.height, false) {
         private val channel = Channel<() -> Unit>(Channel.UNLIMITED)
 
-        private var cproperty: CClass? = null
+        /**
+         * try to post an action to the game thread (running in Opengl context)
+         */
         fun post(action: () -> Unit) {
             channel.trySend(action)
         }
 
+        /**
+         * post an action. It will return until the action was finished
+         */
         suspend fun waitPost(action: () -> Unit) {
             val ec = Channel<Unit>(1)
             channel.send {

@@ -8,6 +8,7 @@
 package io.github.rwpp.game.ui
 
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -67,13 +68,13 @@ fun BanUnitViewDialog(
                 items(
                     allUnits.size,
                 ) {
-                    val unit = allUnits[it]
-                    var checked by remember(lastSelectedUnits) { mutableStateOf(lastSelectedUnits.contains(unit)) }
+                    val unit by remember(allUnits) { mutableStateOf(allUnits[it]) }
+                    var checked by remember(lastSelectedUnits, unit) { mutableStateOf(lastSelectedUnits.contains(unit)) }
                     BanUnitItem(
                         it,
                         checked,
                         state,
-                        unit.displayName
+                        unit
                     ) { c ->
                         checked = c
                         if(c) {
@@ -106,7 +107,7 @@ fun BanUnitItem(
     index: Int,
     checked: Boolean,
     state: LazyListState,
-    name: String,
+    unit: GameUnit,
     onChanged: (checked: Boolean) -> Unit
 ) {
     val (_, easing) = state.calculateDelayAndEasing(index, 5)
@@ -131,7 +132,7 @@ fun BanUnitItem(
             })
 
             Text(
-                name,
+                unit.displayName,
                 modifier = Modifier.padding(5.dp),
                 style = MaterialTheme.typography.bodyLarge
             )

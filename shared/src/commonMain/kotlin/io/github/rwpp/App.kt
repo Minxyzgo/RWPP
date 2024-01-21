@@ -50,7 +50,7 @@ import org.jetbrains.compose.resources.painterResource
 var LocalController = staticCompositionLocalOf<ContextController> { null!! }
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
 
-val projectVersion = "1.0.5-alpha"
+const val projectVersion = "1.0.5-alpha"
 
 val welcomeMessage
     get() = """
@@ -447,45 +447,6 @@ fun MainMenu(
                     }
                 }
                 item { Spacer(Modifier.size(50.dp)) }
-//                item {
-//                    Row(
-//                        horizontalArrangement = Arrangement.Center,
-//                    ) {
-//                        OutlinedButton(
-//                            onClick = { },
-//                            modifier = Modifier
-//                                .wrapContentSize()
-//                                .padding(10.dp),
-//                            border = BorderStroke(2.dp, Color.DarkGray),
-//                            shape = CircleShape,
-//                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Gray)
-//                        ) {
-//                            Image(
-//                                modifier = Modifier
-//                                    .size(40.dp),
-//                                painter = painterResource("GitHub-Mark.png"),
-//                                contentDescription = null
-//                            )
-//                        }
-//
-//                        OutlinedButton(
-//                            onClick = { },
-//                            modifier = Modifier
-//                                .wrapContentSize()
-//                                .padding(10.dp),
-//                            border = BorderStroke(2.dp, Color.DarkGray),
-//                            shape = CircleShape,
-//                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Gray)
-//                        ) {
-//                            Image(
-//                                modifier = Modifier
-//                                    .size(40.dp),
-//                                painter = painterResource("qq-icon.png"),
-//                                contentDescription = null
-//                            )
-//                        }
-//                    }
-//                }
             }
         }
     }
