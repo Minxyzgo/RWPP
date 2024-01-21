@@ -26,8 +26,9 @@ import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.map.Mission
 import io.github.rwpp.game.map.MissionType
-import io.github.rwpp.game.units.GameInternalUnits
+import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.ui.LoadingContext
 import kotlinx.coroutines.*
 import java.io.File
@@ -40,6 +41,8 @@ class GameImpl : Game, CoroutineScope {
     private var connectingJob: Deferred<String?>? = null
     private var _missions: List<Mission>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
+    private var _units: List<GameUnit>? = null
+    private var cacheUnits: ArrayList<*>? = null
 
     override val gameVersion: Int
         get() = 176
@@ -238,13 +241,21 @@ class GameImpl : Game, CoroutineScope {
 
     @Suppress("UNCHECKED_CAST")
     override fun getAllUnits(): List<GameUnit> {
-        return (com.corrodinggames.rts.game.units.cj.ae as ArrayList<com.corrodinggames.rts.game.units.el>).map {
-            object : GameUnit {
-                override val name: String = it.i()
-                override val displayName: String = it.e()
-                override val description: String = it.f()
+        val units = (com.corrodinggames.rts.game.units.cj.ae as ArrayList<com.corrodinggames.rts.game.units.el>)
+        if(cacheUnits != units || _units == null) {
+            _units = units.map {
+                object : GameUnit {
+                    override val name: String = it.i()
+                    override val displayName: String = it.e()
+                    override val description: String = it.f()
+                    override val movementType: MovementType
+                        get() = TODO("Not yet implemented")
+                    override val mod: Mod
+                        get() = TODO("Not yet implemented")
+                }
             }
         }
+        return _units!!
     }
 
     override fun onBanUnits(units: List<GameUnit>) {

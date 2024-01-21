@@ -7,8 +7,13 @@
 
 package io.github.rwpp.game.units
 
+import androidx.compose.ui.graphics.painter.Painter
+import io.github.rwpp.game.mod.Mod
+
 interface GameUnit {
     val name: String
     val displayName: String
     val description: String
+    val movementType: MovementType
+    val mod: Mod?
 }
