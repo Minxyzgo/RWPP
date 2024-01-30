@@ -1,8 +1,8 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.android.impl
@@ -25,6 +25,7 @@ import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.RefreshUIEvent
+import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
@@ -50,7 +51,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             val t = GameEngine.t()
             val p = playerCacheMap[t.bU.A]
             if(p == null) getPlayers()
-            return playerCacheMap[t.bU.A]!!
+            return playerCacheMap[t.bU.A] ?: ConnectingPlayer
         }
     override var sharedControl: Boolean
         get() = GameEngine.t().bU.aA.l

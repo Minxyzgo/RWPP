@@ -1,3 +1,10 @@
+/*
+ * Copyright 2023-2024 RWPP contributors
+ * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ */
+
 @file:OptIn(LibRequiredApi::class)
 
 import com.github.minxyzgo.rwij.LibRequiredApi
@@ -86,7 +93,12 @@ injectionMultiplatform {
             ),
             "com.corrodinggames.rts.java.Main".with("c", "b()"),
             "com.corrodinggames.rts.java.b.a".with("p"),
-            "com.corrodinggames.rts.gameFramework.j.ad".with("a(Lcom/corrodinggames/rts/gameFramework/e;)")
+            "com.corrodinggames.rts.game.units.custom.l".with("a(Lcom/corrodinggames/rts/game/units/custom/ab;Ljava/util/HashMap;)"),
+            "com.corrodinggames.rts.gameFramework.j.ad".with(
+                "a(Lcom/corrodinggames/rts/gameFramework/e;)",
+                "a(Lcom/corrodinggames/rts/gameFramework/j/au;)",
+                "g(Lcom/corrodinggames/rts/gameFramework/j/c;)"
+            )
         )
         action {
             // set all members of Main to public

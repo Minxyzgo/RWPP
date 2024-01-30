@@ -1,8 +1,8 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.android
@@ -65,10 +65,6 @@ class MainActivity : ComponentActivity() {
 
         requestPermissions(permissions, 1)
 
-        if(d.b(this@MainActivity, true, true)) {
-            gameView = d.b(this@MainActivity)
-        }
-
         setContent {
             CompositionLocalProvider(
                 LocalController provides GameContextControllerImpl { exitProcess(0) }.also {
@@ -94,7 +90,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
-        GameEngine.t()?.b(gameView)
+        if(gameView != null) GameEngine.t()?.b(gameView)
     }
 
     override fun onResume() {
@@ -105,11 +101,11 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         controller.saveAllConfig()
-        GameEngine.t()?.b(gameView)
+        if(gameView != null) GameEngine.t()?.b(gameView)
     }
 
     companion object {
-        private lateinit var gameView: com.corrodinggames.rts.appFramework.ab
+        var gameView: com.corrodinggames.rts.appFramework.ab? = null
         lateinit var instance: MainActivity
 
         fun activityResume() {

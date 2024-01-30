@@ -1,8 +1,8 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.game
@@ -43,11 +43,13 @@ interface Game {
      * @param isPublic whether the room will be added to the room list.
      * @param password the password of the room.
      * @param useMods whether the mod will be used or not in the room.
+     * @param option room option.
      */
     fun hostStartWithPasswordAndMods(
         isPublic: Boolean,
         password: String?,
         useMods: Boolean,
+        option: RoomOption
     )
 
     /**

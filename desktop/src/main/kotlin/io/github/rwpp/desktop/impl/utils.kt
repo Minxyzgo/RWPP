@@ -7,14 +7,10 @@
 
 package io.github.rwpp.desktop.impl
 
-class GameStream(
-    private val stream: com.corrodinggames.rts.gameFramework.j.k
-) {
-    fun readByte() = stream.d()
-    fun readBool() = stream.e()
-    fun readInt() = stream.f()
-    fun readFloat() = stream.g()
-    fun readDouble() = stream.h()
-    fun readLong() = stream.i()
-    fun readUTF() = stream.l()
+import com.corrodinggames.rts.gameFramework.j.au
+import io.github.rwpp.net.Packet
+
+fun Packet.asGamePacket(): au = au(type).also {
+    it.c = bytes
+    it.d = -1
 }

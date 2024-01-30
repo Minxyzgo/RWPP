@@ -5,16 +5,12 @@
  *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.desktop.impl
+package io.github.rwpp.net.packets
 
-class GameStream(
-    private val stream: com.corrodinggames.rts.gameFramework.j.k
-) {
-    fun readByte() = stream.d()
-    fun readBool() = stream.e()
-    fun readInt() = stream.f()
-    fun readFloat() = stream.g()
-    fun readDouble() = stream.h()
-    fun readLong() = stream.i()
-    fun readUTF() = stream.l()
+import io.github.rwpp.net.Packet
+import io.github.rwpp.net.PacketType
+
+object ModPacket {
+    fun newRequestPacket(): Packet =
+        Packet.createPacket(PacketType.MOD_DOWNLOAD_REQUEST.type) {}
 }

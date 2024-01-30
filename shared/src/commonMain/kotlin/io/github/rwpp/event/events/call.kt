@@ -5,16 +5,10 @@
  *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.desktop.impl
+package io.github.rwpp.event.events
 
-class GameStream(
-    private val stream: com.corrodinggames.rts.gameFramework.j.k
-) {
-    fun readByte() = stream.d()
-    fun readBool() = stream.e()
-    fun readInt() = stream.f()
-    fun readFloat() = stream.g()
-    fun readDouble() = stream.h()
-    fun readLong() = stream.i()
-    fun readUTF() = stream.l()
-}
+import io.github.rwpp.event.AbstractEvent
+
+sealed class CallEvent : AbstractEvent()
+
+class CallReloadModEvent : AbstractEvent()

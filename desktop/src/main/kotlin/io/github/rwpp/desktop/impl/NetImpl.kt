@@ -7,14 +7,18 @@
 
 package io.github.rwpp.desktop.impl
 
-class GameStream(
-    private val stream: com.corrodinggames.rts.gameFramework.j.k
-) {
-    fun readByte() = stream.d()
-    fun readBool() = stream.e()
-    fun readInt() = stream.f()
-    fun readFloat() = stream.g()
-    fun readDouble() = stream.h()
-    fun readLong() = stream.i()
-    fun readUTF() = stream.l()
+import io.github.rwpp.net.Net
+import io.github.rwpp.net.Packet
+import okhttp3.OkHttpClient
+
+class NetImpl : Net {
+    override val client: OkHttpClient = OkHttpClient()
+
+    override fun sendPacketToServer(packet: Packet) {
+        LClass.B().bX.f(packet.asGamePacket())
+    }
+
+    override fun sendPacketToClients(packet: Packet) {
+        LClass.B().bX.g(packet.asGamePacket())
+    }
 }
