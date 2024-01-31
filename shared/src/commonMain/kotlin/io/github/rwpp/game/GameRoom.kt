@@ -33,6 +33,7 @@ interface GameRoom {
     var allowSpectators: Boolean
     var lockedRoom: Boolean
     var teamLock: Boolean
+    val mods: Array<String>
 
     var isRWPPRoom: Boolean
     var option: RoomOption

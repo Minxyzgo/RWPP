@@ -56,6 +56,8 @@ import kotlinx.coroutines.channels.Channel
 import net.peanuuutz.tomlkt.Toml
 import org.lwjgl.opengl.Display
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
 import javax.imageio.ImageIO
 import javax.swing.SwingUtilities
@@ -73,6 +75,7 @@ class GameImpl : Game {
     private var threadConnector: com.corrodinggames.rts.gameFramework.j.an? = null
     private var isSandboxGame: Boolean = false
     private var bannedUnitList: List<String> = listOf()
+    private var roomMods: Array<String> = arrayOf()
 
 
     override val gameVersion: Int = 176
@@ -147,6 +150,8 @@ class GameImpl : Game {
                 override var teamLock: Boolean
                     get() = m
                     set(value) { m = value }
+                override val mods: Array<String>
+                    get() = roomMods
                 override var isRWPPRoom: Boolean = false
                 override var option: RoomOption = RoomOption()
 
@@ -198,6 +203,7 @@ class GameImpl : Game {
                     isRWPPRoom = false
                     option = RoomOption()
                     bannedUnitList = listOf()
+                    roomMods = arrayOf()
                     B.bX.b("exited")
                 }
 
@@ -351,7 +357,7 @@ class GameImpl : Game {
                     } else Unit
                 } else Unit
             }
-            addProxy("a", com.corrodinggames.rts.gameFramework.j.au::class, mode = InjectMode.InsertBefore) { _: Any?, auVar: com.corrodinggames.rts.gameFramework.j.au ->
+            addProxy("c", com.corrodinggames.rts.gameFramework.j.au::class, mode = InjectMode.InsertBefore) { _: Any?, auVar: com.corrodinggames.rts.gameFramework.j.au ->
                 when(auVar.b) {
                     PacketType.PREREGISTER_INFO.type -> {
                         with(LClass.B().bX) {
@@ -359,8 +365,11 @@ class GameImpl : Game {
                             val kVar16 = k(auVar)
                             val cVar14: c = auVar.a
                             val str = kVar16.l()
+                            println("!!!!!!!!!?!!???")
+                            println("read: $str")
                             if(str.startsWith(packageName)) {
                                 gameRoom.option = Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
+                                println("canTransfermod: ${gameRoom.option.canTransferMod}")
                             }
                             val f11 = kVar16.f()
                             val f12 = kVar16.f()
@@ -381,6 +390,58 @@ class GameImpl : Game {
 
                         InterruptResult(Unit)
                     }
+
+                    PacketType.MOD_DOWNLOAD_REQUEST.type -> {
+                        if(gameRoom.isHost) {
+                            val B = LClass.B()
+                            val c: c = auVar.a
+
+                            if(!gameRoom.option.canTransferMod)
+                                B.bX.a(c, "Server didn't support transferring mods.")
+                            else {
+                                val k = k(auVar)
+                                val str = k.l()
+
+                                try {
+                                    val mods = str.split(";")
+                                    mods.map(gameContext::getModByName).forEachIndexed { i, m ->
+                                        val bytes = m!!.getBytes()
+                                        B.bX.a(c, ModPacket.newModPackPacket(mods.size, i, "${m.name}.rwmod", bytes).asGamePacket())
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    B.bX.a(c, "Mod download error. cause: ${e.message}")
+                                }
+                            }
+                        }
+
+                        InterruptResult(Unit)
+                    }
+
+                    PacketType.DOWNLOAD_MOD_PACK.type -> {
+                        val B = LClass.B()
+                        val k = k(auVar)
+                        val c: c = auVar.a
+                        val size = k.f()
+                        val index = k.f()
+                        val name = k.l()
+                        val bytes = k.w().readBytes()
+                        val fi = File("mods/units/$name")
+                        if (fi.exists()) throw RuntimeException("Mod: $name had been installed.")
+
+                        fi.createNewFile()
+                        fi.writeBytes(bytes)
+
+                        // TODO 可能顺序存在问题
+                        if(index == size - 1) {
+                            gameContext.modUpdate()
+                            gameContext.getAllMods().forEach { it.isEnabled = it.name in roomMods }
+                            CallReloadModEvent().broadCastIn()
+                        }
+
+                        InterruptResult(Unit)
+                    }
+
                     else -> Unit
                 }
             }
@@ -407,19 +468,23 @@ class GameImpl : Game {
 
         com.corrodinggames.rts.game.units.custom.l::class.setFunction {
             addProxy("a", com.corrodinggames.rts.game.units.custom.ab::class, java.util.HashMap::class) { p1: Any?, p2: HashMap<Any?, com.corrodinggames.rts.game.units.custom.ac> ->
+                val allMods = buildList {
+                    p2.values.forEach { ac ->
+                        val name = ac::class.java.getDeclaredField("a")
+                            .also { it.isAccessible = true }
+                            .get(ac)
+                        if(name != null && name != "null") add(name as String)
+                    }
+                }
+
+                roomMods = allMods.toTypedArray()
+
                 val met = UnitEngine::class.java.getDeclaredMethod("__proxy__a",
                     com.corrodinggames.rts.game.units.custom.ab::class.java, java.util.HashMap::class.java).apply { isAccessible = true }
                 try {
                     met.invoke(null, p1, p2)
                 } catch (e: Exception) {
-                    val allMods = buildList {
-                        p2.values.forEach { ac ->
-                            val name = ac::class.java.getDeclaredField("a")
-                                .also { it.isAccessible = true }
-                                .get(ac)
-                            if(name != null && name != "null") add(name as String)
-                        }
-                    }
+
                     run {
                         if(allMods.all { gameContext.getModByName(it) != null }) {
                             gameContext.getAllMods().forEach { it.isEnabled = it.name in allMods }
@@ -427,8 +492,10 @@ class GameImpl : Game {
                             return@run
                         }
 
+                        val modsName = gameContext.getAllMods().map { it.name }
                         if(gameRoom.option.canTransferMod) {
-                            gameContext.sendPacketToServer(ModPacket.newRequestPacket())
+                            gameContext.sendPacketToServer(ModPacket.newRequestPacket(allMods.filter { it !in modsName }.joinToString(";")))
+                            CallStartDownloadModEvent().broadCastIn()
                         } else {
                             gameRoom.disconnect()
                             KickedEvent(e.cause?.message ?: "").broadCastIn()
@@ -622,13 +689,11 @@ class GameImpl : Game {
         isPublic: Boolean,
         password: String?,
         useMods: Boolean,
-        option: RoomOption
     ) {
         val B = l.B()
         B.bX.n = password
-        B.bX.o = isPublic
-        B.bX.q = !useMods
-        gameRoom.option = option
+        B.bX.q = isPublic
+        B.bX.o = useMods
         gameRoom.isRWPPRoom = true
         if(B.bX.b(false)) {
             B.bX.ay.a = GameMapType.a

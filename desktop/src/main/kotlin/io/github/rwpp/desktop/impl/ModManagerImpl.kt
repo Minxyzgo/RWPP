@@ -10,6 +10,8 @@ package io.github.rwpp.desktop.impl
 import com.corrodinggames.rts.game.units.custom.ag
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
+import java.io.File
+import java.io.InputStream
 
 class ModManagerImpl : ModManager {
     private var mods: List<Mod>? = null
@@ -18,7 +20,15 @@ class ModManagerImpl : ModManager {
         val B = LClass.B()
         B.bZ.e()
         B.bQ.save()
-        B.bZ.l()
+        try {
+            B.br = true
+            B.e()
+            B.bZ.a(false, false)
+        //    B.x() do not reload background
+        } finally {
+            B.br = false
+        }
+
     }
 
     override fun modUpdate() {
@@ -64,6 +74,13 @@ class ModManagerImpl : ModManager {
                     override var isEnabled: Boolean
                         get() = !it.f
                         set(value) { it.f = !value }
+
+                    override fun getBytes(): ByteArray {
+                        val file = File(it.g())
+                        return if(file.isDirectory)
+                            zipFolder(file)
+                        else file.readBytes()
+                    }
                 })
             }
         }

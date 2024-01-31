@@ -11,7 +11,7 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutput
 import java.io.DataOutputStream
 
-data class Packet internal constructor(
+class Packet internal constructor(
     val type: Int,
     val bytes: ByteArray
 ) {

@@ -11,4 +11,6 @@ import io.github.rwpp.event.AbstractEvent
 
 sealed class CallEvent : AbstractEvent()
 
-class CallReloadModEvent : AbstractEvent()
+class CallStartDownloadModEvent : CallEvent()
+
+class CallReloadModEvent : CallEvent()

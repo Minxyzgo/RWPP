@@ -38,10 +38,7 @@ import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.event.GlobalEventChannel
-import io.github.rwpp.event.events.CallReloadModEvent
-import io.github.rwpp.event.events.ChatMessageEvent
-import io.github.rwpp.event.events.RefreshUIEvent
-import io.github.rwpp.event.events.ReturnMainMenuEvent
+import io.github.rwpp.event.events.*
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
@@ -53,6 +50,7 @@ import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -76,6 +74,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
     var optionVisible by remember { mutableStateOf(false) }
     var banUnitVisible by remember { mutableStateOf(false) }
+    var downloadModViewVisible by remember { mutableStateOf(false) }
     var loadModViewVisible by remember { mutableStateOf(false) }
     var selectedBanUnits by remember { mutableStateOf(listOf<GameUnit>()) }
 
@@ -92,7 +91,14 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     val scope = rememberCoroutineScope()
 
     GlobalEventChannel.filter(CallReloadModEvent::class).onDispose {
-        subscribeAlways { loadModViewVisible = true }
+        subscribeAlways {
+            loadModViewVisible = true
+            downloadModViewVisible = false
+        }
+    }
+
+    GlobalEventChannel.filter(CallStartDownloadModEvent::class).onDispose {
+        subscribeAlways { downloadModViewVisible = true }
     }
 
     GlobalEventChannel.filter(RefreshUIEvent::class).onDispose {
@@ -134,8 +140,13 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     LoadingView(loadModViewVisible, { loadModViewVisible = false }) {
         message("reloading mods...")
         context.modReload()
-        context.modSaveChange()
         true
+    }
+
+    LoadingView(downloadModViewVisible, { downloadModViewVisible = false }) {
+        message("downloading mods...")
+        delay(Long.MAX_VALUE)
+        false
     }
 
     MapViewDialog(showMapSelectView, { showMapSelectView = false }, lastSelectedIndex, selectedMap.mapType) { index, map ->

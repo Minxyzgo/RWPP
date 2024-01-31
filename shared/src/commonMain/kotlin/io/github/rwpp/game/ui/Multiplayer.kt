@@ -205,26 +205,28 @@ fun MultiplayerView(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 RWTextButton("Host Private", modifier = Modifier.padding(5.dp)) {
                     dismiss()
+                    context.gameRoom.option = RoomOption(transferMod)
                     if(hostByRCN) {
                         context.onQuestionCallback(if(enableMods) "mod" else "new")
                         serverAddress = rcnAddress
                         isConnecting = true
                     } else {
                         context.hostStartWithPasswordAndMods(
-                            false, password.ifBlank { null }, enableMods, RoomOption(transferMod)
+                            false, password.ifBlank { null }, enableMods,
                         )
                         onHost()
                     }
                 }
                 RWTextButton("Host Public", modifier = Modifier.padding(5.dp)) {
                     dismiss()
+                    context.gameRoom.option = RoomOption(transferMod)
                     if(hostByRCN) {
                         context.onQuestionCallback(if(enableMods) "modup" else "newup")
                         serverAddress = rcnAddress
                         isConnecting = true
                     } else {
                         context.hostStartWithPasswordAndMods(
-                            true, password.ifBlank { null }, enableMods, RoomOption(transferMod)
+                            true, password.ifBlank { null }, enableMods,
                         )
                         onHost()
                     }

@@ -96,7 +96,7 @@ injectionMultiplatform {
             "com.corrodinggames.rts.game.units.custom.l".with("a(Lcom/corrodinggames/rts/game/units/custom/ab;Ljava/util/HashMap;)"),
             "com.corrodinggames.rts.gameFramework.j.ad".with(
                 "a(Lcom/corrodinggames/rts/gameFramework/e;)",
-                "a(Lcom/corrodinggames/rts/gameFramework/j/au;)",
+                "c(Lcom/corrodinggames/rts/gameFramework/j/au;)",
                 "g(Lcom/corrodinggames/rts/gameFramework/j/c;)"
             )
         )

@@ -43,13 +43,11 @@ interface Game {
      * @param isPublic whether the room will be added to the room list.
      * @param password the password of the room.
      * @param useMods whether the mod will be used or not in the room.
-     * @param option room option.
      */
     fun hostStartWithPasswordAndMods(
         isPublic: Boolean,
         password: String?,
         useMods: Boolean,
-        option: RoomOption
     )
 
     /**

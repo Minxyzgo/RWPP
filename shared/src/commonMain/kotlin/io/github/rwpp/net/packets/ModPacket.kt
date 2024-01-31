@@ -11,6 +11,21 @@ import io.github.rwpp.net.Packet
 import io.github.rwpp.net.PacketType
 
 object ModPacket {
-    fun newRequestPacket(): Packet =
-        Packet.createPacket(PacketType.MOD_DOWNLOAD_REQUEST.type) {}
+    fun newRequestPacket(mods: String): Packet =
+        Packet.createPacket(PacketType.MOD_DOWNLOAD_REQUEST.type) {
+            it.writeUTF(mods)
+        }
+
+    fun newModPackPacket(
+        size: Int,
+        index: Int,
+        name: String,
+        bytes: ByteArray
+    ) =
+        Packet.createPacket(PacketType.DOWNLOAD_MOD_PACK.type) {
+            it.writeInt(size)
+            it.writeInt(index)
+            it.writeUTF(name)
+            it.write(bytes)
+        }
 }
