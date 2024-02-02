@@ -55,8 +55,17 @@ injectionMultiplatform {
         setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.d".with("b(Landroid/app/Activity;)"))
         //setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.game.i".with("n")) version
         setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.j.ae".with(
-            "X", "d(Ljava/lang/String;Ljava/lang/String;)", "x()", "a(Lcom/corrodinggames/rts/gameFramework/e;)"
+            "X",
+            "d(Ljava/lang/String;Ljava/lang/String;)",
+            "x()",
+            "a(Lcom/corrodinggames/rts/gameFramework/e;)",
+            "a(Lcom/corrodinggames/rts/gameFramework/j/bi;)"
         ))
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`,
+            "com.corrodinggames.rts.game.units.custom.l".with(
+                "a(Lcom/corrodinggames/rts/game/units/custom/ab;Ljava/util/HashMap;)"
+            )
+        )
         action {
             Libs.`android-game-lib`.classTree.defPool["com.corrodinggames.rts.gameFramework.j.ae"].apply {
                 //make accessible
@@ -93,7 +102,9 @@ injectionMultiplatform {
             ),
             "com.corrodinggames.rts.java.Main".with("c", "b()"),
             "com.corrodinggames.rts.java.b.a".with("p"),
-            "com.corrodinggames.rts.game.units.custom.l".with("a(Lcom/corrodinggames/rts/game/units/custom/ab;Ljava/util/HashMap;)"),
+            "com.corrodinggames.rts.game.units.custom.l".with(
+                "a(Lcom/corrodinggames/rts/game/units/custom/ab;Ljava/util/HashMap;)"
+            ),
             "com.corrodinggames.rts.gameFramework.j.ad".with(
                 "a(Lcom/corrodinggames/rts/gameFramework/e;)",
                 "c(Lcom/corrodinggames/rts/gameFramework/j/au;)",

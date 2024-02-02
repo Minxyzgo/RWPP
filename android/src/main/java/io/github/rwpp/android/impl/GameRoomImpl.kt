@@ -17,10 +17,7 @@ import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.bg
 import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
-import io.github.rwpp.android.MainActivity
-import io.github.rwpp.android.gameLauncher
-import io.github.rwpp.android.isGaming
-import io.github.rwpp.android.isSandboxGame
+import io.github.rwpp.android.*
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
 import io.github.rwpp.event.broadCastIn
@@ -28,6 +25,7 @@ import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
+import io.github.rwpp.game.RoomOption
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
@@ -101,6 +99,10 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override var teamLock: Boolean
         get() = GameEngine.t().bU.aA.m
         set(value) { GameEngine.t().bU.aA.m = value }
+    override val mods: Array<String>
+        get() = roomMods
+    override var isRWPPRoom: Boolean = false
+    override var option: RoomOption = RoomOption()
 
     override fun getPlayers(): List<Player> {
         return PlayerInternal.j.mapNotNull {
@@ -365,6 +367,9 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override fun disconnect() {
         isSandboxGame = false
         GameEngine.t().bU.b("exited")
+        isRWPPRoom = false
+        option = RoomOption()
+        roomMods = arrayOf()
         MainActivity.activityResume()
     }
 

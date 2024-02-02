@@ -417,13 +417,18 @@ fun MainMenu(
                 .weight(0.6f)
                 .padding(10.dp)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Image(painter = painterResource("title.png"), "title", modifier = Modifier.padding(15.dp))
+            }
 
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                item { Image(painter = painterResource("title.png"), "title", modifier = Modifier.padding(15.dp)) }
                 item { MenuButton(readI18n("menu.mission"), onClick = mission) }
                 item { MenuButton(readI18n("menu.sandbox"), onClick = sandbox) }
                 item { MenuButton(readI18n("menu.multiplayer"), onClick = multiplayer) }

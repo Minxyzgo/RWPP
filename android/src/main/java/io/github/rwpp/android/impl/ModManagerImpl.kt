@@ -11,6 +11,8 @@ import com.corrodinggames.rts.game.units.custom.ag
 import io.github.rwpp.android.MainActivity
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.utils.io.zipFolderToByte
+import java.io.File
 
 class ModManagerImpl : ModManager {
     private var mods: List<Mod>? = null
@@ -24,8 +26,6 @@ class ModManagerImpl : ModManager {
         aVar.a(false, false)
         t.bo = false
         t.q()
-
-        MainActivity.activityResume()
     }
 
     override fun modUpdate() {
@@ -47,11 +47,13 @@ class ModManagerImpl : ModManager {
         } else if(a2 == 0) {
             t.bW.b()
         }
+
+        MainActivity.activityResume()
     }
 
-    override fun getModByName(name: String): Mod {
+    override fun getModByName(name: String): Mod? {
         mods = mods ?: getAllMods()
-        return mods!!.first { it.name == name }
+        return mods!!.firstOrNull { it.name == name }
     }
 
     @Suppress("unchecked_cast")
@@ -73,6 +75,13 @@ class ModManagerImpl : ModManager {
                     override var isEnabled: Boolean
                         get() = !it.f
                         set(value) { it.f = !value }
+
+                    override fun getBytes(): ByteArray {
+                        val file = File(it.d())
+                        return if(file.isDirectory)
+                            file.zipFolderToByte()
+                        else file.readBytes()
+                    }
                 })
             }
         }

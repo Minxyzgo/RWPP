@@ -38,12 +38,22 @@
             android:requestLegacyExternalStorage="true" android:icon="@mipmap/ic_launcher">
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
         <activity
-            android:name="io.github.rwpp.android.MainActivity"
+            android:name="io.github.rwpp.android.LoadingScreen"
             android:exported="true"
             android:label="RWPP">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
+                android:name="io.github.rwpp.android.MainActivity"
+                android:screenOrientation="behind"
+                android:configChanges="screenSize|orientation|keyboardHidden"
+                android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity

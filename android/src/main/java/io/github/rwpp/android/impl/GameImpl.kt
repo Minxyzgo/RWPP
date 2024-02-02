@@ -57,21 +57,8 @@ class GameImpl : Game, CoroutineScope {
         gameLauncher.launch(intent)
     }
 
-    override suspend fun load(context: LoadingContext) = withContext(Dispatchers.IO) {
-        launch {
-            while(GameEngine.t()?.bg != true) {
-                context.message(GameEngine.t()?.dF ?: "loading...")
-            }
-        }
-
-        // GameEngine.c(MainActivity.instance)
-        if(d.b(MainActivity.instance, true, true)) {
-            MainActivity.gameView = d.b(MainActivity.instance)
-        }
-        GameEngine.t().bU.aA.a = at.a
-        GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
-        GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
-        Unit
+    override suspend fun load(context: LoadingContext) {
+        // do nothing. See LoadingScreen
     }
 
     override fun hostStartWithPasswordAndMods(isPublic: Boolean, password: String?, useMods: Boolean) {
@@ -252,11 +239,13 @@ class GameImpl : Game, CoroutineScope {
                     override val displayName: String = it.e()
                     override val description: String = it.f()
                     override val movementType: MovementType
-                        get() = TODO("Not yet implemented")
-                    override val mod: Mod
-                        get() = TODO("Not yet implemented")
+                        get() = MovementType.valueOf(it.o().name)
+                    override val mod: Mod?
+                        get() = (it as? com.corrodinggames.rts.game.units.custom.l)?.J?.q?.let(controller::getModByName)
                 }
             }
+
+            cacheUnits = units
         }
         return _units!!
     }

@@ -20,26 +20,3 @@ fun Packet.asGamePacket(): au = au(type).also {
     it.c = bytes
     it.d = -1
 }
-
-fun zipFolder(folder: File): ByteArray {
-    val byteOut = ByteArrayOutputStream()
-    val zipOut = ZipOutputStream(byteOut)
-    zipRecursive(folder, Paths.get(folder.absolutePath), zipOut)
-    val bytes = byteOut.toByteArray()
-    byteOut.close()
-    zipOut.close()
-    return bytes
-}
-
-private fun zipRecursive(sourceFile: File, base: Path, zip: ZipOutputStream) {
-    if(sourceFile.isDirectory) {
-        val fileList = sourceFile.listFiles() ?: return
-        for(file in fileList) {
-            zipRecursive(file, base, zip)
-        }
-    } else {
-        val entryName = base.relativize(Paths.get(sourceFile.absolutePath)).toString()
-        zip.putNextEntry(ZipEntry(entryName))
-        sourceFile.inputStream().use { it.copyTo(zip) }
-    }
-}

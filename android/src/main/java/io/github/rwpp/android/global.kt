@@ -17,5 +17,6 @@ var questionOption: String? = null
 var isSandboxGame: Boolean = false
 var isGaming = false
 var isReturnToBattleRoom = false
+var roomMods = arrayOf<String>()
 var bannedUnitList: List<String> = listOf()
 

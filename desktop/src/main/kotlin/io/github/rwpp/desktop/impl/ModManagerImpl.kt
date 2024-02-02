@@ -10,6 +10,7 @@ package io.github.rwpp.desktop.impl
 import com.corrodinggames.rts.game.units.custom.ag
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.utils.io.zipFolderToByte
 import java.io.File
 import java.io.InputStream
 
@@ -78,7 +79,7 @@ class ModManagerImpl : ModManager {
                     override fun getBytes(): ByteArray {
                         val file = File(it.g())
                         return if(file.isDirectory)
-                            zipFolder(file)
+                            file.zipFolderToByte()
                         else file.readBytes()
                     }
                 })
