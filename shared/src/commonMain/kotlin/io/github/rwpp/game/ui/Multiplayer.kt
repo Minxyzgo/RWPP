@@ -1,8 +1,8 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.game.ui
@@ -35,6 +35,7 @@ import io.github.rwpp.config.Blacklist
 import io.github.rwpp.config.Blacklists
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
+import io.github.rwpp.game.RoomOption
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.sorted
@@ -169,14 +170,29 @@ fun MultiplayerView(
             LargeDividingLine { 10.dp }
             var enableMods by remember { mutableStateOf(false) }
             var hostByRCN by remember { mutableStateOf(false) }
+            var transferMod by remember { mutableStateOf(false) }
+
+            remember(enableMods) {
+                if(!enableMods) transferMod = false
+            }
+
             Row {
                 RWCheckbox(enableMods, onCheckedChange = { enableMods = !enableMods }, modifier = Modifier.padding(5.dp))
-                Text(readI18n("multiplayer.enableMods"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(5.dp))
+                Text(readI18n("multiplayer.enableMods"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 15.dp))
             }
 
             Row {
                 RWCheckbox(hostByRCN, onCheckedChange = { hostByRCN = !hostByRCN }, modifier = Modifier.padding(5.dp))
-                Text(readI18n("multiplayer.hostByRCN"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(5.dp))
+                Text(readI18n("multiplayer.hostByRCN"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 15.dp))
+            }
+
+            Row {
+                RWCheckbox(transferMod, onCheckedChange = { transferMod = !transferMod }, modifier = Modifier.padding(5.dp), enabled = enableMods)
+                Text("Transfer Mod (Experimental)",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = 15.dp),
+                    color = if(enableMods) Color.Black else Color.DarkGray
+                )
             }
 
             var password by remember { mutableStateOf("") }
@@ -184,30 +200,33 @@ fun MultiplayerView(
 
             Spacer(modifier = Modifier.weight(1f))
 
+
             val rcnAddress = "43.248.96.172:5123"
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 RWTextButton("Host Private", modifier = Modifier.padding(5.dp)) {
                     dismiss()
+                    context.gameRoom.option = RoomOption(transferMod)
                     if(hostByRCN) {
                         context.onQuestionCallback(if(enableMods) "mod" else "new")
                         serverAddress = rcnAddress
                         isConnecting = true
                     } else {
                         context.hostStartWithPasswordAndMods(
-                            false, password.ifBlank { null }, enableMods
+                            false, password.ifBlank { null }, enableMods,
                         )
                         onHost()
                     }
                 }
                 RWTextButton("Host Public", modifier = Modifier.padding(5.dp)) {
                     dismiss()
+                    context.gameRoom.option = RoomOption(transferMod)
                     if(hostByRCN) {
                         context.onQuestionCallback(if(enableMods) "modup" else "newup")
                         serverAddress = rcnAddress
                         isConnecting = true
                     } else {
                         context.hostStartWithPasswordAndMods(
-                            true, password.ifBlank { null }, enableMods
+                            true, password.ifBlank { null }, enableMods,
                         )
                         onHost()
                     }

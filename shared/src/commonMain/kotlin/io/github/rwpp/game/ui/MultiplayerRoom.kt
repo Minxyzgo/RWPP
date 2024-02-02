@@ -1,8 +1,8 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.game.ui
@@ -38,10 +38,9 @@ import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.event.GlobalEventChannel
-import io.github.rwpp.event.events.ChatMessageEvent
-import io.github.rwpp.event.events.RefreshUIEvent
-import io.github.rwpp.event.events.ReturnMainMenuEvent
+import io.github.rwpp.event.events.*
 import io.github.rwpp.event.onDispose
+import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
@@ -51,43 +50,14 @@ import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import kotlin.math.roundToInt
 import kotlin.reflect.KMutableProperty
 
-object ConnectingPlayer : Player {
-    override val connectHexId: String
-        get() = ""
-    override val spawnPoint: Int
-        get() = 0
-    override val name: String
-        get() = "Connecting..."
-    override val ping: String
-        get() = ""
-    override val team: Int
-        get() = 0
-    override val startingUnit: Int
-        get() = 0
-    override val color: Int
-        get() = 0
-    override val isSpectator: Boolean
-        get() = false
-    override val isAI: Boolean
-        get() = false
-    override val difficulty: Difficulty?
-        get() = null
 
-    override fun applyConfigChange(
-        spawnPoint: Int,
-        team: Int,
-        color: Int?,
-        startingUnits: Int?,
-        aiDifficulty: Difficulty?,
-        changeTeamFromSpawn: Boolean
-    ) {}
-}
 
 private val relayRegex = Regex("""R\d+""")
 
@@ -104,6 +74,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
     var optionVisible by remember { mutableStateOf(false) }
     var banUnitVisible by remember { mutableStateOf(false) }
+    var downloadModViewVisible by remember { mutableStateOf(false) }
+    var loadModViewVisible by remember { mutableStateOf(false) }
     var selectedBanUnits by remember { mutableStateOf(listOf<GameUnit>()) }
 
     var showMapSelectView by remember { mutableStateOf(false) }
@@ -117,6 +89,17 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     var selectedPlayer by remember { mutableStateOf(players.firstOrNull() ?: ConnectingPlayer) }
 
     val scope = rememberCoroutineScope()
+
+    GlobalEventChannel.filter(CallReloadModEvent::class).onDispose {
+        subscribeAlways {
+            loadModViewVisible = true
+            downloadModViewVisible = false
+        }
+    }
+
+    GlobalEventChannel.filter(CallStartDownloadModEvent::class).onDispose {
+        subscribeAlways { downloadModViewVisible = true }
+    }
 
     GlobalEventChannel.filter(RefreshUIEvent::class).onDispose {
         subscribeAlways { updateAction() }
@@ -152,6 +135,18 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                 )
             }
         }
+    }
+
+    LoadingView(loadModViewVisible, { loadModViewVisible = false }) {
+        message("reloading mods...")
+        context.modReload()
+        true
+    }
+
+    LoadingView(downloadModViewVisible, { downloadModViewVisible = false }) {
+        message("downloading mods...")
+        delay(Long.MAX_VALUE)
+        false
     }
 
     MapViewDialog(showMapSelectView, { showMapSelectView = false }, lastSelectedIndex, selectedMap.mapType) { index, map ->
@@ -573,15 +568,15 @@ private fun PlayerOverrideDialog(
         }
     }
 
-    var playerSpawnPoint by remember(player) { mutableStateOf<Int?>(player.spawnPoint + 1) }
-    var playerTeam by remember(player) { mutableStateOf<Int?>(-1) }
-    var playerColor by remember(player) { mutableStateOf(player.color) }
-    var playerStartingUnits by remember(player) { mutableStateOf(items.indexOfFirst { it.first == player.startingUnit }) }
-    var aiDifficulty by remember(player) { mutableStateOf(player.difficulty ?: room.aiDifficulty) }
-
     AnimatedAlertDialog(
         visible, onDismissRequest = { onDismissRequest(); update() }
     ) { m, dismiss ->
+
+        var playerSpawnPoint by remember(player) { mutableStateOf<Int?>(player.spawnPoint + 1) }
+        var playerTeam by remember(player) { mutableStateOf<Int?>(-1) }
+        var playerColor by remember(player) { mutableStateOf(player.color) }
+        var playerStartingUnits by remember(player) { mutableStateOf(items.indexOfFirst { it.first == player.startingUnit }) }
+        var aiDifficulty by remember(player) { mutableStateOf(player.difficulty ?: room.aiDifficulty) }
 
         BorderCard(
             modifier = Modifier

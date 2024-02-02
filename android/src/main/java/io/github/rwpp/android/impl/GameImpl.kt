@@ -1,8 +1,8 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.android.impl
@@ -57,18 +57,8 @@ class GameImpl : Game, CoroutineScope {
         gameLauncher.launch(intent)
     }
 
-    override suspend fun load(context: LoadingContext) = withContext(Dispatchers.IO) {
-        launch {
-            while(GameEngine.t()?.bg != true) {
-                context.message(GameEngine.t()?.dF ?: "loading...")
-            }
-        }
-
-        GameEngine.c(MainActivity.instance)
-        GameEngine.t().bU.aA.a = at.a
-        GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
-        GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
-        Unit
+    override suspend fun load(context: LoadingContext) {
+        // do nothing. See LoadingScreen
     }
 
     override fun hostStartWithPasswordAndMods(isPublic: Boolean, password: String?, useMods: Boolean) {
@@ -249,11 +239,13 @@ class GameImpl : Game, CoroutineScope {
                     override val displayName: String = it.e()
                     override val description: String = it.f()
                     override val movementType: MovementType
-                        get() = TODO("Not yet implemented")
-                    override val mod: Mod
-                        get() = TODO("Not yet implemented")
+                        get() = MovementType.valueOf(it.o().name)
+                    override val mod: Mod?
+                        get() = (it as? com.corrodinggames.rts.game.units.custom.l)?.J?.q?.let(controller::getModByName)
                 }
             }
+
+            cacheUnits = units
         }
         return _units!!
     }

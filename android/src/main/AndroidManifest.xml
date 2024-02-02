@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2023-2024 RWPP contributors
+  ~ 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+  ~  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+  ~  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+  -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <supports-screens
         android:anyDensity="true"
@@ -31,12 +38,22 @@
             android:requestLegacyExternalStorage="true" android:icon="@mipmap/ic_launcher">
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
         <activity
-            android:name="io.github.rwpp.android.MainActivity"
+            android:name="io.github.rwpp.android.LoadingScreen"
             android:exported="true"
             android:label="RWPP">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
+                android:name="io.github.rwpp.android.MainActivity"
+                android:screenOrientation="behind"
+                android:configChanges="screenSize|orientation|keyboardHidden"
+                android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity

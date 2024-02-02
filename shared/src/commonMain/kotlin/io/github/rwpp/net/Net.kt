@@ -1,8 +1,8 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.net
@@ -18,6 +18,11 @@ import okhttp3.Response
 interface Net {
 
     val client: OkHttpClient
+
+    fun sendPacketToServer(packet: Packet)
+
+    fun sendPacketToClients(packet: Packet)
+
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun CoroutineScope.getRoomListFromSourceUrl(url: List<String>): List<RoomDescription> = withContext(Dispatchers.IO) {
         val c =  Channel<Response>(UNLIMITED)

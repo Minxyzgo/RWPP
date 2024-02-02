@@ -1,8 +1,8 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.android.impl
@@ -17,16 +17,15 @@ import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.bg
 import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
-import io.github.rwpp.android.MainActivity
-import io.github.rwpp.android.gameLauncher
-import io.github.rwpp.android.isGaming
-import io.github.rwpp.android.isSandboxGame
+import io.github.rwpp.android.*
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.RefreshUIEvent
+import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
+import io.github.rwpp.game.RoomOption
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
@@ -50,7 +49,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             val t = GameEngine.t()
             val p = playerCacheMap[t.bU.A]
             if(p == null) getPlayers()
-            return playerCacheMap[t.bU.A]!!
+            return playerCacheMap[t.bU.A] ?: ConnectingPlayer
         }
     override var sharedControl: Boolean
         get() = GameEngine.t().bU.aA.l
@@ -100,6 +99,10 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override var teamLock: Boolean
         get() = GameEngine.t().bU.aA.m
         set(value) { GameEngine.t().bU.aA.m = value }
+    override val mods: Array<String>
+        get() = roomMods
+    override var isRWPPRoom: Boolean = false
+    override var option: RoomOption = RoomOption()
 
     override fun getPlayers(): List<Player> {
         return PlayerInternal.j.mapNotNull {
@@ -364,6 +367,9 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override fun disconnect() {
         isSandboxGame = false
         GameEngine.t().bU.b("exited")
+        isRWPPRoom = false
+        option = RoomOption()
+        roomMods = arrayOf()
         MainActivity.activityResume()
     }
 

@@ -1,14 +1,15 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.android
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
@@ -16,6 +17,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalView
@@ -29,10 +31,14 @@ import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.doProxy
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.ReturnMainMenuEvent
+import io.github.rwpp.i18n.parseI18n
+import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
+import java.util.logging.Level
+import java.util.logging.Logger
 import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         gameLauncher = registerForActivityResult(
@@ -43,12 +49,12 @@ class MainActivity : ComponentActivity() {
             if(!isReturnToBattleRoom) { ReturnMainMenuEvent().broadCastIn() }
             isReturnToBattleRoom = false
         }
+
+
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         instance = this
 
         Log.i("RWPP", "check permission: ${checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED}")
-
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        doProxy()
 
         val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arrayOf(
@@ -65,15 +71,16 @@ class MainActivity : ComponentActivity() {
 
         requestPermissions(permissions, 1)
 
-        if(d.b(this@MainActivity, true, true)) {
-            gameView = d.b(this@MainActivity)
+        runBlocking { parseI18n() }
+        controller.readAllConfig()
+
+        if(d.b(this, true, true)) {
+            gameView = d.b(this)
         }
 
         setContent {
             CompositionLocalProvider(
-                LocalController provides GameContextControllerImpl { exitProcess(0) }.also {
-                    controller = it
-                }
+                LocalController provides controller
             ) {
                 val view = LocalView.current
                 val window = (view.context as Activity).window
@@ -94,7 +101,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
-        GameEngine.t()?.b(gameView)
+        if(gameView != null) GameEngine.t()?.b(gameView)
     }
 
     override fun onResume() {
@@ -105,11 +112,11 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         controller.saveAllConfig()
-        GameEngine.t()?.b(gameView)
+        if(gameView != null) GameEngine.t()?.b(gameView)
     }
 
     companion object {
-        private lateinit var gameView: com.corrodinggames.rts.appFramework.ab
+        var gameView: com.corrodinggames.rts.appFramework.ab? = null
         lateinit var instance: MainActivity
 
         fun activityResume() {

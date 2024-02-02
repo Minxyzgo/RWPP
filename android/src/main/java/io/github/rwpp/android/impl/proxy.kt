@@ -1,8 +1,8 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.android.impl
@@ -14,11 +14,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
 import android.view.ViewGroup
-import com.corrodinggames.rts.appFramework.ClosingActivity
-import com.corrodinggames.rts.appFramework.GameView
-import com.corrodinggames.rts.appFramework.GameViewOpenGL
-import com.corrodinggames.rts.appFramework.GameViewThreaded
-import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
+import com.corrodinggames.rts.appFramework.*
 import com.corrodinggames.rts.gameFramework.h.a
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.ao
@@ -31,8 +27,14 @@ import io.github.rwpp.android.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.*
+import io.github.rwpp.game.RoomOption
 import io.github.rwpp.game.units.GameCommandActions
-import io.github.rwpp.game.units.GameInternalUnits
+import io.github.rwpp.net.PacketType
+import io.github.rwpp.net.packets.ModPacket
+import io.github.rwpp.packageName
+import net.peanuuutz.tomlkt.Toml
+import java.io.File
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 fun doProxy() {
@@ -238,6 +240,129 @@ fun doProxy() {
             isReturnToBattleRoom = true
             Unit
         }
+
+        addProxy("a",
+            com.corrodinggames.rts.gameFramework.j.bi::class,
+            mode = InjectMode.InsertBefore
+        ) { _: Any?, packet: com.corrodinggames.rts.gameFramework.j.bi ->
+            when(packet.b) {
+                PacketType.PREREGISTER_INFO.type -> {
+                    val r0 = com.corrodinggames.rts.gameFramework.j.j(packet);     // Catch: java.lang.Throwable -> L603
+                    val r1 = packet.a
+                    val r14 = GameEngine.t().bU
+                    val str = r0.b.readUTF() // Catch: java.lang.Throwable -> L603
+                    if (str.startsWith(packageName)) {
+                        controller.gameRoom.option =
+                            Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
+                    }
+                    val r2 = r0.b.readInt() // Catch: java.lang.Throwable -> L603
+                    val r3 = r0.b.readInt() // Catch: java.lang.Throwable -> L603
+                    r0.b.readInt() // Catch: java.lang.Throwable -> L603
+                    r0.b.readUTF() // Catch: java.lang.Throwable -> L603
+                    r14.U = r0.b.readUTF() // Catch: java.lang.Throwable -> L603
+                    r1.F = r3 // Catch: java.lang.Throwable -> L603
+
+                    if (r2 >= 1) r14.V = r0.b.readInt();
+
+                    if (r2 >= 2) {
+                        r14.W = r0.b.readInt();     // Catch: java.lang.Throwable -> L603
+                        r14.X = r0.b.readInt();
+                    }
+
+                    r14::class.java.getDeclaredMethod("f", r1::class.java).apply {
+                        isAccessible = true
+                    }.invoke(r14, r1)
+
+
+                    InterruptResult(Unit)
+                }
+
+                PacketType.PREREGISTER_INFO_RECEIVE.type -> {
+                    val j = com.corrodinggames.rts.gameFramework.j.j(packet)
+                    val c = packet.a
+
+                    j.b.readUTF()
+                    val i = j.b.readInt()
+                    j.b.readInt()
+                    if(i >= 1) j.b.readUTF()
+                    if(i >= 2) j.a()?.let {
+                        c.p = it
+                    }
+
+                    if(i >= 4) GameEngine.ab()
+
+                    val t = GameEngine.t()
+                    val a = com.corrodinggames.rts.gameFramework.j.bg()
+                    a.b(packageName + Toml.encodeToString(RoomOption.serializer(), controller.gameRoom.option))
+                    a.c(2)
+                    a.c(t.bU.e)
+                    a.c(t.a(true))
+                    a.b(t.h())
+                    if(t.bN.networkServerId == null) {
+                        t.bN.networkServerId = UUID.randomUUID().toString()
+                        t.bN.save()
+                    }
+                    a.b(t.bN.networkServerId)
+                    a.c(c.N)
+                    a.c(t.bU.Y)
+                    a.c(0)
+
+                    t.bU.a(c, a.a(PacketType.PREREGISTER_INFO.type))
+                    InterruptResult(Unit)
+                }
+
+                PacketType.MOD_DOWNLOAD_REQUEST.type -> {
+                    val j = com.corrodinggames.rts.gameFramework.j.j(packet)
+                    val c = packet.a
+
+                    if(controller.gameRoom.isHost) {
+                        if(!controller.gameRoom.option.canTransferMod)
+                            sendKickToClient(c, "Server didn't support transferring mods.")
+                        else {
+                            val str = j.b.readUTF()
+
+                            try {
+                                val mods = str.split(";")
+                                mods.map(controller::getModByName).forEachIndexed { i, m ->
+                                    val bytes = m!!.getBytes()
+                                    sendPacketToClient(c, ModPacket.newModPackPacket(mods.size, i, "${m.name}.rwmod", bytes).asGamePacket())
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                sendKickToClient(c, "Mod download error. cause: ${e.message}")
+                            }
+                        }
+                    }
+
+                    InterruptResult(Unit)
+                }
+
+                PacketType.DOWNLOAD_MOD_PACK.type -> {
+                    val j = com.corrodinggames.rts.gameFramework.j.j(packet)
+                    val c = packet.a
+                    val size = j.b.readInt()
+                    val index = j.b.readInt()
+                    val name = j.b.readUTF()
+                    val bytes = j.b.readBytes()
+                    val fi = File(com.corrodinggames.rts.game.units.custom.ag.h() + "/$name")
+                    if (fi.exists()) throw RuntimeException("Mod: $name had been installed.")
+
+                    fi.createNewFile()
+                    fi.writeBytes(bytes)
+
+                    // TODO 可能顺序存在问题
+                    if(index == size - 1) {
+                        controller.modUpdate()
+                        controller.getAllMods().forEach { it.isEnabled = it.name in roomMods }
+                        CallReloadModEvent().broadCastIn()
+                    }
+
+                    InterruptResult(Unit)
+                }
+                else -> Unit
+            }
+        }
+
         addProxy("a", com.corrodinggames.rts.gameFramework.e::class, mode = InjectMode.InsertBefore) { _: Any?, b3: com.corrodinggames.rts.gameFramework.e ->
             val actionString = b3.k.b
 
@@ -253,6 +378,59 @@ fun doProxy() {
                     InterruptResult(Unit)
                 } else Unit
             } else Unit
+        }
+    }
+
+    com.corrodinggames.rts.game.units.custom.l::class.setFunction {
+        addProxy(
+            "a",
+            com.corrodinggames.rts.game.units.custom.ab::class,
+            java.util.HashMap::class
+        ) { p1: Any?, p2: HashMap<Any?, com.corrodinggames.rts.game.units.custom.ac> ->
+            val allMods = buildList {
+                p2.values.forEach { ac ->
+                    val name = ac::class.java.getDeclaredField("a")
+                        .also { it.isAccessible = true }
+                        .get(ac)
+                    if (name != null && name != "null") add(name as String)
+                }
+            }
+
+            roomMods = allMods.toTypedArray()
+
+            val met = com.corrodinggames.rts.game.units.custom.l::class.java.getDeclaredMethod(
+                "__proxy__a",
+                com.corrodinggames.rts.game.units.custom.ab::class.java, java.util.HashMap::class.java
+            ).apply { isAccessible = true }
+            try {
+                met.invoke(null, p1, p2)
+            } catch (e: Exception) {
+
+                run {
+                    if (allMods.all { controller.getModByName(it) != null }) {
+                        controller.getAllMods().forEach { it.isEnabled = it.name in allMods }
+                        CallReloadModEvent().broadCastIn()
+                        return@run
+                    } else if(!com.corrodinggames.rts.gameFramework.e.a.f(
+                            com.corrodinggames.rts.game.units.custom.ag.h()
+                    )) {
+                        controller.gameRoom.disconnect()
+                        KickedEvent("No mod directory found. Please set it at first.").broadCastIn()
+                        return@run
+                    }
+
+                    val modsName = controller.getAllMods().map { it.name }
+                    if (controller.gameRoom.option.canTransferMod) {
+                        controller.sendPacketToServer(ModPacket.newRequestPacket(allMods.filter { it !in modsName }
+                            .joinToString(";")))
+                        CallStartDownloadModEvent().broadCastIn()
+                    } else {
+                        controller.gameRoom.disconnect()
+                        KickedEvent(e.cause?.message ?: "").broadCastIn()
+                    }
+                }
+            }
+            Unit
         }
     }
 }

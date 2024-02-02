@@ -1,8 +1,8 @@
 /*
- * Copyright 2023 RWPP contributors
+ * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.desktop.impl
@@ -10,6 +10,9 @@ package io.github.rwpp.desktop.impl
 import com.corrodinggames.rts.game.units.custom.ag
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.utils.io.zipFolderToByte
+import java.io.File
+import java.io.InputStream
 
 class ModManagerImpl : ModManager {
     private var mods: List<Mod>? = null
@@ -18,7 +21,15 @@ class ModManagerImpl : ModManager {
         val B = LClass.B()
         B.bZ.e()
         B.bQ.save()
-        B.bZ.l()
+        try {
+            B.br = true
+            B.e()
+            B.bZ.a(false, false)
+        //    B.x() do not reload background
+        } finally {
+            B.br = false
+        }
+
     }
 
     override fun modUpdate() {
@@ -37,9 +48,9 @@ class ModManagerImpl : ModManager {
         ag.c(true)
     }
 
-    override fun getModByName(name: String): Mod {
+    override fun getModByName(name: String): Mod? {
         mods = mods ?: getAllMods()
-        return mods!!.first { it.name == name }
+        return mods!!.firstOrNull { it.name == name }
     }
 
     @Suppress("unchecked_cast")
@@ -64,6 +75,13 @@ class ModManagerImpl : ModManager {
                     override var isEnabled: Boolean
                         get() = !it.f
                         set(value) { it.f = !value }
+
+                    override fun getBytes(): ByteArray {
+                        val file = File(it.g())
+                        return if(file.isDirectory)
+                            file.zipFolderToByte()
+                        else file.readBytes()
+                    }
                 })
             }
         }
