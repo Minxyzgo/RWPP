@@ -22,6 +22,18 @@ kick = "Kick"
 apply = "Apply"
 sendMessage = "Send Message"
 playerConfig = "Player Config"
+startingUnit = "Starting Unit"
+startingCredits = "Starting Credits"
+maxPlayer = "Max Player"
+incomeMultiplier = "Income Multiplier"
+teamUnitCapHostedGame = "Team Unit Cap Hosted Game"
+banUnits = "Ban Units"
+
+[mod]
+update = "Update"
+reload = "Reload"
+disableAll = "DisableAll"
+apply = "Apply"
 
 [menu]
 mission = "Mission"
@@ -42,3 +54,4 @@ These will be fixed in the future...
 difficulty = "Difficulty"
 spawnPoint = "Spawn Point"
 team = "Team"
+fog = "Fog"

@@ -10,6 +10,7 @@ package io.github.rwpp.desktop.impl
 import com.corrodinggames.rts.game.units.custom.ag
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.utils.io.calculateSize
 import io.github.rwpp.utils.io.zipFolderToByte
 import java.io.File
 import java.io.InputStream
@@ -75,6 +76,12 @@ class ModManagerImpl : ModManager {
                     override var isEnabled: Boolean
                         get() = !it.f
                         set(value) { it.f = !value }
+
+                    override fun getSize(): Long {
+                        return kotlin.runCatching {
+                            File(it.g()).calculateSize()
+                        }.getOrNull() ?: 0L
+                    }
 
                     override fun getBytes(): ByteArray {
                         val file = File(it.g())

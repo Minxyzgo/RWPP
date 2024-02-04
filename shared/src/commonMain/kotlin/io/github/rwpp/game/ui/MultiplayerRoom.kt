@@ -48,6 +48,7 @@ import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.units.GameInternalUnits
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.net.packets.ModPacket
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.delay
@@ -140,6 +141,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     LoadingView(loadModViewVisible, { loadModViewVisible = false }) {
         message("reloading mods...")
         context.modReload()
+        context.sendPacketToServer(ModPacket.newModReloadFinishPacket())
         true
     }
 
@@ -326,7 +328,13 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 RWTextButton(
                                     readI18n("multiplayer.room.start"),
                                     modifier = Modifier.padding(5.dp)
-                                ) { room.startGame() }
+                                ) {
+                                    val unpreparedPlayers = context.gameRoom.getPlayers().filter { !it.data.ready }
+                                    if(unpreparedPlayers.isNotEmpty()) {
+                                        context.gameRoom.sendSystemMessage(
+                                            "Cannot start game. Because players: ${unpreparedPlayers.map { it.name }.joinToString(", ")} aren't ready.")
+                                    } else room.startGame()
+                                }
                             }
 
                             if(isHost) {
@@ -780,7 +788,7 @@ private fun MultiplayerOptionDialog(
                     var selectedIndex1 by remember(room) { mutableStateOf(room.aiDifficulty.ordinal) }
                     LargeDropdownMenu(
                         modifier = Modifier.weight(.3f).padding(5.dp),
-                        label = "Difficulty",
+                        label = readI18n("common.difficulty"),
                         items = Difficulty.entries,
                         selectedIndex = selectedIndex1,
                         onItemSelected = { index, _ -> selectedIndex1 = index }
@@ -793,7 +801,7 @@ private fun MultiplayerOptionDialog(
                     var selectedIndex2 by remember(room) { mutableStateOf(room.fogMode.ordinal) }
                     LargeDropdownMenu(
                         modifier = Modifier.weight(.3f).padding(5.dp),
-                        label = "Fog",
+                        label = readI18n("common.fog"),
                         items = FogMode.entries,
                         selectedIndex = selectedIndex2,
                         onItemSelected = { index, _ -> selectedIndex2 = index }
@@ -810,7 +818,7 @@ private fun MultiplayerOptionDialog(
 
                     LargeDropdownMenu(
                         modifier = Modifier.weight(.3f).padding(5.dp),
-                        label = "Starting Unit",
+                        label = readI18n("multiplayer.room.startingUnit"),
                         items = startingOptionList,
                         selectedIndex = selectedIndex3,
                         onItemSelected = { index, _ -> selectedIndex3 = index },
@@ -869,7 +877,7 @@ private fun MultiplayerOptionDialog(
                     }
                     LargeDropdownMenu(
                         modifier = Modifier.weight(.5f).padding(5.dp),
-                        label = "Starting Credits",
+                        label = readI18n("multiplayer.room.startingCredits"),
                         items = startingCreditList,
                         selectedIndex = selectedIndex1,
                         onItemSelected = { index, _ -> selectedIndex1 = index }
@@ -886,7 +894,7 @@ private fun MultiplayerOptionDialog(
 
                 Column(modifier = Modifier.wrapContentSize()) {
                     Text(
-                        "Max Player : $range",
+                        "${readI18n("multiplayer.room.maxPlayer")} : $range",
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                             .padding(0.dp, 5.dp, 0.dp, 5.dp)
                     )
@@ -909,7 +917,7 @@ private fun MultiplayerOptionDialog(
                     var incomeMultiplier by remember { mutableStateOf(room.incomeMultiplier.toString()) }
                     var expanded by remember { mutableStateOf(false) }
                     RWSingleOutlinedTextField(
-                        "incomeMultiplier",
+                        readI18n("multiplayer.room.incomeMultiplier"),
                         incomeMultiplier,
                         lengthLimitCount = 5,
                         typeInNumberOnly = true,
@@ -939,7 +947,6 @@ private fun MultiplayerOptionDialog(
                         room.incomeMultiplier = incomeMultiplier.toFloatOrNull() ?: 1f
                     }
 
-                    val context = LocalController.current
                     var teamUnitCapHostedGame by remember { mutableStateOf(context.getConfig<Int?>("teamUnitCapHostedGame")) }
                     var expanded1 by remember { mutableStateOf(false) }
                     remember(teamUnitCapHostedGame) {
@@ -948,7 +955,7 @@ private fun MultiplayerOptionDialog(
                         context.setTeamUnitCapHostGame(count)
                     }
                     RWSingleOutlinedTextField(
-                        "teamUnitCapHostedGame",
+                        readI18n("multiplayer.room.teamUnitCapHostedGame"),
                         teamUnitCapHostedGame?.toString() ?: "",
                         lengthLimitCount = 6,
                         typeInNumberOnly = true,
@@ -978,7 +985,7 @@ private fun MultiplayerOptionDialog(
             }
 
             item {
-                RWTextButton("Ban Units", modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally)) {
+                RWTextButton(readI18n("multiplayer.room.banUnits"), modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally)) {
                     onShowBanUnitDialog()
                 }
             }

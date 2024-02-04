@@ -5,11 +5,8 @@
  *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game
+package io.github.rwpp.net.packets
 
-import kotlinx.serialization.Serializable
+object GamePacket {
 
-@Serializable
-data class RoomOption(
-    var canTransferMod: Boolean = false,
-)
+}

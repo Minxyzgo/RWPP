@@ -5,18 +5,17 @@
  *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.mod
+package io.github.rwpp.utils.io
 
-import java.io.InputStream
+import java.io.Closeable
+import java.io.DataOutput
+import java.io.DataOutputStream
 
-interface Mod {
-    val id: Int
-    val name: String
-    val description: String
-    val minVersion: String
-    var isEnabled: Boolean
-
-    fun getSize(): Long
-
-    fun getBytes(): ByteArray
+class GameOutputStream(
+    private val stream: DataOutputStream
+) : DataOutput by stream, Closeable by stream {
+    fun writeBytesWithSize(bytes: ByteArray) {
+        writeInt(bytes.size)
+        write(bytes)
+    }
 }

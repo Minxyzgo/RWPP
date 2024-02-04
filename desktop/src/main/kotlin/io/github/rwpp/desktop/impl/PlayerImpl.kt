@@ -10,6 +10,7 @@ package io.github.rwpp.desktop.impl
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
+import io.github.rwpp.game.data.PlayerData
 
 class PlayerImpl(
     internal val player: com.corrodinggames.rts.game.n,
@@ -35,6 +36,7 @@ class PlayerImpl(
         get() = player.w
     override val difficulty: Difficulty?
         get() = if(isAI) player.z?.let { Difficulty.entries[it + 2] } else null
+    override val data: PlayerData = PlayerData()
 
     override fun applyConfigChange(
         spawnPoint: Int,

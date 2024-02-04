@@ -7,6 +7,8 @@
 
 package io.github.rwpp.game.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -17,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,10 +28,9 @@ import io.github.rwpp.LocalController
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
 import io.github.rwpp.platform.BackHandler
-import io.github.rwpp.ui.BorderCard
-import io.github.rwpp.ui.ExitButton
-import io.github.rwpp.ui.RWSingleOutlinedTextField
-import io.github.rwpp.ui.RWSliderColors
+import io.github.rwpp.platform.Platform
+import io.github.rwpp.ui.*
+import kotlin.math.roundToInt
 
 @Composable
 fun SettingsView(onExit: () -> Unit) {
@@ -127,6 +129,17 @@ fun SettingsView(onExit: () -> Unit) {
                             SettingsSwitchComp("showPlayerChatInGame")
                         }
                     }
+
+                    if(Platform.isAndroid()) {
+                        item {
+                            SettingsGroup("", "Android") {
+                                val context = LocalController.current
+                                RWTextButton("Set External Folder") {
+                                    context.requestExternalStoragePermission()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -136,11 +149,12 @@ fun SettingsView(onExit: () -> Unit) {
 @Composable
 private fun SettingsGroup(
     name: String,
+    displayName: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) = with(LocalController.current) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(
-            i18n("menus.settings.heading.$name"),
+            displayName ?: i18n("menus.settings.heading.$name"),
             style = MaterialTheme.typography.headlineLarge,
             color = Color(151, 188, 98),
             modifier = Modifier.padding(start = 5.dp)
@@ -178,8 +192,7 @@ private fun SettingsSwitchComp(
     Surface(
         color = Color.Transparent,
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+            .fillMaxWidth(),
         onClick = onClick,
     ) {
 
@@ -224,10 +237,48 @@ private fun SettingsSlider(
             modifier = Modifier.padding(5.dp)
         )
         var value by remember { mutableStateOf(getConfig<Float>(name)) }
-        Slider(value, {
-            value = it
-            setConfig(name, value)
-        }, modifier = Modifier.weight(1f).padding(5.dp), colors = RWSliderColors, valueRange = valueRange)
+        CustomSlider(
+            modifier = Modifier.weight(1f).padding(5.dp),
+            value = value,
+            onValueChange = {
+                value = it
+                setConfig(name, value)
+            },
+            valueRange = valueRange,
+            showIndicator = false,
+            displayValue = { (it * 100).roundToInt() },
+            thumb = {
+                CustomSliderDefaults.Thumb(
+                    thumbValue = "$it%",
+                    color = Color.Transparent,
+                    size = 40.dp,
+                    modifier = Modifier.background(
+                        shape = CircleShape,
+                        brush = Brush.linearGradient(listOf(Color.Green, Color(151, 188, 98)))
+                    )
+                )
+            },
+            track = {
+                Box(
+                    modifier = Modifier
+                        .track()
+                        .border(
+                            width = 1.dp,
+                            color = Color.LightGray.copy(alpha = .4f),
+                            shape = CircleShape
+                        )
+                        .background(Color.White)
+                        .padding(3.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .progress(it)
+                            .background(brush = Brush.linearGradient(listOf(Color(44, 95, 45), Color(151, 188, 98)))),
+                    )
+                }
+            }
+        )
         Spacer(modifier = Modifier.size(20.dp))
     }
 }

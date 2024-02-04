@@ -12,6 +12,7 @@ import com.corrodinggames.rts.game.p
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
+import io.github.rwpp.game.data.PlayerData
 
 class PlayerImpl(
     internal val player: PlayerInternal,
@@ -50,6 +51,7 @@ class PlayerImpl(
         get() = player.x
     override val difficulty: Difficulty?
         get() = if(isAI) player.y.let { Difficulty.entries[it + 2] } else null
+    override val data: PlayerData = PlayerData()
 
 
     override fun applyConfigChange(

@@ -15,7 +15,8 @@ enum class PacketType(val type: Int) {
     SERVER_DEBUG(2001),
 
     MOD_DOWNLOAD_REQUEST(500),
-    DOWNLOAD_MOD_PACK(501),
+    DOWNLOAD_MOD_PACK(510),
+    MOD_RELOAD_FINISH(502),
 
     /* Ex */
     GET_SERVER_INFO_RECEIVE(3000),

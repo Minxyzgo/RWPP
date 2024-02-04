@@ -11,11 +11,9 @@ import android.content.ServerContext
 import android.graphics.Point
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
-import androidx.compose.ui.res.ResourceLoader
 import com.corrodinggames.librocket.scripts.Root
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
-import com.corrodinggames.rts.game.e
 import com.corrodinggames.rts.gameFramework.ac
 import com.corrodinggames.rts.gameFramework.j.`as`
 import com.corrodinggames.rts.gameFramework.j.c
@@ -39,14 +37,14 @@ import io.github.rwpp.event.events.*
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.RoomOption
+import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.MovementType
-import io.github.rwpp.net.Packet
+import io.github.rwpp.maxModSize
 import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ModPacket
 import io.github.rwpp.packageName
@@ -56,8 +54,6 @@ import kotlinx.coroutines.channels.Channel
 import net.peanuuutz.tomlkt.Toml
 import org.lwjgl.opengl.Display
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.IOException
 import javax.imageio.ImageIO
 import javax.swing.SwingUtilities
@@ -117,6 +113,7 @@ class GameImpl : Game {
                         B.bX.az = realPath
                         B.bX.ay.a = com.corrodinggames.rts.gameFramework.j.ai.entries[value.mapType.ordinal]
                         b = value.tmx!!.name
+                        LClass.B().bX.L() // send server info
                     }
                 override var startingCredits: Int
                     get() = c
@@ -408,11 +405,23 @@ class GameImpl : Game {
                                         val bytes = m!!.getBytes()
                                         B.bX.a(c, ModPacket.newModPackPacket(mods.size, i, "${m.name}.rwmod", bytes).asGamePacket())
                                     }
+
+                                    gameRoom.getPlayers().firstOrNull { it.name == c.z?.v }
+                                        ?.data?.ready = false
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                     B.bX.a(c, "Mod download error. cause: ${e.message}")
                                 }
                             }
+                        }
+
+                        InterruptResult(Unit)
+                    }
+
+                    PacketType.MOD_RELOAD_FINISH.type -> {
+                        if(gameRoom.isHost) {
+                            gameRoom.getPlayers().firstOrNull { it.name == auVar.a.z?.v }
+                                ?.data?.ready = true
                         }
 
                         InterruptResult(Unit)
@@ -425,19 +434,31 @@ class GameImpl : Game {
                         val size = k.f()
                         val index = k.f()
                         val name = k.l()
-                        val bytes = k.w().readBytes()
-                        val fi = File("mods/units/$name")
-                        if (fi.exists()) throw RuntimeException("Mod: $name had been installed.")
+                        val bytes = k.t()
 
-                        fi.createNewFile()
-                        fi.writeBytes(bytes)
+                        run {
 
-                        // TODO 可能顺序存在问题
-                        if(index == size - 1) {
-                            gameContext.modUpdate()
-                            gameContext.getAllMods().forEach { it.isEnabled = it.name in roomMods }
-                            CallReloadModEvent().broadCastIn()
+                            // TODO 多个mod大小之和
+                            if(bytes.size > maxModSize) {
+                                gameRoom.disconnect()
+                                KickedEvent("Downloaded mods are too big.").broadCastIn()
+                                return@run
+                            }
+
+                            val fi = File("mods/units/$name")
+                            if (fi.exists()) throw RuntimeException("Mod: $name had been installed.")
+
+                            fi.createNewFile()
+                            fi.writeBytes(bytes)
+
+                            // TODO 可能顺序存在问题
+                            if(index == size - 1) {
+                                gameContext.modUpdate()
+                                gameContext.getAllMods().forEach { it.isEnabled = it.name in roomMods }
+                                CallReloadModEvent().broadCastIn()
+                            }
                         }
+
 
                         InterruptResult(Unit)
                     }
@@ -487,6 +508,8 @@ class GameImpl : Game {
 
                     run {
                         if(allMods.all { gameContext.getModByName(it) != null }) {
+                            if(gameRoom.isRWPPRoom)
+                                gameContext.sendPacketToServer(ModPacket.newRequestPacket(""))
                             gameContext.getAllMods().forEach { it.isEnabled = it.name in allMods }
                             CallReloadModEvent().broadCastIn()
                             return@run
@@ -928,6 +951,10 @@ class GameImpl : Game {
         bannedUnitList = units.map(GameUnit::name)
         if(units.isNotEmpty())
             gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.map(GameUnit::displayName).joinToString(", ")}")
+    }
+
+    override fun requestExternalStoragePermission() {
+        throw UnsupportedOperationException("Stub!")
     }
 
     private fun restrictedString(str: String?): String? {

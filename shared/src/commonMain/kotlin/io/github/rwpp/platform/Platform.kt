@@ -5,18 +5,10 @@
  *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.mod
+package io.github.rwpp.platform
 
-import java.io.InputStream
+expect object Platform {
+    fun isAndroid(): Boolean
 
-interface Mod {
-    val id: Int
-    val name: String
-    val description: String
-    val minVersion: String
-    var isEnabled: Boolean
-
-    fun getSize(): Long
-
-    fun getBytes(): ByteArray
+    fun isDesktop(): Boolean
 }
