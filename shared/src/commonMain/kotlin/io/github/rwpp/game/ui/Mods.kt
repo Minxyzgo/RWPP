@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
 
@@ -49,22 +50,22 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
         bottomBar = {
             Row(modifier = Modifier.fillMaxWidth().padding(10.dp), horizontalArrangement = Arrangement.Center) {
                 RWTextButton(
-                    "Update",
+                    readI18n("mod.update"),
                     modifier = Modifier.padding(5.dp),
                 )  { loadingAction = { modUpdate(); mods = getAllMods(); updated = true }; isLoading = true }
 
                 RWTextButton(
-                    label = "Reload",
+                    readI18n("mod.reload"),
                     modifier = Modifier.padding(5.dp),
                 ) { loadingAction = { modReload() }; isLoading = true }
 
                 RWTextButton(
-                    "disableAll",
+                    readI18n("mod.disableAll"),
                     modifier = Modifier.padding(5.dp)
                 ) { disableAll = true }
 
                 RWTextButton(
-                    label = "Apply",
+                    readI18n("mod.apply"),
                     modifier = Modifier.padding(5.dp),
                 ) { loadingAction = { modSaveChange(); onExit() }; isLoading = true }
             }

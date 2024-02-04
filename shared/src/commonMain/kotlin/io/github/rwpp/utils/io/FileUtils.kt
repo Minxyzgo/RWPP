@@ -5,18 +5,19 @@
  *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.mod
+package io.github.rwpp.utils.io
 
-import java.io.InputStream
+import java.io.File
 
-interface Mod {
-    val id: Int
-    val name: String
-    val description: String
-    val minVersion: String
-    var isEnabled: Boolean
+fun File.calculateSize(): Long {
+    var size = 0L
+    if(this.isFile) {
+        return this.length()
+    } else {
+        this.listFiles()?.forEach {
+            size += if(it.isFile) it.length() else it.calculateSize()
+        }
+    }
 
-    fun getSize(): Long
-
-    fun getBytes(): ByteArray
+    return size
 }

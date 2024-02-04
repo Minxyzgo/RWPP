@@ -35,17 +35,18 @@ import io.github.rwpp.config.Blacklist
 import io.github.rwpp.config.Blacklists
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
-import io.github.rwpp.game.RoomOption
+import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.maxModSize
 import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.sorted
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.loadSvg
 import io.github.rwpp.ui.*
+import io.github.rwpp.utils.io.SizeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.math.roundToInt
 
 @Composable
@@ -171,6 +172,15 @@ fun MultiplayerView(
             var enableMods by remember { mutableStateOf(false) }
             var hostByRCN by remember { mutableStateOf(false) }
             var transferMod by remember { mutableStateOf(false) }
+            val modSize by remember {
+                mutableStateOf(
+                    context.getAllMods()
+                        .filter { it.isEnabled }
+                        .sumOf { it.getSize() }
+                )
+            }
+
+
 
             remember(enableMods) {
                 if(!enableMods) transferMod = false
@@ -187,11 +197,15 @@ fun MultiplayerView(
             }
 
             Row {
-                RWCheckbox(transferMod, onCheckedChange = { transferMod = !transferMod }, modifier = Modifier.padding(5.dp), enabled = enableMods)
-                Text("Transfer Mod (Experimental)",
+                RWCheckbox(transferMod,
+                    onCheckedChange = { transferMod = !transferMod },
+                    modifier = Modifier.padding(5.dp),
+                    enabled = enableMods && modSize <= maxModSize
+                )
+                Text("Transfer Mod (Experimental) ${if(modSize > maxModSize) "(Disabled for total mods size: ${SizeUtils.byteToMB(modSize)}MB > ${SizeUtils.byteToMB(maxModSize)}MB)" else ""}",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(top = 15.dp),
-                    color = if(enableMods) Color.Black else Color.DarkGray
+                    color = if(enableMods && modSize <= maxModSize) Color.Black else Color.DarkGray
                 )
             }
 

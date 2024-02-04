@@ -7,8 +7,10 @@
 
 package io.github.rwpp.android.impl
 
+import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
@@ -104,6 +106,8 @@ class GameImpl : Game, CoroutineScope {
 
         return when {
             result == null -> {
+                val t = GameEngine.t()
+                t.bu = 0
                 Result.success("")
             }
             ae.u() -> Result.failure(IOException("Connection failed: Target server may not be open to the internet."))
@@ -257,6 +261,18 @@ class GameImpl : Game, CoroutineScope {
                 ", "
             ) { it.displayName }
         }")
+    }
+
+    override fun requestExternalStoragePermission() {
+        d.a(
+            MainActivity.instance, 9, true, "Select a Rusted Warfare Folder to use", Uri.parse(
+                "content://com.android.externalstorage.documents/document/primary%3A" + "rustedWarfare".replace(
+                    "//",
+                    "%2F"
+                )
+            )
+        )
+
     }
 
     override val coroutineContext: CoroutineContext = Job()

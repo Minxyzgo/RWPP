@@ -130,4 +130,6 @@ interface Game {
      * Ban given unit, and all actions about the unit will not executed.
      */
     fun onBanUnits(units: List<GameUnit>)
+
+    fun requestExternalStoragePermission()
 }

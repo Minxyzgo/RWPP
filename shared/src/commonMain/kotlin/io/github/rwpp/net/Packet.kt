@@ -7,6 +7,7 @@
 
 package io.github.rwpp.net
 
+import io.github.rwpp.utils.io.GameOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataOutput
 import java.io.DataOutputStream
@@ -19,11 +20,13 @@ class Packet internal constructor(
     companion object {
         fun createPacket(
             type: Int,
-            content: (DataOutput) -> Unit
+            content: (GameOutputStream) -> Unit
         ): Packet {
             val byteArrayOutput = ByteArrayOutputStream()
-            val dataOutput = DataOutputStream(byteArrayOutput)
-            dataOutput.use(content)
+            val gameOutput = GameOutputStream(
+                DataOutputStream(byteArrayOutput)
+            )
+            gameOutput.use(content)
             val bytes = byteArrayOutput.toByteArray()
             byteArrayOutput.close()
             return Packet(type, bytes)

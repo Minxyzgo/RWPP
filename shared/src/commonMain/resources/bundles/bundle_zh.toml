@@ -22,6 +22,18 @@ kick = "踢出"
 apply = "应用"
 sendMessage = "发送消息"
 playerConfig = "玩家配置"
+startingUnit = "初始单位"
+startingCredits = "初始资金"
+maxPlayer = "最大玩家数"
+incomeMultiplier = "资金倍率"
+teamUnitCapHostedGame = "团队最大单位数量"
+banUnits = "禁用单位"
+
+[mod]
+update = "刷新"
+reload = "重载"
+disableAll = "禁用全部"
+apply = "应用"
 
 [menu]
 mission = "战役"
@@ -40,3 +52,4 @@ RWPP 目前不能在官方服务器和 RW-HPS 中作为房主 （但仍可通过
 difficulty = "难度"
 spawnPoint = "出生点"
 team = "队伍"
+fog = "迷雾"

@@ -8,6 +8,7 @@
 package io.github.rwpp.game
 
 import io.github.rwpp.game.base.Difficulty
+import io.github.rwpp.game.data.PlayerData
 
 object ConnectingPlayer : Player {
     override val connectHexId: String
@@ -30,6 +31,7 @@ object ConnectingPlayer : Player {
         get() = false
     override val difficulty: Difficulty?
         get() = null
+    override val data: PlayerData = PlayerData()
 
     override fun applyConfigChange(
         spawnPoint: Int,

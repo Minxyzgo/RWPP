@@ -391,6 +391,7 @@ fun MainMenu(
                         )
                         Heading(1, "Changelogs")
                         CodeBlock("""
+                            1.0.6-alpha: Fox bugs, Transfer-Mod(Experimental)
                             1.0.5-alpha: Ban units, Game layer
                             1.0.4-alpha: Add i18n support. Player options
                             1.0.3-alpha: Improve menu and resize the layout on small screen device.

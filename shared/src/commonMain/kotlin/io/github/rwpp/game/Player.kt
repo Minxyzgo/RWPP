@@ -9,6 +9,7 @@ package io.github.rwpp.game
 
 import androidx.compose.ui.graphics.Color
 import io.github.rwpp.game.base.Difficulty
+import io.github.rwpp.game.data.PlayerData
 
 interface Player {
     val connectHexId: String
@@ -21,6 +22,8 @@ interface Player {
     val isSpectator: Boolean
     val isAI: Boolean
     val difficulty: Difficulty?
+
+    val data: PlayerData
 
     fun teamAlias() = when {
         team == -3 -> "S"

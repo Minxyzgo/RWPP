@@ -26,6 +26,8 @@ object ModPacket {
             it.writeInt(size)
             it.writeInt(index)
             it.writeUTF(name)
-            it.write(bytes)
+            it.writeBytesWithSize(bytes)
         }
+
+    fun newModReloadFinishPacket() = Packet.createPacket(PacketType.MOD_RELOAD_FINISH.type) {}
 }

@@ -8,11 +8,10 @@
 package io.github.rwpp.game
 
 import io.github.rwpp.game.base.Difficulty
+import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
-import io.github.rwpp.game.units.GameInternalUnits
-import io.github.rwpp.net.Packet
 
 interface GameRoom {
     var maxPlayerCount: Int

@@ -27,11 +27,16 @@ import io.github.rwpp.android.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.*
-import io.github.rwpp.game.RoomOption
+import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.units.GameCommandActions
+import io.github.rwpp.maxModSize
 import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ModPacket
 import io.github.rwpp.packageName
+import io.github.rwpp.utils.io.GameInputStream
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import net.peanuuutz.tomlkt.Toml
 import java.io.File
 import java.util.*
@@ -325,8 +330,16 @@ fun doProxy() {
                                 val mods = str.split(";")
                                 mods.map(controller::getModByName).forEachIndexed { i, m ->
                                     val bytes = m!!.getBytes()
-                                    sendPacketToClient(c, ModPacket.newModPackPacket(mods.size, i, "${m.name}.rwmod", bytes).asGamePacket())
+
+                                    GameEngine.t().bU.a(c,
+                                        ModPacket.newModPackPacket(mods.size, i, "${m.name}.rwmod", bytes)
+                                            .asGamePacket()
+                                    )
+
                                 }
+
+                                controller.gameRoom.getPlayers().firstOrNull { it.name == c.A?.w }
+                                    ?.data?.ready = false
                             } catch (e: Exception) {
                                 e.printStackTrace()
                                 sendKickToClient(c, "Mod download error. cause: ${e.message}")
@@ -337,24 +350,40 @@ fun doProxy() {
                     InterruptResult(Unit)
                 }
 
+                PacketType.MOD_RELOAD_FINISH.type -> {
+                    controller.gameRoom.getPlayers().firstOrNull { it.name == packet.a.A?.w }
+                        ?.data?.ready = true
+                    InterruptResult(Unit)
+                }
+
                 PacketType.DOWNLOAD_MOD_PACK.type -> {
                     val j = com.corrodinggames.rts.gameFramework.j.j(packet)
                     val c = packet.a
-                    val size = j.b.readInt()
-                    val index = j.b.readInt()
-                    val name = j.b.readUTF()
-                    val bytes = j.b.readBytes()
-                    val fi = File(com.corrodinggames.rts.game.units.custom.ag.h() + "/$name")
-                    if (fi.exists()) throw RuntimeException("Mod: $name had been installed.")
+                    val gameInput = GameInputStream(j.b)
+                    val size = gameInput.readInt()
+                    val index = gameInput.readInt()
+                    val name = gameInput.readUTF()
+                    val bytes = gameInput.readNextBytes()
 
-                    fi.createNewFile()
-                    fi.writeBytes(bytes)
+                    run {
+                        if(bytes.size > maxModSize) {
+                            controller.gameRoom.disconnect()
+                            KickedEvent("Downloaded mods are too big.").broadCastIn()
+                            return@run
+                        }
 
-                    // TODO 可能顺序存在问题
-                    if(index == size - 1) {
-                        controller.modUpdate()
-                        controller.getAllMods().forEach { it.isEnabled = it.name in roomMods }
-                        CallReloadModEvent().broadCastIn()
+                        val fi = File("/storage/emulated/0/rustedWarfare/units/$name")
+                        if (fi.exists()) throw RuntimeException("Mod: $name had been installed.")
+
+                        fi.createNewFile()
+                        fi.writeBytes(bytes)
+
+                        // TODO 可能顺序存在问题
+                        if(index == size - 1) {
+                            controller.modUpdate()
+                            controller.getAllMods().forEach { it.isEnabled = it.name in roomMods }
+                            CallReloadModEvent().broadCastIn()
+                        }
                     }
 
                     InterruptResult(Unit)
@@ -408,6 +437,8 @@ fun doProxy() {
 
                 run {
                     if (allMods.all { controller.getModByName(it) != null }) {
+                        if(controller.gameRoom.isRWPPRoom)
+                            controller.sendPacketToServer(ModPacket.newRequestPacket(""))
                         controller.getAllMods().forEach { it.isEnabled = it.name in allMods }
                         CallReloadModEvent().broadCastIn()
                         return@run

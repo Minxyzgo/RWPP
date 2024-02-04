@@ -11,6 +11,7 @@ import com.corrodinggames.rts.game.units.custom.ag
 import io.github.rwpp.android.MainActivity
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.utils.io.calculateSize
 import io.github.rwpp.utils.io.zipFolderToByte
 import java.io.File
 
@@ -76,12 +77,21 @@ class ModManagerImpl : ModManager {
                         get() = !it.f
                         set(value) { it.f = !value }
 
+                    override fun getSize(): Long {
+                        return kotlin.runCatching {
+                            File(modPath()).calculateSize()
+                        }.getOrNull() ?: 0L
+                    }
+
                     override fun getBytes(): ByteArray {
-                        val file = File(it.d())
+                        val file = File(modPath())
                         return if(file.isDirectory)
                             file.zipFolderToByte()
                         else file.readBytes()
                     }
+
+                    private fun modPath(): String =
+                        ("/storage/emulated/0/" + com.corrodinggames.rts.gameFramework.e.a.q(it.g()).removePrefix("/SD/"))
                 })
             }
         }

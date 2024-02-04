@@ -25,7 +25,7 @@ import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.RoomOption
+import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
@@ -63,9 +63,10 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             ?: NetworkMap(LevelSelectActivity.convertLevelFileNameForDisplay(GameEngine.t().bU.aA.b))
         set(value) {
             val realPath = (if(value.mapType == MapType.SkirmishMap) "maps/skirmish/" else "") + (value.mapName + ".tmx").replace("\\", "/")
-            GameEngine.t().bU.aB = realPath
+            GameEngine.t().bU.aB = com.corrodinggames.rts.gameFramework.e.a.b.f(realPath)
             GameEngine.t().bU.aA.a = com.corrodinggames.rts.gameFramework.j.at.entries[value.mapType.ordinal]
             GameEngine.t().bU.aA.b = (value.mapName + ".tmx")
+            GameEngine.t().bU.n()
         }
     override var startingCredits: Int
         get() = GameEngine.t().bU.aA.c

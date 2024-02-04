@@ -5,18 +5,13 @@
  *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.mod
+package io.github.rwpp.utils.io
 
-import java.io.InputStream
-
-interface Mod {
-    val id: Int
-    val name: String
-    val description: String
-    val minVersion: String
-    var isEnabled: Boolean
-
-    fun getSize(): Long
-
-    fun getBytes(): ByteArray
+object SizeUtils {
+    fun byteToKB(b: Long) = b / 1024
+    fun byteToMB(b: Long) = b / (1024 * 1024)
+    fun kBToByte(kb: Long) = kb * 1024
+    fun kBToMB(kb: Long) = kb / 1024
+    fun mBToByte(mb: Long) = mb * 1024 * 1024
+    fun mBToKB(mb: Long) = mb * 1024
 }

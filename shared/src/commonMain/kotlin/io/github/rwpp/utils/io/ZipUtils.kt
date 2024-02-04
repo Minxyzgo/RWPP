@@ -15,7 +15,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 fun File.zipFolderToByte(): ByteArray {
-    val byteOut = ByteArrayOutputStream()
+    val byteOut = ByteArrayOutputStream(SizeUtils.mBToByte(1).toInt())
     val zipOut = ZipOutputStream(byteOut)
     zipRecursive(this, Paths.get(this.absolutePath), zipOut)
     val bytes = byteOut.toByteArray()
