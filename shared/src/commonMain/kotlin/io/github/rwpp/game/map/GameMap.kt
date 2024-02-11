@@ -23,6 +23,8 @@ interface GameMap {
 
     fun displayName() = mapName.replace(mapPrefixRegex, "")
 
+    fun getMapSuffix() = if(mapType == MapType.SavedGame) ".rwsave" else ".tmx"
+
     companion object {
         private val mapPrefixRegex = Regex("""^\[.*?\]""")
     }

@@ -37,6 +37,8 @@ interface GameRoom {
     var isRWPPRoom: Boolean
     var option: RoomOption
 
+    val isConnecting: Boolean
+
     /**
      * Get all players from the room.
      */

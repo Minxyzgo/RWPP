@@ -14,6 +14,7 @@ import com.corrodinggames.rts.appFramework.LevelSelectActivity
 import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
 import com.corrodinggames.rts.game.a.a
 import com.corrodinggames.rts.gameFramework.j.ae
+import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.j.bg
 import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
@@ -62,10 +63,12 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         get() = game.getAllMaps().firstOrNull { (it.mapName + ".tmx").replace("\\", "/").endsWith(GameEngine.t().bU.aA.b ?: "") }
             ?: NetworkMap(LevelSelectActivity.convertLevelFileNameForDisplay(GameEngine.t().bU.aA.b))
         set(value) {
-            val realPath = (if(value.mapType == MapType.SkirmishMap) "maps/skirmish/" else "") + (value.mapName + ".tmx").replace("\\", "/")
+            val realPath =
+                (if(value.mapType == MapType.SkirmishMap) "maps/skirmish/" else "") +
+                        (value.mapName + value.getMapSuffix()).replace("\\", "/")
             GameEngine.t().bU.aB = com.corrodinggames.rts.gameFramework.e.a.b.f(realPath)
             GameEngine.t().bU.aA.a = com.corrodinggames.rts.gameFramework.j.at.entries[value.mapType.ordinal]
-            GameEngine.t().bU.aA.b = (value.mapName + ".tmx")
+            GameEngine.t().bU.aA.b = (value.mapName + value.getMapSuffix())
             GameEngine.t().bU.n()
         }
     override var startingCredits: Int
@@ -104,6 +107,8 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         get() = roomMods
     override var isRWPPRoom: Boolean = false
     override var option: RoomOption = RoomOption()
+    override val isConnecting: Boolean
+        get() = GameEngine.t().bU.C
 
     override fun getPlayers(): List<Player> {
         return PlayerInternal.j.mapNotNull {
@@ -185,7 +190,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                 var s6 = s3;
                 if(t2.G()) {
                     if(bu.p) {
-                        s6 = s3 + "SandBox Mode! \\n Place any unit, Control all teams, Special powers" + "\n";
+                        s6 = s3 + "SandBox Mode! \n Place any unit, Control all teams, Special powers" + "\n";
                     } else {
                         s6 = s3 + "Local skirmish" + "\n";
                     }
@@ -367,10 +372,14 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
 
     override fun disconnect() {
         isSandboxGame = false
-        GameEngine.t().bU.b("exited")
+        if(isConnecting) GameEngine.t().bU.b("exited")
         isRWPPRoom = false
         option = RoomOption()
         roomMods = arrayOf()
+        // 刷新地图
+        GameEngine.t().bU.aA.a = at.a
+        GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
+        GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
         MainActivity.activityResume()
     }
 

@@ -5,13 +5,21 @@
  *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.desktop.impl
+package io.github.rwpp.external
+
+import java.io.File
+
+interface ExternalHandler {
+    fun getAllResources(): List<Resource>
+
+    fun getUsingResource(): Resource?
 
 
-import com.corrodinggames.rts.gameFramework.j.au
-import io.github.rwpp.net.Packet
+    fun enableResource(resource: Resource?)
 
-fun Packet.asGamePacket(): au = au(type).also {
-    it.c = bytes
-    it.d = -1
+    fun newResource(
+        id: Int,
+        resourceFile: File,
+        config: ResourceConfig
+    ): Resource
 }

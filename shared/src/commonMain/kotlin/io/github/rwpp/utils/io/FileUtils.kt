@@ -8,6 +8,7 @@
 package io.github.rwpp.utils.io
 
 import java.io.File
+import java.util.zip.ZipFile
 
 fun File.calculateSize(): Long {
     var size = 0L
@@ -20,4 +21,20 @@ fun File.calculateSize(): Long {
     }
 
     return size
+}
+
+fun File.unzipTo(targetFile: File) {
+    val zipFile = ZipFile(this)
+    for(entry in zipFile.entries()) {
+        if(entry.isDirectory) {
+            File(targetFile, entry.name).mkdirs()
+        } else {
+            val file = File(targetFile, entry.name)
+            if(!file.exists()) {
+                if(!file.parentFile.exists()) file.parentFile.mkdirs()
+                file.createNewFile()
+            }
+            file.writeBytes(zipFile.getInputStream(entry).readBytes())
+        }
+    }
 }

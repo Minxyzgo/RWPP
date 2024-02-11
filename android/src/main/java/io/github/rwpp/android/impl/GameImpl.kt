@@ -7,7 +7,6 @@
 
 package io.github.rwpp.android.impl
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -52,8 +51,9 @@ class GameImpl : Game, CoroutineScope {
 
     override fun startNewMissionGame(difficulty: Difficulty, mission: Mission) {
         val t = GameEngine.t()
-        t.bU.aA.f = difficulty.ordinal - 2
-        LevelSelectActivity.loadSinglePlayerMapRaw("maps/normal/${mission.mapName}.tmx", false, 0, 0, true, false)
+        t.bN.aiDifficulty = difficulty.ordinal - 2
+        t.bN.save()
+        LevelSelectActivity.loadSinglePlayerMapRaw("maps/${mission.type.pathName()}/${mission.mapName}.tmx", false, 0, 0, true, false)
         val intent = Intent(MainActivity.instance, InGameActivity::class.java)
         intent.putExtra("level", t.di)
         gameLauncher.launch(intent)
@@ -131,7 +131,7 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override fun getAllMissionTypes(): List<MissionType> {
-        return listOf(MissionType.Default)
+        return listOf(MissionType.Normal, MissionType.Challenge, MissionType.Survival)
     }
 
     override fun getAllMissions(): List<Mission> {
@@ -139,24 +139,32 @@ class GameImpl : Game, CoroutineScope {
         val assets = MainActivity.instance.assets
 
         val missions = mutableListOf<Mission>()
+        getAllMissionTypes().forEach { type ->
+            assets.list("maps/${type.pathName()}")!!
+                .filter { it.endsWith(".tmx") }
+                .forEachIndexed { i, f ->
+                    missions.add(object : Mission {
+                        override val id: Int = i
+                        override val name: String =
+                            if(type == MissionType.Normal)
+                                f.split("__-__")[1].removeSuffix(".tmx")
+                            else f.removeSuffix(".tmx")
+                        override val type: MissionType
+                            get() = type
+                        override val image: Painter =
+                            BitmapPainter(BitmapFactory.decodeStream(
+                                assets.open("maps/${type.pathName()}/${f.removeSuffix(".tmx") + "_map.png"}")
+                            ).asImageBitmap())
+                        override val mapName: String
+                            get() = f.removeSuffix(".tmx")
+                        override val tmx: File? = null
+                        override val mapType: MapType
+                            get() = MapType.SkirmishMap
+                    })
+                }
+        }
 
-        assets.list("maps/normal")!!
-            .filter { it.endsWith(".tmx") }
-            .forEachIndexed { i, f ->
-                missions.add(object : Mission {
-                    override val id: Int = i
-                    override val name: String = f.split("__-__")[1].removeSuffix(".tmx")
-                    override val image: Painter =
-                        BitmapPainter(BitmapFactory.decodeStream(
-                            assets.open("maps/normal/${f.removeSuffix(".tmx") + "_map.png"}")
-                        ).asImageBitmap())
-                    override val mapName: String
-                        get() = f.removeSuffix(".tmx")
-                    override val tmx: File? = null
-                    override val mapType: MapType
-                        get() = MapType.SkirmishMap
-                })
-            }
+
         return missions.toList().also { _missions = it }
     }
 
@@ -222,7 +230,7 @@ class GameImpl : Game, CoroutineScope {
         return _maps[mapType]!!
     }
 
-    override fun getMissionsByType(type: MissionType): List<Mission> = getAllMissions()
+    override fun getMissionsByType(type: MissionType): List<Mission> = getAllMissions().filter { it.type == type }
     override fun getStartingUnitOptions(): List<Pair<Int, String>> {
         val list = mutableListOf<Pair<Int, String>>()
         val it: Iterator<*> = ae.d().iterator()

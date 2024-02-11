@@ -8,7 +8,6 @@
 package io.github.rwpp.game.ui
 
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -25,8 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
-import io.github.rwpp.LocalWindowManager
-import io.github.rwpp.game.units.GameInternalUnits
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.ui.*
 

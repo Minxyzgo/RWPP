@@ -775,10 +775,10 @@ private fun MultiplayerOptionDialog(
             item {
                 LazyRow(horizontalArrangement = Arrangement.Center) {
                     with(room) {
-                        item { MultiplayerOptionDialog("No Nukes", room::noNukes) }
-                        item { MultiplayerOptionDialog("Shared Control", room::sharedControl) }
-                        item { MultiplayerOptionDialog("Allow Spectators", room::allowSpectators) }
-                        item { MultiplayerOptionDialog("Team Lock", room::teamLock) }
+                        item { MultiplayerOptionDialog(readI18n("multiplayer.room.noNukes"), room::noNukes) }
+                        item { MultiplayerOptionDialog(readI18n("multiplayer.room.sharedControl"), room::sharedControl) }
+                        item { MultiplayerOptionDialog(readI18n("multiplayer.room.allowSpectators"), room::allowSpectators) }
+                        item { MultiplayerOptionDialog(readI18n("multiplayer.room.teamLock"), room::teamLock) }
                     }
                 }
             }

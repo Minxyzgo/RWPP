@@ -7,7 +7,11 @@
 
 package io.github.rwpp.android.impl
 
+import android.content.Context
+import android.content.res.Resources
+import android.util.TypedValue
 import io.github.rwpp.net.Packet
+import java.io.File
 
 fun Packet.asGamePacket(): com.corrodinggames.rts.gameFramework.j.bi {
     return com.corrodinggames.rts.gameFramework.j.bi(type).apply {
@@ -27,4 +31,37 @@ fun sendPacketToClient(c: com.corrodinggames.rts.gameFramework.j.c, bi: com.corr
     t.bU::class.java.getDeclaredMethod("a", com.corrodinggames.rts.gameFramework.j.c::class.java, com.corrodinggames.rts.gameFramework.j.bi::class.java).apply {
         isAccessible = true
     }.invoke(t.bU, c, bi)
+}
+
+fun Resources.getResourceFileName(i: Int): String {
+    val value = TypedValue()
+    getValue(i, value, true)
+    return value.string.toString().removePrefix("res/")
+}
+
+
+fun copyAssets(context: Context, assetDir: String, targetDir: String) {
+    if (assetDir.isEmpty() || targetDir.isEmpty()) {
+        return
+    }
+    val separator = File.separator
+
+    // 获取assets目录assetDir下一级所有文件及文件夹
+    val fileNames = context.resources.assets.list(assetDir)!!
+    // 如果是文件夹(目录),则继续递归遍历
+    if (fileNames.isNotEmpty()) {
+        val targetFile = File(targetDir)
+        if (!targetFile.exists() && !targetFile.mkdirs()) {
+            return
+        }
+        for (fileName in fileNames) {
+            copyAssets(context, assetDir + separator + fileName, targetDir + separator + fileName)
+        }
+    } else { // 文件,则执行拷贝
+        val fi = File(targetDir)
+        fi.parentFile!!.run { if(!exists()) mkdirs() }
+        if(!fi.exists()) fi.createNewFile()
+        fi.writeBytes(context.assets.open(assetDir).use { it.readBytes() })
+    }
+
 }

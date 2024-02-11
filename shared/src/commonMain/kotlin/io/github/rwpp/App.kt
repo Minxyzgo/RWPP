@@ -84,6 +84,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
     var showSettingsView by remember { mutableStateOf(false) }
     var showModsView by remember { mutableStateOf(false) }
     var showRoomView by remember { mutableStateOf(false) }
+    var showResourceView by remember { mutableStateOf(false) }
 
     val context = LocalController.current
 
@@ -107,7 +108,13 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 }
 
                 AnimatedVisibility(
-                    !(showMultiplayerView || showSinglePlayerView || isLoading || showSettingsView || showModsView || showRoomView)
+                    !(showMultiplayerView
+                            || showSinglePlayerView
+                            || isLoading
+                            || showSettingsView
+                            || showModsView
+                            || showRoomView
+                            || showResourceView)
                 ) {
                     MainMenu(
                         multiplayer = {
@@ -127,6 +134,9 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             isSandboxGame = true
                             showRoomView = true
                             context.hostNewSandbox()
+                        },
+                        resource = {
+                            showResourceView = true
                         }
                     )
                 }
@@ -153,6 +163,12 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     showModsView
                 ) {
                     ModsView { showModsView = false }
+                }
+
+                AnimatedVisibility(
+                    showResourceView
+                ) {
+                    ResourceView { showResourceView = false }
                 }
 
                 AnimatedVisibility(
@@ -310,7 +326,8 @@ fun MainMenu(
     mission: () -> Unit,
     settings: () -> Unit,
     mods: () -> Unit,
-    sandbox: () -> Unit
+    sandbox: () -> Unit,
+    resource: () -> Unit,
 ) {
     MaterialTheme.colorScheme
     val deliciousFont = MaterialTheme.typography.headlineLarge.fontFamily!!
@@ -435,11 +452,13 @@ fun MainMenu(
                 item { MenuButton(readI18n("menu.multiplayer"), onClick = multiplayer) }
                 item { MenuButton(readI18n("menu.mods"), onClick = mods) }
                 item { MenuButton(readI18n("menu.settings"), onClick = settings) }
+                item { MenuButton("Resource", onClick = resource) }
                 item {
                     with(LocalController.current) {
                         MenuButton(readI18n("menu.exit")) { exit() }
                     }
                 }
+
                 item { Spacer(Modifier.size(50.dp)) }
             }
         }

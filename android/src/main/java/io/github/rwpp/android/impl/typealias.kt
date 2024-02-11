@@ -9,3 +9,4 @@ package io.github.rwpp.android.impl
 
 typealias GameEngine = com.corrodinggames.rts.gameFramework.k
 typealias PlayerInternal = com.corrodinggames.rts.game.p
+typealias FClass = com.corrodinggames.rts.gameFramework.f

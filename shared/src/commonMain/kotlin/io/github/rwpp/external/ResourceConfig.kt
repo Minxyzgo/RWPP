@@ -5,13 +5,13 @@
  *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.desktop.impl
+package io.github.rwpp.external
 
+import kotlinx.serialization.Serializable
 
-import com.corrodinggames.rts.gameFramework.j.au
-import io.github.rwpp.net.Packet
-
-fun Packet.asGamePacket(): au = au(type).also {
-    it.c = bytes
-    it.d = -1
-}
+@Serializable
+data class ResourceConfig(
+    val name: String,
+    val icon: String,
+    val description: String
+)

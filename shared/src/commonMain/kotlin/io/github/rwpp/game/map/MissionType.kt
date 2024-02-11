@@ -8,9 +8,13 @@
 package io.github.rwpp.game.map
 
 sealed class MissionType {
-    data object Default : MissionType() {
-        override fun toString(): String = "Default"
-    }
+    data object Normal : MissionType()
+
+    data object Challenge : MissionType()
+
+    data object Survival : MissionType()
+
+    fun pathName() = toString().lowercase()
 
     //not implemented
     class ModType(val mod: String) : MissionType()

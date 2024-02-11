@@ -8,6 +8,7 @@
 package io.github.rwpp
 
 import io.github.rwpp.utils.io.SizeUtils
+import io.github.rwpp.platform.Platform
 
 const val projectVersion = "1.0.6-alpha"
 val welcomeMessage =
@@ -23,3 +24,15 @@ val welcomeMessage =
 const val packageName = "io.github.rwpp"
 
 val maxModSize = SizeUtils.mBToByte(3)
+
+val resourcePath = if(Platform.isAndroid()) {
+    "/storage/emulated/0/rustedWarfare/resource/"
+} else "resource/"
+
+val resourceOutputDir = if(Platform.isAndroid()) {
+    "/storage/emulated/0/rustedWarfare/resource_generated/"
+} else "resource_generated/"
+
+val resOutputDir = if(Platform.isAndroid()) {
+    "/storage/emulated/0/rustedWarfare/resource_generated/res/"
+} else "resource_generated/res/"

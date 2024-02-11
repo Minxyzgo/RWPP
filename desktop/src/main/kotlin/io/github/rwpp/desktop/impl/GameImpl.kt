@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.Root
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
+import com.corrodinggames.rts.`R$drawable`
+import com.corrodinggames.rts.`R$raw`
 import com.corrodinggames.rts.gameFramework.ac
 import com.corrodinggames.rts.gameFramework.j.`as`
 import com.corrodinggames.rts.gameFramework.j.c
@@ -28,6 +30,7 @@ import com.corrodinggames.rts.java.u
 import com.github.minxyzgo.rwij.InjectMode
 import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
+import io.github.rwpp.*
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
 import io.github.rwpp.desktop.*
@@ -37,23 +40,22 @@ import io.github.rwpp.event.events.*
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.base.Difficulty
+import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.MovementType
-import io.github.rwpp.maxModSize
 import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ModPacket
-import io.github.rwpp.packageName
 import io.github.rwpp.ui.LoadingContext
-import io.github.rwpp.welcomeMessage
+import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.channels.Channel
 import net.peanuuutz.tomlkt.Toml
 import org.lwjgl.opengl.Display
 import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 import javax.imageio.ImageIO
 import javax.swing.SwingUtilities
@@ -528,6 +530,76 @@ class GameImpl : Game {
                 Unit
             }
         }
+
+        com.corrodinggames.rts.gameFramework.e.c::class.setFunction {
+            addProxy("f", String::class, mode = InjectMode.InsertBefore) { _: Any?, str: String ->
+                if(gameContext.getUsingResource() == null
+                    || str.contains("builtin_mods")
+                    || (str.contains("maps") && !str.contains("bitmaps"))
+                    || str.contains("translations")) return@addProxy Unit
+                val result = Reflect.call<com.corrodinggames.rts.gameFramework.e.c, String>(
+                    com.corrodinggames.rts.gameFramework.e.a.b,
+                    "__proxy__f",
+                    listOf(String::class),
+                    listOf(str)
+                )
+
+                if(result?.contains("assets") != true) return@addProxy InterruptResult(result)
+
+                InterruptResult(resourceOutputDir + result.removePrefix("assets/"))
+            }
+
+            addProxy("i", String::class, mode = InjectMode.InsertBefore) { _: Any?, str: String ->
+                if(gameContext.getUsingResource() == null
+                    || str.contains("builtin_mods")
+                    || (str.contains("maps") && !str.contains("bitmaps"))
+                    || str.contains("translations")) return@addProxy Unit
+                val o = str.let {
+                    if(it.startsWith("assets/") || it.startsWith("assets\\"))
+                        it.removePrefix("assets/") else it
+                }
+
+
+                val s3 = resourceOutputDir + o
+                kotlin.runCatching {
+                    InterruptResult(com.corrodinggames.rts.gameFramework.utility.j(
+                        FileInputStream(s3), s3, o
+                    ))
+                }.getOrElse { InterruptResult(null) }
+            }
+        }
+
+        com.corrodinggames.rts.gameFramework.f::class.setFunction {
+            addProxy("f", Int::class) { i: Int ->
+                val a2: String? = FClass.a(`R$drawable`::class.java, i)
+                val resFileExist = File(resOutputDir).exists()
+                if (a2 != null) {
+                    println("reading res drawable:$a2 i:$i")
+                    return@addProxy com.corrodinggames.rts.gameFramework.e.a.a("${if(resFileExist) resOutputDir else "res/"}drawable", a2)
+
+                }
+                val a3: String? = FClass.a(`R$raw`::class.java, i)
+                if (a3 != null) {
+                    println("reading res raw:$a3 i:$i")
+                    return@addProxy com.corrodinggames.rts.gameFramework.e.a.a("${if(resFileExist) resOutputDir else "res/"}raw", a3)
+
+                }
+                return@addProxy null
+
+            }
+        }
+
+        com.corrodinggames.librocket.b::class.setFunction {
+            addProxy("a", String::class, mode = InjectMode.InsertBefore) { str: String ->
+                val o = FClass.o(str)
+                val resFileExist = File(resOutputDir).exists()
+                println("drawable: $o")
+                if(o.startsWith("drawable:") && resFileExist) {
+                    InterruptResult(com.corrodinggames.librocket.b.b + resOutputDir + "drawable/" + o.removePrefix("drawable:"))
+                } else Unit
+            }
+        }
+
         GlobalEventChannel.filter(StartGameEvent::class).subscribeAlways {
             rwppVisibleSetter(false)
             gameCanvas.isVisible = true
@@ -833,7 +905,7 @@ class GameImpl : Game {
     }
 
     override fun getAllMissionTypes(): List<MissionType> {
-        return listOf(MissionType.Default)
+        return listOf(MissionType.Normal)
     }
 
     override fun getAllMissions(): List<Mission> {

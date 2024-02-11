@@ -5,13 +5,15 @@
  *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.desktop.impl
+package io.github.rwpp.external
 
+import androidx.compose.ui.graphics.painter.Painter
+import java.io.File
 
-import com.corrodinggames.rts.gameFramework.j.au
-import io.github.rwpp.net.Packet
-
-fun Packet.asGamePacket(): au = au(type).also {
-    it.c = bytes
-    it.d = -1
+abstract class Resource(
+    val id: Int,
+    val resourceFile: File,
+    val config: ResourceConfig,
+) {
+    abstract val iconPainter: Painter?
 }
