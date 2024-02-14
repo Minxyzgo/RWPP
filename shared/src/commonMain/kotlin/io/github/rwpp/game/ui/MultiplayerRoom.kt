@@ -12,9 +12,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -45,7 +43,6 @@ import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
-import io.github.rwpp.game.units.GameInternalUnits
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.packets.ModPacket
@@ -56,8 +53,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import kotlin.math.roundToInt
-import kotlin.reflect.KMutableProperty
-
 
 
 private val relayRegex = Regex("""R\d+""")
@@ -81,7 +76,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
     var showMapSelectView by remember { mutableStateOf(false) }
     val players = remember(update) { room.getPlayers().sortedBy { it.team } }
-    val isHost = remember(update) { room.isHost }
+    val isHost = remember(update) { room.isHost || room.isHostServer }
     val updateAction = { update = !update }
 
     val chatMessages = remember { SnapshotStateList<AnnotatedString>() }
@@ -157,7 +152,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         lastSelectedIndex = index
     }
 
-    MultiplayerOptionDialog(
+    MultiplayerSwitchOption(
         optionVisible,
         { optionVisible = false },
         updateAction,
@@ -316,7 +311,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     var isLocked by remember { mutableStateOf(false) }
                                     IconButton(
                                         { isLocked = !isLocked; room.lockedRoom = isLocked },
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp)
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp),
+                                        enabled = room.isHost,
                                     ) {
                                         Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else Color.White)
                                     }
@@ -545,18 +541,22 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 }
 
 @Composable
-private fun GameRoom.MultiplayerOptionDialog(label: String, property: KMutableProperty<Boolean>) {
-    var value by remember { mutableStateOf(property.getter.call()) }
+private fun MultiplayerSwitchOption(
+    label: String,
+    value: Boolean,
+    enabled: Boolean = true,
+    onValueChange: (Boolean) -> Unit,
+) {
     RWCheckbox(
         value,
-        onCheckedChange = { value = it; property.setter.call(it) },
+        onCheckedChange = { onValueChange(!value) },
         modifier = Modifier.padding(5.dp),
-        enabled = isHost
+        enabled
     )
     Text(label,
         modifier = Modifier.padding(top = 10.dp),
         style = MaterialTheme.typography.headlineLarge,
-        color = Color(151, 188, 98)
+        color = if (enabled) Color(151, 188, 98) else Color.DarkGray
     )
 }
 
@@ -752,7 +752,7 @@ private fun PlayerOverrideDialog(
 }
 
 @Composable
-private fun MultiplayerOptionDialog(
+private fun MultiplayerSwitchOption(
     visible: Boolean,
     onDismissRequest: () -> Unit,
     update: () -> Unit,
@@ -764,6 +764,18 @@ private fun MultiplayerOptionDialog(
 ) { m, dismiss ->
     val context = LocalController.current
 
+    var noNukes by remember { mutableStateOf(room.noNukes) }
+    var sharedControl by remember { mutableStateOf(room.sharedControl) }
+    var allowSpectators by remember { mutableStateOf(room.allowSpectators) }
+    var teamLock by remember { mutableStateOf(room.teamLock) }
+    var aiDifficulty by remember { mutableStateOf(room.aiDifficulty) }
+    var fogMode by remember { mutableStateOf(room.fogMode) }
+    var startingUnits by remember { mutableStateOf(room.startingUnits) }
+    var teamMode by remember { mutableStateOf<String?>(null) }
+    var startingCredits by remember { mutableStateOf(room.startingCredits) }
+    var maxPlayerCount by remember { mutableStateOf(room.maxPlayerCount) }
+    var realIncomeMultiplier by remember { mutableStateOf(room.incomeMultiplier) }
+
     BorderCard(
         modifier = Modifier
             .fillMaxSize(LargeProportion())
@@ -771,14 +783,24 @@ private fun MultiplayerOptionDialog(
         backgroundColor = Color.Gray
     ) {
         ExitButton(dismiss)
-        LazyColumn(modifier = Modifier.padding(10.dp)) {
+        LazyColumn(modifier = Modifier.weight(1f).padding(10.dp)) {
             item {
                 LazyRow(horizontalArrangement = Arrangement.Center) {
-                    with(room) {
-                        item { MultiplayerOptionDialog(readI18n("multiplayer.room.noNukes"), room::noNukes) }
-                        item { MultiplayerOptionDialog(readI18n("multiplayer.room.sharedControl"), room::sharedControl) }
-                        item { MultiplayerOptionDialog(readI18n("multiplayer.room.allowSpectators"), room::allowSpectators) }
-                        item { MultiplayerOptionDialog(readI18n("multiplayer.room.teamLock"), room::teamLock) }
+                    item { MultiplayerSwitchOption(readI18n("multiplayer.room.noNukes"), noNukes) { noNukes = it } }
+                    item {
+                        MultiplayerSwitchOption(
+                            readI18n("multiplayer.room.sharedControl"),
+                            sharedControl
+                        ) { sharedControl = it }
+                    }
+                    item {
+                        MultiplayerSwitchOption(
+                            readI18n("multiplayer.room.allowSpectators"),
+                            allowSpectators, room.isHost
+                        ) { allowSpectators = it }
+                    }
+                    item {
+                        MultiplayerSwitchOption(readI18n("multiplayer.room.teamLock"), teamLock, room.isHost) { teamLock = it }
                     }
                 }
             }
@@ -795,7 +817,7 @@ private fun MultiplayerOptionDialog(
                     )
 
                     remember(selectedIndex1) {
-                        room.aiDifficulty = Difficulty.entries[selectedIndex1]
+                        aiDifficulty = Difficulty.entries[selectedIndex1]
                     }
 
                     var selectedIndex2 by remember(room) { mutableStateOf(room.fogMode.ordinal) }
@@ -808,7 +830,7 @@ private fun MultiplayerOptionDialog(
                     )
 
                     remember(selectedIndex2) {
-                        room.fogMode = FogMode.entries[selectedIndex2]
+                        fogMode = FogMode.entries[selectedIndex2]
                     }
 
                     val startingOptionList = remember {
@@ -826,7 +848,7 @@ private fun MultiplayerOptionDialog(
                     )
 
                     remember(selectedIndex3) {
-                        room.startingUnits = startingOptionList[selectedIndex3].first
+                        startingUnits = startingOptionList[selectedIndex3].first
                     }
                 }
 
@@ -845,15 +867,16 @@ private fun MultiplayerOptionDialog(
                     LargeDropdownMenu(
                         modifier = Modifier.weight(.5f).padding(5.dp),
                         label = "Set Team",
+                        enabled = room.isHost,
                         items = teamList,
                         selectedIndex = 0,
                         hasValue = false,
                         onItemSelected = { index, _ ->
                             when(index) {
-                                0 -> room.applyTeamChange("2t")
-                                1 -> room.applyTeamChange("3t")
-                                2 -> room.applyTeamChange("FFA")
-                                3 -> room.applyTeamChange("spectators")
+                                0 -> teamMode = "2t"
+                                1 -> teamMode = "3t"
+                                2 -> teamMode = "FFA"
+                                3 -> teamMode = "spectators"
                                 else -> throw RuntimeException()
                             }
 
@@ -884,7 +907,7 @@ private fun MultiplayerOptionDialog(
                     )
 
                     remember(selectedIndex1) {
-                        room.startingCredits = selectedIndex1
+                        startingCredits = selectedIndex1
                     }
                 }
             }
@@ -902,10 +925,11 @@ private fun MultiplayerOptionDialog(
                         valueRange = players.size.toFloat()..100f,
                         modifier = Modifier.fillMaxWidth().padding(0.dp, 0.dp, 0.dp, 5.dp),
                         value = range.toFloat(),
+                        enabled = room.isHost,
                         colors = RWSliderColors,
                         onValueChange = { range = it.roundToInt().coerceAtLeast(10) },
                         onValueChangeFinished = {
-                            if(range >= players.size) room.maxPlayerCount = range else range =
+                            if(range >= players.size) maxPlayerCount = range else range =
                                 room.maxPlayerCount
                         }
                     )
@@ -944,7 +968,7 @@ private fun MultiplayerOptionDialog(
                     }
 
                     remember(incomeMultiplier) {
-                        room.incomeMultiplier = incomeMultiplier.toFloatOrNull() ?: 1f
+                        realIncomeMultiplier = incomeMultiplier.toFloatOrNull() ?: 1f
                     }
 
                     var teamUnitCapHostedGame by remember { mutableStateOf(context.getConfig<Int?>("teamUnitCapHostedGame")) }
@@ -959,6 +983,7 @@ private fun MultiplayerOptionDialog(
                         teamUnitCapHostedGame?.toString() ?: "",
                         lengthLimitCount = 6,
                         typeInNumberOnly = true,
+                        enabled = room.isHost,
                         modifier = Modifier.weight(.5f).padding(5.dp),
                         typeInOnlyInteger = true,
                         trailingIcon = {
@@ -967,7 +992,7 @@ private fun MultiplayerOptionDialog(
                             Icon(
                                 icon,
                                 "",
-                                modifier = Modifier.clickable(!expanded1) { expanded1 = !expanded1 })
+                                modifier = Modifier.clickable(!expanded1 && room.isHost) { expanded1 = !expanded1 })
                         },
                         appendedContent = {
                             BasicDropdownMenu(
@@ -984,10 +1009,37 @@ private fun MultiplayerOptionDialog(
                 }
             }
 
-            item {
-                RWTextButton(readI18n("multiplayer.room.banUnits"), modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally)) {
-                    onShowBanUnitDialog()
+            if(room.isHost) {
+                item {
+                    RWTextButton(
+                        readI18n("multiplayer.room.banUnits"),
+                        modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
+                    ) {
+                        onShowBanUnitDialog()
+                    }
                 }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(5.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            RWTextButton("Apply") {
+                room.applyRoomConfig(
+                    maxPlayerCount,
+                    sharedControl,
+                    startingCredits,
+                    startingUnits,
+                    fogMode,
+                    aiDifficulty,
+                    realIncomeMultiplier,
+                    noNukes,
+                    allowSpectators,
+                    teamLock,
+                    teamMode
+                )
+
+                dismiss()
             }
         }
     }

@@ -23,10 +23,7 @@ import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.base.Difficulty
-import io.github.rwpp.game.map.GameMap
-import io.github.rwpp.game.map.MapType
-import io.github.rwpp.game.map.Mission
-import io.github.rwpp.game.map.MissionType
+import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.MovementType
@@ -269,6 +266,37 @@ class GameImpl : Game, CoroutineScope {
                 ", "
             ) { it.displayName }
         }")
+    }
+
+    override fun getAllReplays(): List<Replay> {
+        return ReplaySelectActivity.getGameSaves().mapIndexed { i, str ->
+            object : Replay {
+                override val id: Int = i
+                override val name: String = str
+                override fun displayName(): String {
+                    return LoadLevelActivity.convertDataFileNameForDisplay(com.corrodinggames.rts.gameFramework.e.a.q(name));
+                }
+            }
+        }
+    }
+
+    override fun watchReplay(replay: Replay) {
+        if (GameEngine.t().bY.b(replay.name)) {
+            gameLauncher.launch(
+                Intent(MainActivity.instance, InGameActivity::class.java)
+            )
+        }
+    }
+
+    override fun isGameCouldContinue(): Boolean {
+        val c = GameEngine.t()
+        return !(c == null || !c.bD || c.bE)
+    }
+
+    override fun continueGame() {
+        val intent = Intent(MainActivity.instance, InGameActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        gameLauncher.launch(intent)
     }
 
     override fun requestExternalStoragePermission() {

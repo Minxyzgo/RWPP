@@ -44,13 +44,13 @@ mission = "Mission"
 sandbox = "Sandbox Editor"
 multiplayer = "Multiplayer"
 mods = "Mods"
+resource = "Resource"
 settings = "Settings"
 exit = "Exit"
 notes = """
-watching replay haven't yet been implemented.
-RWPP currently couldn't be host in Official Server and RW-HPS.
 For android, start a new game and pause to open the setting to use external folder.
 For Android11 and above, in order to ensure the normal operation of transferrring mods, please grant permission to manage all files in settings.
+Notes that transferring mod isn't supported in RCN.
 
 These will be fixed in the future...
 """

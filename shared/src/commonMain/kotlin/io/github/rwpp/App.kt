@@ -13,11 +13,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -81,10 +83,20 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
     var isSandboxGame by remember { mutableStateOf(false) }
     var showSinglePlayerView by remember { mutableStateOf(false) }
     var showMultiplayerView by remember { mutableStateOf(false) }
+    var showReplayView by remember { mutableStateOf(false) }
     var showSettingsView by remember { mutableStateOf(false) }
     var showModsView by remember { mutableStateOf(false) }
     var showRoomView by remember { mutableStateOf(false) }
     var showResourceView by remember { mutableStateOf(false) }
+
+    val showMainMenu = !(showMultiplayerView
+            || showSinglePlayerView
+            || isLoading
+            || showSettingsView
+            || showModsView
+            || showRoomView
+            || showResourceView
+            || showReplayView)
 
     val context = LocalController.current
 
@@ -107,50 +119,65 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     true
                 }
 
-                AnimatedVisibility(
-                    !(showMultiplayerView
-                            || showSinglePlayerView
-                            || isLoading
-                            || showSettingsView
-                            || showModsView
-                            || showRoomView
-                            || showResourceView)
-                ) {
-                    MainMenu(
-                        multiplayer = {
-                            isSandboxGame = false
-                            showMultiplayerView = true
-                        },
-                        mission = {
-                            showSinglePlayerView = true
-                        },
-                        settings = {
-                            showSettingsView = true
-                        },
-                        mods = {
-                            showModsView = true
-                        },
-                        sandbox = {
-                            isSandboxGame = true
-                            showRoomView = true
-                            context.hostNewSandbox()
-                        },
-                        resource = {
-                            showResourceView = true
+                Scaffold(
+                    containerColor = Color.Transparent,
+                    floatingActionButton = {
+                        if(!isLoading && context.isGameCouldContinue() && (showMainMenu || showSinglePlayerView)) {
+                            FloatingActionButton(
+                                onClick = { context.continueGame() },
+                                shape = CircleShape,
+                                modifier = Modifier.padding(5.dp),
+                                containerColor = Color(151, 188, 98),
+                            ) {
+                                Icon(Icons.Default.PlayArrow, null)
+                            }
                         }
-                    )
-                }
-
-                AnimatedVisibility(
-                    showSinglePlayerView
+                    },
+                    floatingActionButtonPosition = FabPosition.End
                 ) {
-                    MissionView { showSinglePlayerView = false }
+                    AnimatedVisibility(
+                        showMainMenu
+                    ) {
+                        MainMenu(
+                            multiplayer = {
+                                isSandboxGame = false
+                                showMultiplayerView = true
+                            },
+                            mission = {
+                                showSinglePlayerView = true
+                            },
+                            settings = {
+                                showSettingsView = true
+                            },
+                            mods = {
+                                showModsView = true
+                            },
+                            sandbox = {
+                                isSandboxGame = true
+                                showRoomView = true
+                                context.hostNewSandbox()
+                            },
+                            resource = {
+                                showResourceView = true
+                            }
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        showSinglePlayerView
+                    ) {
+                        MissionView { showSinglePlayerView = false }
+                    }
                 }
 
                 AnimatedVisibility(
                     showMultiplayerView
                 ) {
-                    MultiplayerView({ showMultiplayerView = false }) { showRoomView = true }
+                    MultiplayerView(
+                        { showMultiplayerView = false },
+                        { showRoomView = true },
+                        { showReplayView = true }
+                    )
                 }
 
                 AnimatedVisibility(
@@ -169,6 +196,15 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     showResourceView
                 ) {
                     ResourceView { showResourceView = false }
+                }
+
+                AnimatedVisibility(
+                    showReplayView
+                ) {
+                    ReplaysViewDialog {
+                        showReplayView = false
+                        showMultiplayerView = true
+                    }
                 }
 
                 AnimatedVisibility(
@@ -408,7 +444,9 @@ fun MainMenu(
                         )
                         Heading(1, "Changelogs")
                         CodeBlock("""
-                            1.0.6-alpha: Fox bugs, Transfer-Mod(Experimental)
+                            1.0.8-release: Replay and Server are now supported.
+                            1.0.7-beta: Add external resource, bugs fixed
+                            1.0.6-alpha: Fix bugs, Transfer-Mod(Experimental)
                             1.0.5-alpha: Ban units, Game layer
                             1.0.4-alpha: Add i18n support. Player options
                             1.0.3-alpha: Improve menu and resize the layout on small screen device.
@@ -451,8 +489,8 @@ fun MainMenu(
                 item { MenuButton(readI18n("menu.sandbox"), onClick = sandbox) }
                 item { MenuButton(readI18n("menu.multiplayer"), onClick = multiplayer) }
                 item { MenuButton(readI18n("menu.mods"), onClick = mods) }
+                item { MenuButton(readI18n("menu.resource"), onClick = resource) }
                 item { MenuButton(readI18n("menu.settings"), onClick = settings) }
-                item { MenuButton("Resource", onClick = resource) }
                 item {
                     with(LocalController.current) {
                         MenuButton(readI18n("menu.exit")) { exit() }

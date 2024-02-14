@@ -8,11 +8,7 @@
 package io.github.rwpp.game
 
 import io.github.rwpp.game.base.Difficulty
-import io.github.rwpp.game.map.GameMap
-import io.github.rwpp.game.map.MapType
-import io.github.rwpp.game.map.Mission
-import io.github.rwpp.game.map.MissionType
-import io.github.rwpp.game.units.GameInternalUnits
+import io.github.rwpp.game.map.*
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.ui.LoadingContext
 
@@ -131,5 +127,28 @@ interface Game {
      */
     fun onBanUnits(units: List<GameUnit>)
 
+    /**
+     * Get all replays.
+     */
+    fun getAllReplays(): List<Replay>
+
+    /**
+     * Watch the given replay.
+     */
+    fun watchReplay(replay: Replay)
+
+    /**
+     * Describe if the game could continue.
+     */
+    fun isGameCouldContinue(): Boolean
+
+    /**
+     * Continue the game, make sure [isGameCouldContinue] return true.
+     */
+    fun continueGame()
+
+    /**
+     * Request external storage permission. (Only Android need to implement it)
+     */
     fun requestExternalStoragePermission()
 }

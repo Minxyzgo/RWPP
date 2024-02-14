@@ -14,29 +14,39 @@ import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
 
 interface GameRoom {
-    var maxPlayerCount: Int
+    val maxPlayerCount: Int
     val isHost: Boolean
     val isHostServer: Boolean
     val localPlayer: Player
-    var sharedControl: Boolean
+    val sharedControl: Boolean
     val randomSeed: Int
     val mapType: MapType
     var selectedMap: GameMap
-    var startingCredits: Int
-    var startingUnits: Int
-    var fogMode: FogMode
+    val startingCredits: Int
+    val startingUnits: Int
+    val fogMode: FogMode
     val revealedMap: Boolean
-    var aiDifficulty: Difficulty
-    var incomeMultiplier: Float
-    var noNukes: Boolean
-    var allowSpectators: Boolean
+    val aiDifficulty: Difficulty
+    val incomeMultiplier: Float
+    val noNukes: Boolean
+    val allowSpectators: Boolean
     var lockedRoom: Boolean
-    var teamLock: Boolean
+    val teamLock: Boolean
     val mods: Array<String>
 
+    /**
+     * Describe the current room is whether hosted by a RWPP protocol client (or server).
+     */
     var isRWPPRoom: Boolean
+
+    /**
+     * The extra option of the RWPP room. If not, all the options are default.
+     */
     var option: RoomOption
 
+    /**
+     * Describe whether client is connecting a network game.
+     */
     val isConnecting: Boolean
 
     /**
@@ -66,11 +76,23 @@ interface GameRoom {
     fun addAI()
 
     /**
-     * Apply team change mod.
+     * Apply the room config.
      *
-     * @param mode available mods: 2t, 3t, FFA, spectators
+     * @param teamMode available mods: 2t, 3t, FFA, spectators
      */
-    fun applyTeamChange(mode: String)
+    fun applyRoomConfig(
+        maxPlayerCount: Int,
+        sharedControl: Boolean,
+        startingCredits: Int,
+        startingUnits: Int,
+        fogMode: FogMode,
+        aiDifficulty: Difficulty,
+        incomeMultiplier: Float,
+        noNukes: Boolean,
+        allowSpectators: Boolean,
+        teamLock: Boolean,
+        teamMode: String?
+    )
 
     /**
      * Kick a player. (is host)

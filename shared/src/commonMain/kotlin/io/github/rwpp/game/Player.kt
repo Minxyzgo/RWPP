@@ -23,6 +23,9 @@ interface Player {
     val isAI: Boolean
     val difficulty: Difficulty?
 
+    /**
+     * The player extra data.
+     */
     val data: PlayerData
 
     fun teamAlias() = when {

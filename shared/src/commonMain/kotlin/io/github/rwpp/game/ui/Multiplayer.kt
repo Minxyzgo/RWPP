@@ -52,7 +52,8 @@ import kotlin.math.roundToInt
 @Composable
 fun MultiplayerView(
     onExit: () -> Unit,
-    onOpenRoomView: () -> Unit
+    onOpenRoomView: () -> Unit,
+    onOpenReplayView: () -> Unit,
 ) {
     BackHandler(true, onExit)
 
@@ -668,7 +669,10 @@ fun MultiplayerView(
                             label = readI18n("multiplayer.replay"),
                             leadingIcon = { Icon(loadSvg("visibility"), null, modifier = Modifier.size(30.dp)) },
                             modifier = Modifier.padding(5.dp, 0.dp, 5.dp, 5.dp).fillMaxWidth(),
-                        ) {}
+                        ) {
+                            onExit()
+                            onOpenReplayView()
+                        }
 
 
                         RWTextButton(

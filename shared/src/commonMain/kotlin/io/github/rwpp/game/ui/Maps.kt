@@ -52,6 +52,7 @@ fun MapViewDialog(
             .then(m)
     ) {
         ExitButton(d)
+        val room = LocalController.current.gameRoom
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -73,7 +74,7 @@ fun MapViewDialog(
             LargeDropdownMenu(
                 modifier = Modifier.wrapContentSize().padding(5.dp),
                 label = "Map Type",
-                items = MapType.entries,
+                items = if(room.isHost) MapType.entries else listOf(MapType.SkirmishMap),
                 selectedIndex = selectedIndex0,
                 onItemSelected = { index, _ -> selectedIndex0 = index }
             )

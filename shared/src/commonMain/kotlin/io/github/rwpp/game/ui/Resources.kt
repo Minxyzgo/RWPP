@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
+import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -39,6 +40,8 @@ import org.jetbrains.compose.resources.painterResource
 fun ResourceView(
     onExit: () -> Unit
 ) {
+    BackHandler(true, onExit)
+
     val context = LocalController.current
     var selectedResource by remember { mutableStateOf(context.getUsingResource()) }
     var showResultView by remember { mutableStateOf(false) }

@@ -63,13 +63,17 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         get() = game.getAllMaps().firstOrNull { (it.mapName + ".tmx").replace("\\", "/").endsWith(GameEngine.t().bU.aA.b ?: "") }
             ?: NetworkMap(LevelSelectActivity.convertLevelFileNameForDisplay(GameEngine.t().bU.aA.b))
         set(value) {
-            val realPath =
-                (if(value.mapType == MapType.SkirmishMap) "maps/skirmish/" else "") +
-                        (value.mapName + value.getMapSuffix()).replace("\\", "/")
-            GameEngine.t().bU.aB = com.corrodinggames.rts.gameFramework.e.a.b.f(realPath)
-            GameEngine.t().bU.aA.a = com.corrodinggames.rts.gameFramework.j.at.entries[value.mapType.ordinal]
-            GameEngine.t().bU.aA.b = (value.mapName + value.getMapSuffix())
-            GameEngine.t().bU.n()
+            if (isHostServer) {
+                GameEngine.t().bU.i("-map" + com.corrodinggames.rts.gameFramework.e.a.q(LevelSelectActivity.convertLevelFileNameForDisplay(value.mapName)) + "'")
+            } else {
+                val realPath =
+                    (if(value.mapType == MapType.SkirmishMap) "maps/skirmish/" else "") +
+                            (value.mapName + value.getMapSuffix()).replace("\\", "/")
+                GameEngine.t().bU.aB = com.corrodinggames.rts.gameFramework.e.a.b.f(realPath)
+                GameEngine.t().bU.aA.a = com.corrodinggames.rts.gameFramework.j.at.entries[value.mapType.ordinal]
+                GameEngine.t().bU.aA.b = (value.mapName + value.getMapSuffix())
+                GameEngine.t().bU.n()
+            }
         }
     override var startingCredits: Int
         get() = GameEngine.t().bU.aA.c
@@ -354,17 +358,79 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         }
     }
 
-    override fun applyTeamChange(mode: String) {
-        val layout = when(mode) {
-            "2t" -> com.corrodinggames.rts.gameFramework.j.ba.a
-            "3t" -> com.corrodinggames.rts.gameFramework.j.ba.b
-            "FFA" -> com.corrodinggames.rts.gameFramework.j.ba.c
-            "spectators" -> com.corrodinggames.rts.gameFramework.j.ba.d
-            else -> throw RuntimeException()
+    override fun applyRoomConfig(
+        maxPlayerCount: Int,
+        sharedControl: Boolean,
+        startingCredits: Int,
+        startingUnits: Int,
+        fogMode: FogMode,
+        aiDifficulty: Difficulty,
+        incomeMultiplier: Float,
+        noNukes: Boolean,
+        allowSpectators: Boolean,
+        teamLock: Boolean,
+        teamMode: String?
+    ) {
+        if (isHost) {
+            this.maxPlayerCount = maxPlayerCount
+            this.sharedControl = sharedControl
+            this.startingCredits = startingCredits
+            this.startingUnits = startingUnits
+            this.fogMode = fogMode
+            this.aiDifficulty = aiDifficulty
+            this.incomeMultiplier = incomeMultiplier
+            this.noNukes = noNukes
+            this.teamLock = teamLock
+            this.allowSpectators = allowSpectators
         }
 
-        GameEngine.t().bU.a(layout)
+        val t = GameEngine.t()
+        if (isHostServer) {
+            if(fogMode != this.fogMode) {
+                t.bU.i("-fog ${ae.a(fogMode.ordinal)}")
+            }
+
+            if (startingCredits != this.startingCredits) {
+                t.bU.i("-credits ${ae.d(startingCredits)}")
+            }
+
+            if (incomeMultiplier != this.incomeMultiplier) {
+                t.bU.i("-income $incomeMultiplier")
+            }
+
+            if (noNukes != this.noNukes) {
+                t.bU.i("-nukes ${!noNukes}")
+            }
+
+            if (aiDifficulty != this.aiDifficulty) {
+                t.bU.i("-ai ${aiDifficulty.ordinal - 2}")
+            }
+
+            if (startingUnits != this.startingUnits) {
+                t.bU.i("-startingunits $startingUnits")
+            }
+
+            if (sharedControl != this.sharedControl) {
+                t.bU.i("-sharedControl $sharedControl")
+            }
+        }
+
+
+        if (teamMode != null) {
+            val layout = when(teamMode) {
+                "2t" -> com.corrodinggames.rts.gameFramework.j.ba.a
+                "3t" -> com.corrodinggames.rts.gameFramework.j.ba.b
+                "FFA" -> com.corrodinggames.rts.gameFramework.j.ba.c
+                "spectators" -> com.corrodinggames.rts.gameFramework.j.ba.d
+                else -> throw RuntimeException()
+            }
+
+            GameEngine.t().bU.a(layout)
+        }
+
+        if (isHost) GameEngine.t().bU.n()
     }
+
 
     override fun kickPlayer(player: Player) {
         GameEngine.t().bU.d((player as PlayerImpl).player)

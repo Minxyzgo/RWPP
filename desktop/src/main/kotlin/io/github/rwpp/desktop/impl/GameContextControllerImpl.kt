@@ -91,7 +91,7 @@ class GameContextControllerImpl(private val _exit: () -> Unit)
         }
         exitActions.forEach { it.invoke() }
         ScriptEngine.getInstance().root.exit()
-        //GameImpl.gameThread.stop()
+        GameImpl.gameThread.stop()
 
         _exit()
         exitProcess(0)
