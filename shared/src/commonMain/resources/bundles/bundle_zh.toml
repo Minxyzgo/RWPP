@@ -21,6 +21,10 @@ addAI = "添加AI"
 kick = "踢出"
 apply = "应用"
 sendMessage = "发送消息"
+noNukes = "禁用核弹"
+sharedControl = "共享控制"
+allowSpectators = "允许观战"
+teamLock = "队伍锁定"
 playerConfig = "玩家配置"
 startingUnit = "初始单位"
 startingCredits = "初始资金"
@@ -40,12 +44,13 @@ mission = "战役"
 sandbox = "沙盒编辑器"
 multiplayer = "多人游戏"
 mods = "模组"
+resource = "资源"
 settings = "设置"
 exit = "退出"
 notes = """
-观看回放还尚未实现.
-RWPP 目前不能在官方服务器和 RW-HPS 中作为房主 （但仍可通过命令控制房间）.
 对于安卓，开启一个新游戏然后打开设置以启用外部文件的访问权限.
+对于Android11及其以上，为了确保传输模组能正常工作，请在设置中给予管理所有文件权限.
+注意，传输模组不支持在RCN中使用
 """
 
 [common]

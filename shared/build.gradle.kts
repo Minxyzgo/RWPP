@@ -66,6 +66,21 @@ injectionMultiplatform {
                 "a(Lcom/corrodinggames/rts/game/units/custom/ab;Ljava/util/HashMap;)"
             )
         )
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`,
+            "com.corrodinggames.rts.gameFramework.e.c".with(
+                //"f(Ljava/lang/String;)", 实测无用
+                "h(Ljava/lang/String;)"
+            ), // proxy convertAbstractPath
+            "com.corrodinggames.rts.gameFramework.m.fh".with(
+                "a(IZ)"
+            ), // proxy res/drawable
+            "com.corrodinggames.rts.gameFramework.a.a".with(
+                "a(I)"
+            ), // proxy res/raw
+            "com.corrodinggames.rts.gameFramework.bc".with(
+                "a(Z)"
+            ) // music
+        )
         action {
             Libs.`android-game-lib`.classTree.defPool["com.corrodinggames.rts.gameFramework.j.ae"].apply {
                 //make accessible
@@ -100,15 +115,22 @@ injectionMultiplatform {
             "com.corrodinggames.librocket.scripts.Root".with(
                 "showMainMenu", "showBattleroom", "receiveChatMessage", "makeSendMessagePopup", "makeSendTeamMessagePopupWithDefaultText"
             ),
+            "com.corrodinggames.librocket.b".with("a(Ljava/lang/String;)"),
             "com.corrodinggames.rts.java.Main".with("c", "b()"),
             "com.corrodinggames.rts.java.b.a".with("p"),
             "com.corrodinggames.rts.game.units.custom.l".with(
                 "a(Lcom/corrodinggames/rts/game/units/custom/ab;Ljava/util/HashMap;)"
             ),
+
             "com.corrodinggames.rts.gameFramework.j.ad".with(
                 "a(Lcom/corrodinggames/rts/gameFramework/e;)",
                 "c(Lcom/corrodinggames/rts/gameFramework/j/au;)",
                 "g(Lcom/corrodinggames/rts/gameFramework/j/c;)"
+            ),
+            "com.corrodinggames.rts.gameFramework.f".with("f(I)"),
+            "com.corrodinggames.rts.gameFramework.e.c".with(
+                "f(Ljava/lang/String;)",
+                "i(Ljava/lang/String;)"
             )
         )
         action {

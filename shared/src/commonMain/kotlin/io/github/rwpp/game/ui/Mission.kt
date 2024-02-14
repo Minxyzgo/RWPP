@@ -34,6 +34,8 @@ fun MissionView(onExit: () -> Unit) {
     ) {
         ExitButton(onExit)
 
+        val context = LocalController.current
+
         Row(
             modifier = Modifier.fillMaxWidth().scaleFit(),
             horizontalArrangement = Arrangement.Center
@@ -42,7 +44,7 @@ fun MissionView(onExit: () -> Unit) {
         }
 
         var selectedIndex0 by remember { mutableStateOf(0) }
-        var selectedIndex1 by remember { mutableStateOf(0) }
+        var selectedIndex1 by remember { mutableStateOf(context.getConfig<Int>("aiDifficulty") + 2) }
 
         Row(
             horizontalArrangement = Arrangement.Center,

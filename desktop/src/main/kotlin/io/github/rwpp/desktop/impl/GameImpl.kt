@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.Root
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
+import com.corrodinggames.rts.`R$drawable`
+import com.corrodinggames.rts.`R$raw`
 import com.corrodinggames.rts.gameFramework.ac
 import com.corrodinggames.rts.gameFramework.j.`as`
 import com.corrodinggames.rts.gameFramework.j.c
@@ -28,6 +30,7 @@ import com.corrodinggames.rts.java.u
 import com.github.minxyzgo.rwij.InjectMode
 import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
+import io.github.rwpp.*
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
 import io.github.rwpp.desktop.*
@@ -37,23 +40,22 @@ import io.github.rwpp.event.events.*
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.base.Difficulty
+import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.MovementType
-import io.github.rwpp.maxModSize
 import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ModPacket
-import io.github.rwpp.packageName
 import io.github.rwpp.ui.LoadingContext
-import io.github.rwpp.welcomeMessage
+import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.channels.Channel
 import net.peanuuutz.tomlkt.Toml
 import org.lwjgl.opengl.Display
 import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 import javax.imageio.ImageIO
 import javax.swing.SwingUtilities
@@ -82,7 +84,7 @@ class GameImpl : Game {
             object : GameRoom {
                 override var maxPlayerCount: Int
                     get() = PlayerInternal.c
-                    set(value) { PlayerInternal.b(value, true) }
+                    set(value) { if(maxPlayerCount != value) PlayerInternal.b(value, true) }
                 override val isHost: Boolean
                     get() =  B.bX.C || isSandboxGame
                 override val isHostServer: Boolean
@@ -104,16 +106,25 @@ class GameImpl : Game {
                     get() = getAllMaps().firstOrNull { it.tmx!!.absolutePath.replace("\\", "/").endsWith(B.bX.ay.b ?: "") }
                         ?: NetworkMap(mapNameFormatMethod.invoke(null, B.bX.ay.b) as String)
                     set(value) {
-                        val realPath = (
-                                when(value.mapType) {
-                                    MapType.SkirmishMap -> "maps/skirmish/"
-                                    MapType.CustomMap -> "mods/maps/"
-                                    else -> ""
-                                }) + value.tmx!!.name.replace("\\", "/")
-                        B.bX.az = realPath
-                        B.bX.ay.a = com.corrodinggames.rts.gameFramework.j.ai.entries[value.mapType.ordinal]
-                        b = value.tmx!!.name
-                        LClass.B().bX.L() // send server info
+                        if(isHostServer) {
+                            B.bX.a(
+                                B.bX.e().apply {
+                                    b = value.tmx!!.name
+                                }
+                            )
+                        } else {
+                            val realPath = (
+                                    when(value.mapType) {
+                                        MapType.SkirmishMap -> "maps/skirmish/"
+                                        MapType.CustomMap -> "mods/maps/"
+                                        MapType.SavedGame -> "saves/"
+                                        else -> ""
+                                    }) + value.tmx!!.name.replace("\\", "/")
+                            B.bX.az = realPath
+                            B.bX.ay.a = com.corrodinggames.rts.gameFramework.j.ai.entries[value.mapType.ordinal]
+                            b = value.tmx!!.name
+                            LClass.B().bX.L() // send server info
+                        }
                     }
                 override var startingCredits: Int
                     get() = c
@@ -151,6 +162,8 @@ class GameImpl : Game {
                     get() = roomMods
                 override var isRWPPRoom: Boolean = false
                 override var option: RoomOption = RoomOption()
+                override val isConnecting: Boolean
+                    get() = LClass.B().bX.B
 
                 private val mapNameFormatMethod = com.corrodinggames.rts.appFramework.i::class.java.getDeclaredMethod("e", String::class.java)
 
@@ -178,14 +191,53 @@ class GameImpl : Game {
                     B.bX.ap()
                 }
 
-                override fun applyTeamChange(mode: String) {
-                    when(mode) {
+                override fun applyRoomConfig(
+                    maxPlayerCount: Int,
+                    sharedControl: Boolean,
+                    startingCredits: Int,
+                    startingUnits: Int,
+                    fogMode: FogMode,
+                    aiDifficulty: Difficulty,
+                    incomeMultiplier: Float,
+                    noNukes: Boolean,
+                    allowSpectators: Boolean,
+                    teamLock: Boolean,
+                    teamMode: String?
+                ) {
+                    if (isHost) {
+                        this.maxPlayerCount = maxPlayerCount
+                        this.sharedControl = sharedControl
+                        this.startingCredits = startingCredits
+                        this.startingUnits = startingUnits
+                        this.fogMode = fogMode
+                        this.aiDifficulty = aiDifficulty
+                        this.incomeMultiplier = incomeMultiplier
+                        this.noNukes = noNukes
+                        this.teamLock = teamLock
+                        this.allowSpectators = allowSpectators
+                    }
+
+                    if (isHostServer) {
+                        val e = LClass.B().bX.e()
+                        e.l = sharedControl
+                        e.c = startingCredits
+                        e.g = startingUnits
+                        e.f = aiDifficulty.ordinal - 2
+                        e.h = incomeMultiplier
+                        e.i = noNukes
+                        LClass.B().bX.a(e)
+                    }
+
+                    when (teamMode) {
                         "2t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.a)
                         "3t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.b)
                         "FFA" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.c)
                         "spectators" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.d)
-                        else -> throw IllegalArgumentException("mode: $mode")
+                        null -> {}
+                        else -> throw IllegalArgumentException("mode: $teamMode")
                     }
+
+                    if (isHost) LClass.B().bX.L() // send server info
                 }
 
                 override fun kickPlayer(player: Player) {
@@ -201,7 +253,10 @@ class GameImpl : Game {
                     option = RoomOption()
                     bannedUnitList = listOf()
                     roomMods = arrayOf()
-                    B.bX.b("exited")
+                    if(isConnecting) B.bX.b("exited")
+                    B.bX.ay.a = GameMapType.a
+                    B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
+                    B.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
                 }
 
                 override fun startGame() {
@@ -528,6 +583,76 @@ class GameImpl : Game {
                 Unit
             }
         }
+
+        com.corrodinggames.rts.gameFramework.e.c::class.setFunction {
+            addProxy("f", String::class, mode = InjectMode.InsertBefore) { _: Any?, str: String ->
+                if(gameContext.getUsingResource() == null
+                    || str.contains("builtin_mods")
+                    || (str.contains("maps") && !str.contains("bitmaps"))
+                    || str.contains("translations")) return@addProxy Unit
+                val result = Reflect.call<com.corrodinggames.rts.gameFramework.e.c, String>(
+                    com.corrodinggames.rts.gameFramework.e.a.b,
+                    "__proxy__f",
+                    listOf(String::class),
+                    listOf(str)
+                )
+
+                if(result?.contains("assets") != true) return@addProxy InterruptResult(result)
+
+                InterruptResult(resourceOutputDir + result.removePrefix("assets/"))
+            }
+
+            addProxy("i", String::class, mode = InjectMode.InsertBefore) { _: Any?, str: String ->
+                if(gameContext.getUsingResource() == null
+                    || str.contains("builtin_mods")
+                    || (str.contains("maps") && !str.contains("bitmaps"))
+                    || str.contains("translations")) return@addProxy Unit
+                val o = str.let {
+                    if(it.startsWith("assets/") || it.startsWith("assets\\"))
+                        it.removePrefix("assets/") else it
+                }
+
+
+                val s3 = resourceOutputDir + o
+                kotlin.runCatching {
+                    InterruptResult(com.corrodinggames.rts.gameFramework.utility.j(
+                        FileInputStream(s3), s3, o
+                    ))
+                }.getOrElse { InterruptResult(null) }
+            }
+        }
+
+        com.corrodinggames.rts.gameFramework.f::class.setFunction {
+            addProxy("f", Int::class) { i: Int ->
+                val a2: String? = FClass.a(`R$drawable`::class.java, i)
+                val resFileExist = File(resOutputDir).exists()
+                if (a2 != null) {
+                    println("reading res drawable:$a2 i:$i")
+                    return@addProxy com.corrodinggames.rts.gameFramework.e.a.a("${if(resFileExist) resOutputDir else "res/"}drawable", a2)
+
+                }
+                val a3: String? = FClass.a(`R$raw`::class.java, i)
+                if (a3 != null) {
+                    println("reading res raw:$a3 i:$i")
+                    return@addProxy com.corrodinggames.rts.gameFramework.e.a.a("${if(resFileExist) resOutputDir else "res/"}raw", a3)
+
+                }
+                return@addProxy null
+
+            }
+        }
+
+        com.corrodinggames.librocket.b::class.setFunction {
+            addProxy("a", String::class, mode = InjectMode.InsertBefore) { str: String ->
+                val o = FClass.o(str)
+                val resFileExist = File(resOutputDir).exists()
+                println("drawable: $o")
+                if(o.startsWith("drawable:") && resFileExist) {
+                    InterruptResult(com.corrodinggames.librocket.b.b + resOutputDir + "drawable/" + o.removePrefix("drawable:"))
+                } else Unit
+            }
+        }
+
         GlobalEventChannel.filter(StartGameEvent::class).subscribeAlways {
             rwppVisibleSetter(false)
             gameCanvas.isVisible = true
@@ -560,7 +685,7 @@ class GameImpl : Game {
             guiEngine.b(true)
             guiEngine.c(false)
             val met = IClass::class.java.getDeclaredMethod("a", String::class.java, Boolean::class.java, Int::class.java, Int::class.java, Boolean::class.java, Boolean::class.java)
-            met.invoke(null, "maps/normal/${mission.tmx!!.name}", false, 0, 0, true, false)
+            met.invoke(null, "maps/${mission.type.pathName()}/${mission.tmx!!.name}", false, 0, 0, true, false)
 
             guiEngine.f()
             libRocket.closeActiveDocument()
@@ -833,31 +958,41 @@ class GameImpl : Game {
     }
 
     override fun getAllMissionTypes(): List<MissionType> {
-        return listOf(MissionType.Default)
+        return listOf(MissionType.Normal, MissionType.Challenge, MissionType.Survival)
     }
 
     override fun getAllMissions(): List<Mission> {
         if(_missions != null) return _missions!!
-
-        val missionFolder = File("assets/maps/normal")
         val missions = mutableListOf<Mission>()
 
-        missionFolder
-            .walk()
-            .filter { it.name.endsWith(".tmx") }
-            .forEachIndexed { i, f ->
-                missions.add(object : Mission {
-                    override val id: Int = i
-                    override val name: String = f.name.split("__-__")[1].removeSuffix(".tmx")
-                    override val image: Painter =
-                        ImageIO.read(File(f.parent!! + "/" + f.name.removeSuffix(".tmx") + "_map.png")).toPainter()
-                    override val mapName: String
-                        get() = tmx.nameWithoutExtension
-                    override val tmx: File = f
-                    override val mapType: MapType
-                        get() = MapType.SkirmishMap
-                })
-            }
+        getAllMissionTypes().forEach { type ->
+            File("assets/maps/${type.pathName()}")
+                .walk()
+                .filter { it.name.endsWith(".tmx") }
+                .forEachIndexed { i, f ->
+                    missions.add(object : Mission {
+                        override val id: Int = i
+                        override val name: String =
+                            if(type == MissionType.Normal)
+                                f.name.split("__-__")[1].removeSuffix(".tmx")
+                            else f.name
+                        override val type: MissionType
+                            get() = type
+                        override val image: Painter =
+                            ImageIO.read(File(f.parent!! + "/" + f.name.removeSuffix(".tmx") + "_map.png")).toPainter()
+                        override val mapName: String
+                            get() = tmx.nameWithoutExtension
+                        override val tmx: File = f
+                        override fun displayName(): String {
+                            return ScriptEngine.getInstance().root.convertMapName(name)
+                        }
+                        override val mapType: MapType
+                            get() = MapType.SkirmishMap
+                    })
+                }
+        }
+
+
         return missions.toList().also { _missions = it }
     }
 
@@ -901,7 +1036,9 @@ class GameImpl : Game {
         return _maps[mapType]!!
     }
 
-    override fun getMissionsByType(type: MissionType): List<Mission> = getAllMissions()
+    override fun getMissionsByType(type: MissionType): List<Mission> =
+        getAllMissions().filter { it.type == type }
+
     override fun getStartingUnitOptions(): List<Pair<Int, String>> {
         val B: l = LClass.B()
         val list = mutableListOf<Pair<Int, String>>()
@@ -953,6 +1090,50 @@ class GameImpl : Game {
             gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.map(GameUnit::displayName).joinToString(", ")}")
     }
 
+    override fun getAllReplays(): List<Replay> {
+        return Reflect.call<com.corrodinggames.rts.appFramework.q, Array<String>>(
+            null, "l", emptyList(), emptyList()
+        )!!.mapIndexed { i, str ->
+            object : Replay {
+                override val id: Int = i
+                override val name: String = str
+                override fun displayName(): String {
+                    return ScriptEngine.getInstance().root.convertMapName(name)
+                }
+            }
+        }
+    }
+
+    override fun watchReplay(replay: Replay) {
+        rwppVisibleSetter(false)
+        gameCanvas.isVisible = true
+
+        gameCanvas.requestFocus()
+
+        isGaming = true
+
+        container.post {
+            ScriptEngine.getInstance().root.loadReplay(escapedString(replay.name))
+        }
+    }
+
+    override fun isGameCouldContinue(): Boolean {
+        return ScriptEngine.getInstance().root.canResume()
+    }
+
+    override fun continueGame() {
+        rwppVisibleSetter(false)
+        gameCanvas.isVisible = true
+
+        gameCanvas.requestFocus()
+
+        isGaming = true
+
+        container.post {
+            ScriptEngine.getInstance().root.resumeNonMenu()
+        }
+    }
+
     override fun requestExternalStoragePermission() {
         throw UnsupportedOperationException("Stub!")
     }
@@ -960,6 +1141,11 @@ class GameImpl : Game {
     private fun restrictedString(str: String?): String? {
         return str?.replace("'", ".")?.replace("\"", ".")?.replace("(", ".")?.replace(")", ".")?.replace(",", ".")
             ?.replace("<", ".")?.replace(">", ".")
+    }
+
+    private fun escapedString(str: String): String {
+        return "'" + str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&apos;")
+            .replace("\"", "&quot;").replace("\${", "$ {") + "'"
     }
 
 

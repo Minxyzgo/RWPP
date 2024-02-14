@@ -8,18 +8,31 @@
 package io.github.rwpp
 
 import io.github.rwpp.utils.io.SizeUtils
+import io.github.rwpp.platform.Platform
 
-const val projectVersion = "1.0.6-alpha"
+const val projectVersion = "1.0.8-release"
 val welcomeMessage =
     """
         这是一个使用[RWPP]所开始的房间
         [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
         开源地址请访问 https://github.com/Minxyzgo/RWPP 
         bug反馈与交流加入群: 150450999
-        当前版本: $projectVersion (不稳定)
-        Copyright 2023 RWPP contributors
+        当前版本: $projectVersion
+        Copyright 2023-2024 RWPP contributors
     """.trimIndent()
 
 const val packageName = "io.github.rwpp"
 
 val maxModSize = SizeUtils.mBToByte(3)
+
+val resourcePath = if(Platform.isAndroid()) {
+    "/storage/emulated/0/rustedWarfare/resource/"
+} else "resource/"
+
+val resourceOutputDir = if(Platform.isAndroid()) {
+    "/storage/emulated/0/rustedWarfare/resource_generated/"
+} else "resource_generated/"
+
+val resOutputDir = if(Platform.isAndroid()) {
+    "/storage/emulated/0/rustedWarfare/resource_generated/res/"
+} else "resource_generated/res/"

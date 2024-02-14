@@ -7,3 +7,10 @@
 
 package io.github.rwpp.game.map
 
+interface Replay {
+    val id: Int
+
+    val name: String
+
+    fun displayName(): String
+}

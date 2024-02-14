@@ -10,13 +10,14 @@ package io.github.rwpp
 import io.github.rwpp.config.Blacklists
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.instance
+import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.config.ConfigHandler
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.net.Net
 
 interface ContextController :
-    ConfigHandler, Game, Net, ModManager {
+    ConfigHandler, Game, Net, ModManager, ExternalHandler {
     fun i18n(str: String, vararg args: Any?): String
 
     fun readAllConfig() {
@@ -36,6 +37,8 @@ interface ContextController :
         Blacklists.writeFromContext(this)
         setRWPPConfig(MultiplayerPreferences.instance)
     }
+
+    fun onExit(action: () -> Unit)
 
     fun exit()
 }

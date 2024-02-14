@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 val loadingMessage = mutableStateOf("")
 
@@ -38,17 +39,20 @@ fun LoadingView(
     val message by remember { loadingMessage }
     var cancel by remember { mutableStateOf(false) }
 
+    val scope = rememberCoroutineScope()
+
     AnimatedAlertDialog(visible, onDismissRequest = onLoaded, enableDismiss = cancellable) { modifier, dismiss ->
         BorderCard(
             modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
             backgroundColor = Color.Gray
         ) {
             LaunchedEffect(Unit) {
-                if(loadContent(LoadingContext { loadingMessage.value = it })) {
-                    loadingMessage.value = ""
-                    dismiss()
-                } else cancel = true
-
+                scope.launch {
+                    if(loadContent(LoadingContext { loadingMessage.value = it })) {
+                        loadingMessage.value = ""
+                        dismiss()
+                    } else cancel = true
+                }
             }
 
             if(cancellable || cancel) ExitButton(dismiss)

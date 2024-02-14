@@ -10,8 +10,13 @@ package io.github.rwpp.event
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 
+/**
+ * Make event listening follow the compose lifecycle.
+ */
 @Composable
-inline fun <T : Event> EventChannel<T>.onDispose(crossinline listenerProvider: EventChannel<T>.() -> Listener<T>) {
+inline fun <T : Event> EventChannel<T>.onDispose(
+    crossinline listenerProvider: EventChannel<T>.() -> Listener<T>
+) {
     DisposableEffect(Unit) {
         val listener = listenerProvider()
         onDispose {

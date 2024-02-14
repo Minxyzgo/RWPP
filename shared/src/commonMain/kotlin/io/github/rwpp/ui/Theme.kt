@@ -12,19 +12,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-@OptIn(ExperimentalMaterial3Api::class)
 val RWOutlinedTextColors
     @Composable get() =
-        TextFieldDefaults.outlinedTextFieldColors(
+        OutlinedTextFieldDefaults.colors(
             focusedTextColor = Color.Black,
             unfocusedTextColor = Color.Black,
-            containerColor = Color.Transparent,
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+            cursorColor = Color.Black,
             selectionColors = TextSelectionColors(Color.Black, Color.DarkGray.copy(.4f)),
+            focusedBorderColor = Color(151, 188, 98),
+            unfocusedBorderColor = Color.DarkGray,
             focusedLabelColor = Color.Black,
             disabledLabelColor = Color.Black,
-            cursorColor = Color.Black,
-            focusedBorderColor = Color(151, 188, 98),
-            unfocusedBorderColor = Color.DarkGray
         )
 
 val RWSliderColors
