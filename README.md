@@ -49,6 +49,6 @@ For desktop, run task `desktop:packageReleaseUberJarForCurrentOS`
 For android, assets and res are missing for some reason,
 you can find them in your Rusted Warfare client.
 # Run
-- install Java 17
+- Install Java 17
 - Copy RWPP to your rw root directory.
 - Run launcher.bat (you may need to change the rwpp jar name)
