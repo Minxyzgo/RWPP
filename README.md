@@ -11,9 +11,9 @@
 
 ----
 [![Kotlin](https://img.shields.io/badge/kotlin-1.9.22-blue.svg?logo=kotlin)](http://kotlinlang.org)
-[![](https://img.shields.io/badge/Jetpack%20Compose-1.5.12-brightgreen)](https://www.jetbrains.com/lp/compose-multiplatform/)
-[![](https://img.shields.io/github/license/Minxyzgo/RWPP")]()
-[![](https://img.shields.io/github/issues/Minxyzgo/RWPP")]()
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-1.5.12-brightgreen)](https://www.jetbrains.com/lp/compose-multiplatform/)
+[![License](https://img.shields.io/github/license/Minxyzgo/RWPP)]()
+[![Issues](https://img.shields.io/github/issues/Minxyzgo/RWPP)]()
 </div>
 
 > Tencent QQ Group: 150450999
