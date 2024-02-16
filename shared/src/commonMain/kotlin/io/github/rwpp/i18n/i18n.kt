@@ -22,10 +22,9 @@ private val cacheMap = mutableMapOf<String, String>()
 
 @OptIn(ExperimentalResourceApi::class)
 suspend fun parseI18n() {
-    val res = runCatching { resource("bundles/bundle_${Locale.getDefault().language}.toml") }
-        .getOrNull() ?: resource("bundles/bundle_en.toml")
+    val res = resource("bundles/bundle_${Locale.getDefault().language}.toml")
     i18nTable = Toml.parseToTomlTable(withContext(Dispatchers.IO) {
-        res.readBytes()
+        runCatching { res.readBytes() }.getOrNull() ?: resource("bundles/bundle_en.toml").readBytes()
     }.decodeToString().replace("\r", "\n"))
 }
 
