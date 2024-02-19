@@ -326,6 +326,10 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         GameEngine.t().bU.h(message)
     }
 
+    override fun sendQuickGameCommand(command: String) {
+        GameEngine.t().bU.i(command)
+    }
+
     override fun addAI() {
         val t: k = GameEngine.t()
         if(!t.bU.D) {

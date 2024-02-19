@@ -69,6 +69,11 @@ interface GameRoom {
      */
     fun sendSystemMessage(message: String)
 
+    /**
+     * Send quick game command.
+     */
+    fun sendQuickGameCommand(command: String)
+
 
     /**
      * Add an AI to the room. (if host)

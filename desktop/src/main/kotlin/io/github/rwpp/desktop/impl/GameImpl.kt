@@ -187,8 +187,16 @@ class GameImpl : Game {
                     B.bX.j(message)
                 }
 
+                override fun sendQuickGameCommand(command: String) {
+                    B.bX.k(command)
+                }
+
                 override fun addAI() {
-                    B.bX.ap()
+                    if(isHost) {
+                        B.bX.ap()
+                    } else if(isHostServer) {
+                        sendQuickGameCommand("-addai")
+                    }
                 }
 
                 override fun applyRoomConfig(
@@ -243,7 +251,7 @@ class GameImpl : Game {
                 override fun kickPlayer(player: Player) {
                     val p = (player as PlayerImpl).player
                     B.bX.e(p)
-                    playerCacheMap.remove(p)
+                    // playerCacheMap.remove(p) maybe kick didn't work out
                 }
 
                 override fun disconnect() {
@@ -267,9 +275,6 @@ class GameImpl : Game {
 
                     if(isHost || isSandboxGame) {
                         B.bX.ae()
-                        isGaming = true
-                    } else if(isHostServer) {
-                        sendChatMessage("-qc -start")
                     }
                 }
             }

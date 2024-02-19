@@ -43,6 +43,7 @@ import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
+import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.packets.ModPacket
@@ -146,7 +147,12 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         false
     }
 
-    MapViewDialog(showMapSelectView, { showMapSelectView = false }, lastSelectedIndex, selectedMap.mapType) { index, map ->
+    MapViewDialog(
+        showMapSelectView,
+        { showMapSelectView = false },
+        lastSelectedIndex,
+        if (room.isHostServer) MapType.SkirmishMap else selectedMap.mapType
+    ) { index, map ->
         selectedMap = map
         room.selectedMap = map
         lastSelectedIndex = index
@@ -328,8 +334,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     val unpreparedPlayers = context.gameRoom.getPlayers().filter { !it.data.ready }
                                     if(unpreparedPlayers.isNotEmpty()) {
                                         context.gameRoom.sendSystemMessage(
-                                            "Cannot start game. Because players: ${unpreparedPlayers.map { it.name }.joinToString(", ")} aren't ready.")
-                                    } else room.startGame()
+                                            "Cannot start game. Because players: ${unpreparedPlayers.joinToString(", ") { it.name }} aren't ready.")
+                                    } else if(room.isHostServer) room.sendQuickGameCommand("-start")  else room.startGame()
                                 }
                             }
 
@@ -393,7 +399,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                             .padding(5.dp)
                                             .border(BorderStroke(2.dp, Color(160, 191, 124)), CircleShape)
                                             .fillMaxWidth()
-                                            .clickable(room.isHost || room.localPlayer == player) {
+                                            .clickable(room.isHost || room.isHostServer || room.localPlayer == player) {
                                                 selectedPlayer = player
                                                 playerOverrideVisible = true
                                             }
