@@ -5,3 +5,5 @@ build/
 /captures
 /android/release/
 /local.properties
+/android/src/main/assets/
+/android/src/main/res/
