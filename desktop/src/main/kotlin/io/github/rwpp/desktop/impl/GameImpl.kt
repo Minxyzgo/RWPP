@@ -980,7 +980,7 @@ class GameImpl : Game {
                         override val name: String =
                             if(type == MissionType.Normal)
                                 f.name.split("__-__")[1].removeSuffix(".tmx")
-                            else f.name
+                            else f.name.removeSuffix(".tmx")
                         override val type: MissionType
                             get() = type
                         override val image: Painter =
