@@ -1,8 +1,8 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.ui
@@ -26,19 +26,20 @@ package io.github.rwpp.ui
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -96,7 +97,12 @@ fun <T> LazyColumnWithScrollbar(
     val coroutineContext = rememberCoroutineScope()
     val animationCoroutineContext = rememberCoroutineScope()
 
-    val offsetY = remember { mutableStateOf(0f) }
+    var remOffsetY by remember {
+        mutableStateOf(0f)
+    }
+    val offsetY = //remember {
+        mutableStateOf(remOffsetY)
+    //}
     val isUserScrollingLazyColumn = remember {
         mutableStateOf(true)
     }
@@ -130,13 +136,13 @@ fun <T> LazyColumnWithScrollbar(
         ) {
             if (!state.isScrollInProgress) {
                 isUserScrollingLazyColumn.value = true
-                hideScrollbar(animationCoroutineContext, isScrollbarVisible)
+//                hideScrollbar(animationCoroutineContext, isScrollbarVisible)
 
                 if (state.layoutInfo.visibleItemsInfo.isNotEmpty()) {
                     firstVisibleItem.value = state.layoutInfo.visibleItemsInfo.first().index
                 }
             } else if (state.isScrollInProgress && isUserScrollingLazyColumn.value) {
-                showScrollbar(animationCoroutineContext, isScrollbarVisible)
+//                showScrollbar(animationCoroutineContext, isScrollbarVisible)
 
                 if (heightInPixels.value != 0F) {
 
@@ -166,95 +172,96 @@ fun <T> LazyColumnWithScrollbar(
                             )
                         }
                     }
+                    remOffsetY = offsetY.value
 
                 }
             }
             content()
         }
         if (state.layoutInfo.visibleItemsInfo.size < data.size) {
-            AnimatedVisibility(
-                visible = isScrollbarVisible.value,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 200,
-                        easing = LinearEasing
-                    )
-                ),
-                exit = fadeOut(
-                    animationSpec = tween(
-                        delayMillis = 1000,
-                        durationMillis = 1000,
-                        easing = LinearEasing
-                    )
-                ),
-                modifier = Modifier.align(Alignment.CenterEnd)
-            ) {
-                Canvas(modifier = Modifier
-                    .width(settings.thumbWidth.value)
-                    .height(maxHeight)
-                    .align(Alignment.CenterEnd)
-                    .background(settings.trailColor)
-                    .pointerInput(Unit) {
-                        heightInPixels.value = maxHeight.toPx()
-                        detectDragGestures { change, dragAmount ->
-                            change.consume()
+//            AnimatedVisibility(
+//                visible = isScrollbarVisible.value,
+//                enter = fadeIn(
+//                    animationSpec = tween(
+//                        durationMillis = 200,
+//                        easing = LinearEasing
+//                    )
+//                ),
+//                exit = fadeOut(
+//                    animationSpec = tween(
+//                        delayMillis = 1000,
+//                        durationMillis = 1000,
+//                        easing = LinearEasing
+//                    )
+//                ),
+//                modifier = Modifier.align(Alignment.CenterEnd)
+//            ) {
+            Canvas(modifier = Modifier
+                .width(settings.thumbWidth.value)
+                .height(maxHeight)
+                .align(Alignment.CenterEnd)
+                .background(settings.trailColor)
+                .pointerInput(Unit) {
+                    heightInPixels.value = maxHeight.toPx()
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
 
-                            showScrollbar(animationCoroutineContext, isScrollbarVisible)
+//                            showScrollbar(animationCoroutineContext, isScrollbarVisible)
 
-                            isUserScrollingLazyColumn.value = false
-                            if (dragAmount.y > 0) { // drag slider down
-                                if (offsetY.value >= (maxHeight.toPx() - maxHeight.toPx() / settings.thumbHeight.value)) { // Bottom End
-                                    offsetY.value =
-                                        maxHeight.toPx() - maxHeight.toPx() / settings.thumbHeight.value
-                                    coroutineContext.launch {
-                                        state.scrollToItem(data.lastIndex)
-                                    }
-                                } else {
-                                    offsetY.value = offsetY.value + dragAmount.y
+                        isUserScrollingLazyColumn.value = false
+                        if (dragAmount.y > 0) { // drag slider down
+                            if (offsetY.value >= (maxHeight.toPx() - maxHeight.toPx() / settings.thumbHeight.value)) { // Bottom End
+                                offsetY.value =
+                                    maxHeight.toPx() - maxHeight.toPx() / settings.thumbHeight.value
+                                coroutineContext.launch {
+                                    state.scrollToItem(data.lastIndex)
                                 }
-                            } else { // drag slider up
-                                if (offsetY.value <= 0f) { // Top Start
-                                    offsetY.value = 0F
-                                    coroutineContext.launch {
-                                        state.scrollToItem(0)
-                                    }
-                                } else {
-                                    offsetY.value = offsetY.value + dragAmount.y
-                                }
+                            } else {
+                                offsetY.value = offsetY.value + dragAmount.y
                             }
-                            val yMaxValue =
-                                maxHeight.toPx() - maxHeight.toPx() / settings.thumbHeight.value
-                            val yPercentage = (100 * offsetY.value) / yMaxValue
-
-                            /* The items which could be rendered should not be taken under account
-                            otherwise you are going to show the last rendered items before
-                            the scrollbar reaches the bottom.
-                            Change the renderedItemsNumberPerScroll = 0 and scroll to the bottom
-                            and you will understand.
-                             */
-                            val renderedItemsNumberPerScroll =
-                                state.layoutInfo.visibleItemsInfo.size - 2
-                            val index =
-                                (((data.lastIndex - renderedItemsNumberPerScroll) * yPercentage) / 100).toInt()
-
-                            coroutineContext.launch {
-                                if (index > 0) {
-                                    state.scrollToItem(index)
+                        } else { // drag slider up
+                            if (offsetY.value <= 0f) { // Top Start
+                                offsetY.value = 0F
+                                coroutineContext.launch {
+                                    state.scrollToItem(0)
                                 }
+                            } else {
+                                offsetY.value = offsetY.value + dragAmount.y
+                            }
+                        }
+                        val yMaxValue =
+                            maxHeight.toPx() - maxHeight.toPx() / settings.thumbHeight.value
+                        val yPercentage = (100 * offsetY.value) / yMaxValue
+
+                        /* The items which could be rendered should not be taken under account
+                        otherwise you are going to show the last rendered items before
+                        the scrollbar reaches the bottom.
+                        Change the renderedItemsNumberPerScroll = 0 and scroll to the bottom
+                        and you will understand.
+                         */
+                        val renderedItemsNumberPerScroll =
+                            state.layoutInfo.visibleItemsInfo.size - 2
+                        val index =
+                            (((data.lastIndex - renderedItemsNumberPerScroll) * yPercentage) / 100).toInt()
+
+                        coroutineContext.launch {
+                            if (index > 0) {
+                                state.scrollToItem(index)
                             }
                         }
                     }
-                ) {
-                    drawRoundRect(
-                        topLeft = Offset(size.width / 4F, offsetY.value),
-                        color = settings.thumbColor,
-                        size = Size(size.width / 2F, maxHeight.toPx() / settings.thumbHeight.value),
-                        cornerRadius = CornerRadius(20F, 20F)
-                    )
                 }
+            ) {
+                drawRoundRect(
+                    topLeft = Offset(size.width / 4F, offsetY.value),
+                    color = settings.thumbColor,
+                    size = Size(size.width / 2F, maxHeight.toPx() / settings.thumbHeight.value),
+                    cornerRadius = CornerRadius(20F, 20F)
+                )
             }
         }
     }
+//    }
 }
 
 private fun hideScrollbar(coroutineScope: CoroutineScope, state: MutableState<Boolean>) {
@@ -271,7 +278,7 @@ private fun showScrollbar(coroutineScope: CoroutineScope, state: MutableState<Bo
 
 /* The items which are already shown on screen should not be taken
 for calculations because they are already on screen!
-You have to calculate the items remaining off screen as the 100%
+You have to calculate the items remaining off-screen as the 100%
 of the data and match this percentage with the distance travelled
 by the scrollbar.
 */

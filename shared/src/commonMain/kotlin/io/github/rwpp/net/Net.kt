@@ -1,12 +1,15 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.net
 
+import io.github.rwpp.ContextController
+import io.github.rwpp.net.packets.ServerPacket
+import io.github.rwpp.utils.io.GameInputStream
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
@@ -14,8 +17,13 @@ import kotlinx.coroutines.selects.select
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import java.io.DataInputStream
+import kotlin.reflect.full.createInstance
 
 interface Net {
+    val packetDecoders: MutableMap<PacketType, (DataInputStream) -> Packet>
+
+    val listeners: MutableMap<PacketType, (ContextController, Client, Packet) -> Unit>
 
     val client: OkHttpClient
 
@@ -103,5 +111,39 @@ interface Net {
         }
 
         result
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+inline fun <reified T : Packet> Net.registerPacketListener(
+    packetType: PacketType,
+    noinline listener: (ContextController, Client, T) -> Unit
+) {
+    val method = T::class.java.getDeclaredMethod("readPacket", GameInputStream::class.java)
+    packetDecoders[packetType] =
+        {
+            val p = T::class.createInstance()
+            method.invoke(p, GameInputStream(it))
+            p
+        }
+    listeners[packetType] = listener as (ContextController, Client, Packet) -> Unit
+}
+
+fun Net.registerListeners() {
+    registerPacketListener<ServerPacket.ServerInfoGetPacket>(
+        PacketType.PRE_GET_SERVER_INFO_FROM_LIST
+    ) { context, client, _ ->
+        val room = context.gameRoom
+        client.sendPacketToClient(
+            ServerPacket.ServerInfoReceivePacket(
+                room.localPlayer.name + "'s game",
+                room.getPlayers().size,
+                room.maxPlayerCount,
+                room.selectedMap.mapName,
+                "",
+                "v1.15 - RWPP Client",
+                room.mods.joinToString(", "),
+            )
+        )
     }
 }

@@ -11,6 +11,9 @@ playerLimit = "玩家限制"
 enableMods = "启动模组"
 reset = "重置"
 hostByRCN = "以RCN创建房间"
+joinServer = "加入服务器"
+userName = "用户名"
+useAsDefaultList = "用作默认房间列表"
 
 [multiplayer.room]
 selectMap = "选择地图"

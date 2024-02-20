@@ -1,51 +1,30 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.android.impl
 
 import android.app.Activity
-import android.app.Notification
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.media.MediaPlayer
-import android.media.SoundPool
 import android.os.Build
-import android.util.Log
 import android.view.ViewGroup
-import com.corrodinggames.rts.appFramework.*
+import com.corrodinggames.rts.appFramework.GameView
+import com.corrodinggames.rts.appFramework.GameViewOpenGL
+import com.corrodinggames.rts.appFramework.GameViewThreaded
+import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
 import com.corrodinggames.rts.gameFramework.h.a
-import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.ao
-import com.corrodinggames.rts.gameFramework.k
-import com.corrodinggames.rts.gameFramework.m.e
 import com.github.minxyzgo.rwij.InjectMode
-import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
-import io.github.rwpp.*
-import io.github.rwpp.R
 import io.github.rwpp.android.*
 import io.github.rwpp.android.impl.proxy.NetProxy
 import io.github.rwpp.android.impl.proxy.UnitPathProxy
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.*
-import io.github.rwpp.game.data.RoomOption
-import io.github.rwpp.game.units.GameCommandActions
-import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ModPacket
-import io.github.rwpp.utils.Reflect
-import io.github.rwpp.utils.io.GameInputStream
-import net.peanuuutz.tomlkt.Toml
-import java.io.File
-import java.io.FileInputStream
-import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 
@@ -182,7 +161,7 @@ fun doProxy() {
                 run {
                     if (allMods.all { controller.getModByName(it) != null }) {
                         if(controller.gameRoom.isRWPPRoom)
-                            controller.sendPacketToServer(ModPacket.newRequestPacket(""))
+                            controller.sendPacketToServer(ModPacket.RequestPacket(""))
                         controller.getAllMods().forEach { it.isEnabled = it.name in allMods }
                         CallReloadModEvent().broadCastIn()
                         return@run
@@ -196,7 +175,7 @@ fun doProxy() {
 
                     val modsName = controller.getAllMods().map { it.name }
                     if (controller.gameRoom.option.canTransferMod) {
-                        controller.sendPacketToServer(ModPacket.newRequestPacket(allMods.filter { it !in modsName }
+                        controller.sendPacketToServer(ModPacket.RequestPacket(allMods.filter { it !in modsName }
                             .joinToString(";")))
                         CallStartDownloadModEvent().broadCastIn()
                     } else {

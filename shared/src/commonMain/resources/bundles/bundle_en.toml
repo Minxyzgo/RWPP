@@ -11,6 +11,9 @@ playerLimit = "Player Limit"
 enableMods = "Enable Mods"
 reset = "Reset"
 hostByRCN = "Host By RCN"
+joinServer = "Join Server"
+userName = "User Name"
+useAsDefaultList = "Use as default room list"
 
 [multiplayer.room]
 selectMap = "Select Map"

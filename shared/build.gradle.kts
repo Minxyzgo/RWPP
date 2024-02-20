@@ -1,8 +1,8 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 @file:OptIn(LibRequiredApi::class)
@@ -167,7 +167,7 @@ kotlin {
                 api(compose.material3)
                 api("com.halilibo.compose-richtext:richtext-ui:0.17.0")
                 api("com.squareup.okhttp3:okhttp:4.11.0")
-                api("net.peanuuutz.tomlkt:tomlkt:0.3.3")
+                api("net.peanuuutz.tomlkt:tomlkt:0.3.7")
                 //api("com.github.nanihadesuka:LazyColumnScrollbar:1.7.2")
                 //api("com.google.code.gson:gson:2.10.1")
                 //api("io.github.oleksandrbalan:modalsheet:0.5.0")

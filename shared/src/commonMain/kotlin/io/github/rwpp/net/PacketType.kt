@@ -1,8 +1,8 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.net
@@ -10,13 +10,18 @@ package io.github.rwpp.net
 enum class PacketType(val type: Int) {
     /**
      * CUSTOM PACKET
-     *//* DEBUG */
+     *
+     * PacketType in 500-1000
+     */
     SERVER_DEBUG_RECEIVE(2000),
     SERVER_DEBUG(2001),
 
     MOD_DOWNLOAD_REQUEST(500),
     DOWNLOAD_MOD_PACK(510),
     MOD_RELOAD_FINISH(502),
+
+    PRE_GET_SERVER_INFO_FROM_LIST(600),
+    RECEIVE_SERVER_INFO_FROM_LIST(601),
 
     /* Ex */
     GET_SERVER_INFO_RECEIVE(3000),
@@ -79,4 +84,8 @@ enum class PacketType(val type: Int) {
 
     EMPTYP_ACKAGE(0),
     NOT_RESOLVED(-1);
+
+    companion object {
+        fun from(type: Int) = entries.firstOrNull { it.type == type }
+    }
 }

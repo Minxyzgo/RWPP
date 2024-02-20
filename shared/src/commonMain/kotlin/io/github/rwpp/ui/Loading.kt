@@ -1,8 +1,8 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.ui
@@ -36,12 +36,14 @@ fun LoadingView(
     cancellable: Boolean = false,
     loadContent: suspend LoadingContext.() -> Boolean
 ) {
-    val message by remember { loadingMessage }
-    var cancel by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
 
     AnimatedAlertDialog(visible, onDismissRequest = onLoaded, enableDismiss = cancellable) { modifier, dismiss ->
+
+        val message by remember { loadingMessage }
+        var cancel by remember { mutableStateOf(false) }
+
         BorderCard(
             modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
             backgroundColor = Color.Gray

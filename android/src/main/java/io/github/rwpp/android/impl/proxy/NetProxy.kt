@@ -1,8 +1,8 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.android.impl.proxy
@@ -22,6 +22,7 @@ import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.R
 import io.github.rwpp.android.bannedUnitList
 import io.github.rwpp.android.controller
+import io.github.rwpp.android.impl.ClientImpl
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.asGamePacket
 import io.github.rwpp.android.impl.sendKickToClient
@@ -38,6 +39,8 @@ import io.github.rwpp.net.packets.ModPacket
 import io.github.rwpp.packageName
 import io.github.rwpp.utils.io.GameInputStream
 import net.peanuuutz.tomlkt.Toml
+import java.io.ByteArrayInputStream
+import java.io.DataInputStream
 import java.io.File
 import java.util.*
 
@@ -152,7 +155,7 @@ object NetProxy {
                 com.corrodinggames.rts.gameFramework.j.bi::class,
                 mode = InjectMode.InsertBefore
             ) { _: Any?, packet: com.corrodinggames.rts.gameFramework.j.bi ->
-                when(packet.b) {
+                when(val type = packet.b) {
                     PacketType.PREREGISTER_INFO.type -> {
                         val r0 = com.corrodinggames.rts.gameFramework.j.j(packet);     // Catch: java.lang.Throwable -> L603
                         val r1 = packet.a
@@ -234,7 +237,7 @@ object NetProxy {
                                         val bytes = m!!.getBytes()
 
                                         GameEngine.t().bU.a(c,
-                                            ModPacket.newModPackPacket(mods.size, i, "${m.name}.rwmod", bytes)
+                                            ModPacket.ModPackPacket(mods.size, i, "${m.name}.rwmod", bytes)
                                                 .asGamePacket()
                                         )
 
@@ -290,7 +293,23 @@ object NetProxy {
 
                         InterruptResult(Unit)
                     }
-                    else -> Unit
+                    else -> {
+                        if(type in 500..1000) {
+                            val packetType = PacketType.from(type)
+                            val listener = controller.listeners[packetType]
+                            if (listener != null) {
+                                listener.invoke(
+                                    controller,
+                                    ClientImpl(packet.a),
+                                    controller.packetDecoders[packetType]!!.invoke(
+                                        com.corrodinggames.rts.gameFramework.j.j(packet).b
+                                    )
+                                )
+                                return@addProxy InterruptResult(Unit)
+                            }
+                        }
+                        Unit
+                    }
                 }
             }
 

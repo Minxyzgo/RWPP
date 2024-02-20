@@ -1,8 +1,8 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.android.impl
@@ -15,6 +15,7 @@ import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.net.Net
+import io.github.rwpp.net.registerListeners
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
@@ -37,6 +38,7 @@ class GameContextControllerImpl(private val _exit: () -> Unit)
     override val client: OkHttpClient = OkHttpClient()
 
     init {
+        registerListeners()
         Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
     }
 
@@ -65,6 +67,7 @@ class GameContextControllerImpl(private val _exit: () -> Unit)
         val preferences = MainActivity.instance.getSharedPreferences(name, Context.MODE_PRIVATE)
         val src = preferences.getString("src", "")
         if(src.isNullOrBlank()) return null
+
         return Toml.decodeFromString(clazz.serializer(), src)
     }
 

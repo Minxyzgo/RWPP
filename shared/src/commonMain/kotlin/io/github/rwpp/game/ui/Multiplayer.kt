@@ -1,9 +1,11 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
+
+@file:Suppress("DuplicatedCode")
 
 package io.github.rwpp.game.ui
 
@@ -26,15 +28,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
-import io.github.rwpp.config.Blacklist
-import io.github.rwpp.config.Blacklists
-import io.github.rwpp.config.MultiplayerPreferences
-import io.github.rwpp.config.instance
+import io.github.rwpp.config.*
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.maxModSize
@@ -42,13 +45,17 @@ import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.sorted
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.loadSvg
+import io.github.rwpp.platform.readPainterByBytes
 import io.github.rwpp.ui.*
 import io.github.rwpp.utils.io.SizeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalFoundationApi::class, ExperimentalResourceApi::class)
 @Composable
 fun MultiplayerView(
     onExit: () -> Unit,
@@ -59,6 +66,14 @@ fun MultiplayerView(
 
     val refresh = remember { Channel<Unit>(1) }
     var isRefreshing by remember { mutableStateOf(false) }
+    val allServerData = remember {
+        SnapshotStateList<ServerData>().apply {
+            addAll(
+                MultiplayerPreferences.instance.allServerConfig.map { ServerData(it) }
+            )
+        }
+    }
+
     var currentViewList by remember { mutableStateOf<List<RoomDescription>>(listOf()) }
     var throwable by remember { mutableStateOf<Throwable?>(null) }
     val context = LocalController.current
@@ -80,6 +95,15 @@ fun MultiplayerView(
 
     var serverAddress by remember { mutableStateOf("") }
     var isConnecting by remember { mutableStateOf(false) }
+
+    var isShowingServerList by remember { mutableStateOf(false) }
+    var selectedServerConfig by remember {
+        val config = MultiplayerPreferences.instance.allServerConfig.firstOrNull { it.useAsDefaultList }
+        if (config != null) isShowingServerList = true
+        mutableStateOf(config)
+    }
+
+    var showServerInfoConfig by remember { mutableStateOf(false) }
 
     var selectedRoomDescription by remember { mutableStateOf<RoomDescription?>(null) }
     var showJoinRequestDialog by remember { mutableStateOf(false) }
@@ -124,6 +148,8 @@ fun MultiplayerView(
             message("That server no longer exists")
             return@LoadingView false
         }
+
+        message("connecting...")
 
         context.setUserName(userName)
         context.setConfig("lastNetworkIP", serverAddress)
@@ -279,7 +305,7 @@ fun MultiplayerView(
                     }
 
                     if(creatorNameFilter.isNotBlank()) {
-                        return@filter room.mapName.contains(creatorNameFilter, true)
+                        return@filter room.creator.contains(creatorNameFilter, true)
                     }
 
                     if(room.playerMaxCount != null) {
@@ -297,12 +323,12 @@ fun MultiplayerView(
                         .border(BorderStroke(2.dp, Color(101, 147, 74)), CircleShape)
                         .fillMaxWidth()
                 ) {
-                    TableCell("status", statusWeight, drawStroke = false)
+                    TableCell("Status", statusWeight, drawStroke = false)
                     TableCell("Creator Name", creatorNameWeight)
-                    TableCell("count", countWeight)
+                    TableCell("Count", countWeight)
                     TableCell("GameMap", mapWeight)
-                    TableCell("version", versionWeight)
-                    TableCell("open", openWeight, drawStroke = false)
+                    TableCell("Version", versionWeight)
+                    TableCell("Open", openWeight, drawStroke = false)
                 }
 
                 val state = rememberLazyListState()
@@ -378,6 +404,279 @@ fun MultiplayerView(
         }
     }
 
+    @Composable
+    fun AnimatedServerConfigInfo(
+        visible: Boolean,
+        serverConfig: ServerConfig?,
+        onDismissRequest: () -> Unit,
+    ) {
+        AnimatedAlertDialog(
+            visible,
+            onDismissRequest = onDismissRequest
+        ) { modifier, dismiss ->
+            BorderCard(
+                backgroundColor = Color.Gray,
+                modifier = Modifier
+                    .fillMaxSize(0.8f)
+                    .padding(10.dp)
+                    .then(modifier)
+            ) {
+                ExitButton(dismiss)
+                var type by remember { mutableStateOf(serverConfig?.type ?: ServerType.Server) }
+                var url by remember { mutableStateOf(serverConfig?.ip ?: "") }
+                var name by remember { mutableStateOf(serverConfig?.name ?: "") }
+
+                Column(modifier = Modifier.fillMaxSize()) {
+                    LargeDropdownMenu(
+                        modifier = Modifier.padding(20.dp),
+                        label = "Server Type",
+                        items = ServerType.entries,
+                        selectedIndex = type.ordinal,
+                        onItemSelected = { _, t -> type = t }
+                    )
+
+                    RWSingleOutlinedTextField(
+                        "Name",
+                        name,
+                        modifier = Modifier.fillMaxWidth().padding(10.dp)
+                    ) { name = it }
+
+                    RWSingleOutlinedTextField(
+                        "Url/Ip",
+                        url,
+                        modifier = Modifier.fillMaxWidth().padding(10.dp)
+                    ) { url = it }
+
+                    Box(modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                    ) {
+                        TextButton(
+                            onClick =
+                            {
+                                if(serverConfig != null) {
+                                    serverConfig.ip = url
+                                    serverConfig.name = name
+                                    serverConfig.type = type
+                                } else {
+                                    val config = ServerConfig(url, name, type)
+                                    MultiplayerPreferences.instance.allServerConfig.add(config)
+                                    allServerData.add(
+                                        ServerData(
+                                            config
+                                        )
+                                    )
+                                }
+
+                                onDismissRequest()
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd),
+                        ) { Text("Apply", style = MaterialTheme.typography.bodyLarge) }
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    @OptIn(ExperimentalFoundationApi::class, ExperimentalResourceApi::class)
+    fun ColumnScope.ServerList() {
+        AnimatedServerConfigInfo(
+            showServerInfoConfig,
+            selectedServerConfig,
+        ) { showServerInfoConfig = false }
+
+        val realServerData = remember(
+            allServerData.size, enableModFilter, playerLimitRange, mapNameFilter, creatorNameFilter
+        ) {
+            allServerData.filter { data ->
+                val info = data.infoPacket
+                if(enableModFilter) {
+                    if(info?.mods.isNullOrBlank()) {
+                        return@filter false
+                    }
+                }
+
+                if(mapNameFilter.isNotBlank()) {
+                    return@filter info?.mapName?.contains(mapNameFilter, true) == true
+                }
+
+                if(creatorNameFilter.isNotBlank()) {
+                    return@filter (info?.name ?: data.config.name).contains(creatorNameFilter, true)
+                }
+
+                if(info?.maxPlayerSize != null) {
+                    return@filter info.maxPlayerSize in playerLimitRange || info.maxPlayerSize > 100
+                }
+
+                true
+            }
+        }
+
+        BorderCard(
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(10.dp),
+            backgroundColor = Color.DarkGray.copy(.7f)
+        ) {
+            val state = rememberLazyListState()
+
+            var selectedDefaultRoomList by remember { mutableStateOf(allServerData.firstOrNull { it.config.useAsDefaultList }) }
+
+            LazyColumnWithScrollbar(
+                state = state,
+                data = realServerData,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(
+                    count = realServerData.size
+                ) { index ->
+                    val serverData = realServerData[index]
+                    val (delay, easing) = state.calculateDelayAndEasing(index, 1)
+                    val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
+                    val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
+                    val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
+                    BorderCard(
+                        backgroundColor = Color.Gray.copy(.6f),
+                        modifier = Modifier
+                            .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+                            .animateItemPlacement()
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(5.dp)
+                            .clickable {
+                                if (serverData.config.type == ServerType.Server) {
+                                    val ip = serverData.config.ip
+                                    serverAddress = ip
+                                    context.setConfig("lastNetworkIP", ip)
+                                    isConnecting = true
+                                } else if (serverData.config.type == ServerType.RoomList) {
+                                    selectedServerConfig = serverData.config
+                                    isShowingServerList = true
+                                    refresh.trySend(Unit)
+                                }
+                            }
+                    ) {
+                        // do not edit official room list
+                        if (index != 0) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Icon(Icons.Default.Delete, null, modifier = Modifier.padding(5.dp).clickable {
+                                    MultiplayerPreferences.instance.allServerConfig.remove(serverData.config)
+                                    allServerData.remove(serverData)
+                                })
+
+                                Icon(
+                                    Icons.Default.Info,
+                                    null,
+                                    modifier = Modifier.padding(5.dp, 5.dp, 20.dp, 5.dp).clickable {
+                                        selectedServerConfig = serverData.config
+                                        showServerInfoConfig = true
+                                    }
+                                )
+                            }
+                        }
+
+                        Row {
+                            val iconPainter = remember {
+                                runCatching {
+                                    serverData.infoPacket?.iconBytes?.let { readPainterByBytes(it) }
+                                }.getOrNull()
+                            }
+
+                            var checked by remember(selectedDefaultRoomList) {
+                                mutableStateOf(selectedDefaultRoomList == serverData)
+                            }
+
+                            if (serverData.config.type == ServerType.Server) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Image(
+                                        iconPainter ?: painterResource("error_missingmap.png"),
+                                        null,
+                                        modifier = Modifier.size(120.dp).padding(5.dp)
+                                    )
+                                    if (serverData.isLoading) CircularProgressIndicator(color = Color(199, 234, 70))
+                                }
+                            }
+
+                            val info = remember(serverData.infoPacket) { serverData.infoPacket }
+                            val playerCount = remember(info) { info?.run { "$currentPlayer / $maxPlayerSize" } ?: "" }
+                            val version = remember(info) {
+                                info?.run { version } ?: ""
+                            }
+                            val description = remember(info) {
+                                info?.run { description } ?: ""
+                            }
+                            val mapName = remember(info) {
+                                info?.run { mapName } ?: ""
+                            }
+                            val ping = remember(info) {
+                                info?.run { ping.toString() } ?: ""
+                            }
+                            val mods = remember(info) {
+                                info?.run { mods } ?: ""
+                            }
+
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+
+                                Text(
+                                    buildAnnotatedString {
+                                        append(info?.name ?: serverData.config.name)
+                                        withStyle(
+                                            SpanStyle(
+                                                color = Color.DarkGray,
+                                                fontStyle = FontStyle.Italic
+                                            )
+                                        ) {
+                                            if(version.isNotEmpty()) append("  Version: $version")
+                                        }
+                                    },
+                                    modifier = Modifier.padding(3.dp),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                if (serverData.config.type == ServerType.Server) {
+                                    Text(
+                                        buildString {
+                                            appendLine("player: $playerCount")
+                                            appendLine("playing map: $mapName")
+                                            appendLine(description)
+                                            appendLine("ping: ${ping}ms")
+                                            if(mods.isNotBlank()) appendLine("enabled mods: $mods")
+                                        },
+                                        modifier = Modifier.padding(3.dp),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                    )
+                                } else if (serverData.config.type == ServerType.RoomList) {
+                                    Row {
+                                        RWCheckbox(
+                                            checked, {
+                                                checked = it
+                                                selectedDefaultRoomList = if (it) serverData else null
+                                                allServerData.forEach { d -> d.config.useAsDefaultList = false }
+                                                if(checked) serverData.config.useAsDefaultList = true
+                                            }
+                                        )
+
+                                        Text(readI18n("multiplayer.useAsDefaultList"))
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.size(10.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     fun resetFilter() {
         enableModFilter = false
         playerLimitRange = 0..100
@@ -447,7 +746,7 @@ fun MultiplayerView(
     @Composable
     fun JoinServerField() {
         RWSingleOutlinedTextField(
-            label = "Join Server",
+            label = readI18n("multiplayer.joinServer"),
             value = joinServerAddress,
             modifier = Modifier.fillMaxWidth().padding(5.dp),
             leadingIcon = { Icon(Icons.Default.Add, null, modifier = Modifier.size(30.dp)) },
@@ -592,9 +891,27 @@ fun MultiplayerView(
                 throwable = null
                 isRefreshing = true
                 try {
-                    currentViewList = getRoomListFromSourceUrl(
-                        "http://gs1.corrodinggames.com/masterserver/1.4/interface?action=list&game_version=176&game_version_beta=false;http://gs4.corrodinggames.net/masterserver/1.4/interface?action=list&game_version=176&game_version_beta=false".split(";")
-                    )
+                    val roomList = selectedServerConfig
+                    if (isShowingServerList && roomList != null) {
+                        currentViewList = getRoomListFromSourceUrl(
+                            roomList.ip.split(";")
+                        )
+                    } else {
+                        for(s in allServerData) {
+                            if (s.config.type == ServerType.Server) {
+                                launch(Dispatchers.IO) {
+                                    s.isLoading = true
+                                    s.infoPacket = runCatching {
+                                        s.config.getServerInfo()
+                                    }.onFailure {
+                                        it.printStackTrace()
+                                    }.getOrNull()
+                                    s.isLoading = false
+                                }
+                            }
+                        }
+                    }
+
                 } catch(e: Throwable) {
                     throwable = e
                 }
@@ -609,19 +926,37 @@ fun MultiplayerView(
     Scaffold(
         containerColor = Color.Transparent,
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { if(!isRefreshing) scope.launch { refresh.trySend(Unit) } },
-                shape = CircleShape,
-                modifier = Modifier.padding(5.dp),
-                containerColor = Color(151, 188, 98),
-            ) {
-                if(isRefreshing) {
-                    CircularProgressIndicator(color = Color(199, 234, 70))
+            Row {
+                if (isShowingServerList) {
+                    FloatingActionButton(
+                        onClick = { isShowingServerList = false },
+                        shape = CircleShape,
+                        modifier = Modifier.padding(5.dp),
+                        containerColor = Color(151, 188, 98),
+                    ) { Icon(Icons.Default.ArrowBack, null) }
                 } else {
-                    Icon(Icons.Default.Refresh, null)
+                    FloatingActionButton(
+                        onClick = { selectedServerConfig = null; showServerInfoConfig = true },
+                        shape = CircleShape,
+                        modifier = Modifier.padding(5.dp),
+                        containerColor = Color(151, 188, 98),
+                    ) { Icon(Icons.Default.Add, null) }
                 }
 
+                FloatingActionButton(
+                    onClick = { if(!isRefreshing) scope.launch { refresh.trySend(Unit) } },
+                    shape = CircleShape,
+                    modifier = Modifier.padding(5.dp),
+                    containerColor = Color(151, 188, 98),
+                ) {
+                    if(isRefreshing) {
+                        CircularProgressIndicator(color = Color(199, 234, 70))
+                    } else {
+                        Icon(Icons.Default.Refresh, null)
+                    }
+                }
             }
+
         },
         floatingActionButtonPosition = FabPosition.End
     ) {
@@ -637,7 +972,7 @@ fun MultiplayerView(
                 ) {
                     Column(modifier = Modifier.weight(0.4f).verticalScroll(rememberScrollState())) {
                         OutlinedTextField(
-                            label = { Text("User Name", fontFamily = MaterialTheme.typography.headlineLarge.fontFamily) },
+                            label = { Text(readI18n("multiplayer.userName"), fontFamily = MaterialTheme.typography.headlineLarge.fontFamily) },
                             textStyle = MaterialTheme.typography.headlineLarge,
                             colors = RWOutlinedTextColors,
                             value = userName,
@@ -704,7 +1039,7 @@ fun MultiplayerView(
                             }
                         }
 
-                        if(throwable != null) {
+                        if(throwable != null && isShowingServerList) {
                             LazyColumn {
                                 item {
                                     SelectionContainer {
@@ -713,7 +1048,12 @@ fun MultiplayerView(
                                 }
                             }
                         } else {
-                            RoomListAnimatedLazyColumn(currentViewList)
+                            AnimatedVisibility(isShowingServerList) {
+                                RoomListAnimatedLazyColumn(currentViewList)
+                            }
+                            AnimatedVisibility(!isShowingServerList) {
+                                ServerList()
+                            }
                         }
                     }
                 }
@@ -721,6 +1061,7 @@ fun MultiplayerView(
         }
     }
 }
+
 
 
 

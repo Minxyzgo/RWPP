@@ -1,8 +1,8 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.android.impl
@@ -57,7 +57,10 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override suspend fun load(context: LoadingContext) {
-        // do nothing. See LoadingScreen
+        // init map
+        GameEngine.t().bU.aA.a = at.a
+        GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
+        GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
     }
 
     override fun hostStartWithPasswordAndMods(isPublic: Boolean, password: String?, useMods: Boolean) {
@@ -269,7 +272,7 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override fun getAllReplays(): List<Replay> {
-        return ReplaySelectActivity.getGameSaves().mapIndexed { i, str ->
+        return ReplaySelectActivity.getGameSaves()?.mapIndexed { i, str ->
             object : Replay {
                 override val id: Int = i
                 override val name: String = str
@@ -277,7 +280,7 @@ class GameImpl : Game, CoroutineScope {
                     return LoadLevelActivity.convertDataFileNameForDisplay(com.corrodinggames.rts.gameFramework.e.a.q(name));
                 }
             }
-        }
+        } ?: listOf()
     }
 
     override fun watchReplay(replay: Replay) {

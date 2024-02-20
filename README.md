@@ -39,6 +39,11 @@ You can download RWPP release version in the releases.
 
 Or you can download other versions in the QQ group.
 
+# Run
+- Install Java 17
+- Copy RWPP to your rw root directory.
+- Run launcher.bat (you may need to change the rwpp jar name)
+
 # Build
 Run gradle task `shared:rebuildJar` to build necessary libs at first.
 
@@ -48,7 +53,11 @@ For desktop, run task `desktop:packageReleaseUberJarForCurrentOS`
 
 For android, assets and res are missing for some reason,
 you can find them in your Rusted Warfare client.
-# Run
-- Install Java 17
-- Copy RWPP to your rw root directory.
-- Run launcher.bat (you may need to change the rwpp jar name)
+
+# Contribute
+If you want to create international support for your native language,
+You can go `shared/src/commonMain/resources/bundles` to create a new bundle.
+
+# Thanks
+
+[RW-HPS](https://github.com/RW-HPS/RW-HPS)

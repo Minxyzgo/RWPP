@@ -1,9 +1,11 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
+
+@file:Suppress("DuplicatedCode")
 
 package io.github.rwpp
 
@@ -444,6 +446,7 @@ fun MainMenu(
                         )
                         Heading(1, "Changelogs")
                         CodeBlock("""
+                            1.0.9-beta: Add Server list.
                             1.0.8-release: Replay and Server are now supported.
                             1.0.7-beta: Add external resource, bugs fixed
                             1.0.6-alpha: Fix bugs, Transfer-Mod(Experimental)

@@ -1,8 +1,8 @@
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- *  Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
- *  https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp.desktop.impl
@@ -54,9 +54,7 @@ import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.channels.Channel
 import net.peanuuutz.tomlkt.Toml
 import org.lwjgl.opengl.Display
-import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
+import java.io.*
 import javax.imageio.ImageIO
 import javax.swing.SwingUtilities
 
@@ -415,7 +413,7 @@ class GameImpl : Game {
                 } else Unit
             }
             addProxy("c", com.corrodinggames.rts.gameFramework.j.au::class, mode = InjectMode.InsertBefore) { _: Any?, auVar: com.corrodinggames.rts.gameFramework.j.au ->
-                when(auVar.b) {
+                when(val type = auVar.b) {
                     PacketType.PREREGISTER_INFO.type -> {
                         with(LClass.B().bX) {
                             if(this.C) return@with
@@ -463,7 +461,7 @@ class GameImpl : Game {
                                     val mods = str.split(";")
                                     mods.map(gameContext::getModByName).forEachIndexed { i, m ->
                                         val bytes = m!!.getBytes()
-                                        B.bX.a(c, ModPacket.newModPackPacket(mods.size, i, "${m.name}.rwmod", bytes).asGamePacket())
+                                        B.bX.a(c, ModPacket.ModPackPacket(mods.size, i, "${m.name}.rwmod", bytes).asGamePacket())
                                     }
 
                                     gameRoom.getPlayers().firstOrNull { it.name == c.z?.v }
@@ -523,7 +521,26 @@ class GameImpl : Game {
                         InterruptResult(Unit)
                     }
 
-                    else -> Unit
+                    else -> {
+                        if(type in 500..1000) {
+                            val packetType = PacketType.from(type)
+                            val listener = gameContext.listeners[packetType]
+                            if (listener != null) {
+                                listener.invoke(
+                                    gameContext,
+                                    ClientImpl(auVar.a),
+                                    gameContext.packetDecoders[packetType]!!.invoke(
+                                        DataInputStream(
+                                            ByteArrayInputStream(auVar.c)
+                                        )
+                                    )
+                                )
+                                return@addProxy InterruptResult(Unit)
+                            }
+                        }
+
+                        Unit
+                    }
                 }
             }
 
@@ -569,7 +586,7 @@ class GameImpl : Game {
                     run {
                         if(allMods.all { gameContext.getModByName(it) != null }) {
                             if(gameRoom.isRWPPRoom)
-                                gameContext.sendPacketToServer(ModPacket.newRequestPacket(""))
+                                gameContext.sendPacketToServer(ModPacket.RequestPacket(""))
                             gameContext.getAllMods().forEach { it.isEnabled = it.name in allMods }
                             CallReloadModEvent().broadCastIn()
                             return@run
@@ -577,7 +594,7 @@ class GameImpl : Game {
 
                         val modsName = gameContext.getAllMods().map { it.name }
                         if(gameRoom.option.canTransferMod) {
-                            gameContext.sendPacketToServer(ModPacket.newRequestPacket(allMods.filter { it !in modsName }.joinToString(";")))
+                            gameContext.sendPacketToServer(ModPacket.RequestPacket(allMods.filter { it !in modsName }.joinToString(";")))
                             CallStartDownloadModEvent().broadCastIn()
                         } else {
                             gameRoom.disconnect()
