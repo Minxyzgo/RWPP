@@ -41,8 +41,9 @@ Or you can download other versions in the QQ group.
 
 # Run
 - Install Java 17
-- Copy RWPP to your rw root directory.
-- Run launcher.bat (you may need to change the rwpp jar name)
+- Copy RWPP to your rw libs directory.
+> eg. SteamLibrary\steamapps\common\Rusted Warfare\libs
+- Run launcher.bat
 
 # Build
 Run gradle task `shared:rebuildJar` to build necessary libs at first.
