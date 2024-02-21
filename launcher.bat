@@ -1,6 +1,5 @@
 
-java -Djava.net.preferIPv4Stack=true -Xmx2000M -Dfile.encoding=UTF-8 -Dprism.allowhidpi=false -Dsun.java2d.uiScale=1 -Djava.library.path=. -cp "Rwpp-windows-x64-1.0.0.jar;libs/*" io.github.rwpp.desktop.MainKt
-
+java -D"java.net.preferIPv4Stack=true" -Xmx2000M -D"file.encoding=UTF-8" -D"prism.allowhidpi=false" -D"sun.java2d.uiScale=1" -D"java.library.path=." -cp "libs/*" io.github.rwpp.desktop.MainKt
 
 
 pause
