@@ -130,16 +130,16 @@ fun SettingsView(onExit: () -> Unit) {
                         }
                     }
 
-                    if(Platform.isAndroid()) {
-                        item {
-                            SettingsGroup("", "Android") {
-                                val context = LocalController.current
-                                RWTextButton("Set External Folder") {
-                                    context.requestExternalStoragePermission()
-                                }
-                            }
-                        }
-                    }
+//                    if(Platform.isAndroid()) {
+//                        item {
+//                            SettingsGroup("", "Android") {
+//                                val context = LocalController.current
+//                                RWTextButton("Set External Folder") {
+//                                    context.requestExternalStoragePermission()
+//                                }
+//                            }
+//                        }
+//                    }
                 }
             }
         }
@@ -218,11 +218,12 @@ private fun SettingsSwitchComp(
                     colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
                 )
             }
-            Divider()
+            HorizontalDivider()
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsSlider(
     name: String,

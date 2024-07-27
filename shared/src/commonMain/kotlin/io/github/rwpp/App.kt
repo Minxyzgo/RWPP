@@ -46,7 +46,9 @@ import io.github.rwpp.event.events.QuestionReplyEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.ui.*
 import io.github.rwpp.i18n.readI18n
-import io.github.rwpp.platform.deliciousFonts
+import io.github.rwpp.ui.deliciousFonts
+import io.github.rwpp.shared.generated.resources.Res
+import io.github.rwpp.shared.generated.resources.title
 import io.github.rwpp.ui.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -246,13 +248,15 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                         ExitButton(dismiss)
 
                         Row(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
-                            Divider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                            HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
                             Box {
                                 Icon(Icons.Default.Warning, null, tint = Color(151, 188, 98), modifier = Modifier.size(50.dp).offset(5.dp, 5.dp).blur(2.dp))
                                 Icon(Icons.Default.Warning, null, tint = Color(0xFFb6d7a8), modifier = Modifier.size(50.dp))
                             }
-                            Divider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                            HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
                         }
+
+
 
                         LargeDividingLine { 5.dp }
 
@@ -480,7 +484,8 @@ fun MainMenu(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Image(painter = painterResource("title.png"), "title", modifier = Modifier.padding(15.dp))
+
+                Image(painter = painterResource(Res.drawable.title), "title", modifier = Modifier.padding(15.dp))
             }
 
             LazyColumn(

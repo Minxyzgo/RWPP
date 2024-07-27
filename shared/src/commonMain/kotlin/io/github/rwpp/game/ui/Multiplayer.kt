@@ -46,6 +46,8 @@ import io.github.rwpp.net.sorted
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.loadSvg
 import io.github.rwpp.platform.readPainterByBytes
+import io.github.rwpp.shared.generated.resources.Res
+import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
 import io.github.rwpp.utils.io.SizeUtils
 import kotlinx.coroutines.Dispatchers
@@ -592,7 +594,7 @@ fun MultiplayerView(
                             if (serverData.config.type == ServerType.Server) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Image(
-                                        iconPainter ?: painterResource("error_missingmap.png"),
+                                        iconPainter ?: painterResource(Res.drawable.error_missingmap),
                                         null,
                                         modifier = Modifier.size(120.dp).padding(5.dp)
                                     )

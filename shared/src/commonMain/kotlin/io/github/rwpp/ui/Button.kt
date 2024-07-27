@@ -26,6 +26,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.shared.generated.resources.Res
+import io.github.rwpp.shared.generated.resources.btn_left
+import io.github.rwpp.shared.generated.resources.btn_right
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
@@ -58,7 +61,7 @@ fun MenuButton(
         Image(
             modifier = Modifier.requiredHeight(pxValue),
             contentScale = ContentScale.FillHeight,
-            painter = painterResource("btn_left.png"),
+            painter = painterResource(Res.drawable.btn_left),
             contentDescription = null,
         )
 
@@ -91,7 +94,7 @@ fun MenuButton(
         Image(
             modifier = Modifier.requiredHeight(pxValue),
             contentScale = ContentScale.FillHeight,
-            painter = painterResource("btn_right.png"),
+            painter = painterResource(Res.drawable.btn_right),
             contentDescription = null,
         )
     }

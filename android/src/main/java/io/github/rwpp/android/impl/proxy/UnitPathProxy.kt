@@ -52,9 +52,8 @@ object UnitPathProxy {
 //        }
 
             addProxy("h", String::class, mode = InjectMode.InsertBefore) { _: Any?, str: String ->
-                println(str)
-                if(controller.getUsingResource() == null
-                    || str.contains("builtin_mods")
+                if (controller.getUsingResource() == null) return@addProxy Unit
+                if(str.contains("builtin_mods")
                     || (str.contains("maps") && !str.contains("bitmaps"))
                     || str.contains("translations")) return@addProxy Unit
                 val o = str.let {
@@ -76,10 +75,13 @@ object UnitPathProxy {
 
         com.corrodinggames.rts.gameFramework.bc::class.setFunction {
             addProxy("a", Boolean::class, mode = InjectMode.InsertBefore) { self: com.corrodinggames.rts.gameFramework.bc, z: Boolean ->
-                val b = Reflect.get<com.corrodinggames.rts.gameFramework.bb>(self, "b")!!
-                val a = Reflect.get<MediaPlayer>(self, "a")!!
+                if (controller.getUsingResource() == null) return@addProxy Unit
 
-                if(controller.getUsingResource() == null || !b.b.startsWith("music")) return@addProxy Unit
+                val b = Reflect.get<com.corrodinggames.rts.gameFramework.bb>(self, "b")!!
+
+
+                if(b.b.startsWith("music")) return@addProxy Unit
+                val a = Reflect.get<MediaPlayer>(self, "a")!!
                 try {
                     a.reset()
                     val input = FileInputStream(resourceOutputDir + b.b)
@@ -101,8 +103,10 @@ object UnitPathProxy {
 
         com.corrodinggames.rts.gameFramework.m.fh::class.setFunction {
             addProxy("a", Int::class, Boolean::class, mode = InjectMode.InsertBefore) { _: Any?, i: Int, bool: Boolean ->
+                if (controller.getUsingResource() == null) return@addProxy Unit
+
                 val resFileExist = File(resOutputDir).exists()
-                if(controller.getUsingResource() == null || !resFileExist) return@addProxy Unit
+                if(!resFileExist) return@addProxy Unit
 
                 try {
                     val res = GameEngine.t().al.resources
@@ -135,8 +139,11 @@ object UnitPathProxy {
 
         com.corrodinggames.rts.gameFramework.a.a::class.setFunction {
             addProxy("a", Int::class, mode = InjectMode.InsertBefore) { self: com.corrodinggames.rts.gameFramework.a.a, i: Int, ->
+
+                if (controller.getUsingResource() == null) return@addProxy Unit
+
                 val resFileExist = File(resOutputDir).exists()
-                if (controller.getUsingResource() == null || !resFileExist) return@addProxy Unit
+                if (!resFileExist) return@addProxy Unit
 
 
                 try {

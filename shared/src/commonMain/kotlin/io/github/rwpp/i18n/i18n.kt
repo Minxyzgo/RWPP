@@ -7,6 +7,7 @@
 
 package io.github.rwpp.i18n
 
+import io.github.rwpp.shared.generated.resources.Res
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.peanuuutz.tomlkt.Toml
@@ -14,7 +15,6 @@ import net.peanuuutz.tomlkt.TomlTable
 import net.peanuuutz.tomlkt.asTomlLiteral
 import net.peanuuutz.tomlkt.asTomlTable
 import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.resource
 import java.util.*
 
 internal lateinit var i18nTable: TomlTable
@@ -22,9 +22,8 @@ private val cacheMap = mutableMapOf<String, String>()
 
 @OptIn(ExperimentalResourceApi::class)
 suspend fun parseI18n() {
-    val res = resource("bundles/bundle_${Locale.getDefault().language}.toml")
     i18nTable = Toml.parseToTomlTable(withContext(Dispatchers.IO) {
-        runCatching { res.readBytes() }.getOrNull() ?: resource("bundles/bundle_en.toml").readBytes()
+        runCatching { Res.readBytes("files/bundle_${Locale.getDefault().language}.toml") }.getOrNull() ?: Res.readBytes("files/bundle_en.toml")
     }.decodeToString().replace("\r", "\n"))
 }
 

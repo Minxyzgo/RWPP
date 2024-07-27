@@ -9,7 +9,6 @@ package io.github.rwpp.android
 
 import android.Manifest
 import android.app.Activity
-import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
@@ -17,7 +16,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalView
@@ -26,21 +24,17 @@ import androidx.core.view.WindowInsetsCompat
 import com.corrodinggames.rts.appFramework.d
 import io.github.rwpp.App
 import io.github.rwpp.LocalController
-import io.github.rwpp.android.impl.GameContextControllerImpl
 import io.github.rwpp.android.impl.GameEngine
-import io.github.rwpp.android.impl.doProxy
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.ReturnMainMenuEvent
 import io.github.rwpp.i18n.parseI18n
 import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
-import java.util.logging.Level
-import java.util.logging.Logger
-import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         gameLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {

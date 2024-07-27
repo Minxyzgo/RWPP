@@ -4,22 +4,24 @@
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-package io.github.rwpp.platform
+
+package io.github.rwpp.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import io.github.rwpp.android.R
-
+import io.github.rwpp.shared.generated.resources.Delicious_Bold
+import io.github.rwpp.shared.generated.resources.Delicious_BoldItalic
+import io.github.rwpp.shared.generated.resources.Delicious_Italic
+import io.github.rwpp.shared.generated.resources.Res
+import org.jetbrains.compose.resources.Font
 
 @Composable
-actual fun deliciousFonts(): FontFamily {
+fun deliciousFonts(): FontFamily {
     return FontFamily(
-        Font(R.font.deliciousbold, FontWeight.Bold),
-        Font(R.font.deliciousbolditalic, FontWeight.Bold, FontStyle.Italic),
-        Font(R.font.deliciousitalic, FontWeight.Normal, FontStyle.Italic)
+        Font(Res.font.Delicious_Bold, FontWeight.Bold),
+        Font(Res.font.Delicious_BoldItalic, FontWeight.Bold, FontStyle.Italic),
+        Font(Res.font.Delicious_Italic, FontWeight.Normal, FontStyle.Italic)
     )
 }

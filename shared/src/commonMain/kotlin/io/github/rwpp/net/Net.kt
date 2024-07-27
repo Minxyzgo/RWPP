@@ -13,6 +13,7 @@ import io.github.rwpp.utils.io.GameInputStream
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -36,7 +37,8 @@ interface Net {
         val c =  Channel<Response>(UNLIMITED)
         val job = async {
             val result = select {
-                onTimeout(5000) {
+
+                onTimeout(5000L) {
                     throw RuntimeException("Response time out")
                 }
 

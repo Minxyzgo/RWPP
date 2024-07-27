@@ -38,6 +38,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
+import io.github.rwpp.shared.generated.resources.Res
+import io.github.rwpp.shared.generated.resources.error_missingmap
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
@@ -384,7 +386,7 @@ fun LazyGridItemScope.MapItem(
         ) {
             if(showImage) Image(
                 modifier = Modifier.padding(5.dp).weight(1f),
-                painter = image ?: painterResource("error_missingmap.png"),
+                painter = image ?: painterResource(Res.drawable.error_missingmap),
                 contentDescription = null
             )
             Text(

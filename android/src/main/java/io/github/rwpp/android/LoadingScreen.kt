@@ -7,14 +7,11 @@
 
 package io.github.rwpp.android
 
-import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,12 +20,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageShader
-import androidx.compose.ui.graphics.ShaderBrush
-import androidx.compose.ui.graphics.TileMode
-import com.corrodinggames.rts.gameFramework.j.at
 import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.android.impl.GameContextControllerImpl
@@ -37,17 +30,11 @@ import io.github.rwpp.android.impl.doProxy
 import io.github.rwpp.ui.ConstraintWindowManager
 import io.github.rwpp.ui.LoadingView
 import io.github.rwpp.ui.RWSelectionColors
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.orEmpty
-import org.jetbrains.compose.resources.rememberImageBitmap
-import org.jetbrains.compose.resources.resource
+import io.github.rwpp.ui.v2.TitleBrush
+import kotlinx.coroutines.*
 import kotlin.system.exitProcess
 
 class LoadingScreen : ComponentActivity() {
-    @OptIn(ExperimentalResourceApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -55,11 +42,8 @@ class LoadingScreen : ComponentActivity() {
         doProxy()
 
         setContent {
-            val image = resource("metal.png").rememberImageBitmap()
 
-            val brush = remember(image) {
-                ShaderBrush(ImageShader(image.orEmpty(), TileMode.Repeated, TileMode.Repeated))
-            }
+            val brush = TitleBrush()
 
             MaterialTheme(
                 typography = typography,
@@ -78,17 +62,19 @@ class LoadingScreen : ComponentActivity() {
                         LocalWindowManager provides ConstraintWindowManager(maxWidth, maxHeight)
                     ) {
                         LoadingView(true, {}) {
+
                             withContext(Dispatchers.IO) {
+                                message("loading...")
+
                                 launch {
-                                    while(GameEngine.t()?.bg != true) {
-                                        message(GameEngine.t()?.dF ?: "loading...")
+                                    while (GameEngine.t()?.bg != true) {
+                                        val msg = GameEngine.t()?.dF
+                                        message(if (msg.isNullOrBlank()) "loading..." else msg)
                                     }
                                 }
 
                                 GameEngine.c(this@LoadingScreen)
-
                                 startActivityForResult(Intent(this@LoadingScreen, MainActivity::class.java), 0)
-
                                 finish()
 
                                 true

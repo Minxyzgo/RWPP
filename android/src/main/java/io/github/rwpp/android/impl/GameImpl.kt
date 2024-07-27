@@ -106,8 +106,8 @@ class GameImpl : Game, CoroutineScope {
 
         return when {
             result == null -> {
-                val t = GameEngine.t()
-                t.bu = 0
+//                val t = GameEngine.t()
+//                t.bu = 0
                 Result.success("")
             }
             ae.u() -> Result.failure(IOException("Connection failed: Target server may not be open to the internet."))

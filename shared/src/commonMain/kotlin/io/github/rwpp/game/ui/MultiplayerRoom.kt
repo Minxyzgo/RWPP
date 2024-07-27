@@ -48,6 +48,8 @@ import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.packets.ModPacket
 import io.github.rwpp.platform.BackHandler
+import io.github.rwpp.shared.generated.resources.Res
+import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -259,7 +261,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             @Composable
                             fun MapImage(modifier: Modifier = Modifier) {
                                 Image(
-                                    selectedMap.image ?: painterResource("error_missingmap.png"),
+                                    selectedMap.image ?: painterResource(Res.drawable.error_missingmap),
                                     null,
                                     contentScale = ContentScale.Fit,
                                     modifier = Modifier.then(modifier).padding(10.dp)

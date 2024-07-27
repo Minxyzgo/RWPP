@@ -15,6 +15,8 @@ import javassist.ClassMap
 import javassist.CtClass
 import javassist.Modifier
 
+group = "io.github.rwpp"
+
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
@@ -160,11 +162,9 @@ kotlin {
                 api(compose.preview)
                 api(compose.runtime)
                 api(compose.foundation)
-                //api(compose.material)
-                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+                api(compose.material3)
                 api(compose.components.resources)
                 api(compose.ui)
-                api(compose.material3)
                 api("com.halilibo.compose-richtext:richtext-ui:0.17.0")
                 api("com.squareup.okhttp3:okhttp:4.11.0")
                 api("net.peanuuutz.tomlkt:tomlkt:0.3.7")

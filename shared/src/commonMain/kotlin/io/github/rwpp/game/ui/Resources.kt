@@ -30,6 +30,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
 import io.github.rwpp.platform.BackHandler
+import io.github.rwpp.shared.generated.resources.Res
+import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -70,12 +72,12 @@ fun ResourceView(
         ) {
 
             Row(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
-                Divider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
                 Box {
                     Icon(Icons.Default.Warning, null, tint = Color(151, 188, 98), modifier = Modifier.size(50.dp).offset(5.dp, 5.dp).blur(2.dp))
                     Icon(Icons.Default.Warning, null, tint = Color(0xFFb6d7a8), modifier = Modifier.size(50.dp))
                 }
-                Divider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
             }
 
             LargeDividingLine { 5.dp }
@@ -159,7 +161,7 @@ fun ResourceView(
 
                             Row {
                                 Image(
-                                    resource.iconPainter ?: painterResource("error_missingmap.png"),
+                                    resource.iconPainter ?: painterResource(Res.drawable.error_missingmap),
                                     null,
                                     modifier = Modifier.size(120.dp).padding(5.dp)
                                 )
