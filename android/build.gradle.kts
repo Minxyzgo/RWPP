@@ -36,6 +36,12 @@ android {
         javaMaxHeapSize = "2G"
     }
 
+//    buildTypes {
+//        release {
+//            isMinifyEnabled = true
+//        }
+//    }
+
     sourceSets["main"].manifest.srcFile("src/main/AndroidManifest.xml")
 
     defaultConfig {

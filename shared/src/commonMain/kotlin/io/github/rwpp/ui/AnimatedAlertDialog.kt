@@ -8,85 +8,162 @@
 package io.github.rwpp.ui
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupPositionProvider
-import androidx.compose.ui.window.PopupProperties
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+
+internal const val ANIMATION_TIME = 500L
+internal const val DIALOG_BUILD_TIME = 300L
+
+// Inspired by https://medium.com/tech-takeaways/ios-like-modal-view-dialog-animation-in-jetpack-compose-fac5778969af
+
+@Composable
+internal fun AnimatedModalBottomSheetTransition(
+    visible: Boolean,
+    content: @Composable AnimatedVisibilityScope.() -> Unit
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInVertically(
+            animationSpec = tween(ANIMATION_TIME.toInt()),
+            initialOffsetY = { fullHeight -> fullHeight }
+        ),
+        exit = slideOutVertically(
+            animationSpec = tween(ANIMATION_TIME.toInt()),
+            targetOffsetY = { fullHeight -> fullHeight }
+        ),
+        content = content
+    )
+}
+
+@Composable
+internal fun AnimatedScaleInTransition(
+    visible: Boolean,
+    content: @Composable AnimatedVisibilityScope.() -> Unit
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = scaleIn(
+            animationSpec = tween(ANIMATION_TIME.toInt())
+        ),
+        exit = scaleOut(
+            animationSpec = tween(ANIMATION_TIME.toInt())
+        ),
+        content = content
+    )
+}
+
+@Composable
+fun AnimatedTransitionDialog(
+    onDismissRequest: () -> Unit,
+    enableDismiss: Boolean,
+    contentAlignment: Alignment = Alignment.Center,
+    content: @Composable (AnimatedTransitionDialogHelper) -> Unit
+) {
+    val onDismissSharedFlow: MutableSharedFlow<Any> = remember { MutableSharedFlow() }
+    val coroutineScope: CoroutineScope = rememberCoroutineScope()
+    val animateTrigger = remember { mutableStateOf(false) }
+
+    LaunchedEffect(key1 = Unit) {
+        launch {
+            delay(DIALOG_BUILD_TIME)
+            animateTrigger.value = true
+        }
+        launch {
+            onDismissSharedFlow.asSharedFlow().collectLatest {
+                startDismissWithExitAnimation(animateTrigger, onDismissRequest)
+            }
+        }
+    }
+
+//    Popup(alignment = Alignment.Center,
+//        onDismissRequest = {
+//            if (enableDismiss) {
+//                coroutineScope.launch {
+//                    startDismissWithExitAnimation(animateTrigger, onDismissRequest)
+//                }
+//            }
+//        }
+//    ) {
+//        Box(
+//            contentAlignment = contentAlignment,
+//            modifier = Modifier.fillMaxSize()
+//        ) {
+//            AnimatedScaleInTransition(visible = animateTrigger.value) {
+//
+//                content(AnimatedTransitionDialogHelper(coroutineScope, onDismissSharedFlow))
+//
+//            }
+//        }
+//    }
+
+    Dialog(
+        onDismissRequest = {
+            if (enableDismiss) {
+                coroutineScope.launch {
+                    startDismissWithExitAnimation(animateTrigger, onDismissRequest)
+                }
+            }
+        },
+        properties = DialogProperties(dismissOnBackPress = enableDismiss, usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            contentAlignment = contentAlignment,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            AnimatedScaleInTransition(visible = animateTrigger.value) {
+
+                content(AnimatedTransitionDialogHelper(coroutineScope, onDismissSharedFlow))
+
+            }
+        }
+    }
+}
+
+
+class AnimatedTransitionDialogHelper(
+    private val coroutineScope: CoroutineScope,
+    private val onDismissFlow: MutableSharedFlow<Any>
+) {
+
+    fun triggerAnimatedDismiss() {
+        coroutineScope.launch {
+            onDismissFlow.emit(Any())
+        }
+    }
+}
+
+suspend fun startDismissWithExitAnimation(
+    animateTrigger: MutableState<Boolean>,
+    onDismissRequest: () -> Unit
+) {
+    animateTrigger.value = false
+    delay(ANIMATION_TIME)
+    onDismissRequest()
+}
 
 @Composable
 fun AnimatedAlertDialog(
     visible: Boolean,
-    enter: EnterTransition = fadeIn() + scaleIn(),
-    exit: ExitTransition = shrinkOut() + scaleOut(),
     onDismissRequest: () -> Unit,
     enableDismiss: Boolean = true,
-    modifier: Modifier = Modifier,
-    shape: Shape = MaterialTheme.shapes.medium,
-    content: @Composable (modifier: Modifier, dismiss: () -> Unit) -> Unit
+    content: @Composable (dismiss: () -> Unit) -> Unit
 ) {
     if(visible) {
-        var dismiss by remember { mutableStateOf(false) }
-
-        Popup(popupPositionProvider = object : PopupPositionProvider {
-            override fun calculatePosition(
-                anchorBounds: IntRect,
-                windowSize: IntSize,
-                layoutDirection: LayoutDirection,
-                popupContentSize: IntSize
-            ): IntOffset = IntOffset.Zero
-        },
-            onDismissRequest = { if(enableDismiss) dismiss = true },
-            properties = PopupProperties(focusable = true)) {
-            val scrimColor = Color.Black.copy(alpha = 0.32f) //todo configure scrim color in function arguments
-
-            var dialogTrigger by remember { mutableStateOf(true) }
-            LaunchedEffect(key1 = dismiss) {
-                if(dismiss) {
-                    dialogTrigger = false
-                    delay(300)
-                    onDismissRequest()
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(scrimColor)
-                    .pointerInput({ if(enableDismiss) dismiss = true }) {
-                        detectTapGestures(onPress = { if(enableDismiss) dismiss = true })
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                AnimatedVisibility(
-                    dialogTrigger,
-                    enter = enter,
-                    exit = exit,
-                ) {
-                    content(
-                        modifier
-                            .shadow(elevation = 24.dp, shape = shape)
-                            .pointerInput({ if(enableDismiss) dismiss = true }) {
-                                detectTapGestures(onPress = {
-                                    // Workaround to disable clicks on Surface background
-                                    // https://github.com/JetBrains/compose-jb/issues/2581
-                                })
-                            }
-                    ) { dismiss = true }
-                }
-            }
+        AnimatedTransitionDialog(onDismissRequest = onDismissRequest, enableDismiss = enableDismiss) { animatedTransitionDialogHelper ->
+            content(animatedTransitionDialogHelper::triggerAnimatedDismiss)
         }
     }
 }

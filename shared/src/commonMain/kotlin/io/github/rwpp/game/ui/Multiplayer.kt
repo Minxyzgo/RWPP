@@ -177,12 +177,11 @@ fun MultiplayerView(
         onHost: () -> Unit,
     ) = AnimatedAlertDialog(
         visible, onDismissRequest = onDismissRequest
-    ) { m, dismiss ->
+    ) { dismiss ->
         BorderCard(
             modifier = Modifier
                 .fillMaxSize(LargeProportion())
                 .padding(10.dp)
-                .then(m)
                 .verticalScroll(rememberScrollState()),
             backgroundColor = Color.Gray
         ) {
@@ -415,13 +414,12 @@ fun MultiplayerView(
         AnimatedAlertDialog(
             visible,
             onDismissRequest = onDismissRequest
-        ) { modifier, dismiss ->
+        ) { dismiss ->
             BorderCard(
                 backgroundColor = Color.Gray,
                 modifier = Modifier
                     .fillMaxSize(0.8f)
                     .padding(10.dp)
-                    .then(modifier)
             ) {
                 ExitButton(dismiss)
                 var type by remember { mutableStateOf(serverConfig?.type ?: ServerType.Server) }
@@ -707,9 +705,9 @@ fun MultiplayerView(
         AnimatedAlertDialog(
             visible = visible,
             onDismissRequest = { onDismissRequest() },
-        ) { modifier, _ ->
+        ) { _ ->
             BorderCard(
-                modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
+                modifier = Modifier.fillMaxSize(GeneralProportion()),
                 backgroundColor = Color.Gray
             ) {
                 AnimatedBlackList(
@@ -890,6 +888,7 @@ fun MultiplayerView(
         LaunchedEffect(Unit) {
             refresh.send(Unit)
             for(u in refresh) {
+                if (isRefreshing) continue
                 throwable = null
                 isRefreshing = true
                 try {
@@ -1182,12 +1181,11 @@ private fun WelcomeMessageAdmittingDialog(
 ) {
     AnimatedAlertDialog(
         visible, onDismissRequest = onDismissRequest, enableDismiss = false
-    ) { m, dismiss ->
+    ) { dismiss ->
         BorderCard(
             modifier = Modifier
                 .fillMaxSize(GeneralProportion())
-                .padding(5.dp)
-                .then(m),
+                .padding(5.dp),
             backgroundColor = Color.Gray
         ) {
             Row(
@@ -1255,12 +1253,11 @@ private fun JoinServerRequestDialog(
     roomDescription ?: return
     AnimatedAlertDialog(
         visible, onDismissRequest = onDismissRequest
-    ) { m, dismiss ->
+    ) { dismiss ->
         BorderCard(
             modifier = Modifier
                 .fillMaxSize(GeneralProportion())
                 .padding(10.dp)
-                .then(m)
                 .verticalScroll(rememberScrollState()),
             backgroundColor = Color.Gray
         ) {

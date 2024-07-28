@@ -65,9 +65,9 @@ fun ResourceView(
     }
     AnimatedAlertDialog(
         showResultView,
-        onDismissRequest = { }) { modifier, dismiss ->
+        onDismissRequest = { }) { dismiss ->
         BorderCard(
-            modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
+            modifier = Modifier.fillMaxSize(GeneralProportion()),
             backgroundColor = Color.Gray
         ) {
 

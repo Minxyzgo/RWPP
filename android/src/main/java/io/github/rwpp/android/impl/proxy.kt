@@ -99,6 +99,10 @@ fun doProxy() {
             KickedEvent(msg).broadCastIn()
         }
 
+//        addProxy("c", String::class) { _ : Any?, _: String ->
+//
+//        }
+
         addProxy("d", String::class, mode = InjectMode.InsertBefore) { str: String ->
             if(str == "----- returnToBattleroom -----") {
                 isReturnToBattleRoom = true

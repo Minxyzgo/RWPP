@@ -586,7 +586,7 @@ private fun PlayerOverrideDialog(
 
     AnimatedAlertDialog(
         visible, onDismissRequest = { onDismissRequest(); update() }
-    ) { m, dismiss ->
+    ) { dismiss ->
 
         var playerSpawnPoint by remember(player) { mutableStateOf<Int?>(player.spawnPoint + 1) }
         var playerTeam by remember(player) { mutableStateOf<Int?>(-1) }
@@ -596,8 +596,7 @@ private fun PlayerOverrideDialog(
 
         BorderCard(
             modifier = Modifier
-                .fillMaxSize(LargeProportion())
-                .then(m),
+                .fillMaxSize(LargeProportion()),
             backgroundColor = Color.Gray
         ) {
             ExitButton(dismiss)
@@ -769,7 +768,7 @@ private fun MultiplayerSwitchOption(
     players: List<Player>
 ) = AnimatedAlertDialog(
     visible, onDismissRequest = { onDismissRequest(); update() }
-) { m, dismiss ->
+) { dismiss ->
     val context = LocalController.current
 
     var noNukes by remember { mutableStateOf(room.noNukes) }
@@ -786,8 +785,7 @@ private fun MultiplayerSwitchOption(
 
     BorderCard(
         modifier = Modifier
-            .fillMaxSize(LargeProportion())
-            .then(m),
+            .fillMaxSize(LargeProportion()),
         backgroundColor = Color.Gray
     ) {
         ExitButton(dismiss)

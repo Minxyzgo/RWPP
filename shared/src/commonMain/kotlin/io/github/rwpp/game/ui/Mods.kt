@@ -11,10 +11,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -128,7 +130,7 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                             Column {
                                 var checked by remember { mutableStateOf(mod.isEnabled) }
                                 remember(disableAll) {
-                                    if(disableAll) {
+                                    if (disableAll) {
                                         checked = false
                                         mod.isEnabled = false
                                         disableAll = false
@@ -140,7 +142,12 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                                         checked = !checked
                                         mod.isEnabled = checked
                                     }, modifier = Modifier.padding(5.dp))
-                                    Text(mod.name, modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = Color(151, 188, 98))
+                                    Text(
+                                        mod.name,
+                                        modifier = Modifier.padding(5.dp),
+                                        style = MaterialTheme.typography.headlineLarge,
+                                        color = Color(151, 188, 98)
+                                    )
                                 }
 
                                 val expandedStyle = remember {
@@ -152,15 +159,14 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                                     )
                                 }
 
-                                SelectionContainer {
-                                    ExpandableText(
-                                        text = mod.description,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        textModifier = Modifier.padding(top = 5.dp),
-                                        showMoreStyle = expandedStyle,
-                                        showLessStyle = expandedStyle
-                                    )
-                                }
+                                ExpandableText(
+                                    text = mod.description,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    textModifier = Modifier.padding(top = 5.dp),
+                                    showMoreStyle = expandedStyle,
+                                    showLessStyle = expandedStyle
+                                )
+
 
                                 Spacer(modifier = Modifier.size(10.dp))
                             }

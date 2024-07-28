@@ -240,9 +240,9 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
 
                 AnimatedAlertDialog(
                     kickedDialogVisible,
-                    onDismissRequest = { kickedDialogVisible = false }) { modifier, dismiss ->
+                    onDismissRequest = { kickedDialogVisible = false }) { dismiss ->
                     BorderCard(
-                        modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
+                        modifier = Modifier.fillMaxSize(GeneralProportion()),
                         backgroundColor = Color.Gray
                     ) {
                         ExitButton(dismiss)
@@ -293,9 +293,9 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             showMultiplayerView = true
                         }
                     }
-                ) { modifier, dismiss ->
+                ) { dismiss ->
                     BorderCard(
-                        modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
+                        modifier = Modifier.fillMaxSize(GeneralProportion()),
                         backgroundColor = Color.Gray
                     ) {
                         ExitButton(dismiss)

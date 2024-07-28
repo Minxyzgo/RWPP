@@ -39,13 +39,13 @@ fun LoadingView(
 
     val scope = rememberCoroutineScope()
 
-    AnimatedAlertDialog(visible, onDismissRequest = onLoaded, enableDismiss = cancellable) { modifier, dismiss ->
+    AnimatedAlertDialog(visible, onDismissRequest = onLoaded, enableDismiss = cancellable) { dismiss ->
 
         val message by remember { loadingMessage }
         var cancel by remember { mutableStateOf(false) }
 
         BorderCard(
-            modifier = Modifier.fillMaxSize(GeneralProportion()).then(modifier),
+            modifier = Modifier.fillMaxSize(GeneralProportion()),
             backgroundColor = Color.Gray
         ) {
             LaunchedEffect(Unit) {

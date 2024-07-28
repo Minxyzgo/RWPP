@@ -38,14 +38,13 @@ fun BanUnitViewDialog(
 
     AnimatedAlertDialog(
         visible = visible, onDismissRequest = onDismissRequest
-    ) { m, d ->
+    ) { d ->
         val selectedUnits = remember(lastSelectedUnits) { mutableListOf<GameUnit>().apply { addAll(lastSelectedUnits) } }
         BorderCard(
             backgroundColor = Color.Gray,
             modifier = Modifier
                 .fillMaxSize(LargeProportion())
                 .padding(10.dp)
-                .then(m)
         ) {
             ExitButton(d)
             val state = rememberLazyListState()

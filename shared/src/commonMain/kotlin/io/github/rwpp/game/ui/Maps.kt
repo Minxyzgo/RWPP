@@ -45,13 +45,12 @@ fun MapViewDialog(
     onSelectedMap: (Int, GameMap) -> Unit
 ) = AnimatedAlertDialog(
     visible = visible, onDismissRequest = onDismissRequest
-) { m, d ->
+) { d ->
     BorderCard(
         backgroundColor = Color.Gray,
         modifier = Modifier
             .fillMaxSize(0.95f)
             .padding(10.dp)
-            .then(m)
     ) {
         ExitButton(d)
         val room = LocalController.current.gameRoom
