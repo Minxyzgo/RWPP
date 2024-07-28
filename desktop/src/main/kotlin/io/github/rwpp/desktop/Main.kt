@@ -9,7 +9,6 @@ package io.github.rwpp.desktop
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -18,27 +17,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
-import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.*
 import io.github.rwpp.App
 import io.github.rwpp.ContextController
 import io.github.rwpp.LocalController
 import io.github.rwpp.desktop.impl.GameContextControllerImpl
 import io.github.rwpp.ui.RWSingleOutlinedTextField
 import io.github.rwpp.ui.RWTextButton
-import io.github.rwpp.ui.v2.Logo
 import io.github.rwpp.ui.v2.TitleBrush
-import org.jetbrains.compose.resources.*
 import java.awt.*
-import java.awt.event.ComponentEvent
-import java.awt.event.ComponentListener
 import java.io.File
 import javax.imageio.ImageIO
-import javax.imageio.stream.ImageInputStream
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
