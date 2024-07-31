@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.ui.v2.LineSpinFadeLoaderIndicator
 import kotlinx.coroutines.launch
 
 val loadingMessage = mutableStateOf("")
@@ -45,8 +46,7 @@ fun LoadingView(
         var cancel by remember { mutableStateOf(false) }
 
         BorderCard(
-            modifier = Modifier.fillMaxSize(GeneralProportion()),
-            backgroundColor = Color.Gray
+            modifier = Modifier.size(500.dp),
         ) {
             LaunchedEffect(Unit) {
                 scope.launch {
@@ -64,56 +64,9 @@ fun LoadingView(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if(enableAnimation && !cancel) LoadingAnimation(modifier = Modifier.padding(20.dp))
-                Text(message, modifier = Modifier.padding(20.dp))
+                if(enableAnimation && !cancel) LineSpinFadeLoaderIndicator(Color(151, 188, 98))
+                Text(message, modifier = Modifier.padding(20.dp).offset(y = 50.dp), color = Color.White)
             }
         }
     }
-}
-
-@Composable
-fun LoadingAnimation(
-    modifier: Modifier = Modifier,
-    indicatorSize: Dp = 100.dp,
-    circleColors: List<Color> = listOf(
-        Color(0xFF5851D8),
-        Color(0xFF833AB4),
-        Color(0xFFC13584),
-        Color(0xFFE1306C),
-        Color(0xFFFD1D1D),
-        Color(0xFFF56040),
-        Color(0xFFF77737),
-        Color(0xFFFCAF45),
-        Color(0xFFFFDC80),
-        Color(0xFF5851D8)
-    ),
-    animationDuration: Int = 360
-) {
-
-    val infiniteTransition = rememberInfiniteTransition()
-
-    val rotateAnimation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = animationDuration,
-                easing = LinearEasing
-            )
-        )
-    )
-
-    CircularProgressIndicator(
-        modifier = Modifier
-            .size(size = indicatorSize)
-            .rotate(degrees = rotateAnimation)
-            .border(
-                width = 4.dp,
-                brush = Brush.sweepGradient(circleColors),
-                shape = CircleShape
-            ).then(modifier),
-        progress = 1f,
-        strokeWidth = 1.dp,
-        color = Color.Transparent // Set background color
-    )
 }

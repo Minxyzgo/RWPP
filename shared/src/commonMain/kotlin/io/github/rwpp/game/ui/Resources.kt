@@ -12,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -33,6 +34,7 @@ import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.shared.generated.resources.Res
 import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -91,7 +93,7 @@ fun ResourceView(
                     result,
                     modifier = Modifier.padding(5.dp),
                     color = Color.Black,
-                    style = MaterialTheme.typography.headlineLarge
+                    style = MaterialTheme.typography.headlineMedium
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -131,72 +133,76 @@ fun ResourceView(
             val state = rememberLazyListState()
             val resources = context.getAllResources()
 
-            LazyColumnWithScrollbar(
-                state = state,
-                data = resources,
+            LazyColumnScrollbar(
+                listState = state,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(
-                    key = { resources[it].id },
-                    count = resources.size
-                ) { index ->
-                    val resource = resources[index]
-                    val (delay, easing) = state.calculateDelayAndEasing(index, 1)
-                    val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
-                    val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
-                    val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
-                    BorderCard(
-                        backgroundColor = Color.DarkGray.copy(.6f),
-                        modifier = Modifier
-                            .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
-                            .animateItemPlacement()
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .padding(5.dp)
-                    ) {
-                        Column {
-                            var checked by remember(selectedResource) {
-                                mutableStateOf(selectedResource == resource)
-                            }
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    state = state
+                ) {
+                    items(
+                        key = { resources[it].id },
+                        count = resources.size
+                    ) { index ->
+                        val resource = resources[index]
+                        val (delay, easing) = state.calculateDelayAndEasing(index, 1)
+                        val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
+                        val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
+                        val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
+                        BorderCard(
+                            backgroundColor = Color.DarkGray.copy(.6f),
+                            modifier = Modifier
+                                .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+                                .animateItemPlacement()
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                                .padding(5.dp)
+                        ) {
+                            Column {
+                                var checked by remember(selectedResource) {
+                                    mutableStateOf(selectedResource == resource)
+                                }
 
-                            Row {
-                                Image(
-                                    resource.iconPainter ?: painterResource(Res.drawable.error_missingmap),
-                                    null,
-                                    modifier = Modifier.size(120.dp).padding(5.dp)
-                                )
-                                RWCheckbox(checked, onCheckedChange = {
-                                    checked = !checked
-                                    selectedResource = if(checked) resource else null
-                                }, modifier = Modifier.padding(5.dp))
-                                Text(
-                                    resource.config.name,
-                                    modifier = Modifier.padding(5.dp),
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    color = Color(151, 188, 98)
-                                )
-                            }
+                                Row {
+                                    Image(
+                                        resource.iconPainter ?: painterResource(Res.drawable.error_missingmap),
+                                        null,
+                                        modifier = Modifier.size(120.dp).padding(5.dp)
+                                    )
+                                    RWCheckbox(checked, onCheckedChange = {
+                                        checked = !checked
+                                        selectedResource = if(checked) resource else null
+                                    }, modifier = Modifier.padding(5.dp))
+                                    Text(
+                                        resource.config.name,
+                                        modifier = Modifier.padding(5.dp),
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        color = Color(151, 188, 98)
+                                    )
+                                }
 
-                            val expandedStyle = remember {
-                                SpanStyle(
-                                    fontWeight = FontWeight.W500,
-                                    color = Color(173, 216, 230),
-                                    fontStyle = FontStyle.Italic,
-                                    textDecoration = TextDecoration.Underline
-                                )
-                            }
+                                val expandedStyle = remember {
+                                    SpanStyle(
+                                        fontWeight = FontWeight.W500,
+                                        color = Color(173, 216, 230),
+                                        fontStyle = FontStyle.Italic,
+                                        textDecoration = TextDecoration.Underline
+                                    )
+                                }
 
-                            SelectionContainer {
-                                ExpandableText(
-                                    text = resource.config.description,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    textModifier = Modifier.padding(top = 5.dp),
-                                    showMoreStyle = expandedStyle,
-                                    showLessStyle = expandedStyle
-                                )
-                            }
+                                SelectionContainer {
+                                    ExpandableText(
+                                        text = resource.config.description,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        textModifier = Modifier.padding(top = 5.dp),
+                                        showMoreStyle = expandedStyle,
+                                        showLessStyle = expandedStyle
+                                    )
+                                }
 
-                            Spacer(modifier = Modifier.size(10.dp))
+                                Spacer(modifier = Modifier.size(10.dp))
+                            }
                         }
                     }
                 }

@@ -165,9 +165,10 @@ kotlin {
                 api(compose.material3)
                 api(compose.components.resources)
                 api(compose.ui)
-                api("com.halilibo.compose-richtext:richtext-ui:0.17.0")
+                //api("com.halilibo.compose-richtext:richtext-ui:0.17.0")
                 api("com.squareup.okhttp3:okhttp:4.11.0")
                 api("net.peanuuutz.tomlkt:tomlkt:0.3.7")
+                //api("io.github.androidpoet:dropdown:1.1.2")
                 //api("com.github.nanihadesuka:LazyColumnScrollbar:1.7.2")
                 //api("com.google.code.gson:gson:2.10.1")
                 //api("io.github.oleksandrbalan:modalsheet:0.5.0")
@@ -175,9 +176,9 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                api("androidx.activity:activity-compose:1.7.2")
-                api("androidx.appcompat:appcompat:1.6.1")
-                api("androidx.core:core-ktx:1.12.0")
+                api("androidx.activity:activity-compose:1.9.1")
+                api("androidx.appcompat:appcompat:1.7.0")
+                api("androidx.core:core-ktx:1.13.1")
             }
         }
 

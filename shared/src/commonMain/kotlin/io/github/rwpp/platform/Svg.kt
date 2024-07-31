@@ -11,4 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
 
 @Composable
-expect fun loadSvg(path: String): Painter
+expect fun loadSvgPlatform(path: String): Painter
+
+private val svg = mutableMapOf<String, Painter>()
+
+@Composable
+fun loadSvg(path: String): Painter = svg.getOrPut(path) { loadSvgPlatform(path) }

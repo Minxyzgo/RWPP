@@ -47,9 +47,8 @@ fun MapViewDialog(
     visible = visible, onDismissRequest = onDismissRequest
 ) { d ->
     BorderCard(
-        backgroundColor = Color.Gray,
         modifier = Modifier
-            .fillMaxSize(0.95f)
+           // .fillMaxSize(0.95f)
             .padding(10.dp)
     ) {
         ExitButton(d)
@@ -59,7 +58,7 @@ fun MapViewDialog(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-            Text("MapView", style = MaterialTheme.typography.displayLarge.run { copy(fontSize = this.fontSize * scaleFitFloat()) })
+            Text("MapView", style = MaterialTheme.typography.headlineLarge.run { copy(fontSize = this.fontSize * scaleFitFloat()) })
         }
 
         var selectedIndex0 by remember { mutableStateOf(lastSelectedMapType.ordinal) }
@@ -114,7 +113,7 @@ fun MapViewDialog(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LazyGridItemScope.MapItem(
     index: Int,

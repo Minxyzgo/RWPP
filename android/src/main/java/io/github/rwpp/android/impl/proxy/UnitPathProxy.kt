@@ -80,7 +80,7 @@ object UnitPathProxy {
                 val b = Reflect.get<com.corrodinggames.rts.gameFramework.bb>(self, "b")!!
 
 
-                if(b.b.startsWith("music")) return@addProxy Unit
+                if(!b.b.startsWith("music")) return@addProxy Unit
                 val a = Reflect.get<MediaPlayer>(self, "a")!!
                 try {
                     a.reset()

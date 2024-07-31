@@ -145,6 +145,7 @@ fun Net.registerListeners() {
                 "",
                 "v1.15 - RWPP Client",
                 room.mods.joinToString(", "),
+                if (room.isStartGame) ServerStatus.InGame else ServerStatus.BattleRoom
             )
         )
     }

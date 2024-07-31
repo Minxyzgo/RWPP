@@ -40,7 +40,7 @@ fun MissionView(onExit: () -> Unit) {
             modifier = Modifier.fillMaxWidth().scaleFit(),
             horizontalArrangement = Arrangement.Center
         ) {
-            Text(readI18n("mission.title"), style = MaterialTheme.typography.displayLarge)
+            Text(readI18n("mission.title"), style = MaterialTheme.typography.headlineLarge)
         }
 
         var selectedIndex0 by remember { mutableStateOf(0) }

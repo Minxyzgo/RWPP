@@ -43,7 +43,7 @@ fun ReplaysViewDialog(
             modifier = Modifier.fillMaxWidth().scaleFit(),
             horizontalArrangement = Arrangement.Center
         ) {
-            Text("Replay", style = MaterialTheme.typography.displayLarge)
+            Text("Replay", style = MaterialTheme.typography.headlineLarge)
         }
 
         LargeDividingLine { 5.dp }

@@ -10,34 +10,28 @@
 package io.github.rwpp
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.halilibo.richtext.ui.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.KickedEvent
@@ -46,12 +40,8 @@ import io.github.rwpp.event.events.QuestionReplyEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.ui.*
 import io.github.rwpp.i18n.readI18n
-import io.github.rwpp.ui.deliciousFonts
-import io.github.rwpp.shared.generated.resources.Res
-import io.github.rwpp.shared.generated.resources.title
+import io.github.rwpp.platform.loadSvg
 import io.github.rwpp.ui.*
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.painterResource
 
 var LocalController = staticCompositionLocalOf<ContextController> { null!! }
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
@@ -60,26 +50,39 @@ var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
 fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
 //
 
-    val deliciousFont = deliciousFonts()
+    val jostFonts = JostFonts()
+    val valoraxFont = ValoraxFont()
 
     val typography = Typography(
         displayLarge = TextStyle(
-            color = Color.Black,
-            fontFamily = deliciousFont,
-            fontWeight = FontWeight.Bold,
-            fontSize = 35.sp
+            color = Color.White,
+            fontFamily = valoraxFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = 32.sp
         ),
         headlineLarge = TextStyle(
-            color = Color.Black,
-            fontFamily = deliciousFont,
+            color = Color.White,
+            fontFamily = jostFonts,
             fontWeight = FontWeight.Bold,
             fontSize = 21.sp
         ),
+        headlineMedium = TextStyle(
+            color = Color.White,
+            fontFamily = jostFonts,
+            fontWeight = FontWeight.Normal,
+            fontSize = 19.sp
+        ),
         bodyLarge = TextStyle(
-            color = Color.Black,
-            fontFamily = deliciousFont,
+            color = Color.White,
+            fontFamily = jostFonts,
             fontWeight = FontWeight.Bold,
             fontSize = 15.sp
+        ),
+        bodyMedium = TextStyle(
+            color = Color.White,
+            fontFamily = jostFonts,
+            fontWeight = FontWeight.Normal,
+            fontSize = 11.sp
         )
     )
 
@@ -106,7 +109,11 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
 
     MaterialTheme(
         typography = typography,
-        colorScheme = lightColorScheme()
+        colorScheme = lightColorScheme(
+            surface = Color(27, 18, 18),
+            onSurface = Color.White,
+            primary = Color.Black
+        )
     ) {
 
         BoxWithConstraints(
@@ -163,6 +170,9 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             },
                             resource = {
                                 showResourceView = true
+                            },
+                            replay = {
+                                showReplayView = true
                             }
                         )
                     }
@@ -180,7 +190,6 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     MultiplayerView(
                         { showMultiplayerView = false },
                         { showRoomView = true },
-                        { showReplayView = true }
                     )
                 }
 
@@ -207,7 +216,6 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 ) {
                     ReplaysViewDialog {
                         showReplayView = false
-                        showMultiplayerView = true
                     }
                 }
 
@@ -242,8 +250,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     kickedDialogVisible,
                     onDismissRequest = { kickedDialogVisible = false }) { dismiss ->
                     BorderCard(
-                        modifier = Modifier.fillMaxSize(GeneralProportion()),
-                        backgroundColor = Color.Gray
+                       modifier = Modifier.size(500.dp),
                     ) {
                         ExitButton(dismiss)
 
@@ -268,8 +275,8 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             Text(
                                 kickedReason,
                                 modifier = Modifier.padding(5.dp),
-                                color = Color.Black,
-                                style = MaterialTheme.typography.headlineLarge
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyLarge
                             )
                         }
                     }
@@ -296,21 +303,32 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 ) { dismiss ->
                     BorderCard(
                         modifier = Modifier.fillMaxSize(GeneralProportion()),
-                        backgroundColor = Color.Gray
                     ) {
                         ExitButton(dismiss)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                        Box(modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    listOf(Color(0xE9EE8888),
+                                        Color(0xFFE4BD79)))
+                            ),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Info, null, modifier = Modifier.size(25.dp).padding(5.dp))
-                            Text(
-                                questionEvent.title,
-                                modifier = Modifier.padding(5.dp),
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = Color(151, 188, 98)
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+
+                                Icon(Icons.Default.Info, null, modifier = Modifier.size(25.dp).padding(5.dp))
+                                Text(
+                                    questionEvent.title,
+                                    modifier = Modifier.padding(5.dp),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    color = Color(151, 188, 98)
+                                )
+                            }
                         }
                         LargeDividingLine { 5.dp }
                         Column(
@@ -361,7 +379,6 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MainMenu(
     multiplayer: () -> Unit,
@@ -370,143 +387,99 @@ fun MainMenu(
     mods: () -> Unit,
     sandbox: () -> Unit,
     resource: () -> Unit,
+    replay: () -> Unit
 ) {
-    MaterialTheme.colorScheme
-    val deliciousFont = MaterialTheme.typography.headlineLarge.fontFamily!!
-    Row(modifier = Modifier.fillMaxSize()) {
-        BorderCard(
-            modifier = Modifier
-                .weight(1f)
-                .padding(10.dp)
-        ) {
-            LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(10.dp)
-            ) {
-                item {
-                    Text(
-                        "RWPP Update news - $projectVersion",
-                        fontFamily = deliciousFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 36.sp
-                    )
-                }
-                item {
-                    RichText(
-                        modifier = Modifier
-                            .wrapContentSize(),
-                        style = RichTextStyle(
-                            headingStyle = { level, _ ->
-                                when (level) {
-                                    0 -> TextStyle(
-                                        fontFamily = deliciousFont,
-                                        fontSize = 36.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    1 -> TextStyle(
-                                        fontFamily = deliciousFont,
-                                        fontSize = 26.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    2 -> TextStyle(
-                                        fontFamily = deliciousFont,
-                                        fontSize = 22.sp,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    3 -> TextStyle(
-                                        fontFamily = deliciousFont,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        fontStyle = FontStyle.Italic
-                                    )
-                                    4 -> TextStyle(
-                                        fontFamily = deliciousFont,
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    5 -> TextStyle(
-                                        fontFamily = deliciousFont,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    else -> TextStyle(fontFamily = deliciousFont)
-                                }
-                            }
-                        )
-                    ) {
-                        LargeDividingLine {
-                            with(LocalDensity.current) {
-                                currentRichTextStyle.resolveDefaults().paragraphSpacing!!.toDp()
-                            }
-                        }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        BorderCard {
+            Text("RWPP",
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                style = TextStyle(
+                    fontFamily = MaterialTheme.typography.displayLarge.fontFamily,
+                    brush = Brush.linearGradient(listOf(Color(44, 95, 45), Color(151, 188, 98))),
+                    fontSize = 100.sp
+                )
+            )
 
-                        Heading(1, "Contact")
-                        CodeBlock(
-                           """
-                               QQ Group: 150450999
-                               Github: https://github.com/Minxyzgo/RWPP
-                           """.trimIndent()
-                        )
-                        Heading(1, "Changelogs")
-                        CodeBlock("""
-                            1.0.9-beta: Add Server list.
-                            1.0.8-release: Replay and Server are now supported.
-                            1.0.7-beta: Add external resource, bugs fixed
-                            1.0.6-alpha: Fix bugs, Transfer-Mod(Experimental)
-                            1.0.5-alpha: Ban units, Game layer
-                            1.0.4-alpha: Add i18n support. Player options
-                            1.0.3-alpha: Improve menu and resize the layout on small screen device.
-                        """.trimIndent())
-                        Heading(1, "Notes")
-                        CodeBlock(
-                            readI18n("menu.notes")
-                        )
-                        Heading(1, "Features")
-                        CodeBlock(
-                            """
-                                The desktop version of RWPP will make it easier for you to enter Chinese (also included other languages requiring IME)
-                                More options for host.
-                                Mod Menu Improvement & Server list Filter
-                            """.trimIndent()
-                        )
-                    }
+            Text(
+                projectVersion,
+                modifier = Modifier.padding(top = 1.dp, bottom = 5.dp).align(Alignment.CenterHorizontally),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
+            )
+
+            Row(horizontalArrangement = Arrangement.Center) {
+                MenuButton(
+                    readI18n("menu.mission"),
+                    loadSvg("destruction"),
+                    onClick = mission
+                )
+
+                MenuButton(
+                    readI18n("menu.multiplayer"),
+                    loadSvg("group"),
+                    onClick = multiplayer
+                )
+
+                MenuButton(
+                    readI18n("menu.mods"),
+                    loadSvg("dns"),
+                    onClick = mods
+                )
+
+                MenuButton(
+                    readI18n("menu.sandbox"),
+                    loadSvg("edit_square"),
+                    onClick = sandbox
+                )
+            }
+
+            Row(horizontalArrangement = Arrangement.Center) {
+                MenuButton(
+                    readI18n("menu.settings"),
+                    Icons.Default.Settings,
+                    onClick = settings
+                )
+
+                MenuButton(
+                    readI18n("menu.resource"),
+                    loadSvg("stacks"),
+                    onClick = resource
+                )
+
+                MenuButton(
+                    readI18n("menu.replay"),
+                    Icons.Default.PlayArrow,
+                    onClick = replay
+                )
+
+                with(LocalController.current) {
+                    MenuButton(
+                        readI18n("menu.exit"),
+                        loadSvg("exit"),
+                    ) { exit() }
                 }
             }
         }
 
-        BorderCard(
-            modifier = Modifier
-                .weight(0.6f)
-                .padding(10.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
 
-                Image(painter = painterResource(Res.drawable.title), "title", modifier = Modifier.padding(15.dp))
-            }
 
-            LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                item { MenuButton(readI18n("menu.mission"), onClick = mission) }
-                item { MenuButton(readI18n("menu.sandbox"), onClick = sandbox) }
-                item { MenuButton(readI18n("menu.multiplayer"), onClick = multiplayer) }
-                item { MenuButton(readI18n("menu.mods"), onClick = mods) }
-                item { MenuButton(readI18n("menu.resource"), onClick = resource) }
-                item { MenuButton(readI18n("menu.settings"), onClick = settings) }
-                item {
-                    with(LocalController.current) {
-                        MenuButton(readI18n("menu.exit")) { exit() }
-                    }
-                }
 
-                item { Spacer(Modifier.size(50.dp)) }
-            }
+//        item { MenuButton(readI18n("menu.sandbox"), onClick = sandbox) }
+//        item { MenuButton(readI18n("menu.multiplayer"), onClick = multiplayer) }
+//        item { MenuButton(readI18n("menu.mods"), onClick = mods) }
+//        item { MenuButton(readI18n("menu.resource"), onClick = resource) }
+//        item { MenuButton(readI18n("menu.settings"), onClick = settings) }
+//        item {
+//            with(LocalController.current) {
+//                MenuButton(readI18n("menu.exit")) { exit() }
+//            }
+//        }
+//
+//        item { Spacer(Modifier.size(50.dp)) }
         }
-    }
+
 }

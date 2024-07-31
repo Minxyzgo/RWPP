@@ -14,6 +14,7 @@ hostByRCN = "以RCN创建房间"
 joinServer = "加入服务器"
 userName = "用户名"
 useAsDefaultList = "用作默认房间列表"
+battleroom = "战役室"
 
 [multiplayer.room]
 selectMap = "选择地图"
@@ -50,6 +51,7 @@ mods = "模组"
 resource = "资源"
 settings = "设置"
 exit = "退出"
+replay = "观看回放"
 notes = """
 对于安卓，开启一个新游戏然后打开设置以启用外部文件的访问权限.
 对于Android11及其以上，为了确保传输模组能正常工作，请在设置中给予管理所有文件权限.

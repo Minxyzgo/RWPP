@@ -162,6 +162,8 @@ class GameImpl : Game {
                 override var option: RoomOption = RoomOption()
                 override val isConnecting: Boolean
                     get() = LClass.B().bX.B
+                override val isStartGame: Boolean
+                    get() = isGaming
 
                 private val mapNameFormatMethod = com.corrodinggames.rts.appFramework.i::class.java.getDeclaredMethod("e", String::class.java)
 
@@ -328,7 +330,9 @@ class GameImpl : Game {
                 SwingUtilities.invokeLater {
                     sendMessageDialog.isVisible = true
                     val window = mainJFrame
-                    sendMessageDialog.setLocation(window.x + window.width / 2, window.y + window.height / 2)
+                    sendMessageDialog.setLocation(window.x + window.width / 2 - sendMessageDialog.width / 2, window.y + window.height / 2 - sendMessageDialog.height / 2)
+                   // focusRequester.requestFocus()
+                    //sendMessageDialog.getComponent(0).requestFocus()
                 }
             }
 
@@ -336,7 +340,9 @@ class GameImpl : Game {
                 SwingUtilities.invokeLater {
                     sendMessageDialog.isVisible = true
                     val window = mainJFrame
-                    sendMessageDialog.setLocation(window.x + window.width / 2, window.y + window.height / 2)
+                    sendMessageDialog.setLocation(window.x + window.width / 2 - sendMessageDialog.width / 2, window.y + window.height / 2 - sendMessageDialog.height / 2)
+                   // focusRequester.requestFocus()
+                    //sendMessageDialog.getComponent(0).requestFocus()
                 }
             }
         }
@@ -649,13 +655,11 @@ class GameImpl : Game {
                 val a2: String? = FClass.a(`R$drawable`::class.java, i)
                 val resFileExist = File(resOutputDir).exists()
                 if (a2 != null) {
-                    println("reading res drawable:$a2 i:$i")
                     return@addProxy com.corrodinggames.rts.gameFramework.e.a.a("${if(resFileExist) resOutputDir else "res/"}drawable", a2)
 
                 }
                 val a3: String? = FClass.a(`R$raw`::class.java, i)
                 if (a3 != null) {
-                    println("reading res raw:$a3 i:$i")
                     return@addProxy com.corrodinggames.rts.gameFramework.e.a.a("${if(resFileExist) resOutputDir else "res/"}raw", a3)
 
                 }
@@ -668,7 +672,6 @@ class GameImpl : Game {
             addProxy("a", String::class, mode = InjectMode.InsertBefore) { str: String ->
                 val o = FClass.o(str)
                 val resFileExist = File(resOutputDir).exists()
-                println("drawable: $o")
                 if(o.startsWith("drawable:") && resFileExist) {
                     InterruptResult(com.corrodinggames.librocket.b.b + resOutputDir + "drawable/" + o.removePrefix("drawable:"))
                 } else Unit
@@ -745,7 +748,7 @@ class GameImpl : Game {
                 }
 
                 override fun a(p0: String, p1: String) {
-                    if(p0.startsWith("Briefing", ignoreCase = true)) {
+                    if(p0.startsWith("Briefing", ignoreCase = true) || p0.startsWith("Players", ignoreCase = true)) {
                         i.a(p0, p1)
                     } else {
                         KickedEvent("$p0: $p1").broadCastIn()

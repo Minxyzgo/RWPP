@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.Popup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -117,16 +116,13 @@ fun AnimatedTransitionDialog(
                 }
             }
         },
-        properties = DialogProperties(dismissOnBackPress = enableDismiss, usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Box(
             contentAlignment = contentAlignment,
-            modifier = Modifier.fillMaxSize()
         ) {
             AnimatedScaleInTransition(visible = animateTrigger.value) {
-
                 content(AnimatedTransitionDialogHelper(coroutineScope, onDismissSharedFlow))
-
             }
         }
     }

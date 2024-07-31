@@ -20,7 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
@@ -31,7 +30,9 @@ import io.github.rwpp.ui.ConstraintWindowManager
 import io.github.rwpp.ui.LoadingView
 import io.github.rwpp.ui.RWSelectionColors
 import io.github.rwpp.ui.v2.TitleBrush
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.system.exitProcess
 
 class LoadingScreen : ComponentActivity() {

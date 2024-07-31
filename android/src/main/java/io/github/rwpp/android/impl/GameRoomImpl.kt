@@ -109,6 +109,8 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         set(value) { GameEngine.t().bU.aA.m = value }
     override val mods: Array<String>
         get() = roomMods
+    override val isStartGame: Boolean
+        get() = isGaming
     override var isRWPPRoom: Boolean = false
     override var option: RoomOption = RoomOption()
     override val isConnecting: Boolean

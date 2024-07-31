@@ -33,6 +33,7 @@ interface GameRoom {
     var lockedRoom: Boolean
     val teamLock: Boolean
     val mods: Array<String>
+    val isStartGame: Boolean
 
     /**
      * Describe the current room is whether hosted by a RWPP protocol client (or server).

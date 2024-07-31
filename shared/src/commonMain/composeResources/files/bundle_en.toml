@@ -14,6 +14,7 @@ hostByRCN = "Host By RCN"
 joinServer = "Join Server"
 userName = "User Name"
 useAsDefaultList = "Use as default room list"
+battleroom = "Battleroom"
 
 [multiplayer.room]
 selectMap = "Select Map"
@@ -50,6 +51,7 @@ mods = "Mods"
 resource = "Resource"
 settings = "Settings"
 exit = "Exit"
+replay = "Watch Replay"
 notes = """
 For android, start a new game and pause to open the setting to use external folder.
 For Android11 and above, in order to ensure the normal operation of transferrring mods, please grant permission to manage all files in settings.

@@ -8,12 +8,14 @@
 package io.github.rwpp.android.impl
 
 import android.graphics.BitmapFactory
+import android.os.Build
+import android.os.Build.VERSION.SDK_INT
+import android.os.Environment
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import io.github.rwpp.R
 import io.github.rwpp.android.MainActivity
-import io.github.rwpp.android.controller
 import io.github.rwpp.external.Resource
 import io.github.rwpp.external.ResourceConfig
 import io.github.rwpp.impl.BaseExternalHandlerImpl
@@ -80,5 +82,13 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
                 }
             }
         }
+    }
+
+    override fun getUsingResource(): Resource? {
+        if (SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) return null
+        }
+
+        return super.getUsingResource()
     }
 }

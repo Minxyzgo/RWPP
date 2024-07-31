@@ -9,6 +9,7 @@ package io.github.rwpp.net.packets
 
 import io.github.rwpp.net.Packet
 import io.github.rwpp.net.PacketType
+import io.github.rwpp.net.ServerStatus
 import io.github.rwpp.utils.io.GameInputStream
 import io.github.rwpp.utils.io.GameOutputStream
 
@@ -23,6 +24,7 @@ sealed class ServerPacket(type: PacketType) : Packet(type) {
             output.writeInt(1) // buf must > 6
         }
     }
+
     class ServerInfoReceivePacket(
         var name: String = "",
         var currentPlayer: Int = 0,
@@ -31,6 +33,7 @@ sealed class ServerPacket(type: PacketType) : Packet(type) {
         var description: String = "",
         var version: String = "",
         var mods: String = "",
+        var status: ServerStatus = ServerStatus.BattleRoom,
         var iconBytes: ByteArray = byteArrayOf(),
     ): ServerPacket(PacketType.RECEIVE_SERVER_INFO_FROM_LIST) {
         var ping: Int = 0
@@ -43,6 +46,7 @@ sealed class ServerPacket(type: PacketType) : Packet(type) {
             version = input.readUTF()
             mods = input.readUTF()
             iconBytes = input.readNextBytes()
+            status = ServerStatus.entries[input.readInt()]
         }
 
         override fun writePacket(output: GameOutputStream) {
@@ -54,6 +58,7 @@ sealed class ServerPacket(type: PacketType) : Packet(type) {
             output.writeUTF(version)
             output.writeUTF(mods)
             output.writeBytesWithSize(iconBytes)
+            output.writeInt(status.ordinal)
         }
     }
 }

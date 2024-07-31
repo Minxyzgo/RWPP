@@ -10,6 +10,8 @@ package io.github.rwpp.game.ui
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -30,6 +32,7 @@ import io.github.rwpp.LocalController
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.v2.LazyColumnScrollbar
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -95,8 +98,9 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
 
 
                 remember(filter, updated) {
-                    if(filter.isNotBlank() || updated) mods = getAllMods().filter { it.name.uppercase().contains(filter.uppercase()) }
-                    if(filter.isBlank()) mods = getAllMods()
+                    if (filter.isNotBlank() || updated) mods =
+                        getAllMods().filter { it.name.uppercase().contains(filter.uppercase()) }
+                    if (filter.isBlank()) mods = getAllMods()
                     updated = false
                 }
 
@@ -104,71 +108,75 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
 
                 val state = rememberLazyListState()
 
-                LazyColumnWithScrollbar(
-                    state = state,
-                    data = mods,
+                LazyColumnScrollbar(
+                    listState = state,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(
-                        key = { mods[it].id },
-                        count = mods.size
-                    ) { index ->
-                        val mod = mods[index]
-                        val (delay, easing) = state.calculateDelayAndEasing(index, 1)
-                        val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
-                        val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
-                        val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
-                        BorderCard(
-                            backgroundColor = Color.DarkGray.copy(.6f),
-                            modifier = Modifier
-                                .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
-                                .animateItemPlacement()
-                                .fillMaxWidth()
-                                .wrapContentHeight()
-                                .padding(5.dp)
-                        ) {
-                            Column {
-                                var checked by remember { mutableStateOf(mod.isEnabled) }
-                                remember(disableAll) {
-                                    if (disableAll) {
-                                        checked = false
-                                        mod.isEnabled = false
-                                        disableAll = false
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = state
+                    ) {
+                        items(
+                            count = mods.size,
+                            key = { mods[it].id }
+                        ) { index ->
+                            val mod = mods[index]
+                            val (delay, easing) = state.calculateDelayAndEasing(index, 1)
+                            val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
+                            val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
+                            val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
+                            BorderCard(
+                                backgroundColor = Color.DarkGray.copy(.6f),
+                                modifier = Modifier
+                                    .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+                                    .animateItemPlacement()
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .padding(5.dp)
+                            ) {
+                                Column {
+                                    var checked by remember { mutableStateOf(mod.isEnabled) }
+                                    remember(disableAll) {
+                                        if (disableAll) {
+                                            checked = false
+                                            mod.isEnabled = false
+                                            disableAll = false
+                                        }
                                     }
-                                }
 
-                                Row {
-                                    RWCheckbox(checked, onCheckedChange = {
-                                        checked = !checked
-                                        mod.isEnabled = checked
-                                    }, modifier = Modifier.padding(5.dp))
-                                    Text(
-                                        mod.name,
-                                        modifier = Modifier.padding(5.dp),
-                                        style = MaterialTheme.typography.headlineLarge,
-                                        color = Color(151, 188, 98)
+                                    Row {
+                                        RWCheckbox(checked, onCheckedChange = {
+                                            checked = !checked
+                                            mod.isEnabled = checked
+                                        }, modifier = Modifier.padding(5.dp))
+                                        Text(
+                                            mod.name,
+                                            modifier = Modifier.padding(5.dp),
+                                            style = MaterialTheme.typography.headlineLarge,
+                                            color = Color(151, 188, 98)
+                                        )
+                                    }
+
+                                    val expandedStyle = remember {
+                                        SpanStyle(
+                                            fontWeight = FontWeight.W500,
+                                            color = Color(173, 216, 230),
+                                            fontStyle = FontStyle.Italic,
+                                            textDecoration = TextDecoration.Underline
+                                        )
+                                    }
+
+                                    ExpandableText(
+                                        text = mod.description,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        textModifier = Modifier.padding(top = 5.dp),
+                                        showMoreStyle = expandedStyle,
+                                        showLessStyle = expandedStyle
                                     )
+
+
+                                    Spacer(modifier = Modifier.size(10.dp))
                                 }
-
-                                val expandedStyle = remember {
-                                    SpanStyle(
-                                        fontWeight = FontWeight.W500,
-                                        color = Color(173, 216, 230),
-                                        fontStyle = FontStyle.Italic,
-                                        textDecoration = TextDecoration.Underline
-                                    )
-                                }
-
-                                ExpandableText(
-                                    text = mod.description,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    textModifier = Modifier.padding(top = 5.dp),
-                                    showMoreStyle = expandedStyle,
-                                    showLessStyle = expandedStyle
-                                )
-
-
-                                Spacer(modifier = Modifier.size(10.dp))
                             }
                         }
                     }

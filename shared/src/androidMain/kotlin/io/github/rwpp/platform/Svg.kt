@@ -5,6 +5,9 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
+
+@file:JvmName("SvgAndroid")
+
 package io.github.rwpp.platform
 
 import androidx.compose.runtime.Composable
@@ -15,7 +18,7 @@ import androidx.compose.ui.res.vectorResource
 import io.github.rwpp.android.R
 
 @Composable
-actual fun loadSvg(path: String): Painter {
+actual fun loadSvgPlatform(path: String): Painter {
     val f = R.drawable::class.java.getDeclaredField(path + "_30")
     return rememberVectorPainter(ImageVector.vectorResource(f.get(null) as Int))
 }

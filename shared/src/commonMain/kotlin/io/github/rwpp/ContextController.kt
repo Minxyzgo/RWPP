@@ -31,6 +31,7 @@ interface ContextController :
             instance.playerLimitRangeFrom = playerLimitRangeFrom
             instance.showWelcomeMessage = showWelcomeMessage
             instance.allServerConfig = allServerConfig
+            instance.battleroom = battleroom
         }
     }
 

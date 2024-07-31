@@ -11,12 +11,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.unit.dp
@@ -24,6 +28,7 @@ import io.github.rwpp.App
 import io.github.rwpp.ContextController
 import io.github.rwpp.LocalController
 import io.github.rwpp.desktop.impl.GameContextControllerImpl
+import io.github.rwpp.ui.BorderCard
 import io.github.rwpp.ui.RWSingleOutlinedTextField
 import io.github.rwpp.ui.RWTextButton
 import io.github.rwpp.ui.v2.TitleBrush
@@ -32,10 +37,10 @@ import java.io.File
 import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
-import javax.swing.UIManager
 import javax.swing.WindowConstants
 import kotlin.system.exitProcess
 
+typealias ColorCompose = androidx.compose.ui.graphics.Color
 
 lateinit var mainJFrame: JFrame
 lateinit var gameCanvas: Canvas
@@ -45,6 +50,8 @@ lateinit var gameContext: ContextController
 lateinit var rwppVisibleSetter: (Boolean) -> Unit
 
 fun main(args: Array<String>) {
+    System.setProperty("skiko.renderApi", "OPENGL")
+
    // val isSwingApplication = args.contains("-swingApplication")
     if (File("opengl32.dll").exists()) { // for only debug
         System.loadLibrary("opengl32")
@@ -58,8 +65,6 @@ fun main(args: Array<String>) {
             .defaultScreenDevice
             .displayMode
             .run { Dimension(width, height) }
-
-
 
     //if(isSwingApplication) {
     swingApplication()
@@ -169,17 +174,17 @@ fun main(args: Array<String>) {
 
 fun swingApplication() = SwingUtilities.invokeLater {
 
+
     val window = JFrame()
     gameContext = GameContextControllerImpl { exitProcess(0) }
 
-    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+    //UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 
     val panel = ComposePanel()
     panel.isVisible = true
     panel.size = Dimension(800, 600)
     panel.isOpaque = false
     panel.isFocusable = true
-
     rwppVisibleSetter = { panel.isVisible = it }
 
     window.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
@@ -207,7 +212,14 @@ fun swingApplication() = SwingUtilities.invokeLater {
             LocalController provides gameContext
         ) {
             Box(
-                modifier = Modifier.fillMaxSize().background(brush),
+                modifier = Modifier.fillMaxSize().background(brush = Brush.verticalGradient(
+                    listOf(ColorCompose.Black,
+                        androidx.compose.ui.graphics.Color(52, 52, 52),
+                        androidx.compose.ui.graphics.Color(2, 48, 32),
+                        androidx.compose.ui.graphics.Color(52, 52, 52),
+                        ColorCompose.Black
+                    )
+                )),
                 contentAlignment = Alignment.Center
             ) {
                 App()
@@ -249,15 +261,17 @@ fun swingApplication() = SwingUtilities.invokeLater {
     panel.requestFocus()
 
     val panel2 = ComposePanel()
-    panel2.size = Dimension(600, 200)
     panel2.isOpaque = false
     panel2.isFocusable = true
+    panel2.size = Dimension(550, 180)
+
     panel2.setContent {
-        Column {
+        BorderCard(modifier = Modifier.height(180.dp).width(550.dp), shape = RectangleShape) {
             var chatMessage by remember { mutableStateOf("") }
             RWSingleOutlinedTextField(
                 label = "Send Message",
                 value = chatMessage,
+                requestFocus = true,
                 modifier = Modifier.fillMaxWidth().padding(10.dp)
                     .onKeyEvent {
                         if(it.key == androidx.compose.ui.input.key.Key.Enter && chatMessage.isNotEmpty()) {
@@ -269,7 +283,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                     },
                 trailingIcon = {
                     Icon(
-                        Icons.Default.ArrowForward,
+                        Icons.AutoMirrored.Filled.ArrowForward,
                         null,
                         modifier = Modifier.clickable {
                             gameContext.gameRoom.sendChatMessage(chatMessage)
@@ -284,10 +298,18 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 },
             )
 
-            RWTextButton("Send Team") {
-                gameContext.gameRoom.sendChatMessage("-t $chatMessage")
-                chatMessage = ""
-                sendMessageDialog.isVisible = false
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                RWTextButton("Send Message") {
+                    gameContext.gameRoom.sendChatMessage(chatMessage)
+                    chatMessage = ""
+                    sendMessageDialog.isVisible = false
+                }
+
+                RWTextButton("Send Team") {
+                    gameContext.gameRoom.sendChatMessage("-t $chatMessage")
+                    chatMessage = ""
+                    sendMessageDialog.isVisible = false
+                }
             }
         }
     }
@@ -296,8 +318,9 @@ fun swingApplication() = SwingUtilities.invokeLater {
     sendMessageDialog.isFocusable = true
     sendMessageDialog.isVisible = false
     sendMessageDialog.isAlwaysOnTop = true
-    sendMessageDialog.setSize(600, 200)
+    sendMessageDialog.size = Dimension(550, 180)
     sendMessageDialog.add(panel2)
+    //sendMessageDialog.background = Color(0, 0, 0, 0)
 
     mainJFrame = window
     canvas.createBufferStrategy(2)

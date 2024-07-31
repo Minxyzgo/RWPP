@@ -23,34 +23,45 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextInputSession
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.shared.generated.resources.Res
 import io.github.rwpp.shared.generated.resources.error_missingmap
+import io.github.rwpp.ui.v2.bounceClick
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun BorderCard(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color.Gray.copy(.85f),
+    backgroundColor: Color = Color(53, 57, 53).copy(0.9f),
+    shape: Shape = RoundedCornerShape(20.dp),
     content: @Composable ColumnScope.() -> Unit
 ) = Card(
-    shape = RoundedCornerShape(20.dp),
+    shape = shape,
     border = BorderStroke(2.dp, Color.DarkGray),
+    elevation =  CardDefaults.cardElevation(defaultElevation = 10.dp),
     colors = CardDefaults.cardColors(containerColor = backgroundColor),
     modifier = modifier,
     content = content
@@ -78,7 +89,6 @@ fun <T> BasicDropdownMenu(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> LargeDropdownMenu(
     modifier: Modifier = Modifier,
@@ -89,34 +99,34 @@ fun <T> LargeDropdownMenu(
     selectedIndex: Int = -1,
     onItemSelected: (index: Int, item: T) -> Unit,
     selectedItemToString: (T) -> String = { it.toString() },
+    selectedItemColor: (T?, Int) -> Color = { _, _ -> Color.White }
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val focusRequest = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
 
     Box(
         modifier = modifier
             .height(IntrinsicSize.Min)
             .width(IntrinsicSize.Max)
     ) {
-        OutlinedTextField(
-            label = { Text(label, fontFamily = MaterialTheme.typography.headlineLarge.fontFamily) },
-            textStyle = MaterialTheme.typography.headlineLarge,
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black,
-                containerColor = Color.Transparent,
-                focusedBorderColor = Color(44, 95, 45),
-                unfocusedBorderColor = Color(151, 188, 98)
-            ),
-            value = if(hasValue) items.getOrNull(selectedIndex)?.let { selectedItemToString(it) } ?: "" else "",
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                val icon = if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
-                Icon(icon, "")
-            },
-            onValueChange = { },
-            readOnly = true,
-        )
+
+            OutlinedTextField(
+                label = { Text(label, fontFamily = MaterialTheme.typography.headlineLarge.fontFamily) },
+                textStyle = MaterialTheme.typography.headlineLarge.copy(color = selectedItemColor(items.getOrNull(selectedIndex), selectedIndex)),
+                colors = RWOutlinedTextColors,
+                value = if(hasValue) items.getOrNull(selectedIndex)?.let { selectedItemToString(it) } ?: "" else "",
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth().focusRequester(focusRequest),
+                trailingIcon = {
+                    val icon = if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                    Icon(icon, "", tint = Color.White)
+                },
+                onValueChange = { },
+                shape = RoundedCornerShape(10.dp),
+                readOnly = true,
+            )
+
 
         // Transparent clickable surface on top of OutlinedTextField
         Surface(
@@ -124,7 +134,7 @@ fun <T> LargeDropdownMenu(
                 .fillMaxSize()
                 .padding(top = 8.dp)
                 .clip(MaterialTheme.shapes.extraSmall)
-                .clickable(enabled = enabled && !expanded) { expanded = true },
+                .clickable(enabled = enabled && !expanded) { expanded = true; focusRequest.requestFocus() },
             color = Color.Transparent,
         ) {}
 
@@ -132,14 +142,16 @@ fun <T> LargeDropdownMenu(
             expanded = expanded,
             onDismissRequest = {
                 expanded = false
+                focusManager.clearFocus()
             }
         ) {
             items.forEachIndexed { index, t ->
                 DropdownMenuItem(
-                    text = { Text(selectedItemToString(t)) },
+                    text = { Text(selectedItemToString(t), style = MaterialTheme.typography.bodyLarge, color = selectedItemColor(t, index)) },
                     onClick = {
                         onItemSelected(index, t)
                         expanded = false
+                        focusManager.clearFocus()
                     }
                 )
             }
@@ -163,7 +175,7 @@ fun LargeOutlinedButton(
     ) {
         OutlinedTextField(
             label = label,
-            textStyle = MaterialTheme.typography.headlineLarge,
+            textStyle = MaterialTheme.typography.headlineMedium,
             colors = RWOutlinedTextColors,
             value = value,
             enabled = enabled,
@@ -203,6 +215,7 @@ fun RWSingleOutlinedTextField(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
+    requestFocus: Boolean = false,
     trailingIcon: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     lengthLimitCount: Int = Int.MAX_VALUE,
@@ -217,19 +230,32 @@ fun RWSingleOutlinedTextField(
             .height(IntrinsicSize.Min)
             .width(IntrinsicSize.Max)
     ) {
+
+        val focusRequester = remember { if (requestFocus) FocusRequester() else null }
+        var requested by remember { mutableStateOf(false) }
+
         OutlinedTextField(
             label = {
                 Text(
                     label,
-                    fontFamily = MaterialTheme.typography.headlineLarge.fontFamily
+                    fontFamily = MaterialTheme.typography.headlineMedium.fontFamily
                 )
             },
-            textStyle = MaterialTheme.typography.headlineLarge,
+            textStyle = MaterialTheme.typography.headlineMedium,
             colors = RWOutlinedTextColors,
             value = value,
             enabled = enabled,
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().apply {
+                if (requestFocus)
+                    focusRequester(focusRequester!!)
+                        .onGloballyPositioned {
+                            if (!requested) {
+                                requested = true
+                                focusRequester.requestFocus()
+                            }
+                        }
+            },
             trailingIcon = trailingIcon,
             leadingIcon = leadingIcon,
             onValueChange = { if(it.length <= lengthLimitCount && (!typeInNumberOnly || !typeInOnlyInteger || it.all { s -> s.isDigit() })) onValueChange(it) },
@@ -246,16 +272,24 @@ fun RWTextButton(
     modifier: Modifier = Modifier,
     leadingIcon: @Composable (() -> Unit)? = null,
     onClick: () -> Unit
-) = OutlinedButton(
-    onClick = onClick,
-    colors = RWButtonColors,
-    modifier = modifier.width(IntrinsicSize.Max),
-    elevation = ButtonDefaults.buttonElevation(),
-    border = BorderStroke(1.dp, Color(151, 188, 98))
+) = Card(
+    border = BorderStroke(5.dp, Color.DarkGray),
+    colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+    shape = RoundedCornerShape(10.dp),
+    elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+    modifier = modifier.bounceClick(onClick),
 ) {
-    leadingIcon?.invoke()
-    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.Center) {
-        Text(label, style = MaterialTheme.typography.headlineLarge)
+    Row(
+        modifier = Modifier.padding(5.dp),
+    ) {
+        leadingIcon?.invoke()
+
+        Text(
+            label,
+            color = Color.White,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(5.dp)
+        )
     }
 }
 

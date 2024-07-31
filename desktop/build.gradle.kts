@@ -31,12 +31,19 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "io.github.rwpp.desktop.MainKt"
+        buildTypes {
+            release {
+                proguard.isEnabled.set(false)
+            }
+        }
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Rwpp"
-            packageVersion = "1.0.0"
+            packageVersion = rootProject.version.toString()
         }
     }
 }
+
+
 

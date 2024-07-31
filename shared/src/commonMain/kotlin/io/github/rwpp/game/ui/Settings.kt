@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,6 +31,7 @@ import io.github.rwpp.config.instance
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.Platform
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import kotlin.math.roundToInt
 
 @Composable
@@ -59,10 +61,12 @@ fun SettingsView(onExit: () -> Unit) {
                 .fillMaxSize()
                 .padding(10.dp)
         ) {
-            Column {
-                ExitButton(onExit)
+            ExitButton(onExit)
 
-                LazyColumn {
+            val state = rememberLazyListState()
+
+            LazyColumnScrollbar(listState = state) {
+                LazyColumn(state = state) {
                     item {
                         SettingsGroup("graphics") {
                             SettingsSwitchComp("showUnitWaypoints")
@@ -85,12 +89,26 @@ fun SettingsView(onExit: () -> Unit) {
                             SettingsSwitchComp("smartSelection_v2", "smartSelection") //v2 ???
                             SettingsSwitchComp("forceEnglish")
                             var teamUnitCapSinglePlayer by remember { mutableStateOf(current.getConfig<Int?>("teamUnitCapSinglePlayer")) }
-                            RWSingleOutlinedTextField("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer?.toString() ?: "", modifier = Modifier.fillMaxWidth(), lengthLimitCount = 6, typeInNumberOnly = true, typeInOnlyInteger = true) {
+                            RWSingleOutlinedTextField(
+                                "teamUnitCapSinglePlayer",
+                                teamUnitCapSinglePlayer?.toString() ?: "",
+                                modifier = Modifier.fillMaxWidth(),
+                                lengthLimitCount = 6,
+                                typeInNumberOnly = true,
+                                typeInOnlyInteger = true
+                            ) {
                                 teamUnitCapSinglePlayer = it.toIntOrNull()
                                 current.setConfig("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer ?: 100)
                             }
                             var teamUnitCapHostedGame by remember { mutableStateOf(current.getConfig<Int?>("teamUnitCapHostedGame")) }
-                            RWSingleOutlinedTextField("teamUnitCapHostedGame", teamUnitCapHostedGame?.toString() ?: "", modifier = Modifier.fillMaxWidth(), lengthLimitCount = 6, typeInNumberOnly = true, typeInOnlyInteger = true) {
+                            RWSingleOutlinedTextField(
+                                "teamUnitCapHostedGame",
+                                teamUnitCapHostedGame?.toString() ?: "",
+                                modifier = Modifier.fillMaxWidth(),
+                                lengthLimitCount = 6,
+                                typeInNumberOnly = true,
+                                typeInOnlyInteger = true
+                            ) {
                                 teamUnitCapHostedGame = it.toIntOrNull()
                                 current.setConfig("teamUnitCapHostedGame", teamUnitCapHostedGame ?: 100)
                             }
@@ -109,7 +127,8 @@ fun SettingsView(onExit: () -> Unit) {
                     item {
                         SettingsGroup("developer") {
                             SettingsSwitchComp("showFps")
-                            SettingsSwitchComp("Show Welcome Message",
+                            SettingsSwitchComp(
+                                "Show Welcome Message",
                                 defaultValue = MultiplayerPreferences.instance.showWelcomeMessage ?: false
                             ) { MultiplayerPreferences.instance.showWelcomeMessage = it }
                         }
@@ -118,7 +137,13 @@ fun SettingsView(onExit: () -> Unit) {
                     item {
                         SettingsGroup("networking") {
                             var port by remember { mutableStateOf(current.getConfig<Int?>("networkPort")) }
-                            RWSingleOutlinedTextField("port", port?.toString() ?: "", modifier = Modifier.fillMaxWidth(), lengthLimitCount = 5, typeInNumberOnly = true) {
+                            RWSingleOutlinedTextField(
+                                "port",
+                                port?.toString() ?: "",
+                                modifier = Modifier.fillMaxWidth(),
+                                lengthLimitCount = 5,
+                                typeInNumberOnly = true
+                            ) {
                                 port = it.toIntOrNull()
                                 current.setConfig("networkPort", port ?: 5123)
                             }
@@ -155,7 +180,7 @@ private fun SettingsGroup(
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(
             displayName ?: i18n("menus.settings.heading.$name"),
-            style = MaterialTheme.typography.headlineLarge,
+            style = MaterialTheme.typography.headlineMedium,
             color = Color(151, 188, 98),
             modifier = Modifier.padding(start = 5.dp)
         )

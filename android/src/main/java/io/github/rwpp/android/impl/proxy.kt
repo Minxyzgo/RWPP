@@ -96,7 +96,7 @@ fun doProxy() {
 
     GameEngine::class.setFunction {
         addProxy("g", String::class) { _ : Any?, msg: String ->
-            KickedEvent(msg).broadCastIn()
+            if (msg.startsWith("Kicked") || msg.startsWith("Missing")) KickedEvent(msg).broadCastIn()
         }
 
 //        addProxy("c", String::class) { _ : Any?, _: String ->

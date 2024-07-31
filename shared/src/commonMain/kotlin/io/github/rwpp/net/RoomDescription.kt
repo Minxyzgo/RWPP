@@ -19,7 +19,7 @@ data class RoomDescription(
     val requiredPassword: Boolean,
     val mapName: String,
     val mapType: String,
-    val roomType: String,
+    val status: String,
     val version: String,
     val isLocal: Boolean,
     val displayMapName: String, // not sure, source code doesn't use this
@@ -45,7 +45,7 @@ val List<RoomDescription>.sorted
             it.isUpperCase && it.netWorkAddress.startsWith("uuid:") -> 0
             //it.isUpperCase -> 1
             it.isLocal -> 2
-            it.roomType.contains("battleroom") -> {
+            it.status.contains("battleroom") -> {
                 if(it.playerCurrentCount != null && it.playerMaxCount != null && it.playerCurrentCount < it.playerMaxCount) {
                     if(it.isUpperCase) {
                         if(it.playerCurrentCount != 0) 3 else 4

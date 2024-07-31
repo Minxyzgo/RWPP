@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -51,6 +52,7 @@ import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.shared.generated.resources.Res
 import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -160,7 +162,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         lastSelectedIndex = index
     }
 
-    MultiplayerSwitchOption(
+    MultiplayerOptionDialog(
         optionVisible,
         { optionVisible = false },
         updateAction,
@@ -194,7 +196,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                     },
                 trailingIcon = {
                     Icon(
-                        Icons.Default.ArrowForward,
+                        Icons.AutoMirrored.Filled.ArrowForward,
                         null,
                         modifier = Modifier.clickable {
                             room.sendChatMessage(chatMessage)
@@ -212,31 +214,35 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
         @Composable
         fun MessageView(modifier: Modifier = Modifier) {
-            SelectionContainer(modifier) {
+
                 if(LocalWindowManager.current == WindowManager.Large) {
                     val listState = rememberLazyListState()
-                    LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                        items(chatMessages.size) {
-                            Text(
-                                chatMessages[chatMessages.size - 1 - it],
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp)
-                            )
+                    SelectionContainer(modifier) {
+                        LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+                            items(chatMessages.size) {
+                                Text(
+                                    chatMessages[chatMessages.size - 1 - it],
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp)
+                                )
+                            }
                         }
                     }
                 } else {
                     Column {
                         for(i in chatMessages.indices) {
                             if(i >= 100) break
-                            Text(
-                                chatMessages[chatMessages.size - 1 - i],
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp)
-                            )
+                            SelectionContainer {
+                                Text(
+                                    chatMessages[chatMessages.size - 1 - i],
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp)
+                                )
+                            }
                         }
                     }
                 }
-            }
+
         }
 
         BorderCard(
@@ -303,7 +309,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             Text(
                                 selectedMap.displayName(),
                                 modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
-                                style = MaterialTheme.typography.headlineLarge,
+                                style = MaterialTheme.typography.headlineMedium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 color = Color.White
@@ -431,16 +437,20 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         PlayerTable(i)
                                     }
                                 } else {
-                                    LazyColumnWithScrollbar(
-                                        state = state,
-                                        data = players,
+                                    LazyColumnScrollbar(
+                                        listState = state,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        items(
-                                            count = players.size,
-                                            //key = { players[it].connectHexId }
-                                        ) { index ->
-                                            PlayerTable(index)
+                                        LazyColumn(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            state = state
+                                        ) {
+                                            items(
+                                                count = players.size,
+                                                //key = { players[it].connectHexId }
+                                            ) { index ->
+                                                PlayerTable(index)
+                                            }
                                         }
                                     }
                                 }
@@ -549,7 +559,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 }
 
 @Composable
-private fun MultiplayerSwitchOption(
+private fun MultiplayerOptionDialog(
     label: String,
     value: Boolean,
     enabled: Boolean = true,
@@ -563,7 +573,7 @@ private fun MultiplayerSwitchOption(
     )
     Text(label,
         modifier = Modifier.padding(top = 10.dp),
-        style = MaterialTheme.typography.headlineLarge,
+        style = MaterialTheme.typography.headlineMedium,
         color = if (enabled) Color(151, 188, 98) else Color.DarkGray
     )
 }
@@ -597,13 +607,12 @@ private fun PlayerOverrideDialog(
         BorderCard(
             modifier = Modifier
                 .fillMaxSize(LargeProportion()),
-            backgroundColor = Color.Gray
         ) {
             ExitButton(dismiss)
             Text(
                 readI18n("multiplayer.room.playerConfig"),
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp),
-                style = MaterialTheme.typography.displayLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 color = Color(151, 188, 98)
             )
             LargeDividingLine { 5.dp }
@@ -705,7 +714,8 @@ private fun PlayerOverrideDialog(
                             add("Purple")
                         },
                         selectedIndex = playerColor + 1,
-                        onItemSelected = { i, _ -> playerColor = i - 1 }
+                        onItemSelected = { i, _ -> playerColor = i - 1 },
+                        selectedItemColor = { _, i -> if (i > 0) Player.getTeamColor(i - 1) else Color.White }
                     )
 
                     LargeDropdownMenu(
@@ -759,7 +769,7 @@ private fun PlayerOverrideDialog(
 }
 
 @Composable
-private fun MultiplayerSwitchOption(
+private fun MultiplayerOptionDialog(
     visible: Boolean,
     onDismissRequest: () -> Unit,
     update: () -> Unit,
@@ -786,27 +796,26 @@ private fun MultiplayerSwitchOption(
     BorderCard(
         modifier = Modifier
             .fillMaxSize(LargeProportion()),
-        backgroundColor = Color.Gray
     ) {
         ExitButton(dismiss)
         LazyColumn(modifier = Modifier.weight(1f).padding(10.dp)) {
             item {
                 LazyRow(horizontalArrangement = Arrangement.Center) {
-                    item { MultiplayerSwitchOption(readI18n("multiplayer.room.noNukes"), noNukes) { noNukes = it } }
+                    item { MultiplayerOptionDialog(readI18n("multiplayer.room.noNukes"), noNukes) { noNukes = it } }
                     item {
-                        MultiplayerSwitchOption(
+                        MultiplayerOptionDialog(
                             readI18n("multiplayer.room.sharedControl"),
                             sharedControl
                         ) { sharedControl = it }
                     }
                     item {
-                        MultiplayerSwitchOption(
+                        MultiplayerOptionDialog(
                             readI18n("multiplayer.room.allowSpectators"),
                             allowSpectators, room.isHost
                         ) { allowSpectators = it }
                     }
                     item {
-                        MultiplayerSwitchOption(readI18n("multiplayer.room.teamLock"), teamLock, room.isHost) { teamLock = it }
+                        MultiplayerOptionDialog(readI18n("multiplayer.room.teamLock"), teamLock, room.isHost) { teamLock = it }
                     }
                 }
             }

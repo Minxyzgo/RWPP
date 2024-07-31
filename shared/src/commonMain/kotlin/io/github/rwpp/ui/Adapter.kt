@@ -50,14 +50,13 @@ fun scaleFitFloat(): Float {
 
 @Composable
 fun Modifier.scaleFit(): Modifier {
-    val manager = LocalWindowManager.current
     return this.scale(scaleFitFloat())
 }
 
 @Composable
 fun ConstraintWindowManager(width: Dp, height: Dp): WindowManager {
     return when {
-        width >= 1680.dp && height >= 900.dp -> WindowManager.Large
+        // width >= 1680.dp && height >= 900.dp -> WindowManager.Large Large存在性能问题
         width >= 700.dp && height >= 500.dp -> WindowManager.Middle
         else -> WindowManager.Small
     }

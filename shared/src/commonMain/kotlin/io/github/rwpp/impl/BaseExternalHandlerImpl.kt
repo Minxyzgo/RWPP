@@ -58,6 +58,6 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
             )
 
             getAllResources().first { it.config.name == info.name }
-        }
+        }.also { _usingResource = it }
     }
 }

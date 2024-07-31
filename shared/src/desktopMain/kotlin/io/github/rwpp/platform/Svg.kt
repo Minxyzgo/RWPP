@@ -5,6 +5,8 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
+@file:JvmName("SvgDesktop")
+
 package io.github.rwpp.platform
 
 import androidx.compose.runtime.Composable
@@ -13,6 +15,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.loadSvgPainter
 
 @Composable
-actual fun loadSvg(path: String): Painter {
+actual fun loadSvgPlatform(path: String): Painter {
     return loadSvgPainter(ClassLoader.getSystemClassLoader().getResourceAsStream("$path.svg")!!, LocalDensity.current)
 }

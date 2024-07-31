@@ -28,7 +28,7 @@ android {
 
     useLibrary("org.apache.http.legacy")
 
-    packagingOptions {
+    packaging {
         resources.excludes.add("META-INF/*")
     }
 
@@ -36,11 +36,12 @@ android {
         javaMaxHeapSize = "2G"
     }
 
-//    buildTypes {
-//        release {
-//            isMinifyEnabled = true
-//        }
-//    }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            isDebuggable = true
+        }
+    }
 
     sourceSets["main"].manifest.srcFile("src/main/AndroidManifest.xml")
 
@@ -49,13 +50,13 @@ android {
         minSdk = (findProperty("android.minSdk") as String).toInt()
         targetSdk = (findProperty("android.targetSdk") as String).toInt()
         versionCode = 1
-        versionName = "1.0.9"
+        versionName = rootProject.version.toString()
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlin {
-        jvmToolchain(17)
+        jvmToolchain(8)
     }
 }

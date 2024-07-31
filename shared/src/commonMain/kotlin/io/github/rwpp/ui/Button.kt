@@ -7,96 +7,53 @@
 
 package io.github.rwpp.ui
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.shared.generated.resources.Res
-import io.github.rwpp.shared.generated.resources.btn_left
-import io.github.rwpp.shared.generated.resources.btn_right
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.painterResource
+import io.github.rwpp.ui.v2.bounceClick
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MenuButton(
     content: String,
-    enabled: Boolean = true,
+    icon: Any? = null,
+    modifier: Modifier = Modifier.size(150.dp).padding(10.dp),
     onClick: () -> Unit
 ) {
-    var isPressed by remember { mutableStateOf(false) }
-    val colors by remember(isPressed) {
-        mutableStateOf(
-            if(enabled) listOf(Color(173, 243, 177), Color(162, 195, 171), Color(141, 221, 143))
-            else listOf(Color.DarkGray, Color.Gray, Color.DarkGray)
-        )
-    }
-
-    val gradient by remember(colors) { mutableStateOf(Brush.horizontalGradient(colors)) }
-    val pxValue = with(LocalDensity.current) {
-        (MaterialTheme.typography.headlineLarge.fontSize.value + 5).toDp() + 20.dp
-    }
-
-    Row(
-        modifier =
-        Modifier.fillMaxWidth()
-            .padding(10.dp)
-            .shadow(10.dp),
+    Card(
+        border = BorderStroke(5.dp, Color.DarkGray),
+        colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+        shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+        modifier = modifier.bounceClick(onClick),
     ) {
-        Image(
-            modifier = Modifier.requiredHeight(pxValue),
-            contentScale = ContentScale.FillHeight,
-            painter = painterResource(Res.drawable.btn_left),
-            contentDescription = null,
-        )
-
-        Button(
-            modifier = Modifier
-                .requiredHeight(pxValue)
-                .weight(1f),
-            shape = RectangleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-            contentPadding = PaddingValues(),
-            onClick = { onClick() },
+        Column(
+            modifier = Modifier.fillMaxSize().padding(5.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                modifier = Modifier
-                    .background(gradient)
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        detectTapGestures(onPress = {
-                            isPressed = true
-                            tryAwaitRelease()
-                            isPressed = false
-                        }, onTap = { onClick() })
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = content, style = MaterialTheme.typography.headlineLarge)
-            }
-        }
+            if (icon is Painter)
+                Icon(icon, null, tint = Color.White, modifier = Modifier.padding(5.dp))
+            else if (icon is ImageVector)
+                Icon(icon, null, tint = Color.White, modifier = Modifier.padding(5.dp))
 
-        Image(
-            modifier = Modifier.requiredHeight(pxValue),
-            contentScale = ContentScale.FillHeight,
-            painter = painterResource(Res.drawable.btn_right),
-            contentDescription = null,
-        )
+            Text(
+                content,
+                color = Color.White,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(5.dp)
+            )
+        }
     }
 }
 

@@ -41,9 +41,8 @@ fun BanUnitViewDialog(
     ) { d ->
         val selectedUnits = remember(lastSelectedUnits) { mutableListOf<GameUnit>().apply { addAll(lastSelectedUnits) } }
         BorderCard(
-            backgroundColor = Color.Gray,
             modifier = Modifier
-                .fillMaxSize(LargeProportion())
+               // .fillMaxSize(LargeProportion())
                 .padding(10.dp)
         ) {
             ExitButton(d)
