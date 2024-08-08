@@ -35,7 +35,7 @@ enum class GameCommandActions {
         private val actionMap = mutableMapOf<Int, GameCommandActions>()
 
         init {
-            GameCommandActions.values().forEach {
+            entries.forEach {
                 if (actionMap.containsKey(it.ordinal)) {
                     throw RuntimeException("[GameUnitType -> GameActions]")
                 }

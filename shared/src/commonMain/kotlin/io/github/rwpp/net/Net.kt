@@ -32,6 +32,8 @@ interface Net {
 
     fun sendPacketToClients(packet: Packet)
 
+    fun openUriInBrowser(uri: String)
+
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun CoroutineScope.getRoomListFromSourceUrl(url: List<String>): List<RoomDescription> = withContext(Dispatchers.IO) {
         val c =  Channel<Response>(UNLIMITED)

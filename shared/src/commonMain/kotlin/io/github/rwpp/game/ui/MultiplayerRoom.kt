@@ -17,7 +17,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -55,14 +58,12 @@ import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import kotlin.math.roundToInt
 
 
 private val relayRegex = Regex("""R\d+""")
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     BackHandler(true, onExit)
@@ -390,7 +391,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 }
 
                                 @Composable
-                                fun ColumnScope.PlayerTable(index: Int) {
+                                fun PlayerTable(index: Int) {
                                     val options = remember {
                                         context.getStartingUnitOptions()
                                     }
@@ -887,11 +888,11 @@ private fun MultiplayerOptionDialog(
                         selectedIndex = 0,
                         hasValue = false,
                         onItemSelected = { index, _ ->
-                            when(index) {
-                                0 -> teamMode = "2t"
-                                1 -> teamMode = "3t"
-                                2 -> teamMode = "FFA"
-                                3 -> teamMode = "spectators"
+                            teamMode = when(index) {
+                                0 -> "2t"
+                                1 -> "3t"
+                                2 -> "FFA"
+                                3 -> "spectators"
                                 else -> throw RuntimeException()
                             }
 

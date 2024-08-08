@@ -15,6 +15,7 @@ import io.github.rwpp.utils.io.GameOutputStream
 /**
  * Don't register them, they are implemented in platform.
  */
+@Suppress("MemberVisibilityCanBePrivate")
 sealed class ModPacket(type: PacketType) : Packet(type) {
     class RequestPacket(
         var mods: String

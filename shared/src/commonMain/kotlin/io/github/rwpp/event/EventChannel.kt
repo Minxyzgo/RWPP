@@ -46,7 +46,6 @@ open class EventChannel <T : Event>(val coroutineScope: CoroutineScope): Corouti
      * @param timeout 设置该协程超时所需的时间，小于0则不设置，超时则返回null.
      * @param coroutineContext 在 [coroutineContext] 的基础上, 给事件监听协程的额外的 [CoroutineContext]
      */
-    @OptIn(FlowPreview::class)
     suspend fun receive(
         timeout: Long = -1,
         coroutineContext: CoroutineContext = EmptyCoroutineContext,

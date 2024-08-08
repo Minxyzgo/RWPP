@@ -9,6 +9,8 @@ package io.github.rwpp.desktop.impl
 
 import android.content.ServerContext
 import android.graphics.Point
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.Root
@@ -22,6 +24,7 @@ import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.j.k
 import com.corrodinggames.rts.gameFramework.l
 import com.corrodinggames.rts.gameFramework.n
+import com.corrodinggames.rts.gameFramework.utility.ae
 import com.corrodinggames.rts.java.Main
 import com.corrodinggames.rts.java.audio.lwjgl.OpenALAudio
 import com.corrodinggames.rts.java.b
@@ -47,6 +50,7 @@ import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.MovementType
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ModPacket
 import io.github.rwpp.ui.LoadingContext
@@ -54,6 +58,8 @@ import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.channels.Channel
 import net.peanuuutz.tomlkt.Toml
 import org.lwjgl.opengl.Display
+import java.awt.Image
+import java.awt.image.BufferedImage
 import java.io.*
 import javax.imageio.ImageIO
 import javax.swing.SwingUtilities
@@ -101,13 +107,13 @@ class GameImpl : Game {
                 override val mapType: MapType
                     get() = MapType.entries[a.ordinal]
                 override var selectedMap: GameMap
-                    get() = getAllMaps().firstOrNull { it.tmx!!.absolutePath.replace("\\", "/").endsWith(B.bX.ay.b ?: "") }
+                    get() = getAllMaps().firstOrNull { (it.mapName + it.getMapSuffix()).replace("\\", "/").endsWith(B.bX.ay.b ?: "") }
                         ?: NetworkMap(mapNameFormatMethod.invoke(null, B.bX.ay.b) as String)
                     set(value) {
                         if(isHostServer) {
                             B.bX.a(
                                 B.bX.e().apply {
-                                    b = value.tmx!!.name
+                                    b = (value.mapName + value.getMapSuffix())
                                 }
                             )
                         } else {
@@ -117,10 +123,10 @@ class GameImpl : Game {
                                         MapType.CustomMap -> "mods/maps/"
                                         MapType.SavedGame -> "saves/"
                                         else -> ""
-                                    }) + value.tmx!!.name.replace("\\", "/")
+                                    }) +  (value.mapName + value.getMapSuffix()).replace("\\", "/")
                             B.bX.az = realPath
                             B.bX.ay.a = com.corrodinggames.rts.gameFramework.j.ai.entries[value.mapType.ordinal]
-                            b = value.tmx!!.name
+                            b = (value.mapName + value.getMapSuffix())
                             LClass.B().bX.L() // send server info
                         }
                     }
@@ -328,21 +334,13 @@ class GameImpl : Game {
 
             addProxy(Root::makeSendMessagePopup) {
                 SwingUtilities.invokeLater {
-                    sendMessageDialog.isVisible = true
-                    val window = mainJFrame
-                    sendMessageDialog.setLocation(window.x + window.width / 2 - sendMessageDialog.width / 2, window.y + window.height / 2 - sendMessageDialog.height / 2)
-                   // focusRequester.requestFocus()
-                    //sendMessageDialog.getComponent(0).requestFocus()
+                   showSendMessageDialog()
                 }
             }
 
             addProxy(Root::makeSendTeamMessagePopupWithDefaultText) { _, str ->
                 SwingUtilities.invokeLater {
-                    sendMessageDialog.isVisible = true
-                    val window = mainJFrame
-                    sendMessageDialog.setLocation(window.x + window.width / 2 - sendMessageDialog.width / 2, window.y + window.height / 2 - sendMessageDialog.height / 2)
-                   // focusRequester.requestFocus()
-                    //sendMessageDialog.getComponent(0).requestFocus()
+                    showSendMessageDialog()
                 }
             }
         }
@@ -426,11 +424,15 @@ class GameImpl : Game {
                             val kVar16 = k(auVar)
                             val cVar14: c = auVar.a
                             val str = kVar16.l()
-                            println("!!!!!!!!!?!!???")
-                            println("read: $str")
                             if(str.startsWith(packageName)) {
+                                gameRoom.isRWPPRoom = true
                                 gameRoom.option = Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
-                                println("canTransfermod: ${gameRoom.option.canTransferMod}")
+                                val v = gameRoom.option.protocolVersion
+                                if (v != protocolVersion) {
+                                    gameRoom.disconnect()
+                                    KickedEvent(readI18n("Different protocol version. yours: $protocolVersion server's: $v")).broadCastIn()
+                                    return@with
+                                }
                             }
                             val f11 = kVar16.f()
                             val f12 = kVar16.f()
@@ -467,7 +469,7 @@ class GameImpl : Game {
                                     val mods = str.split(";")
                                     mods.map(gameContext::getModByName).forEachIndexed { i, m ->
                                         val bytes = m!!.getBytes()
-                                        B.bX.a(c, ModPacket.ModPackPacket(mods.size, i, "${m.name}.rwmod", bytes).asGamePacket())
+                                        B.bX.a(c, ModPacket.ModPackPacket(mods.size, i, "${m.name}.network.rwmod", bytes).asGamePacket())
                                     }
 
                                     gameRoom.getPlayers().firstOrNull { it.name == c.z?.v }
@@ -500,11 +502,13 @@ class GameImpl : Game {
                         val name = k.l()
                         val bytes = k.t()
 
+                        val modSize = cacheModSize.addAndGet(bytes.size)
+
                         run {
 
-                            // TODO 多个mod大小之和
-                            if(bytes.size > maxModSize) {
+                            if(modSize > maxModSize) {
                                 gameRoom.disconnect()
+                                cacheModSize.set(0)
                                 KickedEvent("Downloaded mods are too big.").broadCastIn()
                                 return@run
                             }
@@ -519,6 +523,7 @@ class GameImpl : Game {
                             if(index == size - 1) {
                                 gameContext.modUpdate()
                                 gameContext.getAllMods().forEach { it.isEnabled = it.name in roomMods }
+                                cacheModSize.set(0)
                                 CallReloadModEvent().broadCastIn()
                             }
                         }
@@ -591,8 +596,6 @@ class GameImpl : Game {
 
                     run {
                         if(allMods.all { gameContext.getModByName(it) != null }) {
-                            if(gameRoom.isRWPPRoom)
-                                gameContext.sendPacketToServer(ModPacket.RequestPacket(""))
                             gameContext.getAllMods().forEach { it.isEnabled = it.name in allMods }
                             CallReloadModEvent().broadCastIn()
                             return@run
@@ -710,7 +713,7 @@ class GameImpl : Game {
             guiEngine.b(true)
             guiEngine.c(false)
             val met = IClass::class.java.getDeclaredMethod("a", String::class.java, Boolean::class.java, Int::class.java, Int::class.java, Boolean::class.java, Boolean::class.java)
-            met.invoke(null, "maps/${mission.type.pathName()}/${mission.tmx!!.name}", false, 0, 0, true, false)
+            met.invoke(null, "maps/${mission.type.pathName()}/${(mission.mapName + mission.getMapSuffix())}", false, 0, 0, true, false)
 
             guiEngine.f()
             libRocket.closeActiveDocument()
@@ -1006,8 +1009,7 @@ class GameImpl : Game {
                         override val image: Painter =
                             ImageIO.read(File(f.parent!! + "/" + f.name.removeSuffix(".tmx") + "_map.png")).toPainter()
                         override val mapName: String
-                            get() = tmx.nameWithoutExtension
-                        override val tmx: File = f
+                            get() = f.nameWithoutExtension
                         override fun displayName(): String {
                             return ScriptEngine.getInstance().root.convertMapName(name)
                         }
@@ -1021,34 +1023,60 @@ class GameImpl : Game {
         return missions.toList().also { _missions = it }
     }
 
-    override fun getAllMaps(): List<GameMap> {
-        if(_maps.isEmpty()) {
+    @Suppress("UNCHECKED_CAST")
+    override fun getAllMaps(flush: Boolean): List<GameMap> {
+        if(_maps.isEmpty() || flush) {
+            val B = LClass.B()
+            val levelDirs = com.corrodinggames.rts.gameFramework.e.a.a("/SD/rusted_warfare_maps", true)
             val mapFolders = mapOf(
                 MapType.SkirmishMap to File("assets/maps/skirmish"),
-                MapType.CustomMap to File("mods/maps"),
+                MapType.CustomMap to B.bZ.a(levelDirs, "/SD/rusted_warfare_maps"),
                 MapType.SavedGame to File("saves")
             )
             for((type, folder) in mapFolders) {
                 val maps = mutableListOf<GameMap>()
-                folder
-                    .walk()
-                    .filter { it.name.endsWith(".tmx") || it.name.endsWith(".rwsave") }
-                    .forEachIndexed { i, f ->
+                if (folder is File) {
+                    folder
+                        .walk()
+                        .filter { it.name.endsWith(".tmx") || it.name.endsWith(".rwsave") }
+                        .forEachIndexed { i, f ->
+                            maps.add(object : GameMap {
+                                override val id: Int = i
+                                override val image: Painter? =
+                                    if(mapType != MapType.SavedGame) File(f.parent!! + "/" + f.name.removeSuffix(".tmx") + "_map.png")
+                                        .let { if(it.exists()) ImageIO.read(it).toPainter() else null }
+                                    else null
+                                override val mapName: String
+                                    get() = f.nameWithoutExtension
+                                override val mapType: MapType
+                                    get() = type
+                            })
+                        }
+                } else if (folder is Array<*>) {
+                    folder as Array<String>
+                    folder.forEachIndexed { i, name ->
                         maps.add(object : GameMap {
                             override val id: Int = i
                             override val image: Painter? =
-                                if(mapType != MapType.SavedGame) File(f.parent!! + "/" + f.name.removeSuffix(".tmx") + "_map.png")
-                                    .let { if(it.exists()) ImageIO.read(it).toPainter() else null }
-                                else null
+                                if(type == MapType.CustomMap) {
+                                    if (name.contains("MOD|")) //TODO 实现mod图片
+                                        null
+                                    else loadImage(
+                                        com.corrodinggames.rts.appFramework.c.c(name)
+                                    )?.toPainter()
+                                } else null
                             override val mapName: String
-                                get() = tmx.nameWithoutExtension.let {
-                                    if(type == MapType.SkirmishMap) it.replace(mapPrefixRegex, "") else it
-                                }
-                            override val tmx: File = f
+                                get() = name.removeSuffix(".tmx").removeSuffix(".rwsave")
                             override val mapType: MapType
                                 get() = type
+
+                            override fun displayName(): String {
+                                return ScriptEngine.getInstance().root.convertMapName(name)
+                            }
                         })
                     }
+                }
+
                 _maps[type] = maps.toList()
             }
         }
@@ -1138,7 +1166,7 @@ class GameImpl : Game {
         isGaming = true
 
         container.post {
-            ScriptEngine.getInstance().root.loadReplay(escapedString(replay.name))
+            ScriptEngine.getInstance().root.loadReplay(replay.name)
         }
     }
 
@@ -1163,6 +1191,10 @@ class GameImpl : Game {
         throw UnsupportedOperationException("Stub!")
     }
 
+    override fun requestManageFilePermission() {
+        throw UnsupportedOperationException("Stub!")
+    }
+
     private fun restrictedString(str: String?): String? {
         return str?.replace("'", ".")?.replace("\"", ".")?.replace("(", ".")?.replace(")", ".")?.replace(",", ".")
             ?.replace("<", ".")?.replace(">", ".")
@@ -1171,6 +1203,37 @@ class GameImpl : Game {
     private fun escapedString(str: String): String {
         return "'" + str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&apos;")
             .replace("\"", "&quot;").replace("\${", "$ {") + "'"
+    }
+
+    private fun loadImage(path: String): BufferedImage? {
+        val fileInputStream: InputStream?
+        val bufferedInputStream: BufferedInputStream
+        val a2 = ae.a(path)
+        if (a2 != null) {
+            fileInputStream = a2.b(path, true)
+            if (fileInputStream == null) {
+                println("Failed to open zipped file: $path")
+                return null
+            }
+        } else {
+            try {
+                fileInputStream = FileInputStream("mods/maps/$path")
+            } catch (e: IOException) {
+                e.printStackTrace()
+                return null
+            }
+        }
+
+        try {
+            bufferedInputStream = BufferedInputStream(fileInputStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+
+        bufferedInputStream.use { stream ->
+            return ImageIO.read(stream)
+        }
     }
 
 

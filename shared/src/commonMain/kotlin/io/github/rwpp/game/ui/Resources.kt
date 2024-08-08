@@ -37,10 +37,9 @@ import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalResourceApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ResourceView(
     onExit: () -> Unit
@@ -69,8 +68,7 @@ fun ResourceView(
         showResultView,
         onDismissRequest = { }) { dismiss ->
         BorderCard(
-            modifier = Modifier.fillMaxSize(GeneralProportion()),
-            backgroundColor = Color.Gray
+            modifier = Modifier.size(500.dp),
         ) {
 
             Row(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
@@ -92,8 +90,8 @@ fun ResourceView(
                 Text(
                     result,
                     modifier = Modifier.padding(5.dp),
-                    color = Color.Black,
-                    style = MaterialTheme.typography.headlineMedium
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge
                 )
 
                 Spacer(modifier = Modifier.weight(1f))

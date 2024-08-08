@@ -20,27 +20,24 @@ import com.github.minxyzgo.rwij.InjectMode
 import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.R
-import io.github.rwpp.android.bannedUnitList
-import io.github.rwpp.android.controller
+import io.github.rwpp.android.*
 import io.github.rwpp.android.impl.ClientImpl
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.asGamePacket
 import io.github.rwpp.android.impl.sendKickToClient
-import io.github.rwpp.android.isReturnToBattleRoom
-import io.github.rwpp.android.roomMods
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.CallReloadModEvent
 import io.github.rwpp.event.events.KickedEvent
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.units.GameCommandActions
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.maxModSize
 import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ModPacket
 import io.github.rwpp.packageName
+import io.github.rwpp.protocolVersion
 import io.github.rwpp.utils.io.GameInputStream
 import net.peanuuutz.tomlkt.Toml
-import java.io.ByteArrayInputStream
-import java.io.DataInputStream
 import java.io.File
 import java.util.*
 
@@ -162,8 +159,14 @@ object NetProxy {
                         val r14 = GameEngine.t().bU
                         val str = r0.b.readUTF() // Catch: java.lang.Throwable -> L603
                         if (str.startsWith(packageName)) {
-                            controller.gameRoom.option =
-                                Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
+                            controller.gameRoom.isRWPPRoom = true
+                            controller.gameRoom.option = Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
+                            val v = controller.gameRoom.option.protocolVersion
+                            if (v != protocolVersion) {
+                                controller.gameRoom.disconnect()
+                                KickedEvent(readI18n("Different protocol version. yours: $protocolVersion server's: $v")).broadCastIn()
+                                return@addProxy InterruptResult(Unit)
+                            }
                         }
                         val r2 = r0.b.readInt() // Catch: java.lang.Throwable -> L603
                         val r3 = r0.b.readInt() // Catch: java.lang.Throwable -> L603
@@ -237,7 +240,7 @@ object NetProxy {
                                         val bytes = m!!.getBytes()
 
                                         GameEngine.t().bU.a(c,
-                                            ModPacket.ModPackPacket(mods.size, i, "${m.name}.rwmod", bytes)
+                                            ModPacket.ModPackPacket(mods.size, i, "${m.name}.network.rwmod", bytes)
                                                 .asGamePacket()
                                         )
 
@@ -270,10 +273,13 @@ object NetProxy {
                         val name = gameInput.readUTF()
                         val bytes = gameInput.readNextBytes()
 
+                        val modSize = cacheModSize.addAndGet(bytes.size)
+
                         run {
-                            if(bytes.size > maxModSize) {
+                            if(modSize > maxModSize) {
                                 controller.gameRoom.disconnect()
                                 KickedEvent("Downloaded mods are too big.").broadCastIn()
+                                cacheModSize.set(0)
                                 return@run
                             }
 
@@ -287,6 +293,7 @@ object NetProxy {
                             if(index == size - 1) {
                                 controller.modUpdate()
                                 controller.getAllMods().forEach { it.isEnabled = it.name in roomMods }
+                                cacheModSize.set(0)
                                 CallReloadModEvent().broadCastIn()
                             }
                         }

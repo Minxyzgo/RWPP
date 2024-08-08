@@ -9,15 +9,14 @@
 
 package io.github.rwpp
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.*
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,10 +27,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.text.*
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.instance
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.KickedEvent
@@ -40,15 +41,15 @@ import io.github.rwpp.event.events.QuestionReplyEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.ui.*
 import io.github.rwpp.i18n.readI18n
-import io.github.rwpp.platform.loadSvg
+import io.github.rwpp.platform.*
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.v2.bounceClick
 
 var LocalController = staticCompositionLocalOf<ContextController> { null!! }
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
 
 @Composable
 fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
-//
 
     val jostFonts = JostFonts()
     val valoraxFont = ValoraxFont()
@@ -76,7 +77,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
             color = Color.White,
             fontFamily = jostFonts,
             fontWeight = FontWeight.Bold,
-            fontSize = 15.sp
+            fontSize = 15.sp,
         ),
         bodyMedium = TextStyle(
             color = Color.White,
@@ -86,7 +87,6 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
         )
     )
 
-    var isLoading by remember { mutableStateOf(true) }
     var isSandboxGame by remember { mutableStateOf(false) }
     var showSinglePlayerView by remember { mutableStateOf(false) }
     var showMultiplayerView by remember { mutableStateOf(false) }
@@ -95,15 +95,16 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
     var showModsView by remember { mutableStateOf(false) }
     var showRoomView by remember { mutableStateOf(false) }
     var showResourceView by remember { mutableStateOf(false) }
+    var showContributorList by remember { mutableStateOf(false) }
 
     val showMainMenu = !(showMultiplayerView
             || showSinglePlayerView
-            || isLoading
             || showSettingsView
             || showModsView
             || showRoomView
             || showResourceView
-            || showReplayView)
+            || showReplayView
+            || showContributorList)
 
     val context = LocalController.current
 
@@ -125,15 +126,11 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 LocalTextSelectionColors provides RWSelectionColors,
                 LocalWindowManager provides ConstraintWindowManager(maxWidth, maxHeight)
             ) {
-                LoadingView(isLoading, onLoaded = { isLoading = false }) {
-                    context.load(this)
-                    true
-                }
 
                 Scaffold(
                     containerColor = Color.Transparent,
                     floatingActionButton = {
-                        if(!isLoading && context.isGameCouldContinue() && (showMainMenu || showSinglePlayerView)) {
+                        if(context.isGameCouldContinue() && (showMainMenu || showSinglePlayerView)) {
                             FloatingActionButton(
                                 onClick = { context.continueGame() },
                                 shape = CircleShape,
@@ -173,6 +170,9 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             },
                             replay = {
                                 showReplayView = true
+                            },
+                            contributor = {
+                                showContributorList = true
                             }
                         )
                     }
@@ -185,7 +185,9 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 }
 
                 AnimatedVisibility(
-                    showMultiplayerView
+                    showMultiplayerView,
+                    enter = fadeIn() + slideInVertically(),
+                    exit = fadeOut() + slideOutVertically()
                 ) {
                     MultiplayerView(
                         { showMultiplayerView = false },
@@ -232,6 +234,16 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                         context.gameRoom.disconnect()
 
                         showRoomView = false
+                    }
+                }
+
+                AnimatedVisibility(
+                    showContributorList,
+                    enter = fadeIn() + slideInVertically(),
+                    exit = fadeOut() + slideOutVertically()
+                ) {
+                    ContributorList {
+                        showContributorList = false
                     }
                 }
 
@@ -290,6 +302,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                         questionEvent = it
                     }
                 }
+
 
                 AnimatedAlertDialog(questionDialogVisible,
                     onDismissRequest = {
@@ -357,7 +370,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                                     },
                                 trailingIcon = {
                                     Icon(
-                                        Icons.Default.ArrowForward,
+                                        Icons.AutoMirrored.Filled.ArrowForward,
                                         null,
                                         modifier = Modifier.clickable {
                                             QuestionReplyEvent(message, false).broadCastIn()
@@ -387,14 +400,15 @@ fun MainMenu(
     mods: () -> Unit,
     sandbox: () -> Unit,
     resource: () -> Unit,
-    replay: () -> Unit
+    replay: () -> Unit,
+    contributor: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        BorderCard {
+        BorderCard(modifier = Modifier.verticalScroll(rememberScrollState()).width(IntrinsicSize.Max)) {
             Text("RWPP",
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 style = TextStyle(
@@ -461,6 +475,31 @@ fun MainMenu(
                         readI18n("menu.exit"),
                         loadSvg("exit"),
                     ) { exit() }
+                }
+            }
+
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                Card(
+                    border = BorderStroke(3.dp, Color.DarkGray),
+                    colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+                    shape = RoundedCornerShape(5.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+                    modifier = Modifier.bounceClick { contributor() }.padding(10.dp),
+                ) {
+                    Icon(Icons.Filled.Favorite, null, modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally).padding(10.dp))
+                }
+
+                val context = LocalController.current
+
+                Card(
+                    border = BorderStroke(3.dp, Color.DarkGray),
+                    colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+                    shape = RoundedCornerShape(5.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+                    modifier = Modifier.bounceClick { context.openUriInBrowser("https://github.com/Minxyzgo/RWPP") }.padding(10.dp),
+                ) {
+                    Icon(painter = loadSvg("octocat"), null, modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally).padding(7.dp))
                 }
             }
         }

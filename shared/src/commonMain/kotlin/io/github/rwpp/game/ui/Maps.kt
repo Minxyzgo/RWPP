@@ -33,7 +33,6 @@ import io.github.rwpp.game.map.MapType
 import io.github.rwpp.shared.generated.resources.Res
 import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 @Composable

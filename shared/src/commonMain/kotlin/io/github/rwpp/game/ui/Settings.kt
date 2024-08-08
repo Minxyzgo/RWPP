@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
 import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.UIConfig
 import io.github.rwpp.config.instance
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.Platform
@@ -78,6 +79,16 @@ fun SettingsView(onExit: () -> Unit) {
                             SettingsSwitchComp("enableMouseCapture")
                             SettingsSwitchComp("quickRally")
                             SettingsSwitchComp("doubleClickToAttackMove")
+
+                            if (Platform.isDesktop()) {
+                                SettingsSwitchComp(
+                                    LocalController.current.i18n("menus.settings.option.immersiveFullScreen"),
+                                    defaultValue = UIConfig.instance.isFullscreen,
+                                    customConfigSettingAction = {
+                                        UIConfig.instance.isFullscreen = it
+                                    }
+                                )
+                            }
                         }
                     }
 
@@ -155,16 +166,20 @@ fun SettingsView(onExit: () -> Unit) {
                         }
                     }
 
-//                    if(Platform.isAndroid()) {
-//                        item {
-//                            SettingsGroup("", "Android") {
-//                                val context = LocalController.current
-//                                RWTextButton("Set External Folder") {
-//                                    context.requestExternalStoragePermission()
-//                                }
-//                            }
-//                        }
-//                    }
+                    if(Platform.isAndroid()) {
+                        item {
+                            SettingsGroup("", "Android") {
+                                val context = LocalController.current
+                                RWTextButton("Set External Folder") {
+                                    context.requestExternalStoragePermission()
+                                }
+
+                                RWTextButton("Manage All Files") {
+                                    context.requestManageFilePermission()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

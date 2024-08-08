@@ -10,12 +10,15 @@ package io.github.rwpp.desktop.impl
 import com.corrodinggames.librocket.scripts.ScriptEngine
 import com.corrodinggames.rts.gameFramework.SettingsEngine
 import io.github.rwpp.ContextController
+import io.github.rwpp.config.UIConfig
+import io.github.rwpp.config.instance
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.i18n.parseI18n
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.registerListeners
+import io.github.rwpp.utils.setPropertyFromObject
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -30,7 +33,12 @@ import kotlin.reflect.KClass
 import kotlin.system.exitProcess
 
 class GameContextControllerImpl(private val _exit: () -> Unit)
-    : ContextController, Game by GameImpl(), ModManager by ModManagerImpl(), Net by NetImpl(), ExternalHandler by ExternalHandlerImpl() {
+    : ContextController,
+    Game by GameImpl(),
+    ModManager by ModManagerImpl(),
+    Net by NetImpl(),
+    ExternalHandler by ExternalHandlerImpl()
+{
     private val fieldCache = mutableMapOf<String, Field>()
     private val exitActions = mutableListOf<() -> Unit>()
 
@@ -39,6 +47,15 @@ class GameContextControllerImpl(private val _exit: () -> Unit)
         runBlocking { parseI18n() }
         Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
         readAllConfig()
+        File("mods/units")
+            .walk()
+            .forEach {
+                if (it.name.contains(".network")) {
+                    it.delete()
+                } else if (it.name.endsWith(".netbak")) {
+                    it.renameTo(File(it.absolutePath.removeSuffix(".netbak")))
+                }
+            }
     }
 
     override fun i18n(str: String, vararg args: Any?): String {
@@ -82,6 +99,18 @@ class GameContextControllerImpl(private val _exit: () -> Unit)
 
     override fun saveConfig() {
         LClass.B().bQ.save()
+    }
+
+    override fun readAllConfig() {
+        super.readAllConfig()
+        getRWPPConfig(UIConfig::class)?.apply {
+            UIConfig.instance.setPropertyFromObject(this)
+        }
+    }
+
+    override fun saveAllConfig() {
+        super.saveAllConfig()
+        setRWPPConfig(UIConfig.instance)
     }
 
     override fun exit() {

@@ -21,6 +21,10 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
     protected var _usingResource: Resource? = null
     protected var resources: List<Resource>? = null
 
+    private val fileExists by lazy {
+        File(resourceOutputDir).exists()
+    }
+
     override fun getAllResources(): List<Resource> {
         return resources ?: File(resourcePath).let { file ->
             if (file.exists()) {
@@ -52,7 +56,7 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
 
     override fun getUsingResource(): Resource? {
         return _usingResource ?: run {
-            if(!File(resourceOutputDir).exists()) return@run null
+            if(!fileExists) return@run null
             val info = Toml.decodeFromNativeReader<ResourceConfig>(
                 File(resourceOutputDir + "info.toml").reader()
             )

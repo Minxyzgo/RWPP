@@ -7,9 +7,12 @@
 
 package io.github.rwpp.game.data
 
+import io.github.rwpp.protocolVersion as version
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class RoomOption(
     var canTransferMod: Boolean = false,
+    val allModsSize: Int = 0,
+    val protocolVersion: Int = version
 )

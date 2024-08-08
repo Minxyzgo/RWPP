@@ -17,8 +17,6 @@ interface GameMap {
 
     val mapName: String
 
-    val tmx: File?
-
     val mapType: MapType
 
     fun displayName() = mapName.replace(mapPrefixRegex, "")

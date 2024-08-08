@@ -12,7 +12,9 @@ import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,6 +24,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.corrodinggames.rts.appFramework.d
+import com.hjq.permissions.XXPermissions
 import io.github.rwpp.App
 import io.github.rwpp.LocalController
 import io.github.rwpp.android.impl.GameEngine
@@ -29,6 +32,7 @@ import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.ReturnMainMenuEvent
 import io.github.rwpp.i18n.parseI18n
 import kotlinx.coroutines.runBlocking
+import java.io.File
 
 class MainActivity : ComponentActivity() {
 
@@ -67,6 +71,12 @@ class MainActivity : ComponentActivity() {
 
         runBlocking { parseI18n() }
         controller.readAllConfig()
+
+        if (SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) removeNetworkMod()
+        } else if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            removeNetworkMod()
+        }
 
         if(d.b(this, true, true)) {
             gameView = d.b(this)
@@ -107,6 +117,18 @@ class MainActivity : ComponentActivity() {
         super.onStop()
         controller.saveAllConfig()
         if(gameView != null) GameEngine.t()?.b(gameView)
+    }
+
+    private fun removeNetworkMod() {
+        File("/storage/emulated/0/rustedWarfare/units/")
+            .walk()
+            .forEach {
+                if (it.name.contains(".network")) {
+                    it.delete()
+                } else if (it.name.endsWith(".netbak")) {
+                    it.renameTo(File(it.absolutePath.removeSuffix(".netbak")))
+                }
+            }
     }
 
     companion object {

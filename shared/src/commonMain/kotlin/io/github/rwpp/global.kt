@@ -10,10 +10,17 @@ package io.github.rwpp
 import io.github.rwpp.utils.io.SizeUtils
 import io.github.rwpp.platform.Platform
 
-const val projectVersion = "1.1.0-rc.1"
+const val projectVersion = "1.2.0 (core v1.15)"
+
+/**
+ * The protocol version.
+ * The clients which have different protocol version can not join to each other
+ */
+const val protocolVersion = 1
+
 val welcomeMessage =
     """
-        这是一个使用[RWPP]所开始的房间
+        这是一个使用[RWPP]所创建的房间
         [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
         开源地址请访问 https://github.com/Minxyzgo/RWPP 
         当前版本: $projectVersion
@@ -22,7 +29,7 @@ val welcomeMessage =
 
 const val packageName = "io.github.rwpp"
 
-val maxModSize = SizeUtils.mBToByte(3)
+val maxModSize = SizeUtils.mBToByte(16)
 
 val resourcePath = if(Platform.isAndroid()) {
     "/storage/emulated/0/rustedWarfare/resource/"

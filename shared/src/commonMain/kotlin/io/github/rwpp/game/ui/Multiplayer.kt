@@ -10,15 +10,18 @@
 package io.github.rwpp.game.ui
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -51,16 +53,18 @@ import io.github.rwpp.platform.readPainterByBytes
 import io.github.rwpp.shared.generated.resources.Res
 import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.v2.ExpandedCard
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
+import io.github.rwpp.ui.v2.ListIndicatorSettings
+import io.github.rwpp.ui.v2.bounceClick
 import io.github.rwpp.utils.io.SizeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalResourceApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MultiplayerView(
     onExit: () -> Unit,
@@ -101,10 +105,10 @@ fun MultiplayerView(
     var serverAddress by remember { mutableStateOf("") }
     var isConnecting by remember { mutableStateOf(false) }
 
-    var isShowingServerList by remember { mutableStateOf(false) }
+    var isShowingRoomList by remember { mutableStateOf(false) }
     var selectedServerConfig by remember {
         val config = MultiplayerPreferences.instance.allServerConfig.firstOrNull { it.useAsDefaultList }
-        if (config != null) isShowingServerList = true
+        if (config != null) isShowingRoomList = true
         mutableStateOf(config)
     }
 
@@ -118,8 +122,6 @@ fun MultiplayerView(
     remember(blacklists.size) {
         Blacklists.blacklists = blacklists.toMutableList()
     }
-
-
     remember(mapNameFilter) { instance.mapNameFilter = mapNameFilter }
     remember(creatorNameFilter) { instance.creatorNameFilter = creatorNameFilter }
     remember(joinServerAddress) { instance.joinServerAddress = joinServerAddress }
@@ -205,7 +207,6 @@ fun MultiplayerView(
                 }
             }
 
-
             LargeDividingLine { 10.dp }
             var enableMods by remember { mutableStateOf(false) }
             var hostByRCN by remember { mutableStateOf(false) }
@@ -217,7 +218,6 @@ fun MultiplayerView(
                         .sumOf { it.getSize() }
                 )
             }
-
 
 
             remember(enableMods) {
@@ -240,7 +240,7 @@ fun MultiplayerView(
                     modifier = Modifier.padding(5.dp),
                     enabled = enableMods && modSize <= maxModSize
                 )
-                Text("Transfer Mod (Experimental) ${if(modSize > maxModSize) "(Disabled for total mods size: ${SizeUtils.byteToMB(modSize)}MB > ${SizeUtils.byteToMB(maxModSize)}MB)" else ""}",
+                Text("${readI18n("multiplayer.transferMod")} ${if(modSize > maxModSize) "(Disabled for total mods size: ${SizeUtils.byteToMB(modSize)}MB > ${SizeUtils.byteToMB(maxModSize)}MB)" else ""}",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(top = 15.dp),
                     color = if(enableMods && modSize <= maxModSize) Color.White else Color.Gray
@@ -259,7 +259,7 @@ fun MultiplayerView(
                     dismiss()
                     context.gameRoom.option = RoomOption(transferMod)
                     if(hostByRCN) {
-                        context.onQuestionCallback(if(enableMods) "mod" else "new")
+                        context.onQuestionCallback(if(enableMods) "smod" else "snew")
                         serverAddress = rcnAddress
                         isConnecting = true
                     } else {
@@ -273,7 +273,7 @@ fun MultiplayerView(
                     dismiss()
                     context.gameRoom.option = RoomOption(transferMod)
                     if(hostByRCN) {
-                        context.onQuestionCallback(if(enableMods) "modup" else "newup")
+                        context.onQuestionCallback(if(enableMods) "smodup" else "snewup")
                         serverAddress = rcnAddress
                         isConnecting = true
                     } else {
@@ -288,131 +288,108 @@ fun MultiplayerView(
     }
 
     @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    fun ColumnScope.RoomListAnimatedLazyColumn(descriptions: List<RoomDescription>) {
-        BorderCard(
-            modifier = Modifier.weight(1f).fillMaxWidth().padding(10.dp),
-            backgroundColor = Color.DarkGray.copy(.7f)
-        ) {
-            val statusWeight = .3f
-            val creatorNameWeight = .3F
-            val countWeight = .1f
-            val mapWeight = .6f
-            val versionWeight = .2f
-            val openWeight = .1f
-            val realDescriptions = remember(
-                descriptions, enableModFilter, playerLimitRange, mapNameFilter, creatorNameFilter, blacklists.size, battleroom
+    fun LazyListScope.RoomListAnimated(
+        descriptions: List<RoomDescription>
+    ) {
+
+        val statusWeight = .3f
+        val creatorNameWeight = .3F
+        val countWeight = .1f
+        val mapWeight = .6f
+        val versionWeight = .2f
+        val openWeight = .1f
+
+
+//                Row(
+//                    modifier = Modifier
+//                        .padding(5.dp)
+//                        .border(BorderStroke(2.dp, Color(101, 147, 74)), CircleShape)
+//                        .fillMaxWidth()
+//                ) {
+//                    TableCell("Status", statusWeight, drawStroke = false)
+//                    TableCell("Creator Name", creatorNameWeight)
+//                    TableCell("Count", countWeight)
+//                    TableCell("GameMap", mapWeight)
+//                    TableCell("Version", versionWeight)
+//                    TableCell("Open", openWeight, drawStroke = false)
+//                }
+
+        items(
+            count = descriptions.size,
+            key = { descriptions[it].uuid }
+        ) { index ->
+            val desc = descriptions[index]
+            Row(
+                modifier = Modifier
+                    .animateItemPlacement()
+                    .height(IntrinsicSize.Max)
+                    .padding(5.dp)
+                    .border(BorderStroke(2.dp, Color(160, 191, 124)), CircleShape)
+                    .fillMaxWidth()
+                    .clickable {
+                        selectedRoomDescription = desc
+                        showJoinRequestDialog = true
+                    }
             ) {
-                descriptions.filter { room ->
-                    if(blacklists.any { it.uuid == room.uuid}) return@filter false
-
-                    if (battleroom && room.status == "ingame") return@filter false
-                    if(enableModFilter) {
-                        if(!room.version.contains("mod", true) && room.mods.isBlank()) {
-                            return@filter false
-                        }
+                val color: Color =
+                    if (desc.isUpperCase) {
+                        Color.White
+                    } else if (desc.gameVersion != LocalController.current.gameVersion) {
+                        Color.Gray
+                    } else if (desc.isLocal) {
+                        Color(255, 127, 80)
+                    } else if (desc.isOpen) {
+                        Color(200, 200, 200)
+                    } else {
+                        Color.Gray
+                    }
+                val open: String =
+                    if (desc.requiredPassword) {
+                        "P"
+                    } else if (desc.isLocal) {
+                        "L"
+                    } else if (desc.isOpen) {
+                        "Y"
+                    } else {
+                        "N"
                     }
 
-                    if(mapNameFilter.isNotBlank()) {
-                        return@filter room.mapName.contains(mapNameFilter, true)
-                    }
-
-                    if(creatorNameFilter.isNotBlank()) {
-                        return@filter room.creator.contains(creatorNameFilter, true)
-                    }
-
-                    if(room.playerMaxCount != null) {
-                        return@filter room.playerMaxCount in playerLimitRange || room.playerMaxCount > 100
-                    }
-
-                    true
-                }.sorted
-            }
-
-            Column(modifier = Modifier.fillMaxSize()) {
-                Row(
-                    modifier = Modifier
-                        .padding(5.dp)
-                        .border(BorderStroke(2.dp, Color(101, 147, 74)), CircleShape)
-                        .fillMaxWidth()
-                ) {
-                    TableCell("Status", statusWeight, drawStroke = false)
-                    TableCell("Creator Name", creatorNameWeight)
-                    TableCell("Count", countWeight)
-                    TableCell("GameMap", mapWeight)
-                    TableCell("Version", versionWeight)
-                    TableCell("Open", openWeight, drawStroke = false)
-                }
-
-                val state = rememberLazyListState()
-
-                LazyColumnScrollbar(
-                    listState = state,
-                    modifier = Modifier.weight(1f).fillMaxWidth()
-                ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        state = state
-                    ) {
-                        items(
-                            count = realDescriptions.size,
-                            key = { realDescriptions[it].uuid }
-                        ) { index ->
-                            val desc = realDescriptions[index]
-                            Row(
-                                modifier = Modifier
-                                    .animateItemPlacement()
-                                    .height(IntrinsicSize.Max)
-                                    .padding(5.dp)
-                                    .border(BorderStroke(2.dp, Color(160, 191, 124)), CircleShape)
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        selectedRoomDescription = desc
-                                        showJoinRequestDialog = true
-                                    }
-                            ) {
-                                val color: Color =
-                                    if(desc.isUpperCase) {
-                                        Color.White
-                                    } else if(desc.gameVersion != LocalController.current.gameVersion) {
-                                        Color.Gray
-                                    } else if(desc.isLocal) {
-                                        Color(255, 127, 80)
-                                    } else if(desc.isOpen) {
-                                        Color(200, 200, 200)
-                                    } else {
-                                        Color.Gray
-                                    }
-                                val open: String =
-                                    if(desc.requiredPassword) {
-                                        "P"
-                                    } else if(desc.isLocal) {
-                                        "L"
-                                    } else if(desc.isOpen) {
-                                        "Y"
-                                    } else {
-                                        "N"
-                                    }
 
 
+                TableCell(
+                    desc.status,
+                    statusWeight,
+                    color = color,
+                    modifier = Modifier.fillMaxHeight(),
+                    drawStroke = false
+                )
+                TableCell(
+                    desc.creator,
+                    creatorNameWeight,
+                    modifier = Modifier.fillMaxHeight(),
+                    color = color
+                )
+                TableCell(
+                    (desc.playerCurrentCount ?: "").toString() + "/" + desc.playerMaxCount.toString(),
+                    countWeight,
+                    modifier = Modifier.fillMaxHeight(),
+                    color = color
+                )
+                TableCell(
+                    desc.mapName.removeSuffix(".tmx"),
+                    mapWeight,
+                    modifier = Modifier.fillMaxHeight(),
+                    color = color
+                )
+                TableCell(desc.version, versionWeight, modifier = Modifier.fillMaxHeight(), color = color)
 
-                                TableCell(desc.status, statusWeight, color = color, modifier = Modifier.fillMaxHeight(), drawStroke = false)
-                                TableCell(desc.creator, creatorNameWeight, modifier = Modifier.fillMaxHeight(), color = color)
-                                TableCell(
-                                    (desc.playerCurrentCount ?: "").toString() + "/" + desc.playerMaxCount.toString(),
-                                    countWeight,
-                                    modifier = Modifier.fillMaxHeight(),
-                                    color = color
-                                )
-                                TableCell(desc.mapName.removeSuffix(".tmx"), mapWeight, modifier = Modifier.fillMaxHeight(), color = color)
-                                TableCell(desc.version, versionWeight, modifier = Modifier.fillMaxHeight(), color = color)
-
-                                TableCell(open, openWeight, drawStroke = false, modifier = Modifier.fillMaxHeight(), color = color)
-                            }
-                        }
-                    }
-
-                }
+                TableCell(
+                    open,
+                    openWeight,
+                    drawStroke = false,
+                    modifier = Modifier.fillMaxHeight(),
+                    color = color
+                )
             }
         }
     }
@@ -491,215 +468,154 @@ fun MultiplayerView(
         }
     }
 
-    @Composable
-    @OptIn(ExperimentalFoundationApi::class, ExperimentalResourceApi::class)
-    fun ColumnScope.ServerList() {
-        AnimatedServerConfigInfo(
-            showServerInfoConfig,
-            selectedServerConfig,
-        ) { showServerInfoConfig = false }
+    @OptIn(ExperimentalFoundationApi::class)
+    fun LazyListScope.ServerList(
+        serverDataList: List<ServerData>
+    ) {
+        items(
+            count = serverDataList.size
+        ) { index ->
+            var selectedDefaultRoomList by remember { mutableStateOf(allServerData.firstOrNull { it.config.useAsDefaultList }) }
 
-        val realServerData = remember(
-            allServerData.size, enableModFilter, playerLimitRange, mapNameFilter, creatorNameFilter, battleroom
-        ) {
-            allServerData.filter { data ->
-                val info = data.infoPacket
+            val serverData = serverDataList[index]
+            BorderCard(
+                backgroundColor = Color(27, 18, 18).copy(.7f),
+                modifier = Modifier
+                    .animateItemPlacement()
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(5.dp)
+                    .clickable {
+                        if (serverData.config.type == ServerType.Server) {
+                            val ip = serverData.config.ip
+                            serverAddress = ip
+                            context.setConfig("lastNetworkIP", ip)
+                            isConnecting = true
+                        } else if (serverData.config.type == ServerType.RoomList) {
+                            selectedServerConfig = serverData.config
+                            isShowingRoomList = true
+                            refresh.trySend(Unit)
+                        }
+                    }
+            ) {
+                // do not edit official room list
+                if (index != 0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Icon(Icons.Default.Delete, null, modifier = Modifier.padding(5.dp).clickable {
+                            MultiplayerPreferences.instance.allServerConfig.remove(serverData.config)
+                            allServerData.remove(serverData)
+                        })
 
-                if (battleroom && info?.status == ServerStatus.InGame) {
-                    return@filter false
-                }
-
-                if(enableModFilter) {
-                    if(info?.mods.isNullOrBlank()) {
-                        return@filter false
+                        Icon(
+                            Icons.Default.Info,
+                            null,
+                            modifier = Modifier.padding(5.dp, 5.dp, 20.dp, 5.dp).clickable {
+                                selectedServerConfig = serverData.config
+                                showServerInfoConfig = true
+                            }
+                        )
                     }
                 }
 
-                if(mapNameFilter.isNotBlank()) {
-                    return@filter info?.mapName?.contains(mapNameFilter, true) == true
-                }
+                Row {
+                    val iconPainter = remember {
+                        runCatching {
+                            serverData.infoPacket?.iconBytes?.let { readPainterByBytes(it) }
+                        }.getOrNull()
+                    }
 
-                if(creatorNameFilter.isNotBlank()) {
-                    return@filter (info?.name ?: data.config.name).contains(creatorNameFilter, true)
-                }
+                    var checked by remember(selectedDefaultRoomList) {
+                        mutableStateOf(selectedDefaultRoomList == serverData)
+                    }
 
-                if(info?.maxPlayerSize != null) {
-                    return@filter info.maxPlayerSize in playerLimitRange || info.maxPlayerSize > 100
-                }
+                    if (serverData.config.type == ServerType.Server) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Image(
+                                iconPainter ?: painterResource(Res.drawable.error_missingmap),
+                                null,
+                                modifier = Modifier.size(120.dp).padding(5.dp)
+                            )
+                            if (serverData.isLoading) CircularProgressIndicator(color = Color(199, 234, 70))
+                        }
+                    }
 
-                true
-            }
-        }
+                    val info = remember(serverData.infoPacket) { serverData.infoPacket }
+                    val playerCount = remember(info) { info?.run { "$currentPlayer / $maxPlayerSize" } ?: "" }
+                    val version = remember(info) {
+                        info?.run { version } ?: ""
+                    }
+                    val description = remember(info) {
+                        info?.run { description } ?: ""
+                    }
+                    val mapName = remember(info) {
+                        info?.run { mapName } ?: ""
+                    }
+                    val ping = remember(info) {
+                        info?.run { ping.toString() } ?: ""
+                    }
+                    val mods = remember(info) {
+                        info?.run { mods } ?: ""
+                    }
 
-        CompositionLocalProvider(
-            LocalContentColor provides Color.White
-        ) {
-            BorderCard(
-                modifier = Modifier.weight(1f).fillMaxWidth().padding(10.dp),
-                backgroundColor = Color.DarkGray.copy(.7f)
-            ) {
-                val state = rememberLazyListState()
-
-                var selectedDefaultRoomList by remember { mutableStateOf(allServerData.firstOrNull { it.config.useAsDefaultList }) }
-
-                LazyColumnScrollbar(
-                    listState = state,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        state = state
+                    Column(
+                        modifier = Modifier.weight(1f)
                     ) {
-                        items(
-                            count = realServerData.size
-                        ) { index ->
-                            val serverData = realServerData[index]
-                            val (delay, easing) = state.calculateDelayAndEasing(index, 1)
-                            val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
-                            val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
-                            val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
-                            BorderCard(
-                                backgroundColor = Color(27, 18, 18).copy(.7f),
-                                modifier = Modifier
-                                    .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
-                                    .animateItemPlacement()
-                                    .fillMaxWidth()
-                                    .wrapContentHeight()
-                                    .padding(5.dp)
-                                    .clickable {
-                                        if (serverData.config.type == ServerType.Server) {
-                                            val ip = serverData.config.ip
-                                            serverAddress = ip
-                                            context.setConfig("lastNetworkIP", ip)
-                                            isConnecting = true
-                                        } else if (serverData.config.type == ServerType.RoomList) {
-                                            selectedServerConfig = serverData.config
-                                            isShowingServerList = true
-                                            refresh.trySend(Unit)
-                                        }
-                                    }
-                            ) {
-                                // do not edit official room list
-                                if (index != 0) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.End
-                                    ) {
-                                        Icon(Icons.Default.Delete, null, modifier = Modifier.padding(5.dp).clickable {
-                                            MultiplayerPreferences.instance.allServerConfig.remove(serverData.config)
-                                            allServerData.remove(serverData)
-                                        })
 
-                                        Icon(
-                                            Icons.Default.Info,
-                                            null,
-                                            modifier = Modifier.padding(5.dp, 5.dp, 20.dp, 5.dp).clickable {
-                                                selectedServerConfig = serverData.config
-                                                showServerInfoConfig = true
-                                            }
-                                        )
-                                    }
+                        Text(
+                            buildAnnotatedString {
+                                append(info?.name ?: serverData.config.name)
+                                withStyle(
+                                    SpanStyle(
+                                        color = Color.DarkGray,
+                                        fontStyle = FontStyle.Italic
+                                    )
+                                ) {
+                                    if (version.isNotEmpty()) append("  Version: $version")
                                 }
+                            },
+                            modifier = Modifier.padding(3.dp),
+                            style = MaterialTheme.typography.headlineMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                                Row {
-                                    val iconPainter = remember {
-                                        runCatching {
-                                            serverData.infoPacket?.iconBytes?.let { readPainterByBytes(it) }
-                                        }.getOrNull()
+                        if (serverData.config.type == ServerType.Server) {
+                            Text(
+                                buildString {
+                                    appendLine("player: $playerCount")
+                                    appendLine("playing map: $mapName")
+                                    appendLine(description)
+                                    appendLine("ping: ${ping}ms")
+                                    if (mods.isNotBlank()) appendLine("enabled mods: $mods")
+                                },
+                                modifier = Modifier.padding(3.dp),
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        } else if (serverData.config.type == ServerType.RoomList) {
+                            Row {
+                                RWCheckbox(
+                                    checked, {
+                                        checked = it
+                                        selectedDefaultRoomList = if (it) serverData else null
+                                        allServerData.forEach { d -> d.config.useAsDefaultList = false }
+                                        if (checked) serverData.config.useAsDefaultList = true
                                     }
+                                )
 
-                                    var checked by remember(selectedDefaultRoomList) {
-                                        mutableStateOf(selectedDefaultRoomList == serverData)
-                                    }
-
-                                    if (serverData.config.type == ServerType.Server) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Image(
-                                                iconPainter ?: painterResource(Res.drawable.error_missingmap),
-                                                null,
-                                                modifier = Modifier.size(120.dp).padding(5.dp)
-                                            )
-                                            if (serverData.isLoading) CircularProgressIndicator(color = Color(199, 234, 70))
-                                        }
-                                    }
-
-                                    val info = remember(serverData.infoPacket) { serverData.infoPacket }
-                                    val playerCount = remember(info) { info?.run { "$currentPlayer / $maxPlayerSize" } ?: "" }
-                                    val version = remember(info) {
-                                        info?.run { version } ?: ""
-                                    }
-                                    val description = remember(info) {
-                                        info?.run { description } ?: ""
-                                    }
-                                    val mapName = remember(info) {
-                                        info?.run { mapName } ?: ""
-                                    }
-                                    val ping = remember(info) {
-                                        info?.run { ping.toString() } ?: ""
-                                    }
-                                    val mods = remember(info) {
-                                        info?.run { mods } ?: ""
-                                    }
-
-                                    Column(
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-
-                                        Text(
-                                            buildAnnotatedString {
-                                                append(info?.name ?: serverData.config.name)
-                                                withStyle(
-                                                    SpanStyle(
-                                                        color = Color.DarkGray,
-                                                        fontStyle = FontStyle.Italic
-                                                    )
-                                                ) {
-                                                    if(version.isNotEmpty()) append("  Version: $version")
-                                                }
-                                            },
-                                            modifier = Modifier.padding(3.dp),
-                                            style = MaterialTheme.typography.headlineMedium,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-
-                                        if (serverData.config.type == ServerType.Server) {
-                                            Text(
-                                                buildString {
-                                                    appendLine("player: $playerCount")
-                                                    appendLine("playing map: $mapName")
-                                                    appendLine(description)
-                                                    appendLine("ping: ${ping}ms")
-                                                    if(mods.isNotBlank()) appendLine("enabled mods: $mods")
-                                                },
-                                                modifier = Modifier.padding(3.dp),
-                                                style = MaterialTheme.typography.bodyLarge,
-                                            )
-                                        } else if (serverData.config.type == ServerType.RoomList) {
-                                            Row {
-                                                RWCheckbox(
-                                                    checked, {
-                                                        checked = it
-                                                        selectedDefaultRoomList = if (it) serverData else null
-                                                        allServerData.forEach { d -> d.config.useAsDefaultList = false }
-                                                        if(checked) serverData.config.useAsDefaultList = true
-                                                    }
-                                                )
-
-                                                Text(readI18n("multiplayer.useAsDefaultList"))
-                                            }
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.size(10.dp))
-                                }
+                                Text(readI18n("multiplayer.useAsDefaultList"))
                             }
                         }
                     }
 
+                    Spacer(modifier = Modifier.size(10.dp))
                 }
             }
         }
+
+
     }
 
 
@@ -774,11 +690,11 @@ fun MultiplayerView(
         RWSingleOutlinedTextField(
             label = readI18n("multiplayer.joinServer"),
             value = joinServerAddress,
-            modifier = Modifier.fillMaxWidth().padding(5.dp),
+            modifier = Modifier.width(400.dp).padding(10.dp),
             leadingIcon = { Icon(Icons.Default.Add, null, modifier = Modifier.size(30.dp)) },
             trailingIcon = {
                 Icon(
-                    Icons.Default.ArrowForward,
+                    Icons.AutoMirrored.Filled.ArrowForward,
                     null,
                     modifier = Modifier.clickable {
                         if(joinServerAddress.isNotBlank()) {
@@ -796,134 +712,144 @@ fun MultiplayerView(
     }
 
     @Composable
-    fun ColumnScope.FilterSurface() {
-        BorderCard(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
-            backgroundColor = Color.DarkGray.copy(.7f)
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Filter", style = MaterialTheme.typography.headlineMedium)
-                }
+    fun FilterSurfaceDialog(
+        visible: Boolean,
+        onDismissRequest: () -> Unit
+    ) {
+        AnimatedAlertDialog(
+            visible, onDismissRequest = onDismissRequest
+        ) { dismiss ->
+            BorderCard(
+                modifier = Modifier
+                    .fillMaxSize(GeneralProportion())
+                    .padding(10.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                ExitButton(dismiss)
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Filter", style = MaterialTheme.typography.headlineMedium)
+                    }
 
-                LargeDividingLine { 5.dp }
+                    LargeDividingLine { 5.dp }
 
-                var showBlacklistDialog by remember {
-                    mutableStateOf(false)
-                }
+                    var showBlacklistDialog by remember {
+                        mutableStateOf(false)
+                    }
 
-                LargeOutlinedButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = {  },
-                    value = "Blacklist"
-                ) {
-                    showBlacklistDialog = true
-                }
+                    LargeOutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = {  },
+                        value = "Blacklist"
+                    ) {
+                        showBlacklistDialog = true
+                    }
 
-                BlacklistTargetDialog(showBlacklistDialog) { showBlacklistDialog = false }
+                    BlacklistTargetDialog(showBlacklistDialog) { showBlacklistDialog = false }
 
-                OutlinedTextField(
-                    label = {
+                    OutlinedTextField(
+                        label = {
+                            Text(
+                                "GameMap Name Filter",
+                                style = MaterialTheme.typography.headlineMedium
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.headlineMedium,
+                        colors = RWOutlinedTextColors,
+                        value = mapNameFilter,
+                        enabled = true,
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(5.dp),
+                        onValueChange =
+                        {
+                            mapNameFilter = it
+                        },
+                    )
+
+                    OutlinedTextField(
+                        label = {
+                            Text(
+                                "Creator Name Filter",
+                                style = MaterialTheme.typography.headlineMedium
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.headlineMedium,
+                        colors = RWOutlinedTextColors,
+                        value = creatorNameFilter,
+                        enabled = true,
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(5.dp, 0.dp, 5.dp, 5.dp),
+                        onValueChange =
+                        {
+                            creatorNameFilter = it
+                        },
+                    )
+
+                    var range by remember { mutableStateOf(playerLimitRange) }
+                    Column(modifier = Modifier.wrapContentSize()) {
                         Text(
-                            "GameMap Name Filter",
-                            style = MaterialTheme.typography.headlineMedium
+                            "${readI18n("multiplayer.playerLimit")} : $range",
+                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 5.dp, 0.dp, 5.dp)
                         )
-                    },
-                    textStyle = MaterialTheme.typography.headlineMedium,
-                    colors = RWOutlinedTextColors,
-                    value = mapNameFilter,
-                    enabled = true,
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(5.dp),
-                    onValueChange =
-                    {
-                        mapNameFilter = it
-                    },
-                )
+                        RangeSlider(
+                            valueRange = 0f..100f,
+                            modifier = Modifier.fillMaxWidth().padding(0.dp, 0.dp, 0.dp, 5.dp),
+                            steps = 101,
+                            value = range.first.toFloat()..range.last.toFloat(),
+                            colors = RWSliderColors,
+                            onValueChange = { range = it.start.roundToInt()..it.endInclusive.roundToInt() },
+                            onValueChangeFinished = { playerLimitRange = range }
+                        )
+                    }
 
-                OutlinedTextField(
-                    label = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min)
+                            .padding(5.dp)
+                    ) {
                         Text(
-                            "Creator Name Filter",
-                            style = MaterialTheme.typography.headlineMedium
+                            readI18n("multiplayer.enableMods"), style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .weight(1f)
                         )
-                    },
-                    textStyle = MaterialTheme.typography.headlineMedium,
-                    colors = RWOutlinedTextColors,
-                    value = creatorNameFilter,
-                    enabled = true,
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(5.dp, 0.dp, 5.dp, 5.dp),
-                    onValueChange =
-                    {
-                        creatorNameFilter = it
-                    },
-                )
+                        Switch(
+                            checked = enableModFilter,
+                            onCheckedChange = { enableModFilter = it },
+                            colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
+                        )
+                    }
 
-                var range by remember { mutableStateOf(playerLimitRange) }
-                Column(modifier = Modifier.wrapContentSize()) {
-                    Text(
-                        "${readI18n("multiplayer.playerLimit")} : $range",
-                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 5.dp, 0.dp, 5.dp)
-                    )
-                    RangeSlider(
-                        valueRange = 0f..100f,
-                        modifier = Modifier.fillMaxWidth().padding(0.dp, 0.dp, 0.dp, 5.dp),
-                        steps = 101,
-                        value = range.first.toFloat()..range.last.toFloat(),
-                        colors = RWSliderColors,
-                        onValueChange = { range = it.start.roundToInt()..it.endInclusive.roundToInt() },
-                        onValueChangeFinished = { playerLimitRange = range }
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min)
-                        .padding(5.dp)
-                ) {
-                    Text(
-                        readI18n("multiplayer.enableMods"), style = MaterialTheme.typography.headlineMedium,
+                    Row(
                         modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min)
                             .padding(5.dp)
-                            .weight(1f)
-                    )
-                    Switch(
-                        checked = enableModFilter,
-                        onCheckedChange = { enableModFilter = it },
-                        colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
-                    )
-                }
+                    ) {
+                        Text(
+                            readI18n("multiplayer.battleroom"), style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .weight(1f)
+                        )
+                        Switch(
+                            checked = battleroom,
+                            onCheckedChange = { battleroom = it },
+                            colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
+                        )
+                    }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min)
-                        .padding(5.dp)
-                ) {
-                    Text(
-                        readI18n("multiplayer.battleroom"), style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier
-                            .padding(5.dp)
-                            .weight(1f)
-                    )
-                    Switch(
-                        checked = battleroom,
-                        onCheckedChange = { battleroom = it },
-                        colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
-                    )
-                }
-
-                LargeOutlinedButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(readI18n("multiplayer.reset")) },
-                    value = ""
-                ) {
-                    resetFilter()
+                    LargeOutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(readI18n("multiplayer.reset")) },
+                        value = ""
+                    ) {
+                        resetFilter()
+                    }
                 }
             }
         }
@@ -938,7 +864,7 @@ fun MultiplayerView(
                 isRefreshing = true
                 try {
                     val roomList = selectedServerConfig
-                    if (isShowingServerList && roomList != null) {
+                    if (isShowingRoomList && roomList != null) {
                         currentViewList = getRoomListFromSourceUrl(
                             roomList.ip.split(";")
                         )
@@ -967,19 +893,49 @@ fun MultiplayerView(
         }
     }
 
+    var hostDialogVisible by remember { mutableStateOf(false) }
+    var filterSurfaceDialogVisible by remember { mutableStateOf(false) }
 
+    FilterSurfaceDialog(filterSurfaceDialogVisible) { filterSurfaceDialogVisible = false }
+    HostGameDialog(hostDialogVisible, { hostDialogVisible = false }) {
+        onExit(); onOpenRoomView(); context.setUserName(userName)
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
-        floatingActionButton = {
-            Row {
-                if (isShowingServerList) {
+        bottomBar = {
+            Row(modifier = Modifier.fillMaxWidth().padding(10.dp)) {
+
+                Spacer(modifier = Modifier.weight(1.3f))
+
+                RWTextButton(
+                    readI18n("multiplayer.host"),
+                    leadingIcon = { Icon(Icons.Default.Build, null, modifier = Modifier.size(30.dp)) },
+                    modifier = Modifier.padding(10.dp)
+                ) { hostDialogVisible = true }
+
+
+                RWTextButton(
+                    label = readI18n("multiplayer.joinLastGame"),
+                    leadingIcon = { Icon(loadSvg("replay"), null, modifier = Modifier.size(30.dp)) },
+                    modifier = Modifier.padding(10.dp)
+                ) {
+                    val lastIp = context.getConfig<String?>("lastNetworkIP")
+                    if (lastIp != null) {
+                        serverAddress = lastIp
+                        isConnecting = true
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                if (isShowingRoomList) {
                     FloatingActionButton(
-                        onClick = { isShowingServerList = false },
+                        onClick = { isShowingRoomList = false },
                         shape = CircleShape,
                         modifier = Modifier.padding(5.dp),
                         containerColor = Color(151, 188, 98),
-                    ) { Icon(Icons.Default.ArrowBack, null) }
+                    ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
                 } else {
                     FloatingActionButton(
                         onClick = { selectedServerConfig = null; showServerInfoConfig = true },
@@ -1002,93 +958,146 @@ fun MultiplayerView(
                     }
                 }
             }
-
         },
-        floatingActionButtonPosition = FabPosition.End
     ) {
-        BorderCard(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(5.dp)
-        ) {
-            Column {
-                ExitButton(onExit)
-                Row(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Column(modifier = Modifier.weight(0.4f).verticalScroll(rememberScrollState())) {
-                        OutlinedTextField(
-                            label = { Text(readI18n("multiplayer.userName"), fontFamily = MaterialTheme.typography.headlineMedium.fontFamily) },
-                            textStyle = MaterialTheme.typography.headlineLarge,
-                            colors = RWOutlinedTextColors,
-                            value = userName,
-                            enabled = true,
-                            singleLine = true,
-                            leadingIcon = { Icon(Icons.Default.Person, null, modifier = Modifier.size(30.dp)) },
-                            modifier = Modifier.fillMaxWidth().padding(10.dp),
-                            onValueChange =
-                            {
-                                userName = it
-                            },
-                        )
+        ExpandedCard {
+            ExitButton(onExit)
 
-                        if(LocalWindowManager.current == WindowManager.Small) {
-                            JoinServerField()
+            val realList = remember(
+                currentViewList,
+                enableModFilter,
+                playerLimitRange,
+                mapNameFilter,
+                creatorNameFilter,
+                blacklists.size,
+                battleroom
+            ) {
+                currentViewList.filter { room ->
+                    if (blacklists.any { it.uuid == room.uuid }) return@filter false
+
+                    if (battleroom && room.status == "ingame") return@filter false
+                    if (enableModFilter) {
+                        if (!room.version.contains("mod", true) && room.mods.isBlank()) {
+                            return@filter false
                         }
-
-                        var hostDialogVisible by remember { mutableStateOf(false) }
-                        RWTextButton(
-                            readI18n("multiplayer.host"),
-                            leadingIcon = { Icon(Icons.Default.Build, null, modifier = Modifier.size(30.dp)) },
-                            modifier = Modifier.padding(5.dp).fillMaxWidth()
-                        ) { hostDialogVisible = true }
-                        HostGameDialog(hostDialogVisible, { hostDialogVisible = false }) {
-                            onExit(); onOpenRoomView(); context.setUserName(userName)
-                        }
-
-                        RWTextButton(
-                            label = readI18n("multiplayer.joinLastGame"),
-                            leadingIcon = { Icon(loadSvg("replay"), null, modifier = Modifier.size(30.dp)) },
-                            modifier = Modifier.padding(5.dp, 0.dp, 5.dp, 5.dp).fillMaxWidth(),
-                        ) {
-                            val lastIp = context.getConfig<String?>("lastNetworkIP")
-                            if(lastIp != null) {
-                                serverAddress = lastIp
-                                isConnecting = true
-                            }
-                        }
-
-                        FilterSurface()
                     }
 
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
+                    if (mapNameFilter.isNotBlank()) {
+                        return@filter room.mapName.contains(mapNameFilter, true)
+                    }
+
+                    if (creatorNameFilter.isNotBlank()) {
+                        return@filter room.creator.contains(creatorNameFilter, true)
+                    }
+
+                    if (room.playerMaxCount != null) {
+                        return@filter room.playerMaxCount in playerLimitRange || room.playerMaxCount > 100
+                    }
+
+                    true
+                }.sorted
+            }
+
+            val realServerData = remember(
+                allServerData.size, enableModFilter, playerLimitRange, mapNameFilter, creatorNameFilter, battleroom
+            ) {
+                allServerData.filter { data ->
+                    val info = data.infoPacket
+
+                    if (battleroom && info?.status == ServerStatus.InGame) {
+                        return@filter false
+                    }
+
+                    if (enableModFilter) {
+                        if (info?.mods.isNullOrBlank()) {
+                            return@filter false
+                        }
+                    }
+
+                    if (mapNameFilter.isNotBlank()) {
+                        return@filter info?.mapName?.contains(mapNameFilter, true) == true
+                    }
+
+                    if (creatorNameFilter.isNotBlank()) {
+                        return@filter (info?.name ?: data.config.name).contains(creatorNameFilter, true)
+                    }
+
+                    if (info?.maxPlayerSize != null) {
+                        return@filter info.maxPlayerSize in playerLimitRange || info.maxPlayerSize > 100
+                    }
+
+                    true
+                }
+            }
+
+            AnimatedServerConfigInfo(
+                showServerInfoConfig,
+                selectedServerConfig,
+            ) { showServerInfoConfig = false }
+
+            CompositionLocalProvider(
+                LocalContentColor provides Color.White
+            ) {
+                val state = rememberLazyListState()
+                LazyColumnScrollbar(
+                    listState = state,
+                    showItemIndicator = ListIndicatorSettings.EnabledMirrored(
+                        if (LocalWindowManager.current == WindowManager.Small) 0.dp else 100.dp,
+                        MaterialTheme.colorScheme.surface
+                    ),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = state
                     ) {
-                        if(LocalWindowManager.current != WindowManager.Small) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(IntrinsicSize.Min)
-                            ) {
+                        item {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                OutlinedTextField(
+                                    label = {
+                                        Text(
+                                            readI18n("multiplayer.userName"),
+                                            fontFamily = MaterialTheme.typography.headlineMedium.fontFamily
+                                        )
+                                    },
+                                    textStyle = MaterialTheme.typography.headlineLarge,
+                                    colors = RWOutlinedTextColors,
+                                    value = userName,
+                                    enabled = true,
+                                    singleLine = true,
+                                    leadingIcon = { Icon(Icons.Default.Person, null, modifier = Modifier.size(30.dp)) },
+                                    modifier = Modifier.width(200.dp).padding(10.dp),
+                                    onValueChange =
+                                    {
+                                        userName = it
+                                    },
+                                )
+
                                 JoinServerField()
+
+                                Card(
+                                    border = BorderStroke(2.dp, Color.DarkGray),
+                                    colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+                                    shape = RoundedCornerShape(5.dp),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+                                    modifier = Modifier.offset(y = 25.dp).bounceClick { filterSurfaceDialogVisible = true },
+                                ) {
+                                    Icon(painter = loadSvg("tune"), null, modifier = Modifier.size(45.dp).align(Alignment.CenterHorizontally))
+                                }
                             }
                         }
 
-                        if(throwable != null && isShowingServerList) {
-                            LazyColumn {
-                                item {
-                                    SelectionContainer {
-                                        Text(throwable?.stackTraceToString() ?: "", color = Color.Red)
-                                    }
+                        if (throwable != null && isShowingRoomList) {
+                            item {
+                                SelectionContainer {
+                                    Text(throwable?.stackTraceToString() ?: "", color = Color.Red)
                                 }
                             }
                         } else {
-                            AnimatedVisibility(isShowingServerList) {
-                                RoomListAnimatedLazyColumn(currentViewList)
-                            }
-                            AnimatedVisibility(!isShowingServerList) {
-                                ServerList()
+                            if (isShowingRoomList) {
+                                RoomListAnimated(realList)
+                            } else {
+                                ServerList(realServerData)
                             }
                         }
                     }
@@ -1224,7 +1233,7 @@ private fun WelcomeMessageAdmittingDialog(
         BorderCard(
             modifier = Modifier
              //   .fillMaxSize(GeneralProportion())
-                .size(500.dp)
+                .width(IntrinsicSize.Max)
                 .padding(5.dp),
         ) {
             Row(
@@ -1243,17 +1252,12 @@ private fun WelcomeMessageAdmittingDialog(
             LargeDividingLine { 5.dp }
 
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    """
-                    为了使RWPP能变得更好，我们希望您在开房时向进入的玩家发送一条消息用以推广RWPP
-                    您是否同意？(该对话框第一次显示后将不再显示，稍后可在 设置 - Show Welcome Message中更改)
-                    In order to make RWPP even better, we want you to send a message to joining players to promote RWPP when you are a host
-                    Do you agree? (The dialog will no longer be displayed, and can be changed later in Settings - Show Welcome Message)
-                """.trimIndent(),
+                    readI18n("multiplayer.admitting").trimIndent(),
                     modifier = Modifier.padding(5.dp),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White
@@ -1279,7 +1283,6 @@ private fun WelcomeMessageAdmittingDialog(
         }
     }
 }
-
 
 @Composable
 private fun JoinServerRequestDialog(
@@ -1321,9 +1324,10 @@ private fun JoinServerRequestDialog(
             }
 
             LargeDividingLine { 5.dp }
-            Text("creator: ${roomDescription.mapName}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-            Text("map: ${roomDescription.creator}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Text("creator: ${roomDescription.creator}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Text("map: ${roomDescription.mapName}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
             Text("version: ${roomDescription.version}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Text("mods: ${roomDescription.mods}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
             Spacer(modifier = Modifier.weight(1f))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 RWTextButton("Add to Blacklist", modifier = Modifier.padding(5.dp)) {

@@ -11,7 +11,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -28,6 +27,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.rwpp.LocalController
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
@@ -50,6 +50,16 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
         true
     }
 
+    fun updateMods() {
+        loadingAction = {
+            modUpdate()
+            mods = getAllMods()
+            updated = true
+        }
+
+        isLoading = true
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
         bottomBar = {
@@ -57,12 +67,15 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                 RWTextButton(
                     readI18n("mod.update"),
                     modifier = Modifier.padding(5.dp),
-                )  { loadingAction = { modUpdate(); mods = getAllMods(); updated = true }; isLoading = true }
+                )  { updateMods() }
 
                 RWTextButton(
                     readI18n("mod.reload"),
                     modifier = Modifier.padding(5.dp),
-                ) { loadingAction = { modReload() }; isLoading = true }
+                ) { loadingAction = {
+                    modReload()
+                    getAllMaps(true)
+                }; isLoading = true }
 
                 RWTextButton(
                     readI18n("mod.disableAll"),
@@ -156,6 +169,23 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                                             color = Color(151, 188, 98)
                                         )
                                     }
+
+                                    var isNetwork by remember { mutableStateOf(mod.isNetworkMod) }
+
+                                    if(isNetwork) {
+                                        Text(
+                                            readI18n("mod.networkModInfo"),
+                                            style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 12.sp),
+                                            color = Color.Yellow
+                                        )
+
+                                        RWTextButton(readI18n("mod.cancel")) {
+                                            mod.isNetworkMod = false
+                                            isNetwork = false
+                                        }
+                                    }
+
+
 
                                     val expandedStyle = remember {
                                         SpanStyle(

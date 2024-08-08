@@ -13,7 +13,9 @@ import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
 import io.github.rwpp.net.PacketType
 import okhttp3.OkHttpClient
+import java.awt.Desktop
 import java.io.DataInputStream
+import java.net.URI
 
 class NetImpl : Net {
     override val packetDecoders: MutableMap<PacketType, (DataInputStream) -> Packet> = mutableMapOf()
@@ -26,5 +28,9 @@ class NetImpl : Net {
 
     override fun sendPacketToClients(packet: Packet) {
         LClass.B().bX.g(packet.asGamePacket())
+    }
+
+    override fun openUriInBrowser(uri: String) {
+        Desktop.getDesktop().browse(URI(uri))
     }
 }

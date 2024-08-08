@@ -114,7 +114,7 @@ fun doProxy() {
 
     com.corrodinggames.rts.appFramework.d::class.setFunction {
         addProxy("b", Activity::class) { activity: Activity ->
-            val viewGroup = activity.getWindow().getDecorView().getRootView() as ViewGroup
+            val viewGroup = activity.window.decorView.rootView as ViewGroup
             val i = com.corrodinggames.rts.appFramework.d.d;
             var i2 = i;
             val bMethod = com.corrodinggames.rts.appFramework.d::class.java.getDeclaredMethod("b").apply { isAccessible = true }
@@ -164,8 +164,6 @@ fun doProxy() {
 
                 run {
                     if (allMods.all { controller.getModByName(it) != null }) {
-                        if(controller.gameRoom.isRWPPRoom)
-                            controller.sendPacketToServer(ModPacket.RequestPacket(""))
                         controller.getAllMods().forEach { it.isEnabled = it.name in allMods }
                         CallReloadModEvent().broadCastIn()
                         return@run

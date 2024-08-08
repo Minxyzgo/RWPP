@@ -64,7 +64,7 @@ fun BanUnitViewDialog(
                     allUnits.size,
                 ) {
                     val unit by remember(allUnits) { mutableStateOf(allUnits[it]) }
-                    var checked by remember(lastSelectedUnits, unit) { mutableStateOf(lastSelectedUnits.contains(unit)) }
+                    var checked by remember(lastSelectedUnits, unit) { mutableStateOf(selectedUnits.contains(unit)) }
                     BanUnitItem(
                         it,
                         checked,

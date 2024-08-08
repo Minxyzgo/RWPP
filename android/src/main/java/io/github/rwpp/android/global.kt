@@ -10,6 +10,7 @@ package io.github.rwpp.android
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
 import io.github.rwpp.ContextController
+import java.util.concurrent.atomic.AtomicInteger
 
 lateinit var controller: ContextController
 lateinit var gameLauncher: ActivityResultLauncher<Intent>
@@ -19,4 +20,5 @@ var isGaming = false
 var isReturnToBattleRoom = false
 var roomMods = arrayOf<String>()
 var bannedUnitList: List<String> = listOf()
+val cacheModSize = AtomicInteger(0)
 

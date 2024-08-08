@@ -12,20 +12,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import io.github.rwpp.shared.generated.resources.*
-import io.github.rwpp.shared.generated.resources.Delicious_Bold
-import io.github.rwpp.shared.generated.resources.Delicious_BoldItalic
-import io.github.rwpp.shared.generated.resources.Delicious_Italic
-import io.github.rwpp.shared.generated.resources.Res
 import org.jetbrains.compose.resources.Font
-
-@Composable
-fun deliciousFonts(): FontFamily {
-    return FontFamily(
-        Font(Res.font.Delicious_Bold, FontWeight.Bold),
-        Font(Res.font.Delicious_BoldItalic, FontWeight.Bold, FontStyle.Italic),
-        Font(Res.font.Delicious_Italic, FontWeight.Normal, FontStyle.Italic)
-    )
-}
 
 @Composable
 fun JostFonts(): FontFamily {

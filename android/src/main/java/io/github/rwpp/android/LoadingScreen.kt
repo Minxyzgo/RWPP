@@ -19,7 +19,7 @@ import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
@@ -28,6 +28,7 @@ import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.doProxy
 import io.github.rwpp.ui.ConstraintWindowManager
 import io.github.rwpp.ui.LoadingView
+import io.github.rwpp.ui.MenuLoadingView
 import io.github.rwpp.ui.RWSelectionColors
 import io.github.rwpp.ui.v2.TitleBrush
 import kotlinx.coroutines.Dispatchers
@@ -62,23 +63,22 @@ class LoadingScreen : ComponentActivity() {
                         LocalTextSelectionColors provides RWSelectionColors,
                         LocalWindowManager provides ConstraintWindowManager(maxWidth, maxHeight)
                     ) {
-                        LoadingView(true, {}) {
+                        var message by remember { mutableStateOf("loading") }
 
+                        MenuLoadingView(message)
+
+                        LaunchedEffect(Unit) {
                             withContext(Dispatchers.IO) {
-                                message("loading...")
-
                                 launch {
                                     while (GameEngine.t()?.bg != true) {
                                         val msg = GameEngine.t()?.dF
-                                        message(if (msg.isNullOrBlank()) "loading..." else msg)
+                                        message = (if (msg.isNullOrBlank()) "loading..." else msg)
                                     }
                                 }
 
                                 GameEngine.c(this@LoadingScreen)
                                 startActivityForResult(Intent(this@LoadingScreen, MainActivity::class.java), 0)
                                 finish()
-
-                                true
                             }
                         }
                     }

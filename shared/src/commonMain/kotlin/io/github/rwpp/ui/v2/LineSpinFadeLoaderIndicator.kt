@@ -40,7 +40,6 @@ fun LineSpinFadeLoaderIndicator(
 
     val angleStep = 360f / rectCount
     val outerRadius = radius + elementHeight
-    val innerRadius = radius
 
 
 // ------------------------ scale animation ---------------------
@@ -91,9 +90,9 @@ fun LineSpinFadeLoaderIndicator(
             val angle = index * angleStep
 
             val startX =
-                center.x + innerRadius * cos(Math.toRadians(angle.toDouble())).toFloat()
+                center.x + radius * cos(Math.toRadians(angle.toDouble())).toFloat()
             val startY =
-                center.y + innerRadius * sin(Math.toRadians(angle.toDouble())).toFloat()
+                center.y + radius * sin(Math.toRadians(angle.toDouble())).toFloat()
 
             val endX = center.x + outerRadius * cos(Math.toRadians(angle.toDouble())).toFloat()
             val endY = center.y + outerRadius * sin(Math.toRadians(angle.toDouble())).toFloat()

@@ -100,7 +100,7 @@ interface Game {
     /**
      * Get all maps.
      */
-    fun getAllMaps(): List<GameMap>
+    fun getAllMaps(flush: Boolean = false): List<GameMap>
 
     /**
      * Get all maps by given map type.
@@ -151,4 +151,10 @@ interface Game {
      * Request external storage permission. (Only Android need to implement it)
      */
     fun requestExternalStoragePermission()
+
+    /**
+     * Request manage file permission. (Only Android 11+)
+     */
+    fun requestManageFilePermission()
+
 }

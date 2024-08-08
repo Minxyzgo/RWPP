@@ -17,23 +17,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType.Companion.KeyDown
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.App
 import io.github.rwpp.ContextController
 import io.github.rwpp.LocalController
+import io.github.rwpp.config.UIConfig
+import io.github.rwpp.config.instance
 import io.github.rwpp.desktop.impl.GameContextControllerImpl
-import io.github.rwpp.ui.BorderCard
-import io.github.rwpp.ui.RWSingleOutlinedTextField
-import io.github.rwpp.ui.RWTextButton
-import io.github.rwpp.ui.v2.TitleBrush
+import io.github.rwpp.ui.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.*
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
@@ -48,11 +51,36 @@ lateinit var displaySize: Dimension
 lateinit var sendMessageDialog: Dialog
 lateinit var gameContext: ContextController
 lateinit var rwppVisibleSetter: (Boolean) -> Unit
+val cacheModSize = AtomicInteger(0)
 
 fun main(args: Array<String>) {
-    System.setProperty("skiko.renderApi", "OPENGL")
+    // System.setProperty("skiko.renderApi", "OPENGL") 系统选择
 
    // val isSwingApplication = args.contains("-swingApplication")
+
+//    if (args.contains("-native")) {
+//        System.setOut(PrintStream(FileOutputStream("rwpp_last_log.txt")))
+//        val addURL = URLClassLoader::class.java.getDeclaredMethod("addURL", URL::class.java).apply {
+//            isAccessible = true
+//        }
+//
+//        val allLibFiles = File("/libs")
+//        println(allLibFiles.exists())
+//        println(allLibFiles.calculateSize())
+//
+//        allLibFiles.walk().forEach {
+//            println("load ${it.name}")
+//            addURL.invoke(Thread.currentThread().contextClassLoader, it.toURI().toURL())
+//        }
+//
+//        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+//            val jframe = JFrame()
+//            jframe.add(JTextArea(e.stackTraceToString()))
+//            jframe.size = Dimension(800, 600)
+//            jframe.isVisible = true
+//        }
+//    }
+
     if (File("opengl32.dll").exists()) { // for only debug
         System.loadLibrary("opengl32")
     }
@@ -176,6 +204,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
 
     val window = JFrame()
+
     gameContext = GameContextControllerImpl { exitProcess(0) }
 
     //UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
@@ -188,9 +217,9 @@ fun swingApplication() = SwingUtilities.invokeLater {
     rwppVisibleSetter = { panel.isVisible = it }
 
     window.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
-    window.title = "RWPP"
+    window.title = "Rusted Warfare Plus Plus"
     window.iconImage = ImageIO.read(ClassLoader.getSystemResource("drawable/logo.png"))
-
+    //window.extendedState = JFrame.MAXIMIZED_BOTH
 
     val canvas = Canvas()
 
@@ -207,10 +236,22 @@ fun swingApplication() = SwingUtilities.invokeLater {
     val gameContext = GameContextControllerImpl(window::dispose)
 
     panel.setContent {
-        val brush = TitleBrush()
         CompositionLocalProvider(
             LocalController provides gameContext
         ) {
+            var isLoading by remember { mutableStateOf(true) }
+            var message by remember { mutableStateOf("loading...") }
+
+            LaunchedEffect(Unit) {
+                withContext(Dispatchers.IO) {
+                    gameContext.load(
+                        LoadingContext { message = it }
+                    )
+
+                    isLoading = false
+                }
+            }
+
             Box(
                 modifier = Modifier.fillMaxSize().background(brush = Brush.verticalGradient(
                     listOf(ColorCompose.Black,
@@ -222,18 +263,25 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 )),
                 contentAlignment = Alignment.Center
             ) {
-                App()
+                if (isLoading) MenuLoadingView(message) else App()
             }
 
         }
     }
 
+
     window.background = Color.BLACK
     window.extendedState = JFrame.MAXIMIZED_BOTH
+
+    if (UIConfig.instance.isFullscreen) {
+        window.isUndecorated = true
+    } else {
+        window.minimumSize = Dimension(800, 600)
+        window.isResizable = true
+    }
+
     window.isVisible = true
-    window.minimumSize = Dimension(800, 600)
-    window.isResizable = true
-    window.setLocationRelativeTo(null)
+
 //    window.addComponentListener(object : ComponentListener {
 //        override fun componentResized(p0: ComponentEvent) {
 //            println(p0.component.size)
@@ -266,8 +314,21 @@ fun swingApplication() = SwingUtilities.invokeLater {
     panel2.size = Dimension(550, 180)
 
     panel2.setContent {
-        BorderCard(modifier = Modifier.height(180.dp).width(550.dp), shape = RectangleShape) {
+        BorderCard(
+            modifier = Modifier
+            .height(180.dp)
+            .width(550.dp).onKeyEvent {
+                if (it.key == Key.Escape && it.type == KeyDown) {
+                    sendMessageDialog.isVisible = false
+                }
+                true
+            },
+            shape = RectangleShape
+        ) {
             var chatMessage by remember { mutableStateOf("") }
+            ExitButton {
+                sendMessageDialog.isVisible = false
+            }
             RWSingleOutlinedTextField(
                 label = "Send Message",
                 value = chatMessage,
@@ -305,7 +366,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                     sendMessageDialog.isVisible = false
                 }
 
-                RWTextButton("Send Team") {
+                RWTextButton("Send Team Message") {
                     gameContext.gameRoom.sendChatMessage("-t $chatMessage")
                     chatMessage = ""
                     sendMessageDialog.isVisible = false
@@ -323,6 +384,13 @@ fun swingApplication() = SwingUtilities.invokeLater {
     //sendMessageDialog.background = Color(0, 0, 0, 0)
 
     mainJFrame = window
+
     canvas.createBufferStrategy(2)
+}
+
+fun showSendMessageDialog() {
+    sendMessageDialog.isVisible = true
+    val window = mainJFrame
+    sendMessageDialog.setLocation(window.x + window.width / 2 - sendMessageDialog.width / 2, window.y + window.height / 2 - sendMessageDialog.height / 2)
 }
 

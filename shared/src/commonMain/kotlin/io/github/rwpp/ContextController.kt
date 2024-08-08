@@ -15,23 +15,20 @@ import io.github.rwpp.game.Game
 import io.github.rwpp.game.config.ConfigHandler
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.net.Net
+import io.github.rwpp.utils.setPropertyFromObject
 
 interface ContextController :
     ConfigHandler, Game, Net, ModManager, ExternalHandler {
+
+    /**
+     * Read RW translations (not RWPP)
+     */
     fun i18n(str: String, vararg args: Any?): String
 
     fun readAllConfig() {
         Blacklists.readFromContext(this)
         getRWPPConfig(MultiplayerPreferences::class)?.apply {
-            val instance = MultiplayerPreferences.instance
-            instance.creatorNameFilter = creatorNameFilter
-            instance.joinServerAddress = joinServerAddress
-            instance.mapNameFilter = mapNameFilter
-            instance.playerLimitRangeTo = playerLimitRangeTo
-            instance.playerLimitRangeFrom = playerLimitRangeFrom
-            instance.showWelcomeMessage = showWelcomeMessage
-            instance.allServerConfig = allServerConfig
-            instance.battleroom = battleroom
+            MultiplayerPreferences.instance.setPropertyFromObject(this)
         }
     }
 

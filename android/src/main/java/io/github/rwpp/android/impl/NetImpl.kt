@@ -7,7 +7,11 @@
 
 package io.github.rwpp.android.impl
 
+import android.content.Intent
+import android.net.Uri
+import androidx.core.content.ContextCompat.startActivity
 import io.github.rwpp.ContextController
+import io.github.rwpp.android.MainActivity
 import io.github.rwpp.net.Client
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
@@ -26,5 +30,10 @@ class NetImpl : Net {
 
     override fun sendPacketToClients(packet: Packet) {
         GameEngine.t().bU.c(packet.asGamePacket())
+    }
+
+    override fun openUriInBrowser(uri: String) {
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+        MainActivity.instance.startActivity(browserIntent)
     }
 }

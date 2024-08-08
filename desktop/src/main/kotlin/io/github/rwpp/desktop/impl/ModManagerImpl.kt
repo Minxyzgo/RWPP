@@ -13,7 +13,7 @@ import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.utils.io.calculateSize
 import io.github.rwpp.utils.io.zipFolderToByte
 import java.io.File
-import java.io.InputStream
+
 
 class ModManagerImpl : ModManager {
     private var mods: List<Mod>? = null
@@ -76,6 +76,17 @@ class ModManagerImpl : ModManager {
                     override var isEnabled: Boolean
                         get() = !it.f
                         set(value) { it.f = !value }
+                    override var isNetworkMod: Boolean
+                        get() = it.c.contains(".network")
+                        set(value) {
+                            if (!value) {
+                                val newName = it.c.replace(".network", "")
+                                File("mods/units/${it.c}").copyTo(File("mods/units/$newName.netbak"))
+                                it.c = newName
+                            } else {
+                                throw RuntimeException("Cannot set a mod to network mod.")
+                            }
+                        }
 
                     override fun getSize(): Long {
                         return kotlin.runCatching {
@@ -89,6 +100,7 @@ class ModManagerImpl : ModManager {
                             file.zipFolderToByte()
                         else file.readBytes()
                     }
+
                 })
             }
         }

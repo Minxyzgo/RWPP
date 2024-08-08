@@ -11,6 +11,7 @@ import java.io.Closeable
 import java.io.DataInput
 import java.io.DataInputStream
 
+@Suppress("MemberVisibilityCanBePrivate")
 class GameInputStream(
     private val stream: DataInputStream
 ) : DataInput by stream, Closeable by stream {

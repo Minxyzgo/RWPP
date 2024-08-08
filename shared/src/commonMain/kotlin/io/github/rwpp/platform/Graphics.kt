@@ -11,9 +11,7 @@ package io.github.rwpp.platform
 
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.toImageBitmap
 
-@OptIn(ExperimentalResourceApi::class)
 fun readPainterByBytes(bytes: ByteArray): Painter =
     BitmapPainter(bytes.toImageBitmap())

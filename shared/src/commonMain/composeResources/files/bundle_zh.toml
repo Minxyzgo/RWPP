@@ -15,6 +15,11 @@ joinServer = "加入服务器"
 userName = "用户名"
 useAsDefaultList = "用作默认房间列表"
 battleroom = "战役室"
+transferMod = "传输模组 (实验性)"
+admitting = """
+为了使RWPP能变得更好，我们希望您在开房时向进入的玩家发送一条消息用以推广RWPP
+您是否同意？(该对话框第一次显示后将不再显示，稍后可在 设置 - Show Welcome Message中更改)
+"""
 
 [multiplayer.room]
 selectMap = "选择地图"
@@ -42,6 +47,12 @@ update = "刷新"
 reload = "重载"
 disableAll = "禁用全部"
 apply = "应用"
+cancel = "取消"
+delete = "删除"
+networkModInfo = """
+警告：这是一个从多人游戏中下载的模组，之后它就会被删除
+如果你不想这么做，请点击下方的'取消'按钮。
+"""
 
 [menu]
 mission = "战役"

@@ -183,10 +183,10 @@ fun LazyColumnScrollbar(
     thumbColor: Color = Color(0, 255, 127),
     thumbSelectedColor: Color = Color(124, 252, 0),
     thumbShape: Shape = CircleShape,
-    selectionMode: ScrollbarSelectionMode = ScrollbarSelectionMode.Thumb,
+    selectionMode: ScrollbarSelectionMode = ScrollbarSelectionMode.Full,
     selectionActionable: ScrollbarSelectionActionable = ScrollbarSelectionActionable.Always,
     hideDelay: Duration = 400.toDuration(DurationUnit.MILLISECONDS),
-    showItemIndicator: ListIndicatorSettings = ListIndicatorSettings.EnabledMirrored(
+    showItemIndicator: ListIndicatorSettings = EnabledMirrored(
         100.dp,
         MaterialTheme.colorScheme.surface
     ),
@@ -226,10 +226,10 @@ fun LazyColumnScrollbar(
 
             content()
             when(showItemIndicator){
-                ListIndicatorSettings.Disabled -> {
+                Disabled -> {
                     // Do nothing
                 }
-                is ListIndicatorSettings.EnabledIndividualControl -> {
+                is EnabledIndividualControl -> {
                     DisplayIndicator(
                         upIndication = true,
                         indicatorHeight = showItemIndicator.upperIndicatorHeight * heightAbove,
@@ -248,7 +248,7 @@ fun LazyColumnScrollbar(
                         modifier = Modifier.align(Alignment.BottomCenter).focusable(false)
                     )
                 }
-                is ListIndicatorSettings.EnabledMirrored -> {
+                is EnabledMirrored -> {
                     DisplayIndicator(
                         upIndication = true,
                         indicatorHeight = showItemIndicator.indicatorHeight * heightAbove,
@@ -573,7 +573,7 @@ internal fun calculateVisibilityStates(
         return Pair(VisibilityState.NotVisible, VisibilityState.NotVisible)
     }
 
-    if (showItemIndicator is ListIndicatorSettings.Disabled) {
+    if (showItemIndicator is Disabled) {
         return Pair(VisibilityState.CompletelyVisible, VisibilityState.CompletelyVisible)
     }
 

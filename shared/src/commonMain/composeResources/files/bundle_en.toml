@@ -15,6 +15,11 @@ joinServer = "Join Server"
 userName = "User Name"
 useAsDefaultList = "Use as default room list"
 battleroom = "Battleroom"
+transferMod = "Transfer Mod (Experimental)"
+admitting = """
+In order to make RWPP even better, we want you to send a message to joining players to promote RWPP when you are a host
+Do you agree? (The dialog will no longer be displayed, and can be changed later in Settings - Show Welcome Message)
+"""
 
 [multiplayer.room]
 selectMap = "Select Map"
@@ -42,6 +47,12 @@ update = "Update"
 reload = "Reload"
 disableAll = "DisableAll"
 apply = "Apply"
+cancel = "Cancel"
+delete = "Delete"
+networkModInfo = """
+Warning: this is a mod downloaded from multiplayer game, and it will be deleted later,
+if you don't want to do so, please touch the button 'Cancel'.
+"""
 
 [menu]
 mission = "Mission"

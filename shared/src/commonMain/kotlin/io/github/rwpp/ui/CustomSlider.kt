@@ -211,7 +211,7 @@ private fun customSliderMeasurePolicy(
 
         // Place indicators below the slider.
         indicatorPlaceables.forEach { placeable ->
-            // We have to subtract the half width of the each indicator from the indicatorOffset,
+            // We have to subtract the half width of the indicator from the indicatorOffset,
             // to place our indicators at the center.
             placeable.placeRelative(
                 x = (indicatorOffsetX - (placeable.width / 2)).roundToInt(),
@@ -265,7 +265,7 @@ object CustomSliderDefaults {
     /**
      * Composable function that represents the track of the slider.
      *
-     * @param sliderPositions The positions of the slider.
+     * @param sliderState The state of the slider.
      * @param modifier The modifier for styling the track.
      * @param trackColor The color of the track.
      * @param progressColor The color of the progress.

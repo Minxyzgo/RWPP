@@ -26,7 +26,7 @@ data class MultiplayerPreferences(
             "Official Room List",
             ServerType.RoomList
         )
-    )
+    ),
 )
 
 val MultiplayerPreferences.Companion.instance

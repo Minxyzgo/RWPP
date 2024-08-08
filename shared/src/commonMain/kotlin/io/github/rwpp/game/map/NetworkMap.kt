@@ -17,8 +17,6 @@ class NetworkMap(private val _mapName: String) : GameMap {
         get() = null
     override val mapName: String
         get() = _mapName
-    override val tmx: File
-        get() = null!!
     override val mapType: MapType
         get() = MapType.CustomMap
 }

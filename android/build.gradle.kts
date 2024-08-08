@@ -14,6 +14,7 @@ plugins {
 
 dependencies {
     implementation(project(":shared"))
+    implementation("com.github.getActivity:XXPermissions:20.0")
     implementation(fileTree(
         "dir" to project(":shared").dependencyProject.projectDir.absolutePath + "/build/generated/lib",
         "include" to "android-game-lib.jar",
@@ -53,10 +54,24 @@ android {
         versionName = rootProject.version.toString()
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin {
-        jvmToolchain(8)
+        jvmToolchain(17)
+    }
+
+    flavorDimensions.add("mode")
+
+    productFlavors {
+        create("cn") {
+            manifestPlaceholders["app_label"] = "铁锈战争PP版"
+            manifestPlaceholders["app_icon"] = "ic_launcher"
+        }
+
+        create("int") {
+            manifestPlaceholders["app_label"] = "RWPP"
+            manifestPlaceholders["app_icon"] = "ic_launcher_2"
+        }
     }
 }

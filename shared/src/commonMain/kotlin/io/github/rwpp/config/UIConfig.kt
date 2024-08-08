@@ -5,14 +5,16 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.units
+package io.github.rwpp.config
 
-import io.github.rwpp.game.mod.Mod
+import kotlinx.serialization.Serializable
 
-interface GameUnit {
-    val name: String
-    val displayName: String
-    val description: String
-    val movementType: MovementType
-    val mod: Mod?
-}
+private val instance0 = UIConfig()
+
+@Serializable
+data class UIConfig(
+    var isFullscreen: Boolean = false
+)
+
+val UIConfig.Companion.instance
+    get() = instance0

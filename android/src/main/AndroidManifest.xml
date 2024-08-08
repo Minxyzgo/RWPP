@@ -32,15 +32,14 @@
             android:theme="@style/app_theme"
             android:hardwareAccelerated="true"
             android:largeHeap="true"
-            android:label="@string/app_name"
+            android:label="${app_label}"
             android:usesCleartextTraffic="true"
             android:resizeableActivity="true"
-            android:requestLegacyExternalStorage="true" android:icon="@mipmap/ic_launcher">
+            android:requestLegacyExternalStorage="true" android:icon="@mipmap/${app_icon}">
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
         <activity
             android:name="io.github.rwpp.android.LoadingScreen"
-            android:exported="true"
-            android:label="RWPP">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

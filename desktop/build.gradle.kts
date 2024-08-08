@@ -38,9 +38,21 @@ compose.desktop {
         }
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Exe, TargetFormat.Dmg, TargetFormat.Deb)
             packageName = "Rwpp"
+            mainClass = "io.github.rwpp.desktop.MainKt"
             packageVersion = rootProject.version.toString()
+           // copyright = "Copyright 2023-2024 RWPP contributors"
+           // licenseFile.set(rootProject.file("LICENSE"))
+            jvmArgs += listOf(
+                "-Djava.net.preferIPv4Stack=true",
+                "-Xmx2000M",
+                "-Dfile.encoding=UTF-8",
+                "-Djava.library.path=.",
+                "--add-opens=java.base/java.net=ALL-UNNAMED"
+            )
+
+            args += listOf("-native")
         }
     }
 }

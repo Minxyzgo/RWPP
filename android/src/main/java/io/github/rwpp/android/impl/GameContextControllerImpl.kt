@@ -11,6 +11,8 @@ import android.content.Context
 import com.corrodinggames.rts.gameFramework.SettingsEngine
 import io.github.rwpp.ContextController
 import io.github.rwpp.android.MainActivity
+import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.instance
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.ModManager

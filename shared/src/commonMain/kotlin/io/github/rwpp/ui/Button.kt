@@ -27,7 +27,7 @@ import io.github.rwpp.ui.v2.bounceClick
 fun MenuButton(
     content: String,
     icon: Any? = null,
-    modifier: Modifier = Modifier.size(150.dp).padding(10.dp),
+    modifier: Modifier = Modifier.size(140.dp).padding(10.dp),
     onClick: () -> Unit
 ) {
     Card(

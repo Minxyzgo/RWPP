@@ -10,13 +10,22 @@ package io.github.rwpp.android.impl
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
+import android.os.Build.VERSION.SDK_INT
+import android.os.Environment
+import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.core.content.ContextCompat.startActivity
 import com.corrodinggames.rts.appFramework.*
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.k
+import com.hjq.permissions.OnPermissionCallback
+import com.hjq.permissions.Permission
+import com.hjq.permissions.XXPermissions
 import io.github.rwpp.android.*
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.RefreshUIEvent
@@ -157,7 +166,6 @@ class GameImpl : Game, CoroutineScope {
                             ).asImageBitmap())
                         override val mapName: String
                             get() = f.removeSuffix(".tmx")
-                        override val tmx: File? = null
                         override val mapType: MapType
                             get() = MapType.SkirmishMap
                     })
@@ -168,9 +176,9 @@ class GameImpl : Game, CoroutineScope {
         return missions.toList().also { _missions = it }
     }
 
-    override fun getAllMaps(): List<GameMap> {
+    override fun getAllMaps(flush: Boolean): List<GameMap> {
         val assets = MainActivity.instance.assets
-        if(_maps.isEmpty()) {
+        if(_maps.isEmpty() || flush) {
             val t = GameEngine.t()
             val levelDirs = com.corrodinggames.rts.gameFramework.e.a.a(LevelGroupSelectActivity.customLevelsDir, true)
             val mapPaths = mapOf<MapType, Array<String>?>(
@@ -191,7 +199,6 @@ class GameImpl : Game, CoroutineScope {
                             ).asImageBitmap())
                         override val mapName: String
                             get() = f.removeSuffix(".tmx")
-                        override val tmx: File? = null
                         override val mapType: MapType
                             get() = MapType.SkirmishMap
                     })
@@ -211,7 +218,6 @@ class GameImpl : Game, CoroutineScope {
                                 } else null
                             override val mapName: String
                                 get() = name.removeSuffix(".tmx").removeSuffix(".rwsave")
-                            override val tmx: File? = null
                             override val mapType: MapType
                                 get() = type
 
@@ -303,16 +309,25 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override fun requestExternalStoragePermission() {
-        d.a(
-            MainActivity.instance, 9, true, "Select a Rusted Warfare Folder to use", Uri.parse(
-                "content://com.android.externalstorage.documents/document/primary%3A" + "rustedWarfare".replace(
-                    "//",
-                    "%2F"
-                )
-            )
-        )
+//        d.a(
+//            MainActivity.instance, 9, true, "Select a Rusted Warfare Folder to use", Uri.parse(
+//                "content://com.android.externalstorage.documents/document/primary%3A" + "rustedWarfare".replace(
+//                    "//",
+//                    "%2F"
+//                )
+//            )
+//        )
 
+
+       d.c(MainActivity.instance)
     }
+
+    override fun requestManageFilePermission() {
+        XXPermissions.with(MainActivity.instance)
+            .permission(Permission.MANAGE_EXTERNAL_STORAGE)
+            .request { _, _ -> }
+    }
+
 
     override val coroutineContext: CoroutineContext = Job()
 
