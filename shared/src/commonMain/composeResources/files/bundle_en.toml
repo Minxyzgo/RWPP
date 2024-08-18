@@ -16,6 +16,8 @@ userName = "User Name"
 useAsDefaultList = "Use as default room list"
 battleroom = "Battleroom"
 transferMod = "Transfer Mod (Experimental)"
+addToBlackList = "Add to Blacklist"
+join = "Join"
 admitting = """
 In order to make RWPP even better, we want you to send a message to joining players to promote RWPP when you are a host
 Do you agree? (The dialog will no longer be displayed, and can be changed later in Settings - Show Welcome Message)

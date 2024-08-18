@@ -647,7 +647,7 @@ private fun PlayerOverrideDialog(
                     }
                 ) {
                     val n = it.toIntOrNull()
-                    if(n == null || n < room.maxPlayerCount) playerSpawnPoint = n
+                    if(n == null || n <= room.maxPlayerCount) playerSpawnPoint = n
                 }
 
                 Text(

@@ -7,6 +7,8 @@
 
 package io.github.rwpp.net
 
+import io.github.rwpp.gameVersion
+
 data class RoomDescription(
     val uuid: String,
     val roomOwner: String, // ? for official server and custom client is always 'Unnamed'
@@ -45,13 +47,17 @@ val List<RoomDescription>.sorted
             it.isUpperCase && it.netWorkAddress.startsWith("uuid:") -> 0
             //it.isUpperCase -> 1
             it.isLocal -> 2
+            it.isUpperCase && it.creator.contains("RELAY") -> 4
             it.status.contains("battleroom") -> {
-                if(it.playerCurrentCount != null && it.playerMaxCount != null && it.playerCurrentCount < it.playerMaxCount) {
-                    if(it.isUpperCase) {
-                        if(it.playerCurrentCount != 0) 3 else 4
-                    } else if(it.isOpen) 7 else 9
-                } else if(it.isUpperCase) 6
-                else if(it.isOpen) 8 else 9
+                if(it.playerCurrentCount != null && it.playerMaxCount != null
+                    && it.playerCurrentCount < it.playerMaxCount
+                    && it.gameVersion == gameVersion
+                    && it.isOpen) {
+                    if(it.isUpperCase) 3 else 5
+                }
+                else if (it.gameVersion == gameVersion) 6
+                else if (it.isUpperCase) 7
+                else if (it.isOpen) 9 else 10
             }
             else -> 99
         }

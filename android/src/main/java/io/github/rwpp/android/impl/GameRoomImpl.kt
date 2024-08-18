@@ -20,14 +20,13 @@ import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.*
 import io.github.rwpp.config.MultiplayerPreferences
-import io.github.rwpp.config.instance
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.base.Difficulty
+import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType

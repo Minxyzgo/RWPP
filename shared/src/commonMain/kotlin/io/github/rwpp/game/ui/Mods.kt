@@ -75,6 +75,7 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                 ) { loadingAction = {
                     modReload()
                     getAllMaps(true)
+                    mods = getAllMods()
                 }; isLoading = true }
 
                 RWTextButton(
@@ -175,6 +176,7 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                                     if(isNetwork) {
                                         Text(
                                             readI18n("mod.networkModInfo"),
+                                            modifier = Modifier.padding(start = 2.dp),
                                             style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 12.sp),
                                             color = Color.Yellow
                                         )
@@ -184,8 +186,6 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                                             isNetwork = false
                                         }
                                     }
-
-
 
                                     val expandedStyle = remember {
                                         SpanStyle(
@@ -198,12 +198,28 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
 
                                     ExpandableText(
                                         text = mod.description,
-                                        style = MaterialTheme.typography.bodyLarge,
+                                        modifier = Modifier.padding(start = 2.dp),
+                                        style = MaterialTheme.typography.bodyMedium,
                                         textModifier = Modifier.padding(top = 5.dp),
                                         showMoreStyle = expandedStyle,
                                         showLessStyle = expandedStyle
                                     )
 
+                                    Text(
+                                        "(RAM: ${mod.getRamUsed()})",
+                                        modifier = Modifier.padding(start = 2.dp),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.Green
+                                    )
+
+                                    if (mod.errorMessage != null) {
+                                        Text(
+                                            mod.errorMessage!!,
+                                            modifier = Modifier.padding(start = 2.dp),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = Color.Red
+                                        )
+                                    }
 
                                     Spacer(modifier = Modifier.size(10.dp))
                                 }

@@ -29,7 +29,6 @@ import io.github.rwpp.App
 import io.github.rwpp.ContextController
 import io.github.rwpp.LocalController
 import io.github.rwpp.config.UIConfig
-import io.github.rwpp.config.instance
 import io.github.rwpp.desktop.impl.GameContextControllerImpl
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.Dispatchers

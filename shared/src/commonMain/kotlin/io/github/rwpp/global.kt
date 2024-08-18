@@ -10,13 +10,20 @@ package io.github.rwpp
 import io.github.rwpp.utils.io.SizeUtils
 import io.github.rwpp.platform.Platform
 
-const val projectVersion = "1.2.0 (core v1.15)"
+const val projectVersion = "1.2.1 (core v1.15)"
 
 /**
  * The protocol version.
  * The clients which have different protocol version can not join to each other
  */
 const val protocolVersion = 1
+
+/**
+ * 1.15 -> 176
+ */
+const val gameVersion: Int = 176
+
+
 
 val welcomeMessage =
     """

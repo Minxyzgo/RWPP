@@ -31,8 +31,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.rwpp.config.MultiplayerPreferences
-import io.github.rwpp.config.instance
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.KickedEvent
@@ -41,7 +39,7 @@ import io.github.rwpp.event.events.QuestionReplyEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.ui.*
 import io.github.rwpp.i18n.readI18n
-import io.github.rwpp.platform.*
+import io.github.rwpp.platform.loadSvg
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.bounceClick
 
@@ -83,7 +81,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
             color = Color.White,
             fontFamily = jostFonts,
             fontWeight = FontWeight.Normal,
-            fontSize = 11.sp
+            fontSize = 13.sp
         )
     )
 
@@ -315,12 +313,12 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     }
                 ) { dismiss ->
                     BorderCard(
-                        modifier = Modifier.fillMaxSize(GeneralProportion()),
+                        modifier = Modifier.fillMaxWidth(if (LocalWindowManager.current == WindowManager.Small) 0.9f else 0.75f),
                     ) {
-                        ExitButton(dismiss)
+
                         Box(modifier = Modifier
                             .fillMaxWidth()
-                            .height(150.dp)
+                            .height(if (LocalWindowManager.current == WindowManager.Small) 75.dp else 150.dp)
                             .background(
                                 brush = Brush.linearGradient(
                                     listOf(Color(0xE9EE8888),
@@ -328,19 +326,21 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-
-                                Icon(Icons.Default.Info, null, modifier = Modifier.size(25.dp).padding(5.dp))
-                                Text(
-                                    questionEvent.title,
-                                    modifier = Modifier.padding(5.dp),
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    color = Color(151, 188, 98)
-                                )
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                ExitButton(dismiss)
+                                Row(
+                                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Info, null, modifier = Modifier.size(25.dp).padding(5.dp))
+                                    Text(
+                                        questionEvent.title,
+                                        modifier = Modifier.padding(5.dp),
+                                        style = MaterialTheme.typography.headlineLarge,
+                                        color = Color.White
+                                    )
+                                }
                             }
                         }
                         LargeDividingLine { 5.dp }

@@ -253,7 +253,14 @@ fun RWSingleOutlinedTextField(
             },
             trailingIcon = trailingIcon,
             leadingIcon = leadingIcon,
-            onValueChange = { if(it.length <= lengthLimitCount && (!typeInNumberOnly || !typeInOnlyInteger || it.all { s -> s.isDigit() })) onValueChange(it) },
+            onValueChange = {
+                onValueChange(
+                    if(it.length <= lengthLimitCount
+                        && (!typeInNumberOnly || !typeInOnlyInteger || it.all { s -> s.isDigit() }))
+                        it
+                    else ""
+                )
+            },
             keyboardOptions = KeyboardOptions(keyboardType = if(typeInNumberOnly) KeyboardType.Number else KeyboardType.Text)
         )
 

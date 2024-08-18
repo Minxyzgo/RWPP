@@ -9,7 +9,6 @@ package io.github.rwpp
 
 import io.github.rwpp.config.Blacklists
 import io.github.rwpp.config.MultiplayerPreferences
-import io.github.rwpp.config.instance
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.config.ConfigHandler

@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
+import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.ui.*
 
@@ -48,18 +49,21 @@ fun BanUnitViewDialog(
             ExitButton(d)
             val state = rememberLazyListState()
             var filter by remember { mutableStateOf("") }
-            RWSingleOutlinedTextField(
-                "Filter",
-                filter,
-                modifier = Modifier.fillMaxWidth(.5f).padding(5.dp).align(Alignment.CenterHorizontally),
-                leadingIcon = { Icon(Icons.Default.Search, null) }
-            ) {
-                filter = it
-            }
 
             val allUnits = remember(filter) { context.getAllUnits().filter { filter.isBlank() || it.displayName.contains(filter, ignoreCase = true) } }
 
+            val current = LocalWindowManager.current
+
+            if (current != WindowManager.Small) {
+                FilterField(filter) { filter = it }
+            }
+
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f).padding(5.dp), state = state) {
+
+                if (current == WindowManager.Small) {
+                    item { FilterField(filter) { filter = it } }
+                }
+
                 items(
                     allUnits.size,
                 ) {
@@ -126,11 +130,36 @@ fun BanUnitItem(
                 onChanged(it)
             })
 
-            Text(
-                unit.displayName,
-                modifier = Modifier.padding(5.dp),
-                style = MaterialTheme.typography.bodyLarge
-            )
+            Column {
+                Text(
+                    unit.displayName,
+                    modifier = Modifier.padding(5.dp),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                Text(
+                    unit.name,
+                    modifier = Modifier.padding(5.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterField(filter: String, onFilterChange: (String) -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        RWSingleOutlinedTextField(
+            "Filter",
+            filter,
+            modifier = Modifier.fillMaxWidth(.5f).padding(5.dp),
+            leadingIcon = { Icon(Icons.Default.Search, null) }
+        ) {
+            onFilterChange(it)
         }
     }
 }

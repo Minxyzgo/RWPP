@@ -9,8 +9,6 @@ package io.github.rwpp.desktop.impl
 
 import android.content.ServerContext
 import android.graphics.Point
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.Root
@@ -35,7 +33,6 @@ import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.*
 import io.github.rwpp.config.MultiplayerPreferences
-import io.github.rwpp.config.instance
 import io.github.rwpp.desktop.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
@@ -58,7 +55,6 @@ import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.channels.Channel
 import net.peanuuutz.tomlkt.Toml
 import org.lwjgl.opengl.Display
-import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.*
 import javax.imageio.ImageIO
@@ -78,9 +74,6 @@ class GameImpl : Game {
     private var isSandboxGame: Boolean = false
     private var bannedUnitList: List<String> = listOf()
     private var roomMods: Array<String> = arrayOf()
-
-
-    override val gameVersion: Int = 176
 
     override val gameRoom: GameRoom by lazy {
         val B = l.B()

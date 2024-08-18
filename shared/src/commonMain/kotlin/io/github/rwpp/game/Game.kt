@@ -14,11 +14,6 @@ import io.github.rwpp.ui.LoadingContext
 
 interface Game {
     /**
-     * 1.15 -> 176
-     */
-    val gameVersion: Int
-
-    /**
      * Current game room.
      */
     val gameRoom: GameRoom

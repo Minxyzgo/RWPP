@@ -9,12 +9,11 @@ package io.github.rwpp.config
 
 import kotlinx.serialization.Serializable
 
-private val instance0 = UIConfig()
-
 @Serializable
 data class UIConfig(
     var isFullscreen: Boolean = false
-)
-
-val UIConfig.Companion.instance
-    get() = instance0
+) {
+    companion object {
+        val instance = UIConfig()
+    }
+}

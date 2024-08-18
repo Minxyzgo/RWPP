@@ -75,6 +75,8 @@ class ModManagerImpl : ModManager {
                         get() = it.s ?: ""
                     override val minVersion: String
                         get() = it.t ?: ""
+                    override val errorMessage: String?
+                        get() = it.P
                     override var isEnabled: Boolean
                         get() = !it.f
                         set(value) { it.f = !value }
@@ -89,6 +91,10 @@ class ModManagerImpl : ModManager {
                                 throw RuntimeException("Cannot set a mod to network mod.")
                             }
                         }
+
+                    override fun getRamUsed(): String {
+                        return it.k()
+                    }
 
                     override fun getSize(): Long {
                         return kotlin.runCatching {

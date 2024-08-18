@@ -33,6 +33,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.LocalWindowManager
+import io.github.rwpp.ui.WindowManager
 import io.github.rwpp.ui.v2.ListIndicatorSettings.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -187,7 +189,7 @@ fun LazyColumnScrollbar(
     selectionActionable: ScrollbarSelectionActionable = ScrollbarSelectionActionable.Always,
     hideDelay: Duration = 400.toDuration(DurationUnit.MILLISECONDS),
     showItemIndicator: ListIndicatorSettings = EnabledMirrored(
-        100.dp,
+        if (LocalWindowManager.current == WindowManager.Small) 0.dp else 100.dp,
         MaterialTheme.colorScheme.surface
     ),
     enabled: Boolean = true,

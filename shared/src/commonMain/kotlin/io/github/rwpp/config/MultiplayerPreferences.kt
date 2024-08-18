@@ -9,8 +9,6 @@ package io.github.rwpp.config
 
 import kotlinx.serialization.Serializable
 
-private val instance0: MultiplayerPreferences = MultiplayerPreferences()
-
 @Serializable
 data class MultiplayerPreferences(
     var mapNameFilter: String = "",
@@ -27,8 +25,8 @@ data class MultiplayerPreferences(
             ServerType.RoomList
         )
     ),
-)
-
-val MultiplayerPreferences.Companion.instance
-    get() = instance0
-
+) {
+    companion object {
+        val instance = MultiplayerPreferences()
+    }
+}

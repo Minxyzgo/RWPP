@@ -51,8 +51,6 @@ class GameImpl : Game, CoroutineScope {
     private var _units: List<GameUnit>? = null
     private var cacheUnits: ArrayList<*>? = null
 
-    override val gameVersion: Int
-        get() = 176
     override val gameRoom: GameRoom = GameRoomImpl(this)
 
     override fun startNewMissionGame(difficulty: Difficulty, mission: Mission) {

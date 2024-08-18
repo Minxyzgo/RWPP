@@ -175,7 +175,7 @@ fun ResourceView(
                                     Text(
                                         resource.config.name,
                                         modifier = Modifier.padding(5.dp),
-                                        style = MaterialTheme.typography.headlineMedium,
+                                        style = MaterialTheme.typography.headlineLarge,
                                         color = Color(151, 188, 98)
                                     )
                                 }
@@ -192,7 +192,7 @@ fun ResourceView(
                                 SelectionContainer {
                                     ExpandableText(
                                         text = resource.config.description,
-                                        style = MaterialTheme.typography.bodyLarge,
+                                        style = MaterialTheme.typography.bodyMedium,
                                         textModifier = Modifier.padding(top = 5.dp),
                                         showMoreStyle = expandedStyle,
                                         showLessStyle = expandedStyle

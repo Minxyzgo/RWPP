@@ -12,8 +12,12 @@ interface Mod {
     val name: String
     val description: String
     val minVersion: String
+    val errorMessage: String?
     var isEnabled: Boolean
     var isNetworkMod: Boolean
+
+
+    fun getRamUsed(): String
 
     fun getSize(): Long
 

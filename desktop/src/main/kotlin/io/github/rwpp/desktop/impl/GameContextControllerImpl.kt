@@ -11,7 +11,6 @@ import com.corrodinggames.librocket.scripts.ScriptEngine
 import com.corrodinggames.rts.gameFramework.SettingsEngine
 import io.github.rwpp.ContextController
 import io.github.rwpp.config.UIConfig
-import io.github.rwpp.config.instance
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.ModManager

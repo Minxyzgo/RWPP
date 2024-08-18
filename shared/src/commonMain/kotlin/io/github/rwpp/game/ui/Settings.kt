@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalController
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.UIConfig
-import io.github.rwpp.config.instance
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.Platform
 import io.github.rwpp.ui.*

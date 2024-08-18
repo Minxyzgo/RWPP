@@ -9,7 +9,11 @@ package io.github.rwpp.android
 
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
+import android.os.Environment
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -34,6 +38,7 @@ import io.github.rwpp.ui.v2.TitleBrush
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.system.exitProcess
 
 class LoadingScreen : ComponentActivity() {
@@ -41,6 +46,13 @@ class LoadingScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+
+        if (SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) removeNetworkMod()
+        } else if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            removeNetworkMod()
+        }
+
         doProxy()
 
         setContent {
@@ -85,5 +97,17 @@ class LoadingScreen : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun removeNetworkMod() {
+        File("/storage/emulated/0/rustedWarfare/units/")
+            .walk()
+            .forEach {
+                if (it.name.contains(".network")) {
+                    it.delete()
+                } else if (it.name.endsWith(".netbak")) {
+                    it.renameTo(File(it.absolutePath.removeSuffix(".netbak")))
+                }
+            }
     }
 }
