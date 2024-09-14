@@ -11,8 +11,9 @@ import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.ui.LoadingContext
+import org.koin.core.component.KoinComponent
 
-interface Game {
+interface Game : KoinComponent {
     /**
      * Current game room.
      */
@@ -141,15 +142,4 @@ interface Game {
      * Continue the game, make sure [isGameCouldContinue] return true.
      */
     fun continueGame()
-
-    /**
-     * Request external storage permission. (Only Android need to implement it)
-     */
-    fun requestExternalStoragePermission()
-
-    /**
-     * Request manage file permission. (Only Android 11+)
-     */
-    fun requestManageFilePermission()
-
 }

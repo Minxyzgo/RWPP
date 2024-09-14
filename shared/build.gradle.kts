@@ -22,6 +22,7 @@ plugins {
     kotlin("plugin.serialization")
     id("com.android.library")
     id("org.jetbrains.compose")
+    id("com.google.devtools.ksp")
 }
 
 buildscript {
@@ -165,6 +166,11 @@ kotlin {
                 api(compose.material3)
                 api(compose.components.resources)
                 api(compose.ui)
+                val koinVersion = findProperty("koin.version") as String
+                val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
+                api("io.insert-koin:koin-core:$koinVersion")
+                api("io.insert-koin:koin-compose:$koinVersion")
+                api("io.insert-koin:koin-annotations:$koinAnnotationsVersion")
                 //api("com.halilibo.compose-richtext:richtext-ui:0.17.0")
                 api("com.squareup.okhttp3:okhttp:4.11.0")
                 api("net.peanuuutz.tomlkt:tomlkt:0.3.7")
@@ -174,6 +180,9 @@ kotlin {
                 //api("io.github.oleksandrbalan:modalsheet:0.5.0")
             }
         }
+
+        commonMain.kotlin.srcDirs("build/generated/ksp/main/kotlin")
+
         val androidMain by getting {
             dependencies {
                 api("androidx.activity:activity-compose:1.9.1")
@@ -208,7 +217,11 @@ android {
     }
 }
 
+
 dependencies {
     val rwijVersion = findProperty("rwij.version") as String
     commonMainApi("com.github.minxyzgo.rw-injection:core:$rwijVersion")
+
+    val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
+    ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
 }

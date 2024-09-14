@@ -7,11 +7,9 @@
 
 package io.github.rwpp.config
 
-import kotlinx.serialization.Serializable
-import org.koin.core.annotation.Single
+import org.koin.core.annotation.ComponentScan
+import org.koin.core.annotation.Module
 
-@Single
-@Serializable
-data class Blacklists(
-    var blacklists: MutableList<Blacklist> = mutableListOf()
-) : Config
+@Module
+@ComponentScan("io.github.rwpp.config")
+class ConfigModule

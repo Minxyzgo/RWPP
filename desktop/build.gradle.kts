@@ -10,6 +10,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
     kotlin("jvm")
     id("org.jetbrains.compose")
+    id("com.google.devtools.ksp")
 }
 
 sourceSets.main.get().resources.srcDir(rootDir.absolutePath + "/shared/src/commonMain/resources")
@@ -26,6 +27,13 @@ dependencies {
         "dir" to project(":shared").dependencyProject.projectDir.absolutePath + "/build/generated/lib",
         "include" to "game-lib.jar",
     ))
+
+    val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
+    ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
+}
+
+sourceSets.main {
+    java.srcDirs("build/generated/ksp/main/kotlin")
 }
 
 compose.desktop {

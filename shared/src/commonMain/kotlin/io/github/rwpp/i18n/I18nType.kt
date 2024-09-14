@@ -5,13 +5,9 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.config
+package io.github.rwpp.i18n
 
-import kotlinx.serialization.Serializable
-import org.koin.core.annotation.Single
-
-@Single
-@Serializable
-data class Blacklists(
-    var blacklists: MutableList<Blacklist> = mutableListOf()
-) : Config
+enum class I18nType {
+    RWPP,
+    RW
+}

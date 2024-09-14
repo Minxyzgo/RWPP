@@ -29,7 +29,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.LocalController
+import io.github.rwpp.AppContext
+import io.github.rwpp.external.ExternalHandler
+import io.github.rwpp.game.Game
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.shared.generated.resources.Res
 import io.github.rwpp.shared.generated.resources.error_missingmap
@@ -38,6 +40,7 @@ import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -45,9 +48,11 @@ fun ResourceView(
     onExit: () -> Unit
 ) {
     BackHandler(true, onExit)
+    val appContext = koinInject<AppContext>()
+    val game = koinInject<Game>()
+    val externalHandler = koinInject<ExternalHandler>()
 
-    val context = LocalController.current
-    var selectedResource by remember { mutableStateOf(context.getUsingResource()) }
+    var selectedResource by remember { mutableStateOf(externalHandler.getUsingResource()) }
     var showResultView by remember { mutableStateOf(false) }
 
     var isLoading by remember { mutableStateOf(false) }
@@ -59,7 +64,7 @@ fun ResourceView(
         message("Loading")
         result = kotlin.runCatching {
             withContext(Dispatchers.IO) {
-                context.enableResource(selectedResource)
+                externalHandler.enableResource(selectedResource)
             }
         }.exceptionOrNull()?.stackTraceToString() ?: "Loading successfully. You should restart RWPP to enable changes."
         true
@@ -102,7 +107,7 @@ fun ResourceView(
                     RWTextButton(
                         "Restart",
                         modifier = Modifier.padding(5.dp)
-                    ) { context.exit() }
+                    ) { appContext.exit() }
                 }
             }
         }
@@ -129,7 +134,7 @@ fun ResourceView(
             ExitButton(onExit)
 
             val state = rememberLazyListState()
-            val resources = context.getAllResources()
+            val resources = externalHandler.getAllResources()
 
             LazyColumnScrollbar(
                 listState = state,

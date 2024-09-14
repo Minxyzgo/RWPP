@@ -14,4 +14,4 @@ import androidx.compose.ui.graphics.painter.Painter
 import org.jetbrains.compose.resources.toImageBitmap
 
 fun readPainterByBytes(bytes: ByteArray): Painter =
-    BitmapPainter(bytes.toImageBitmap())
+    BitmapPainter(bytes.toImageBitmap(1, 1))

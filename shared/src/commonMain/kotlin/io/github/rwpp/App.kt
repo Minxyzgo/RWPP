@@ -37,13 +37,15 @@ import io.github.rwpp.event.events.KickedEvent
 import io.github.rwpp.event.events.QuestionDialogEvent
 import io.github.rwpp.event.events.QuestionReplyEvent
 import io.github.rwpp.event.onDispose
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.ui.*
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.net.Net
 import io.github.rwpp.platform.loadSvg
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.bounceClick
+import org.koin.compose.koinInject
 
-var LocalController = staticCompositionLocalOf<ContextController> { null!! }
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
 
 @Composable
@@ -104,7 +106,8 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
             || showReplayView
             || showContributorList)
 
-    val context = LocalController.current
+
+    val game = koinInject<Game>()
 
     MaterialTheme(
         typography = typography,
@@ -128,9 +131,9 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 Scaffold(
                     containerColor = Color.Transparent,
                     floatingActionButton = {
-                        if(context.isGameCouldContinue() && (showMainMenu || showSinglePlayerView)) {
+                        if(game.isGameCouldContinue() && (showMainMenu || showSinglePlayerView)) {
                             FloatingActionButton(
-                                onClick = { context.continueGame() },
+                                onClick = { game.continueGame() },
                                 shape = CircleShape,
                                 modifier = Modifier.padding(5.dp),
                                 containerColor = Color(151, 188, 98),
@@ -161,7 +164,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             sandbox = {
                                 isSandboxGame = true
                                 showRoomView = true
-                                context.hostNewSandbox()
+                                game.hostNewSandbox()
                             },
                             resource = {
                                 showResourceView = true
@@ -224,12 +227,12 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 ) {
                     MultiplayerRoomView(isSandboxGame) {
                         if(!isSandboxGame) {
-                            context.cancelJoinServer()
+                            game.cancelJoinServer()
                             showMultiplayerView = true
                         }
 
-                        context.onBanUnits(listOf())
-                        context.gameRoom.disconnect()
+                        game.onBanUnits(listOf())
+                        game.gameRoom.disconnect()
 
                         showRoomView = false
                     }
@@ -409,7 +412,8 @@ fun MainMenu(
         verticalArrangement = Arrangement.Center
     ) {
         BorderCard(modifier = Modifier.verticalScroll(rememberScrollState()).width(IntrinsicSize.Max)) {
-            Text("RWPP",
+            Text(
+                "RWPP",
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 style = TextStyle(
                     fontFamily = MaterialTheme.typography.displayLarge.fontFamily,
@@ -470,7 +474,7 @@ fun MainMenu(
                     onClick = replay
                 )
 
-                with(LocalController.current) {
+                with(koinInject<AppContext>()) {
                     MenuButton(
                         readI18n("menu.exit"),
                         loadSvg("exit"),
@@ -487,38 +491,30 @@ fun MainMenu(
                     elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
                     modifier = Modifier.bounceClick { contributor() }.padding(10.dp),
                 ) {
-                    Icon(Icons.Filled.Favorite, null, modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally).padding(10.dp))
+                    Icon(
+                        Icons.Filled.Favorite,
+                        null,
+                        modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally).padding(10.dp)
+                    )
                 }
 
-                val context = LocalController.current
+                val net = koinInject<Net>()
 
                 Card(
                     border = BorderStroke(3.dp, Color.DarkGray),
                     colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
                     shape = RoundedCornerShape(5.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
-                    modifier = Modifier.bounceClick { context.openUriInBrowser("https://github.com/Minxyzgo/RWPP") }.padding(10.dp),
+                    modifier = Modifier.bounceClick { net.openUriInBrowser("https://github.com/Minxyzgo/RWPP") }
+                        .padding(10.dp),
                 ) {
-                    Icon(painter = loadSvg("octocat"), null, modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally).padding(7.dp))
+                    Icon(
+                        painter = loadSvg("octocat"),
+                        null,
+                        modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally).padding(7.dp)
+                    )
                 }
             }
         }
-
-
-
-
-//        item { MenuButton(readI18n("menu.sandbox"), onClick = sandbox) }
-//        item { MenuButton(readI18n("menu.multiplayer"), onClick = multiplayer) }
-//        item { MenuButton(readI18n("menu.mods"), onClick = mods) }
-//        item { MenuButton(readI18n("menu.resource"), onClick = resource) }
-//        item { MenuButton(readI18n("menu.settings"), onClick = settings) }
-//        item {
-//            with(LocalController.current) {
-//                MenuButton(readI18n("menu.exit")) { exit() }
-//            }
-//        }
-//
-//        item { Spacer(Modifier.size(50.dp)) }
-        }
-
+    }
 }

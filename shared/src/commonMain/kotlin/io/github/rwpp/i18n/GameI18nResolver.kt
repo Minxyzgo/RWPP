@@ -4,19 +4,11 @@
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
+package io.github.rwpp.i18n
 
-package io.github.rwpp.game.config
-
-import kotlin.reflect.KClass
-
-interface ConfigHandler {
-    fun <T> getConfig(name: String): T
-
-    fun setConfig(name: String, value: Any?)
-
-    fun <T : Any> getRWPPConfig(clazz: KClass<T>): T?
-
-    fun setRWPPConfig(value: Any)
-
-    fun saveConfig()
+interface GameI18nResolver {
+    /**
+     * Read RW translations (not RWPP)
+     */
+    fun i18n(str: String, vararg args: Any?): String
 }

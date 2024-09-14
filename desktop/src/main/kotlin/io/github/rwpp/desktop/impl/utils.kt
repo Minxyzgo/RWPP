@@ -9,7 +9,6 @@ package io.github.rwpp.desktop.impl
 
 
 import com.corrodinggames.rts.gameFramework.j.au
-import io.github.rwpp.desktop.gameContext
 import io.github.rwpp.net.Packet
 import io.github.rwpp.utils.io.GameOutputStream
 import java.io.ByteArrayOutputStream

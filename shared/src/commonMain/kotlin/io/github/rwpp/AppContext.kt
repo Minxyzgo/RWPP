@@ -5,13 +5,12 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.config
+package io.github.rwpp
 
-import kotlinx.serialization.Serializable
-import org.koin.core.annotation.Single
+import org.koin.core.component.KoinComponent
 
-@Single
-@Serializable
-data class Blacklists(
-    var blacklists: MutableList<Blacklist> = mutableListOf()
-) : Config
+interface AppContext : KoinComponent {
+    fun onExit(action: () -> Unit)
+
+    fun exit()
+}

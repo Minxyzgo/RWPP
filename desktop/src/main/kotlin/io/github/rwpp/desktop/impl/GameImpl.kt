@@ -33,10 +33,12 @@ import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.*
 import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.Settings
 import io.github.rwpp.desktop.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.*
+import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
@@ -44,23 +46,27 @@ import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
+import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.net.Net
 import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ModPacket
 import io.github.rwpp.ui.LoadingContext
 import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.channels.Channel
 import net.peanuuutz.tomlkt.Toml
+import org.koin.core.annotation.Single
+import org.koin.core.component.get
 import org.lwjgl.opengl.Display
 import java.awt.image.BufferedImage
 import java.io.*
 import javax.imageio.ImageIO
 import javax.swing.SwingUtilities
 
-
+@Single
 class GameImpl : Game {
     private val mapPrefixRegex = Regex("""^\[.*?\]""")
     private var _missions: List<Mission>? = null
@@ -343,13 +349,13 @@ class GameImpl : Game {
                 RefreshUIEvent().broadCastIn()
             }
 
-            addProxy("c", com.corrodinggames.rts.gameFramework.j.c::class, String::class, String::class) { _: Any?, c: com.corrodinggames.rts.gameFramework.j.c, _: Any?, _: Any? ->
-                if(MultiplayerPreferences.instance.showWelcomeMessage != true) return@addProxy Unit
+            addProxy("c", c::class, String::class, String::class) { _: Any?, c: c, _: Any?, _: Any? ->
+                if(get<Settings>().showWelcomeMessage != true) return@addProxy Unit
                 val rwOutputStream = RwOutputStream()
                 rwOutputStream.c(welcomeMessage)
                 rwOutputStream.c(3)
                 rwOutputStream.b("RWPP")
-                rwOutputStream.a(null as com.corrodinggames.rts.gameFramework.j.c?)
+                rwOutputStream.a(null as c?)
                 rwOutputStream.a(-1)
                 LClass.B().bX.a(c, rwOutputStream.b(141))
             }
@@ -423,7 +429,7 @@ class GameImpl : Game {
                                 val v = gameRoom.option.protocolVersion
                                 if (v != protocolVersion) {
                                     gameRoom.disconnect()
-                                    KickedEvent(readI18n("Different protocol version. yours: $protocolVersion server's: $v")).broadCastIn()
+                                    KickedEvent("Different protocol version. yours: $protocolVersion server's: $v").broadCastIn()
                                     return@with
                                 }
                             }
@@ -460,7 +466,7 @@ class GameImpl : Game {
 
                                 try {
                                     val mods = str.split(";")
-                                    mods.map(gameContext::getModByName).forEachIndexed { i, m ->
+                                    mods.map(get<ModManager>()::getModByName).forEachIndexed { i, m ->
                                         val bytes = m!!.getBytes()
                                         B.bX.a(c, ModPacket.ModPackPacket(mods.size, i, "${m.name}.network.rwmod", bytes).asGamePacket())
                                     }
@@ -514,8 +520,9 @@ class GameImpl : Game {
 
                             // TODO 可能顺序存在问题
                             if(index == size - 1) {
-                                gameContext.modUpdate()
-                                gameContext.getAllMods().forEach { it.isEnabled = it.name in roomMods }
+                                val modManager = get<ModManager>()
+                                modManager.modUpdate()
+                                modManager.getAllMods().forEach { it.isEnabled = it.name in roomMods }
                                 cacheModSize.set(0)
                                 CallReloadModEvent().broadCastIn()
                             }
@@ -528,12 +535,11 @@ class GameImpl : Game {
                     else -> {
                         if(type in 500..1000) {
                             val packetType = PacketType.from(type)
-                            val listener = gameContext.listeners[packetType]
+                            val listener = get<Net>().listeners[packetType]
                             if (listener != null) {
                                 listener.invoke(
-                                    gameContext,
                                     ClientImpl(auVar.a),
-                                    gameContext.packetDecoders[packetType]!!.invoke(
+                                    get<Net>().packetDecoders[packetType]!!.invoke(
                                         DataInputStream(
                                             ByteArrayInputStream(auVar.c)
                                         )
@@ -548,7 +554,7 @@ class GameImpl : Game {
                 }
             }
 
-            addProxy("g", com.corrodinggames.rts.gameFramework.j.c::class) { _: Any?, c: com.corrodinggames.rts.gameFramework.j.c ->
+            addProxy("g", c::class) { _: Any?, c: c ->
                 val asVar: `as` = `as`()
                 try {
                     val B = LClass.B()
@@ -588,15 +594,16 @@ class GameImpl : Game {
                 } catch (e: Exception) {
 
                     run {
-                        if(allMods.all { gameContext.getModByName(it) != null }) {
-                            gameContext.getAllMods().forEach { it.isEnabled = it.name in allMods }
+                        val modManager = get<ModManager>()
+                        if(allMods.all { modManager.getModByName(it) != null }) {
+                            modManager.getAllMods().forEach { it.isEnabled = it.name in allMods }
                             CallReloadModEvent().broadCastIn()
                             return@run
                         }
 
-                        val modsName = gameContext.getAllMods().map { it.name }
+                        val modsName = modManager.getAllMods().map { it.name }
                         if(gameRoom.option.canTransferMod) {
-                            gameContext.sendPacketToServer(ModPacket.RequestPacket(allMods.filter { it !in modsName }.joinToString(";")))
+                            get<Net>().sendPacketToServer(ModPacket.RequestPacket(allMods.filter { it !in modsName }.joinToString(";")))
                             CallStartDownloadModEvent().broadCastIn()
                         } else {
                             gameRoom.disconnect()
@@ -610,7 +617,7 @@ class GameImpl : Game {
 
         com.corrodinggames.rts.gameFramework.e.c::class.setFunction {
             addProxy("f", String::class, mode = InjectMode.InsertBefore) { _: Any?, str: String ->
-                if(gameContext.getUsingResource() == null
+                if(get<ExternalHandler>().getUsingResource() == null
                     || str.contains("builtin_mods")
                     || (str.contains("maps") && !str.contains("bitmaps"))
                     || str.contains("translations")) return@addProxy Unit
@@ -627,7 +634,7 @@ class GameImpl : Game {
             }
 
             addProxy("i", String::class, mode = InjectMode.InsertBefore) { _: Any?, str: String ->
-                if(gameContext.getUsingResource() == null
+                if(get<ExternalHandler>().getUsingResource() == null
                     || str.contains("builtin_mods")
                     || (str.contains("maps") && !str.contains("bitmaps"))
                     || str.contains("translations")) return@addProxy Unit
@@ -1120,7 +1127,7 @@ class GameImpl : Game {
                     override val movementType: MovementType
                         get() = MovementType.valueOf(it.o().name)
                     override val mod: Mod?
-                        get() = (it as? com.corrodinggames.rts.game.units.custom.l)?.J?.s?.let(gameContext::getModByName)
+                        get() = (it as? com.corrodinggames.rts.game.units.custom.l)?.J?.s?.let(get<ModManager>()::getModByName)
                 }
             }
 
@@ -1180,13 +1187,6 @@ class GameImpl : Game {
         }
     }
 
-    override fun requestExternalStoragePermission() {
-        throw UnsupportedOperationException("Stub!")
-    }
-
-    override fun requestManageFilePermission() {
-        throw UnsupportedOperationException("Stub!")
-    }
 
     private fun restrictedString(str: String?): String? {
         return str?.replace("'", ".")?.replace("\"", ".")?.replace("(", ".")?.replace(")", ".")?.replace(",", ".")

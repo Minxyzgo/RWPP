@@ -7,6 +7,7 @@
 
 package io.github.rwpp.i18n
 
+import androidx.compose.runtime.Composable
 import io.github.rwpp.shared.generated.resources.Res
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,6 +16,8 @@ import net.peanuuutz.tomlkt.TomlTable
 import net.peanuuutz.tomlkt.asTomlLiteral
 import net.peanuuutz.tomlkt.asTomlTable
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.koin.compose.koinInject
+import java.text.MessageFormat
 import java.util.*
 
 internal lateinit var i18nTable: TomlTable
@@ -27,18 +30,25 @@ suspend fun parseI18n() {
     }.decodeToString().replace("\r", "\n"))
 }
 
-fun readI18n(path: String): String {
-    cacheMap[path]?.let { return it }
-    val strArray = path.split(".")
-    val iter = strArray.iterator()
-    var table: TomlTable = i18nTable
-    while(iter.hasNext()) {
-        val next = iter.next()
-        if(!iter.hasNext()) {
-            return table[next]!!.asTomlLiteral().content.also {
-                cacheMap[path] = it
-            }
-        } else table = table[next]!!.asTomlTable()
+@Composable
+fun readI18n(path: String, i18nType: I18nType = I18nType.RWPP, vararg arg: String): String {
+    if (i18nType == I18nType.RWPP) {
+        cacheMap[path]?.let { return MessageFormat.format(it, arg) }
+        val strArray = path.split(".")
+        val iter = strArray.iterator()
+        var table: TomlTable = i18nTable
+        while(iter.hasNext()) {
+            val next = iter.next()
+            if(!iter.hasNext()) {
+                return table[next]!!.asTomlLiteral().content.let {
+                    cacheMap[path] = it
+                    MessageFormat.format(it, arg)
+                }
+            } else table = table[next]!!.asTomlTable()
+        }
+    } else if (i18nType == I18nType.RW) {
+        val resolver: GameI18nResolver = koinInject()
+        return resolver.i18n(path, arg)
     }
 
     return "null"

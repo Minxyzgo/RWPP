@@ -27,11 +27,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
-import io.github.rwpp.android.impl.GameContextControllerImpl
+import io.github.rwpp.android.impl.GameAppContextImpl
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.doProxy
 import io.github.rwpp.ui.ConstraintWindowManager
-import io.github.rwpp.ui.LoadingView
 import io.github.rwpp.ui.MenuLoadingView
 import io.github.rwpp.ui.RWSelectionColors
 import io.github.rwpp.ui.v2.TitleBrush
@@ -69,7 +68,7 @@ class LoadingScreen : ComponentActivity() {
                         .background(brush),
                 ) {
                     CompositionLocalProvider(
-                        LocalController provides GameContextControllerImpl { exitProcess(0) }.also {
+                        LocalController provides GameAppContextImpl { exitProcess(0) }.also {
                             controller = it
                         },
                         LocalTextSelectionColors provides RWSelectionColors,

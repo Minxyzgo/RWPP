@@ -5,12 +5,11 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.config
+package io.github.rwpp.desktop
 
-import io.github.rwpp.ContextController
+import org.koin.core.annotation.ComponentScan
+import org.koin.core.annotation.Module
 
-interface ConfigSerializer {
-    fun readFromContext(context: ContextController)
-
-    fun writeFromContext(context: ContextController)
-}
+@ComponentScan("io.github.rwpp.desktop.impl")
+@Module
+class DesktopModule

@@ -5,13 +5,19 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.config
+package io.github.rwpp.desktop.impl
 
-import kotlinx.serialization.Serializable
+import io.github.rwpp.app.PermissionHelper
 import org.koin.core.annotation.Single
 
 @Single
-@Serializable
-data class Blacklists(
-    var blacklists: MutableList<Blacklist> = mutableListOf()
-) : Config
+class PermissionHelperImpl : PermissionHelper {
+
+    override fun requestExternalStoragePermission() {
+        throw UnsupportedOperationException("Stub!")
+    }
+
+    override fun requestManageFilePermission() {
+        throw UnsupportedOperationException("Stub!")
+    }
+}

@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -40,13 +39,15 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.config.*
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.data.RoomOption
+import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.gameVersion
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.maxModSize
+import io.github.rwpp.net.Net
 import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.ServerStatus
 import io.github.rwpp.net.sorted
@@ -64,6 +65,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -74,34 +76,41 @@ fun MultiplayerView(
 ) {
     BackHandler(true, onExit)
 
+    val instance = koinInject<MultiplayerPreferences>()
+    val settings = koinInject<Settings>()
+    val configIO = koinInject<ConfigIO>()
+    val game = koinInject<Game>()
+    val modManager = koinInject<ModManager>()
+    val net = koinInject<Net>()
+    val blacklistsInstance = koinInject<Blacklists>()
+
     val refresh = remember { Channel<Unit>(1) }
     var isRefreshing by remember { mutableStateOf(false) }
     val allServerData = remember {
         SnapshotStateList<ServerData>().apply {
             addAll(
-                MultiplayerPreferences.instance.allServerConfig.map { ServerData(it) }
+                instance.allServerConfig.map { ServerData(it) }
             )
         }
     }
 
     var currentViewList by remember { mutableStateOf<List<RoomDescription>>(listOf()) }
     var throwable by remember { mutableStateOf<Throwable?>(null) }
-    val context = LocalController.current
 
     var userName by remember {
-        val lastName = context.getConfig<String?>("lastNetworkPlayerName")
-        mutableStateOf((lastName ?: "RWPP${(0..999).random()}").also { context.setUserName(it) })
+        val lastName = configIO.getGameConfig<String?>("lastNetworkPlayerName")
+        mutableStateOf((lastName ?: "RWPP${(0..999).random()}").also { game.setUserName(it) })
     }
 
-    val blacklists = remember { mutableStateListOf<Blacklist>().apply { addAll(Blacklists.blacklists) } }
+    val blacklists = remember { mutableStateListOf<Blacklist>().apply { addAll(blacklistsInstance.blacklists) } }
 
-    val instance = MultiplayerPreferences.instance
+
     var enableModFilter by remember { mutableStateOf(false) }
     var mapNameFilter by remember { mutableStateOf(instance.mapNameFilter) }
     var creatorNameFilter by remember { mutableStateOf(instance.creatorNameFilter) }
     var playerLimitRange by remember { mutableStateOf(instance.playerLimitRangeFrom..instance.playerLimitRangeTo) }
     var joinServerAddress by rememberSaveable { mutableStateOf(instance.joinServerAddress) }
-    val showWelcomeMessage by remember { mutableStateOf(instance.showWelcomeMessage) }
+    val showWelcomeMessage by remember { mutableStateOf(settings.showWelcomeMessage) }
     var battleroom by remember { mutableStateOf(instance.battleroom) }
 
     var serverAddress by remember { mutableStateOf("") }
@@ -109,7 +118,7 @@ fun MultiplayerView(
 
     var isShowingRoomList by remember { mutableStateOf(false) }
     var selectedServerConfig by remember {
-        val config = MultiplayerPreferences.instance.allServerConfig.firstOrNull { it.useAsDefaultList }
+        val config = instance.allServerConfig.firstOrNull { it.useAsDefaultList }
         if (config != null) isShowingRoomList = true
         mutableStateOf(config)
     }
@@ -122,7 +131,7 @@ fun MultiplayerView(
     val scope = rememberCoroutineScope()
 
     remember(blacklists.size) {
-        Blacklists.blacklists = blacklists.toMutableList()
+        blacklistsInstance.blacklists = blacklists.toMutableList()
     }
     remember(mapNameFilter) { instance.mapNameFilter = mapNameFilter }
     remember(creatorNameFilter) { instance.creatorNameFilter = creatorNameFilter }
@@ -134,7 +143,7 @@ fun MultiplayerView(
 
     DisposableEffect(Unit) {
         onDispose {
-            context.setUserName(userName)
+            game.setUserName(userName)
         }
     }
 
@@ -152,7 +161,7 @@ fun MultiplayerView(
         dismiss()
     }
 
-    LoadingView(isConnecting, onLoaded = { context.cancelJoinServer(); isConnecting = false }, cancellable = true) {
+    LoadingView(isConnecting, onLoaded = { game.cancelJoinServer(); isConnecting = false }, cancellable = true) {
         if(serverAddress.isBlank()) {
             message("That server no longer exists")
             return@LoadingView false
@@ -160,12 +169,10 @@ fun MultiplayerView(
 
         message("connecting...")
 
-        context.setUserName(userName)
-        context.setConfig("lastNetworkIP", serverAddress)
+        game.setUserName(userName)
+        configIO.setGameConfig("lastNetworkIP", serverAddress)
 
-        scope.launch(Dispatchers.IO) { context.saveConfig() }
-
-        val result = context.directJoinServer(serverAddress, selectedRoomDescription?.uuid2, this)
+        val result = game.directJoinServer(serverAddress, selectedRoomDescription?.uuid2, this)
         selectedRoomDescription = null
         if(result.isSuccess) {
             onExit()
@@ -215,7 +222,7 @@ fun MultiplayerView(
             var transferMod by remember { mutableStateOf(false) }
             val modSize by remember {
                 mutableStateOf(
-                    context.getAllMods()
+                    modManager.getAllMods()
                         .filter { it.isEnabled }
                         .sumOf { it.getSize() }
                 )
@@ -259,13 +266,13 @@ fun MultiplayerView(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 RWTextButton("Host Private", modifier = Modifier.padding(5.dp)) {
                     dismiss()
-                    context.gameRoom.option = RoomOption(transferMod)
+                    game.gameRoom.option = RoomOption(transferMod)
                     if(hostByRCN) {
-                        context.onQuestionCallback(if(enableMods) "smod" else "snew")
+                        game.onQuestionCallback(if(enableMods) "smod" else "snew")
                         serverAddress = rcnAddress
                         isConnecting = true
                     } else {
-                        context.hostStartWithPasswordAndMods(
+                        game.hostStartWithPasswordAndMods(
                             false, password.ifBlank { null }, enableMods,
                         )
                         onHost()
@@ -273,13 +280,13 @@ fun MultiplayerView(
                 }
                 RWTextButton("Host Public", modifier = Modifier.padding(5.dp)) {
                     dismiss()
-                    context.gameRoom.option = RoomOption(transferMod)
+                    game.gameRoom.option = RoomOption(transferMod)
                     if(hostByRCN) {
-                        context.onQuestionCallback(if(enableMods) "smodup" else "snewup")
+                        game.onQuestionCallback(if(enableMods) "smodup" else "snewup")
                         serverAddress = rcnAddress
                         isConnecting = true
                     } else {
-                        context.hostStartWithPasswordAndMods(
+                        game.hostStartWithPasswordAndMods(
                             true, password.ifBlank { null }, enableMods,
                         )
                         onHost()
@@ -450,7 +457,7 @@ fun MultiplayerView(
                                     serverConfig.type = type
                                 } else {
                                     val config = ServerConfig(url, name, type)
-                                    MultiplayerPreferences.instance.allServerConfig.add(config)
+                                    instance.allServerConfig.add(config)
                                     allServerData.add(
                                         ServerData(
                                             config
@@ -484,7 +491,7 @@ fun MultiplayerView(
                     if (serverData.config.type == ServerType.Server) {
                         val ip = serverData.config.ip
                         serverAddress = ip
-                        context.setConfig("lastNetworkIP", ip)
+                        configIO.setGameConfig("lastNetworkIP", ip)
                         isConnecting = true
                     } else if (serverData.config.type == ServerType.RoomList) {
                         selectedServerConfig = serverData.config
@@ -508,7 +515,7 @@ fun MultiplayerView(
                         horizontalArrangement = Arrangement.End
                     ) {
                         Icon(Icons.Default.Delete, null, modifier = Modifier.padding(5.dp).clickable {
-                            MultiplayerPreferences.instance.allServerConfig.remove(serverData.config)
+                            instance.allServerConfig.remove(serverData.config)
                             allServerData.remove(serverData)
                         })
 
@@ -707,7 +714,7 @@ fun MultiplayerView(
             onValueChange =
             {
                 joinServerAddress = it
-                context.setConfig("lastNetworkIP", it)
+                configIO.setGameConfig("lastNetworkIP", it)
             },
         )
     }
@@ -855,7 +862,7 @@ fun MultiplayerView(
         }
     }
 
-    with(context) {
+    with(net) {
         LaunchedEffect(Unit) {
             refresh.send(Unit)
             for(u in refresh) {
@@ -898,7 +905,7 @@ fun MultiplayerView(
 
     FilterSurfaceDialog(filterSurfaceDialogVisible) { filterSurfaceDialogVisible = false }
     HostGameDialog(hostDialogVisible, { hostDialogVisible = false }) {
-        onExit(); onOpenRoomView(); context.setUserName(userName)
+        onExit(); onOpenRoomView(); game.setUserName(userName)
     }
 
     Scaffold(
@@ -918,7 +925,7 @@ fun MultiplayerView(
                         leadingIcon = { Icon(loadSvg("replay"), null, modifier = Modifier.size(30.dp)) },
                         modifier = Modifier.padding(10.dp)
                     ) {
-                        val lastIp = context.getConfig<String?>("lastNetworkIP")
+                        val lastIp = configIO.getGameConfig<String?>("lastNetworkIP")
                         if (lastIp != null) {
                             serverAddress = lastIp
                             isConnecting = true
@@ -1222,6 +1229,8 @@ private fun WelcomeMessageAdmittingDialog(
     visible: Boolean,
     onDismissRequest: () -> Unit,
 ) {
+    val settings = koinInject<Settings>()
+
     AnimatedAlertDialog(
         visible, onDismissRequest = onDismissRequest, enableDismiss = false
     ) { dismiss ->
@@ -1263,14 +1272,14 @@ private fun WelcomeMessageAdmittingDialog(
                     RWTextButton("Yes", modifier = Modifier.padding(5.dp), leadingIcon = {
                         Icon(Icons.Default.Done, null, modifier = Modifier.size(30.dp))
                     }) {
-                        MultiplayerPreferences.instance.showWelcomeMessage = true
+                        settings.showWelcomeMessage = true
                         dismiss()
                     }
 
                     RWTextButton("No", modifier = Modifier.padding(5.dp), leadingIcon = {
                         Icon(Icons.Default.Close, null, modifier = Modifier.size(30.dp))
                     }) {
-                        MultiplayerPreferences.instance.showWelcomeMessage = false
+                        settings.showWelcomeMessage = false
                         dismiss()
                     }
                 }

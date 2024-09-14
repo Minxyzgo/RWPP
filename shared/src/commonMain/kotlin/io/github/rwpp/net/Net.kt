@@ -7,7 +7,7 @@
 
 package io.github.rwpp.net
 
-import io.github.rwpp.ContextController
+import io.github.rwpp.game.Game
 import io.github.rwpp.net.packets.ServerPacket
 import io.github.rwpp.utils.io.GameInputStream
 import kotlinx.coroutines.*
@@ -18,13 +18,15 @@ import kotlinx.coroutines.selects.select
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import java.io.DataInputStream
 import kotlin.reflect.full.createInstance
 
-interface Net {
+interface Net : KoinComponent {
     val packetDecoders: MutableMap<PacketType, (DataInputStream) -> Packet>
 
-    val listeners: MutableMap<PacketType, (ContextController, Client, Packet) -> Unit>
+    val listeners: MutableMap<PacketType, (Client, Packet) -> Unit>
 
     val client: OkHttpClient
 
@@ -121,7 +123,7 @@ interface Net {
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T : Packet> Net.registerPacketListener(
     packetType: PacketType,
-    noinline listener: (ContextController, Client, T) -> Unit
+    noinline listener: (Client, T) -> Unit
 ) {
     val method = T::class.java.getDeclaredMethod("readPacket", GameInputStream::class.java)
     packetDecoders[packetType] =
@@ -130,14 +132,15 @@ inline fun <reified T : Packet> Net.registerPacketListener(
             method.invoke(p, GameInputStream(it))
             p
         }
-    listeners[packetType] = listener as (ContextController, Client, Packet) -> Unit
+    listeners[packetType] = listener as (Client, Packet) -> Unit
 }
 
 fun Net.registerListeners() {
+    val game = get<Game>()
     registerPacketListener<ServerPacket.ServerInfoGetPacket>(
         PacketType.PRE_GET_SERVER_INFO_FROM_LIST
-    ) { context, client, _ ->
-        val room = context.gameRoom
+    ) { client, _ ->
+        val room = game.gameRoom
         client.sendPacketToClient(
             ServerPacket.ServerInfoReceivePacket(
                 room.localPlayer.name + "'s game",

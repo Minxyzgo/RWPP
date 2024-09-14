@@ -34,22 +34,26 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
+import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.events.*
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.ConnectingPlayer
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.MapType
+import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.net.Net
 import io.github.rwpp.net.packets.ModPacket
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.shared.generated.resources.Res
@@ -59,6 +63,7 @@ import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
 
@@ -68,8 +73,12 @@ private val relayRegex = Regex("""R\d+""")
 fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     BackHandler(true, onExit)
 
-    val context = LocalController.current
-    val room = context.gameRoom
+    val configIO = koinInject<ConfigIO>()
+    val game = koinInject<Game>()
+    val modManager = koinInject<ModManager>()
+    val net = koinInject<Net>()
+    val room = game.gameRoom
+
     var update by remember { mutableStateOf(false) }
     var lastSelectedIndex by remember { mutableStateOf(0) }
     var selectedMap by remember(update) { mutableStateOf(room.selectedMap) }
@@ -120,12 +129,15 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             val result = relayRegex.find(it.message)?.value
 
                             if(!result.isNullOrBlank()) {
-                                context.setConfig("lastNetworkIP", result)
+                                configIO.setGameConfig("lastNetworkIP", result)
                             }
                         }
 
                         if(it.sender.isNotBlank()) {
-                            withStyle(style = SpanStyle(color = Player.getTeamColor(it.spawn))) {
+                            withStyle(style = SpanStyle(
+                                color = Player.getTeamColor(it.spawn),
+                                fontWeight = FontWeight.Bold
+                            )) {
                                 append(it.sender + ": ")
                             }
                         }
@@ -141,8 +153,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
     LoadingView(loadModViewVisible, { loadModViewVisible = false }) {
         message("reloading mods...")
-        context.modReload()
-        context.sendPacketToServer(ModPacket.ModReloadFinishPacket())
+        modManager.modReload()
+        net.sendPacketToServer(ModPacket.ModReloadFinishPacket())
         true
     }
 
@@ -174,7 +186,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
     BanUnitViewDialog(banUnitVisible, { banUnitVisible = false }, selectedBanUnits) {
         selectedBanUnits = it
-        context.onBanUnits(it)
+        game.onBanUnits(it)
     }
 
     PlayerOverrideDialog(playerOverrideVisible, { playerOverrideVisible = false }, updateAction, room, selectedPlayer)
@@ -236,7 +248,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             SelectionContainer {
                                 Text(
                                     chatMessages[chatMessages.size - 1 - i],
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp)
                                 )
                             }
@@ -340,9 +352,9 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     readI18n("multiplayer.room.start"),
                                     modifier = Modifier.padding(5.dp)
                                 ) {
-                                    val unpreparedPlayers = context.gameRoom.getPlayers().filter { !it.data.ready }
+                                    val unpreparedPlayers = game.gameRoom.getPlayers().filter { !it.data.ready }
                                     if(unpreparedPlayers.isNotEmpty()) {
-                                        context.gameRoom.sendSystemMessage(
+                                        game.gameRoom.sendSystemMessage(
                                             "Cannot start game. Because players: ${unpreparedPlayers.joinToString(", ") { it.name }} aren't ready.")
                                     } else if(room.isHostServer) room.sendQuickGameCommand("-start")  else room.startGame()
                                 }
@@ -393,7 +405,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 @Composable
                                 fun PlayerTable(index: Int) {
                                     val options = remember {
-                                        context.getStartingUnitOptions()
+                                        game.getStartingUnitOptions()
                                     }
                                     val player = players[index]
                                     var (delay, easing) = state.calculateDelayAndEasing(index, 1)
@@ -587,11 +599,11 @@ private fun PlayerOverrideDialog(
     room: GameRoom,
     player: Player
 ) {
-    val context = LocalController.current
+    val game = koinInject<Game>()
     val items = remember {
         buildList {
             add(-1 to "Default")
-            addAll(context.getStartingUnitOptions())
+            addAll(game.getStartingUnitOptions())
         }
     }
 
@@ -780,7 +792,9 @@ private fun MultiplayerOptionDialog(
 ) = AnimatedAlertDialog(
     visible, onDismissRequest = { onDismissRequest(); update() }
 ) { dismiss ->
-    val context = LocalController.current
+
+    val game = koinInject<Game>()
+    val configIO = koinInject<ConfigIO>()
 
     var noNukes by remember { mutableStateOf(room.noNukes) }
     var sharedControl by remember { mutableStateOf(room.sharedControl) }
@@ -850,7 +864,7 @@ private fun MultiplayerOptionDialog(
                     }
 
                     val startingOptionList = remember {
-                        context.getStartingUnitOptions()
+                        game.getStartingUnitOptions()
                     }
                     var selectedIndex3 by remember(room) { mutableStateOf(startingOptionList.indexOfFirst { it.first == room.startingUnits }) }
 
@@ -987,12 +1001,12 @@ private fun MultiplayerOptionDialog(
                         realIncomeMultiplier = incomeMultiplier.toFloatOrNull() ?: 1f
                     }
 
-                    var teamUnitCapHostedGame by remember { mutableStateOf(context.getConfig<Int?>("teamUnitCapHostedGame")) }
+                    var teamUnitCapHostedGame by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapHostedGame")) }
                     var expanded1 by remember { mutableStateOf(false) }
                     remember(teamUnitCapHostedGame) {
                         val count = teamUnitCapHostedGame ?: 100
-                        context.setConfig("teamUnitCapHostedGame", count)
-                        context.setTeamUnitCapHostGame(count)
+                        configIO.setGameConfig("teamUnitCapHostedGame", count)
+                        game.setTeamUnitCapHostGame(count)
                     }
                     RWSingleOutlinedTextField(
                         readI18n("multiplayer.room.teamUnitCapHostedGame"),

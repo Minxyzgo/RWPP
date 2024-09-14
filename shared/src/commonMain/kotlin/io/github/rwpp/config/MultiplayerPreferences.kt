@@ -8,7 +8,9 @@
 package io.github.rwpp.config
 
 import kotlinx.serialization.Serializable
+import org.koin.core.annotation.Single
 
+@Single
 @Serializable
 data class MultiplayerPreferences(
     var mapNameFilter: String = "",
@@ -16,7 +18,6 @@ data class MultiplayerPreferences(
     var playerLimitRangeFrom: Int = 0,
     var playerLimitRangeTo: Int = 100,
     var joinServerAddress: String = "",
-    var showWelcomeMessage: Boolean? = null,
     var battleroom: Boolean = true,
     var allServerConfig: MutableList<ServerConfig> = mutableListOf(
         ServerConfig(
@@ -25,8 +26,4 @@ data class MultiplayerPreferences(
             ServerType.RoomList
         )
     ),
-) {
-    companion object {
-        val instance = MultiplayerPreferences()
-    }
-}
+) : Config

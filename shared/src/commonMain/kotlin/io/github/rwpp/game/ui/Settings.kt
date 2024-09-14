@@ -25,26 +25,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.LocalController
+import io.github.rwpp.app.PermissionHelper
+import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.MultiplayerPreferences
-import io.github.rwpp.config.UIConfig
+import io.github.rwpp.config.Settings
+import io.github.rwpp.game.Game
+import io.github.rwpp.i18n.I18nType
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.Platform
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
+import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
 @Composable
 fun SettingsView(onExit: () -> Unit) {
     BackHandler(true, onExit)
 
-    val current = LocalController.current
+    val configIO = koinInject<ConfigIO>()
+    val game = koinInject<Game>()
+    val settings = koinInject<Settings>()
+
     Scaffold(
         containerColor = Color.Transparent,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    current.saveConfig()
+                    configIO.saveAllConfig()
                     onExit()
                 },
                 shape = CircleShape,
@@ -81,10 +89,10 @@ fun SettingsView(onExit: () -> Unit) {
 
                             if (Platform.isDesktop()) {
                                 SettingsSwitchComp(
-                                    LocalController.current.i18n("menus.settings.option.immersiveFullScreen"),
-                                    defaultValue = UIConfig.instance.isFullscreen,
+                                    readI18n("menus.settings.option.immersiveFullScreen", I18nType.RW),
+                                    defaultValue = settings.isFullscreen,
                                     customConfigSettingAction = {
-                                        UIConfig.instance.isFullscreen = it
+                                        settings.isFullscreen = it
                                     }
                                 )
                             }
@@ -98,7 +106,7 @@ fun SettingsView(onExit: () -> Unit) {
                             SettingsSwitchComp("showWarLogOnScreen")
                             SettingsSwitchComp("smartSelection_v2", "smartSelection") //v2 ???
                             SettingsSwitchComp("forceEnglish")
-                            var teamUnitCapSinglePlayer by remember { mutableStateOf(current.getConfig<Int?>("teamUnitCapSinglePlayer")) }
+                            var teamUnitCapSinglePlayer by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapSinglePlayer")) }
                             RWSingleOutlinedTextField(
                                 "teamUnitCapSinglePlayer",
                                 teamUnitCapSinglePlayer?.toString() ?: "",
@@ -108,9 +116,9 @@ fun SettingsView(onExit: () -> Unit) {
                                 typeInOnlyInteger = true
                             ) {
                                 teamUnitCapSinglePlayer = it.toIntOrNull()
-                                current.setConfig("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer ?: 100)
+                                configIO.setGameConfig("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer ?: 100)
                             }
-                            var teamUnitCapHostedGame by remember { mutableStateOf(current.getConfig<Int?>("teamUnitCapHostedGame")) }
+                            var teamUnitCapHostedGame by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapHostedGame")) }
                             RWSingleOutlinedTextField(
                                 "teamUnitCapHostedGame",
                                 teamUnitCapHostedGame?.toString() ?: "",
@@ -120,7 +128,7 @@ fun SettingsView(onExit: () -> Unit) {
                                 typeInOnlyInteger = true
                             ) {
                                 teamUnitCapHostedGame = it.toIntOrNull()
-                                current.setConfig("teamUnitCapHostedGame", teamUnitCapHostedGame ?: 100)
+                                configIO.setGameConfig("teamUnitCapHostedGame", teamUnitCapHostedGame ?: 100)
                             }
                         }
                     }
@@ -139,14 +147,14 @@ fun SettingsView(onExit: () -> Unit) {
                             SettingsSwitchComp("showFps")
                             SettingsSwitchComp(
                                 "Show Welcome Message",
-                                defaultValue = MultiplayerPreferences.instance.showWelcomeMessage ?: false
-                            ) { MultiplayerPreferences.instance.showWelcomeMessage = it }
+                                defaultValue = settings.showWelcomeMessage ?: false
+                            ) { settings.showWelcomeMessage = it }
                         }
                     }
 
                     item {
                         SettingsGroup("networking") {
-                            var port by remember { mutableStateOf(current.getConfig<Int?>("networkPort")) }
+                            var port by remember { mutableStateOf(configIO.getGameConfig<Int?>("networkPort")) }
                             RWSingleOutlinedTextField(
                                 "port",
                                 port?.toString() ?: "",
@@ -155,7 +163,7 @@ fun SettingsView(onExit: () -> Unit) {
                                 typeInNumberOnly = true
                             ) {
                                 port = it.toIntOrNull()
-                                current.setConfig("networkPort", port ?: 5123)
+                                configIO.setGameConfig("networkPort", port ?: 5123)
                             }
                             SettingsSwitchComp("udpInMultiplayer")
                             SettingsSwitchComp("showChatAndPingShortcuts")
@@ -168,13 +176,13 @@ fun SettingsView(onExit: () -> Unit) {
                     if(Platform.isAndroid()) {
                         item {
                             SettingsGroup("", "Android") {
-                                val context = LocalController.current
+                                val permissionHelper = koinInject<PermissionHelper>()
                                 RWTextButton("Set External Folder") {
-                                    context.requestExternalStoragePermission()
+                                    permissionHelper.requestExternalStoragePermission()
                                 }
 
                                 RWTextButton("Manage All Files") {
-                                    context.requestManageFilePermission()
+                                    permissionHelper.requestManageFilePermission()
                                 }
                             }
                         }
@@ -190,10 +198,10 @@ private fun SettingsGroup(
     name: String,
     displayName: String? = null,
     content: @Composable ColumnScope.() -> Unit
-) = with(LocalController.current) {
+) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(
-            displayName ?: i18n("menus.settings.heading.$name"),
+            displayName ?: readI18n("menus.settings.heading.$name", I18nType.RW),
             style = MaterialTheme.typography.headlineMedium,
             color = Color(151, 188, 98),
             modifier = Modifier.padding(start = 5.dp)
@@ -217,8 +225,10 @@ private fun SettingsSwitchComp(
     labelName: String = name,
     defaultValue: Boolean? = null,
     customConfigSettingAction: ((Boolean) -> Unit)? = null
-) = with(LocalController.current) {
-    var state by remember { mutableStateOf(defaultValue ?: getConfig(name)) }
+) {
+    val configIO = koinInject<ConfigIO>()
+
+    var state by remember { mutableStateOf(defaultValue ?: configIO.getGameConfig(name)) }
     val onClick = customConfigSettingAction?.let{
         {
             state = !state
@@ -226,7 +236,7 @@ private fun SettingsSwitchComp(
         }
     } ?: {
         state = !state
-        setConfig(name, state)
+        configIO.setGameConfig(name, state)
     }
     Surface(
         color = Color.Transparent,
@@ -244,7 +254,7 @@ private fun SettingsSwitchComp(
 
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if(customConfigSettingAction != null) labelName else i18n("menus.settings.option.$labelName"),
+                        text = if(customConfigSettingAction != null) labelName else readI18n("menus.settings.option.$labelName", I18nType.RW),
                         modifier = Modifier.padding(16.dp),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Start,
@@ -267,22 +277,24 @@ private fun SettingsSwitchComp(
 private fun SettingsSlider(
     name: String,
     valueRange: ClosedFloatingPointRange<Float>,
-) = with(LocalController.current) {
+) {
+    val configIO = koinInject<ConfigIO>()
+
     Column(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
         Text(
-            i18n("menus.settings.option.$name"),
+            readI18n("menus.settings.option.$name", I18nType.RW),
             style = MaterialTheme.typography.bodyLarge,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(5.dp)
         )
-        var value by remember { mutableStateOf(getConfig<Float>(name)) }
+        var value by remember { mutableStateOf(configIO.getGameConfig<Float>(name)) }
         CustomSlider(
             modifier = Modifier.weight(1f).padding(5.dp),
             value = value,
             onValueChange = {
                 value = it
-                setConfig(name, value)
+                configIO.setGameConfig(name, value)
             },
             valueRange = valueRange,
             showIndicator = false,

@@ -28,18 +28,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.rwpp.LocalController
+import io.github.rwpp.game.Game
+import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
+fun ModsView(onExit: () -> Unit) {
     BackHandler(true, onExit)
+    val modManager = koinInject<ModManager>()
+    val game = koinInject<Game>()
 
-    var mods by remember { mutableStateOf(getAllMods()) }
+    var mods by remember { mutableStateOf(modManager.getAllMods()) }
     var updated by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var loadingAction by remember { mutableStateOf<suspend () -> Unit>({}) }
@@ -52,8 +56,8 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
 
     fun updateMods() {
         loadingAction = {
-            modUpdate()
-            mods = getAllMods()
+            modManager.modUpdate()
+            mods = modManager.getAllMods()
             updated = true
         }
 
@@ -73,9 +77,9 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                     readI18n("mod.reload"),
                     modifier = Modifier.padding(5.dp),
                 ) { loadingAction = {
-                    modReload()
-                    getAllMaps(true)
-                    mods = getAllMods()
+                    modManager.modReload()
+                    game.getAllMaps(true)
+                    mods = modManager.getAllMods()
                 }; isLoading = true }
 
                 RWTextButton(
@@ -86,7 +90,7 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
                 RWTextButton(
                     readI18n("mod.apply"),
                     modifier = Modifier.padding(5.dp),
-                ) { loadingAction = { modSaveChange(); onExit() }; isLoading = true }
+                ) { loadingAction = { modManager.modSaveChange(); onExit() }; isLoading = true }
             }
         }
     ) {
@@ -113,8 +117,8 @@ fun ModsView(onExit: () -> Unit) = with(LocalController.current) {
 
                 remember(filter, updated) {
                     if (filter.isNotBlank() || updated) mods =
-                        getAllMods().filter { it.name.uppercase().contains(filter.uppercase()) }
-                    if (filter.isBlank()) mods = getAllMods()
+                        modManager.getAllMods().filter { it.name.uppercase().contains(filter.uppercase()) }
+                    if (filter.isBlank()) mods = modManager.getAllMods()
                     updated = false
                 }
 

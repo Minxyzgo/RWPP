@@ -9,6 +9,7 @@ package io.github.rwpp
 
 import io.github.rwpp.utils.io.SizeUtils
 import io.github.rwpp.platform.Platform
+import org.koin.core.Koin
 
 const val projectVersion = "1.2.1 (core v1.15)"
 
@@ -23,7 +24,10 @@ const val protocolVersion = 1
  */
 const val gameVersion: Int = 176
 
-
+/**
+ * global koin module.
+ */
+lateinit var appKoin: Koin
 
 val welcomeMessage =
     """

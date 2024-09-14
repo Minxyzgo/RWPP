@@ -9,20 +9,20 @@ package io.github.rwpp.android.impl
 
 import android.content.Intent
 import android.net.Uri
-import androidx.core.content.ContextCompat.startActivity
-import io.github.rwpp.ContextController
+import io.github.rwpp.AppContext
 import io.github.rwpp.android.MainActivity
-import io.github.rwpp.net.Client
-import io.github.rwpp.net.Net
-import io.github.rwpp.net.Packet
-import io.github.rwpp.net.PacketType
+import io.github.rwpp.net.*
 import okhttp3.OkHttpClient
 import java.io.DataInputStream
 
 class NetImpl : Net {
     override val packetDecoders: MutableMap<PacketType, (DataInputStream) -> Packet> = mutableMapOf()
-    override val listeners: MutableMap<PacketType, (ContextController, Client, Packet) -> Unit> = mutableMapOf()
+    override val listeners: MutableMap<PacketType, (AppContext, Client, Packet) -> Unit> = mutableMapOf()
     override val client: OkHttpClient = OkHttpClient()
+
+    init {
+        registerListeners()
+    }
 
     override fun sendPacketToServer(packet: Packet) {
         GameEngine.t().bU.b(packet.asGamePacket())

@@ -16,16 +16,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.LocalController
+import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.Mission
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.*
+import org.koin.compose.koinInject
 
 @Composable
 fun MissionView(onExit: () -> Unit) {
     BackHandler(true, onExit)
+
+    val game = koinInject<Game>()
+    val configIO = koinInject<ConfigIO>()
 
     BorderCard(
         modifier = Modifier
@@ -34,7 +39,6 @@ fun MissionView(onExit: () -> Unit) {
     ) {
         ExitButton(onExit)
 
-        val context = LocalController.current
 
         Row(
             modifier = Modifier.fillMaxWidth().scaleFit(),
@@ -44,7 +48,7 @@ fun MissionView(onExit: () -> Unit) {
         }
 
         var selectedIndex0 by remember { mutableStateOf(0) }
-        var selectedIndex1 by remember { mutableStateOf(context.getConfig<Int>("aiDifficulty") + 2) }
+        var selectedIndex1 by remember { mutableStateOf(configIO.getGameConfig<Int>("aiDifficulty") + 2) }
 
         Row(
             horizontalArrangement = Arrangement.Center,
@@ -54,7 +58,7 @@ fun MissionView(onExit: () -> Unit) {
                 .padding(top = 5.dp)
                 .scaleFit()
         ) {
-            with(LocalController.current) {
+            with(game) {
                 LargeDropdownMenu(
                     modifier = Modifier.wrapContentSize().padding(5.dp),
                     label = readI18n("mission.type"),
@@ -75,7 +79,7 @@ fun MissionView(onExit: () -> Unit) {
 
         LargeDividingLine { 5.dp }
 
-        with(LocalController.current) {
+        with(game) {
             var missions by remember { mutableStateOf(listOf<Mission>()) }
             LaunchedEffect(selectedIndex0) {
                 missions = getMissionsByType(getAllMissionTypes()[selectedIndex0])

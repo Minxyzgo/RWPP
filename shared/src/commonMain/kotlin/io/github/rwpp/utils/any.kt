@@ -10,8 +10,8 @@ package io.github.rwpp.utils
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.declaredMemberProperties
 
-inline fun <reified T : Any> T.setPropertyFromObject(obj: T) {
-    T::class.declaredMemberProperties.forEach { member ->
+fun <T : Any> T.setPropertyFromObject(obj: T) {
+    obj::class.declaredMemberProperties.forEach { member ->
         if (member is KMutableProperty<*>) {
             member.setter.call(this, member.getter.call(obj))
         }

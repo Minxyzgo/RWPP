@@ -9,17 +9,19 @@ package io.github.rwpp.desktop.impl
 
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
-import io.github.rwpp.desktop.gameContext
+import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.external.Resource
 import io.github.rwpp.external.ResourceConfig
 import io.github.rwpp.impl.BaseExternalHandlerImpl
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
 import io.github.rwpp.utils.io.unzipTo
+import org.koin.core.annotation.Single
 import java.io.File
 import java.util.zip.ZipFile
 import javax.imageio.ImageIO
 
+@Single(binds = [ExternalHandler::class])
 class ExternalHandlerImpl : BaseExternalHandlerImpl() {
     override fun enableResource(resource: Resource?) {
         _usingResource = resource

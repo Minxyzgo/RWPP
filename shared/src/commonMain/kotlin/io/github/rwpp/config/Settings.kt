@@ -10,8 +10,9 @@ package io.github.rwpp.config
 import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Single
 
-@Single
+@Single(binds = [Config::class])
 @Serializable
-data class Blacklists(
-    var blacklists: MutableList<Blacklist> = mutableListOf()
+data class Settings(
+    var isFullscreen: Boolean = false,
+    var showWelcomeMessage: Boolean? = null,
 ) : Config

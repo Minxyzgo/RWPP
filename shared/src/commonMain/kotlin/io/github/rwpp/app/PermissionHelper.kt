@@ -5,13 +5,18 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.config
+package io.github.rwpp.app
 
-import kotlinx.serialization.Serializable
-import org.koin.core.annotation.Single
+interface PermissionHelper {
 
-@Single
-@Serializable
-data class Blacklists(
-    var blacklists: MutableList<Blacklist> = mutableListOf()
-) : Config
+    /**
+     * Request external storage permission. (Only Android need to implement it)
+     */
+    fun requestExternalStoragePermission()
+
+    /**
+     * Request manage file permission. (Only Android 11+)
+     */
+    fun requestManageFilePermission()
+
+}

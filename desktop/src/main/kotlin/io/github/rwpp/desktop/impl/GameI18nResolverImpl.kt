@@ -5,15 +5,14 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.config
+package io.github.rwpp.desktop.impl
 
-import kotlinx.serialization.Serializable
+import io.github.rwpp.i18n.GameI18nResolver
+import org.koin.core.annotation.Single
 
-@Serializable
-data class UIConfig(
-    var isFullscreen: Boolean = false
-) {
-    companion object {
-        val instance = UIConfig()
+@Single
+class GameI18nResolverImpl : GameI18nResolver {
+    override fun i18n(str: String, vararg args: Any?): String {
+        return com.corrodinggames.rts.gameFramework.h.a.a(str, args)
     }
 }

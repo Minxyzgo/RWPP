@@ -19,12 +19,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.LocalController
+import io.github.rwpp.game.Game
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.BorderCard
 import io.github.rwpp.ui.ExitButton
 import io.github.rwpp.ui.LargeDividingLine
 import io.github.rwpp.ui.scaleFit
+import org.koin.compose.koinInject
 
 @Composable
 fun ReplaysViewDialog(
@@ -48,7 +49,7 @@ fun ReplaysViewDialog(
 
         LargeDividingLine { 5.dp }
 
-        with(LocalController.current) {
+        with(koinInject<Game>()) {
             val replays by remember { mutableStateOf(getAllReplays()) }
 
             val state = rememberLazyListState()

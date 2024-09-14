@@ -12,9 +12,10 @@ import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.utils.io.calculateSize
 import io.github.rwpp.utils.io.zipFolderToByte
+import org.koin.core.annotation.Single
 import java.io.File
 
-
+@Single
 class ModManagerImpl : ModManager {
     private var mods: List<Mod>? = null
 

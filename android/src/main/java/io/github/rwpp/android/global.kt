@@ -9,10 +9,10 @@ package io.github.rwpp.android
 
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
-import io.github.rwpp.ContextController
+import io.github.rwpp.AppContext
 import java.util.concurrent.atomic.AtomicInteger
 
-lateinit var controller: ContextController
+lateinit var controller: AppContext
 lateinit var gameLauncher: ActivityResultLauncher<Intent>
 var questionOption: String? = null
 var isSandboxGame: Boolean = false

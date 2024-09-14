@@ -27,13 +27,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.LocalController
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
 import io.github.rwpp.shared.generated.resources.Res
 import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 
 @Composable
 fun MapViewDialog(
@@ -51,7 +52,8 @@ fun MapViewDialog(
             .padding(10.dp)
     ) {
         ExitButton(d)
-        val room = LocalController.current.gameRoom
+
+        val room = koinInject<Game>().gameRoom
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -81,7 +83,7 @@ fun MapViewDialog(
 
         LargeDividingLine { 5.dp }
 
-        with(LocalController.current) {
+        with(koinInject<Game>()) {
             var maps by remember { mutableStateOf(listOf<GameMap>()) }
             var mapType = remember { MapType.entries[selectedIndex0] }
             remember(selectedIndex0) {

@@ -23,10 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.ui.*
+import org.koin.compose.koinInject
 
 @Composable
 fun BanUnitViewDialog(
@@ -35,7 +36,8 @@ fun BanUnitViewDialog(
     lastSelectedUnits: List<GameUnit>,
     onSelectedUnits: (List<GameUnit>) -> Unit
 ) {
-    val context = LocalController.current
+
+    val game = koinInject<Game>()
 
     AnimatedAlertDialog(
         visible = visible, onDismissRequest = onDismissRequest
@@ -50,7 +52,7 @@ fun BanUnitViewDialog(
             val state = rememberLazyListState()
             var filter by remember { mutableStateOf("") }
 
-            val allUnits = remember(filter) { context.getAllUnits().filter { filter.isBlank() || it.displayName.contains(filter, ignoreCase = true) } }
+            val allUnits = remember(filter) { game.getAllUnits().filter { filter.isBlank() || it.displayName.contains(filter, ignoreCase = true) } }
 
             val current = LocalWindowManager.current
 
