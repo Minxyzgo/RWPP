@@ -9,7 +9,6 @@ package io.github.rwpp.game.ui
 
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,13 +20,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
-import io.github.rwpp.ui.ExitButton
-import io.github.rwpp.ui.v2.ExpandedCard
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.ui.BorderCard
+import io.github.rwpp.ui.ExitButton
 import io.github.rwpp.ui.LargeDividingLine
 import io.github.rwpp.ui.WindowManager
+import io.github.rwpp.ui.v2.ExpandedCard
 
+/**
+ * Simple contributor list,
+ *
+ * It will be changed at any time.
+ */
 @Composable
 fun ContributorList(
     onExit: () -> Unit,

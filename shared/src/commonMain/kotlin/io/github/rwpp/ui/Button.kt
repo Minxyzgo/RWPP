@@ -72,7 +72,7 @@ fun ExitButton(onClick: () -> Unit) {
             contentPadding = PaddingValues(0.dp),
             onClick = { onClick() },
         ) {
-            Icon(Icons.Default.Close, contentDescription = null)
+            Icon(Icons.Default.Close, tint = Color.White, contentDescription = null)
         }
     }
 }

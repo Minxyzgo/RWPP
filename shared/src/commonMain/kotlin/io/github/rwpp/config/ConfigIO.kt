@@ -11,15 +11,37 @@ import io.github.rwpp.utils.setPropertyFromObject
 import org.koin.core.component.KoinComponent
 import kotlin.reflect.KClass
 
+/**
+ * An interface that describes all operations related to configuring reads and writes.
+ *
+ * To get it, use `koinInject<ConfigIO>()` or `appKoin.get<ConfigIO>()`
+ */
 interface ConfigIO : KoinComponent {
+    /**
+     * Save a rw-pp configuration.
+     */
     fun saveConfig(config: Config)
 
+    /**
+     * Read a rw-pp configuration from the file.
+     */
     fun <T : Config> readConfig(clazz: KClass<T>): T?
 
+    /**
+     * Get a game configuration.
+     */
     fun <T> getGameConfig(name: String): T
 
+    /**
+     * Set a game configuration.
+     */
     fun setGameConfig(name: String, value: Any?)
 
+    /**
+     * Save all the configurations, which should also include the game's.
+     *
+     * It should be called when exciting the game.
+     */
     fun saveAllConfig() {
         // save config
         val configs = getKoin().getAll<Config>()
@@ -28,13 +50,15 @@ interface ConfigIO : KoinComponent {
         }
     }
 
+    /**
+     * Read all rw-pp configurations from files.
+     *
+     * It should be called before the game starts.
+     */
     fun readAllConfig() {
         val configs = getKoin().getAll<Config>()
         configs.forEach { config ->
-            println("read: ${config::class.qualifiedName}")
-            runCatching { readConfig(config::class)?.let {
-                config.setPropertyFromObject(it)
-            } }
+            runCatching { readConfig(config::class)?.let { config.setPropertyFromObject(it) } }
                 .onFailure { it.printStackTrace() }
         }
     }

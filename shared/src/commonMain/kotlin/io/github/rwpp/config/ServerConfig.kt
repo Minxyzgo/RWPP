@@ -21,6 +21,13 @@ import java.io.DataOutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
 
+/**
+ * Describes the configuration of various types of servers
+ *
+ * [useAsDefaultList] works when [type] is [ServerType.RoomList],
+ *
+ * When it is set to true, then this list will be opened first every time you enter a multiplayer game
+ */
 @Serializable
 data class ServerConfig(
     var ip: String,
@@ -28,6 +35,14 @@ data class ServerConfig(
     var type: ServerType,
     var useAsDefaultList: Boolean = false,
 ) {
+
+    /**
+     * Get a server information.
+     *
+     * Notice: [type] must be [ServerType.Server]
+     *
+     * This is a custom protocol for RW-PP and will not work on any server that does not implement such a protocol.
+     */
     fun getServerInfo(): ServerPacket.ServerInfoReceivePacket {
         val list = ip.split(":")
         val address = list[0]
@@ -36,6 +51,7 @@ data class ServerConfig(
         socket.soTimeout = 5000
         socket.connect(InetSocketAddress(address, port ?: 5123), 5000)
 
+        // Normal packet
         DataOutputStream(socket.getOutputStream())
             .apply {
                 val bytes = ServerPacket.ServerInfoGetPacket().toBytes()
@@ -49,6 +65,8 @@ data class ServerConfig(
         while(true) {
             val size = buffer.readInt()
             val type = buffer.readInt()
+
+            //limit image size
             val bytes = buffer.readByteArray(size.toLong().coerceAtMost(SizeUtils.kBToByte(10)))
 
             if(type == PacketType.RECEIVE_SERVER_INFO_FROM_LIST.type) {

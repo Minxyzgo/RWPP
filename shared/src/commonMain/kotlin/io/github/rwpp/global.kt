@@ -11,7 +11,7 @@ import io.github.rwpp.utils.io.SizeUtils
 import io.github.rwpp.platform.Platform
 import org.koin.core.Koin
 
-const val projectVersion = "1.2.1 (core v1.15)"
+const val projectVersion = "1.3.0 (core v1.15)"
 
 /**
  * The protocol version.

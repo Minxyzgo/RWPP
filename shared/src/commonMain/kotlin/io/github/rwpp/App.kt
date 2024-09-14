@@ -111,7 +111,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
 
     MaterialTheme(
         typography = typography,
-        colorScheme = lightColorScheme(
+        colorScheme = darkColorScheme(
             surface = Color(27, 18, 18),
             onSurface = Color.White,
             primary = Color.Black

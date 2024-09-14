@@ -10,7 +10,7 @@ package io.github.rwpp.config
 import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Single
 
-@Single(binds = [Config::class])
+@Single
 @Serializable
 data class Settings(
     var isFullscreen: Boolean = false,

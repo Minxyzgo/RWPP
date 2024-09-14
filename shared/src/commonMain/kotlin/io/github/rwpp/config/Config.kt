@@ -7,5 +7,11 @@
 
 package io.github.rwpp.config
 
-interface Config {
-}
+/**
+ * Describe a config.
+ *
+ * Any config that can be saved should be implemented under this package, and the corresponding code should be generated using Koin.
+ *
+ * See [ConfigIO], [ConfigModule]
+ */
+interface Config

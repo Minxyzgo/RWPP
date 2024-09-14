@@ -57,12 +57,14 @@ fun BanUnitViewDialog(
             val current = LocalWindowManager.current
 
             if (current != WindowManager.Small) {
+                //Fix the filter field
                 FilterField(filter) { filter = it }
             }
 
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f).padding(5.dp), state = state) {
 
                 if (current == WindowManager.Small) {
+                    //When it is small, let the field can be scrolled
                     item { FilterField(filter) { filter = it } }
                 }
 

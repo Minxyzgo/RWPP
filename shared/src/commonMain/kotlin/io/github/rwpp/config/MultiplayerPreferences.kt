@@ -10,6 +10,9 @@ package io.github.rwpp.config
 import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Single
 
+/**
+ * Multiplayer player preferences
+ */
 @Single
 @Serializable
 data class MultiplayerPreferences(

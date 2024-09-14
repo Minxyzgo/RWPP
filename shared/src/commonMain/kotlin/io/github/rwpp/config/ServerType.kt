@@ -7,6 +7,9 @@
 
 package io.github.rwpp.config
 
+/**
+ * The type of server, which describes a server that can be joined, or a list of rooms
+ */
 enum class ServerType {
     Server, RoomList
 }

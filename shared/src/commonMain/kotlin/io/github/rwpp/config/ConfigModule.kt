@@ -10,6 +10,9 @@ package io.github.rwpp.config
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 
+/**
+ * A koin module containing all the configurations that can be read and written.
+ */
 @Module
 @ComponentScan("io.github.rwpp.config")
 class ConfigModule
