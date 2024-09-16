@@ -18,9 +18,10 @@ import com.github.minxyzgo.rwij.InjectMode
 import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.R
-import io.github.rwpp.android.controller
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.getResourceFileName
+import io.github.rwpp.appKoin
+import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
 import io.github.rwpp.utils.Reflect
@@ -52,7 +53,8 @@ object UnitPathProxy {
 //        }
 
             addProxy("h", String::class, mode = InjectMode.InsertBefore) { _: Any?, str: String ->
-                if (controller.getUsingResource() == null) return@addProxy Unit
+                val externalHandler = appKoin.get<ExternalHandler>()
+                if (externalHandler.getUsingResource() == null) return@addProxy Unit
                 if(str.contains("builtin_mods")
                     || (str.contains("maps") && !str.contains("bitmaps"))
                     || str.contains("translations")) return@addProxy Unit
@@ -75,7 +77,8 @@ object UnitPathProxy {
 
         com.corrodinggames.rts.gameFramework.bc::class.setFunction {
             addProxy("a", Boolean::class, mode = InjectMode.InsertBefore) { self: com.corrodinggames.rts.gameFramework.bc, z: Boolean ->
-                if (controller.getUsingResource() == null) return@addProxy Unit
+                val externalHandler = appKoin.get<ExternalHandler>()
+                if (externalHandler.getUsingResource() == null) return@addProxy Unit
 
                 val b = Reflect.get<com.corrodinggames.rts.gameFramework.bb>(self, "b")!!
 
@@ -103,7 +106,8 @@ object UnitPathProxy {
 
         com.corrodinggames.rts.gameFramework.m.fh::class.setFunction {
             addProxy("a", Int::class, Boolean::class, mode = InjectMode.InsertBefore) { _: Any?, i: Int, bool: Boolean ->
-                if (controller.getUsingResource() == null) return@addProxy Unit
+                val externalHandler = appKoin.get<ExternalHandler>()
+                if (externalHandler.getUsingResource() == null) return@addProxy Unit
 
                 val resFileExist = File(resOutputDir).exists()
                 if(!resFileExist) return@addProxy Unit
@@ -139,8 +143,8 @@ object UnitPathProxy {
 
         com.corrodinggames.rts.gameFramework.a.a::class.setFunction {
             addProxy("a", Int::class, mode = InjectMode.InsertBefore) { self: com.corrodinggames.rts.gameFramework.a.a, i: Int, ->
-
-                if (controller.getUsingResource() == null) return@addProxy Unit
+                val externalHandler = appKoin.get<ExternalHandler>()
+                if (externalHandler.getUsingResource() == null) return@addProxy Unit
 
                 val resFileExist = File(resOutputDir).exists()
                 if (!resFileExist) return@addProxy Unit

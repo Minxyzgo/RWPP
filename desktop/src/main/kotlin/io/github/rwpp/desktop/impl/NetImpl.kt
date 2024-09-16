@@ -7,23 +7,22 @@
 
 package io.github.rwpp.desktop.impl
 
-import io.github.rwpp.AppContext
-import io.github.rwpp.net.*
+import io.github.rwpp.core.Initialization
+import io.github.rwpp.net.Client
+import io.github.rwpp.net.Net
+import io.github.rwpp.net.Packet
+import io.github.rwpp.net.PacketType
 import okhttp3.OkHttpClient
 import org.koin.core.annotation.Single
 import java.awt.Desktop
 import java.io.DataInputStream
 import java.net.URI
 
-@Single
+@Single(binds = [Net::class, Initialization::class])
 class NetImpl : Net {
     override val packetDecoders: MutableMap<PacketType, (DataInputStream) -> Packet> = mutableMapOf()
     override val listeners: MutableMap<PacketType, (Client, Packet) -> Unit> = mutableMapOf()
     override val client: OkHttpClient = OkHttpClient()
-
-    init {
-        registerListeners()
-    }
 
     override fun sendPacketToServer(packet: Packet) {
         LClass.B().bX.f(packet.asGamePacket())

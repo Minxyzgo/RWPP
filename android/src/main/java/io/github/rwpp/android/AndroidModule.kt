@@ -5,12 +5,11 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.platform
+package io.github.rwpp.android
 
-import androidx.compose.runtime.Composable
+import org.koin.core.annotation.ComponentScan
+import org.koin.core.annotation.Module
 
-@Composable
-actual fun BackHandler(enabled: Boolean, onBack: () -> Unit) {
-    // do nothing
-
-}
+@ComponentScan("io.github.rwpp.android.impl")
+@Module
+class AndroidModule

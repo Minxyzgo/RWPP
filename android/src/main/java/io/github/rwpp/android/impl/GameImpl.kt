@@ -7,6 +7,7 @@
 
 package io.github.rwpp.android.impl
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -34,15 +35,19 @@ import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
+import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.ui.LoadingContext
 import kotlinx.coroutines.*
+import org.koin.core.annotation.Single
+import org.koin.core.component.get
 import java.io.File
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
 
+@Single
 class GameImpl : Game, CoroutineScope {
 
     private var connectingJob: Deferred<String?>? = null
@@ -58,7 +63,7 @@ class GameImpl : Game, CoroutineScope {
         t.bN.aiDifficulty = difficulty.ordinal - 2
         t.bN.save()
         LevelSelectActivity.loadSinglePlayerMapRaw("maps/${mission.type.pathName()}/${mission.mapName}.tmx", false, 0, 0, true, false)
-        val intent = Intent(MainActivity.instance, InGameActivity::class.java)
+        val intent = Intent(get(), InGameActivity::class.java)
         intent.putExtra("level", t.di)
         gameLauncher.launch(intent)
     }
@@ -143,7 +148,7 @@ class GameImpl : Game, CoroutineScope {
 
     override fun getAllMissions(): List<Mission> {
         if(_missions != null) return _missions!!
-        val assets = MainActivity.instance.assets
+        val assets = get<Context>().assets
 
         val missions = mutableListOf<Mission>()
         getAllMissionTypes().forEach { type ->
@@ -175,7 +180,7 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override fun getAllMaps(flush: Boolean): List<GameMap> {
-        val assets = MainActivity.instance.assets
+        val assets = get<Context>().assets
         if(_maps.isEmpty() || flush) {
             val t = GameEngine.t()
             val levelDirs = com.corrodinggames.rts.gameFramework.e.a.a(LevelGroupSelectActivity.customLevelsDir, true)
@@ -257,7 +262,7 @@ class GameImpl : Game, CoroutineScope {
                     override val movementType: MovementType
                         get() = MovementType.valueOf(it.o().name)
                     override val mod: Mod?
-                        get() = (it as? com.corrodinggames.rts.game.units.custom.l)?.J?.q?.let(controller::getModByName)
+                        get() = (it as? com.corrodinggames.rts.game.units.custom.l)?.J?.q?.let(get<ModManager>()::getModByName)
                 }
             }
 
@@ -290,7 +295,7 @@ class GameImpl : Game, CoroutineScope {
     override fun watchReplay(replay: Replay) {
         if (GameEngine.t().bY.b(replay.name)) {
             gameLauncher.launch(
-                Intent(MainActivity.instance, InGameActivity::class.java)
+                Intent(get(), InGameActivity::class.java)
             )
         }
     }
@@ -301,30 +306,12 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override fun continueGame() {
-        val intent = Intent(MainActivity.instance, InGameActivity::class.java)
+        val intent = Intent(get(), InGameActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
         gameLauncher.launch(intent)
     }
 
-    override fun requestExternalStoragePermission() {
-//        d.a(
-//            MainActivity.instance, 9, true, "Select a Rusted Warfare Folder to use", Uri.parse(
-//                "content://com.android.externalstorage.documents/document/primary%3A" + "rustedWarfare".replace(
-//                    "//",
-//                    "%2F"
-//                )
-//            )
-//        )
 
-
-       d.c(MainActivity.instance)
-    }
-
-    override fun requestManageFilePermission() {
-        XXPermissions.with(MainActivity.instance)
-            .permission(Permission.MANAGE_EXTERNAL_STORAGE)
-            .request { _, _ -> }
-    }
 
 
     override val coroutineContext: CoroutineContext = Job()

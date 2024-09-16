@@ -7,6 +7,12 @@
 
 package io.github.rwpp.android.impl
 
-fun listenEvents() {
+import io.github.rwpp.i18n.GameI18nResolver
+import org.koin.core.annotation.Single
 
+@Single
+class GameI18nResolverImpl : GameI18nResolver {
+    override fun i18n(str: String, vararg args: Any?): String {
+        return com.corrodinggames.rts.gameFramework.h.a.a(str, args)
+    }
 }

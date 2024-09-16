@@ -56,9 +56,12 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
 
     override fun getUsingResource(): Resource? {
         return _usingResource ?: run {
-            if(!fileExists) return@run null
+            val infoTomlFile = File(resourceOutputDir + "info.toml")
+
+            if(!fileExists || !infoTomlFile.exists()) return@run null
+
             val info = Toml.decodeFromNativeReader<ResourceConfig>(
-                File(resourceOutputDir + "info.toml").reader()
+                infoTomlFile.reader()
             )
 
             getAllResources().first { it.config.name == info.name }

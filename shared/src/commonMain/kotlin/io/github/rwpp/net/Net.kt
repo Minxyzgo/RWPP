@@ -7,6 +7,7 @@
 
 package io.github.rwpp.net
 
+import io.github.rwpp.core.Initialization
 import io.github.rwpp.game.Game
 import io.github.rwpp.net.packets.ServerPacket
 import io.github.rwpp.utils.io.GameInputStream
@@ -23,7 +24,7 @@ import org.koin.core.component.get
 import java.io.DataInputStream
 import kotlin.reflect.full.createInstance
 
-interface Net : KoinComponent {
+interface Net : KoinComponent, Initialization {
     val packetDecoders: MutableMap<PacketType, (DataInputStream) -> Packet>
 
     val listeners: MutableMap<PacketType, (Client, Packet) -> Unit>
@@ -35,6 +36,10 @@ interface Net : KoinComponent {
     fun sendPacketToClients(packet: Packet)
 
     fun openUriInBrowser(uri: String)
+
+    override fun init() {
+        registerListeners()
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun CoroutineScope.getRoomListFromSourceUrl(url: List<String>): List<RoomDescription> = withContext(Dispatchers.IO) {

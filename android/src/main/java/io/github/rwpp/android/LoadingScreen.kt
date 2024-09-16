@@ -25,11 +25,10 @@ import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import io.github.rwpp.LocalController
 import io.github.rwpp.LocalWindowManager
-import io.github.rwpp.android.impl.GameAppContextImpl
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.doProxy
+import io.github.rwpp.appKoin
 import io.github.rwpp.ui.ConstraintWindowManager
 import io.github.rwpp.ui.MenuLoadingView
 import io.github.rwpp.ui.RWSelectionColors
@@ -37,13 +36,12 @@ import io.github.rwpp.ui.v2.TitleBrush
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.compose.LocalKoinApplication
 import java.io.File
-import kotlin.system.exitProcess
 
 class LoadingScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         if (SDK_INT >= Build.VERSION_CODES.R) {
@@ -68,9 +66,7 @@ class LoadingScreen : ComponentActivity() {
                         .background(brush),
                 ) {
                     CompositionLocalProvider(
-                        LocalController provides GameAppContextImpl { exitProcess(0) }.also {
-                            controller = it
-                        },
+                        LocalKoinApplication provides appKoin,
                         LocalTextSelectionColors provides RWSelectionColors,
                         LocalWindowManager provides ConstraintWindowManager(maxWidth, maxHeight)
                     ) {

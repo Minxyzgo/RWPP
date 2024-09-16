@@ -60,7 +60,7 @@ fun BorderCard(
     border = BorderStroke(2.dp, Color.DarkGray),
     elevation =  CardDefaults.cardElevation(defaultElevation = 10.dp),
     colors = CardDefaults.cardColors(containerColor = backgroundColor),
-    modifier = modifier.autoClearFocus(),
+    modifier = modifier,
     content = content
 )
 
@@ -338,7 +338,8 @@ fun RowScope.TableCell(
             maxLines = 1,
             color = color,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(0.dp, 2.dp, 0.dp, 2.dp)
+            modifier = Modifier.padding(0.dp, 2.dp, 0.dp, 2.dp),
+            style = MaterialTheme.typography.bodyLarge
         )
     }
 }

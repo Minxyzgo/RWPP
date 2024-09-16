@@ -9,20 +9,42 @@ package io.github.rwpp.android.impl
 
 import android.content.Context
 import com.corrodinggames.rts.gameFramework.SettingsEngine
-import io.github.rwpp.android.MainActivity
 import io.github.rwpp.config.Config
-import io.github.rwpp.game.team.ConfigHandler
-import io.github.rwpp.utils.setPropertyFromObject
+import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.core.Initialization
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 import net.peanuuutz.tomlkt.Toml
+import org.koin.core.annotation.Single
+import org.koin.core.component.get
 import java.lang.reflect.Field
 import kotlin.reflect.KClass
 
-class ConfigHandlerImpl : ConfigHandler {
+@Single(binds = [ConfigIO::class, Initialization::class])
+class ConfigIOImpl : ConfigIO {
     private val fieldCache = mutableMapOf<String, Field>()
-    private val allConfig: List<Config> by lazy { getKoin().getAll<Config>() }
+
+    @Suppress("unchecked_cast")
+    @OptIn(InternalSerializationApi::class)
+    override fun saveConfig(config: Config) {
+        val clazz = config::class
+        val name = clazz.qualifiedName
+        val preferences = get<Context>().getSharedPreferences(name, Context.MODE_PRIVATE)
+        val editor = preferences.edit()
+        editor.putString("src", Toml.encodeToString(clazz.serializer() as KSerializer<Any>, config))
+        editor.commit()
+    }
+
+    @OptIn(InternalSerializationApi::class)
+    override fun <T : Config> readConfig(clazz: KClass<T>): T? {
+        val name = clazz.qualifiedName
+        val preferences = get<Context>().getSharedPreferences(name, Context.MODE_PRIVATE)
+        val src = preferences.getString("src", "")
+        if(src.isNullOrBlank()) return null
+
+        return Toml.decodeFromString(clazz.serializer(), src)
+    }
 
     @Suppress("unchecked_cast")
     override fun <T> getGameConfig(name: String): T {
@@ -35,36 +57,9 @@ class ConfigHandlerImpl : ConfigHandler {
         field.set(GameEngine.t().bN, value)
     }
 
-    override fun readAllConfig() {
-        allConfig.forEach { config ->
-            getRWPPConfig(config::class)?.let { config.setPropertyFromObject(it) }
-        }
-    }
 
     override fun saveAllConfig() {
-        allConfig.forEach { config ->
-            setRWPPConfig(config)
-        }
-    }
-
-    @OptIn(InternalSerializationApi::class)
-    private fun getRWPPConfig(clazz: KClass<*>) : Any? {
-        val name = clazz.qualifiedName
-        val preferences = MainActivity.instance.getSharedPreferences(name, Context.MODE_PRIVATE)
-        val src = preferences.getString("src", "")
-        if(src.isNullOrBlank()) return null
-
-        return Toml.decodeFromString(clazz.serializer(), src)
-    }
-
-    @OptIn(InternalSerializationApi::class)
-    @Suppress("UNCHECKED_CAST")
-    private fun setRWPPConfig(value: Any) {
-        val clazz = value::class
-        val name = clazz.qualifiedName
-        val preferences = MainActivity.instance.getSharedPreferences(name, Context.MODE_PRIVATE)
-        val editor = preferences.edit()
-        editor.putString("src", Toml.encodeToString(clazz.serializer() as KSerializer<Any>, value))
-        editor.commit()
+        super.readAllConfig()
+        GameEngine.t().bN.save()
     }
 }

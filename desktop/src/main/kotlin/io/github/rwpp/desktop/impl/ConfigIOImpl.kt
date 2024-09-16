@@ -10,6 +10,7 @@ package io.github.rwpp.desktop.impl
 import com.corrodinggames.rts.gameFramework.SettingsEngine
 import io.github.rwpp.config.Config
 import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.core.Initialization
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
@@ -19,7 +20,7 @@ import java.io.File
 import java.lang.reflect.Field
 import kotlin.reflect.KClass
 
-@Single
+@Single(binds = [ConfigIO::class, Initialization::class])
 class ConfigIOImpl : ConfigIO {
     private val fieldCache = mutableMapOf<String, Field>()
 

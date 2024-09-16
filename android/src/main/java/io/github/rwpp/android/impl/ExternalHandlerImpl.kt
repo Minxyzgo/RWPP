@@ -7,6 +7,7 @@
 
 package io.github.rwpp.android.impl
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
@@ -15,16 +16,19 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import io.github.rwpp.R
-import io.github.rwpp.android.MainActivity
+import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.external.Resource
 import io.github.rwpp.external.ResourceConfig
 import io.github.rwpp.impl.BaseExternalHandlerImpl
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
 import io.github.rwpp.utils.io.unzipTo
+import org.koin.core.annotation.Single
+import org.koin.core.component.get
 import java.io.File
 import java.util.zip.ZipFile
 
+@Single(binds = [ExternalHandler::class])
 class ExternalHandlerImpl : BaseExternalHandlerImpl() {
     override fun enableResource(resource: Resource?) {
         _usingResource = resource
@@ -41,7 +45,7 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
 
         val resourceList = listOf("units", "tilesets", "music", "shaders")
         resourceList.forEach {
-            copyAssets(MainActivity.instance, it, resourceOutputDir + it)
+            copyAssets(get(), it, resourceOutputDir + it)
         }
 
         val resList = listOf(
@@ -49,7 +53,7 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
             R.raw::class.java
         )
 
-        val resources = MainActivity.instance.resources
+        val resources = get<Context>().resources
 
         resList.forEach { clazz ->
             clazz.declaredFields.forEach {

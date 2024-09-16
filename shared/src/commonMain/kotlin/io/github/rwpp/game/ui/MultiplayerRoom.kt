@@ -264,6 +264,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(5.dp)
+                .autoClearFocus()
         ) {
             Column {
                 ExitButton(onExit)

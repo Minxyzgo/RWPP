@@ -1,3 +1,6 @@
+import com.android.build.api.variant.ApplicationVariant
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree.Companion.main
+
 /*
  * Copyright 2023-2024 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
@@ -9,6 +12,7 @@ plugins {
     kotlin("android")
     id("com.android.application")
     id("org.jetbrains.compose")
+    id("com.google.devtools.ksp")
 }
 
 
@@ -19,6 +23,11 @@ dependencies {
         "dir" to project(":shared").dependencyProject.projectDir.absolutePath + "/build/generated/lib",
         "include" to "android-game-lib.jar",
     ))
+
+    val koinVersion = findProperty("koin.version") as String
+    val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
+    ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
+    implementation("io.insert-koin:koin-android:$koinVersion")
 }
 
 
@@ -45,6 +54,15 @@ android {
     }
 
     sourceSets["main"].manifest.srcFile("src/main/AndroidManifest.xml")
+    // For KSP
+    applicationVariants.configureEach {
+        val variant: com.android.build.gradle.api.ApplicationVariant = this
+        kotlin.sourceSets {
+            getByName(name) {
+                kotlin.srcDir("build/generated/ksp/${variant.name}/kotlin")
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "io.github.rwpp"
@@ -66,7 +84,7 @@ android {
     productFlavors {
         create("cn") {
             manifestPlaceholders["app_label"] = "铁锈战争PP版"
-            manifestPlaceholders["app_icon"] = "ic_launcher"
+            manifestPlaceholders["app_icon"] = "ic_launcher_2" //!
         }
 
         create("int") {

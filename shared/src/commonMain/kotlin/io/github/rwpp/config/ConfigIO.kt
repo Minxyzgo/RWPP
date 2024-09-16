@@ -7,6 +7,7 @@
 
 package io.github.rwpp.config
 
+import io.github.rwpp.core.Initialization
 import io.github.rwpp.utils.setPropertyFromObject
 import org.koin.core.component.KoinComponent
 import kotlin.reflect.KClass
@@ -16,7 +17,7 @@ import kotlin.reflect.KClass
  *
  * To get it, use `koinInject<ConfigIO>()` or `appKoin.get<ConfigIO>()`
  */
-interface ConfigIO : KoinComponent {
+interface ConfigIO : KoinComponent, Initialization {
     /**
      * Save a rw-pp configuration.
      */
@@ -61,5 +62,9 @@ interface ConfigIO : KoinComponent {
             runCatching { readConfig(config::class)?.let { config.setPropertyFromObject(it) } }
                 .onFailure { it.printStackTrace() }
         }
+    }
+
+    override fun init() {
+        readAllConfig()
     }
 }

@@ -19,6 +19,7 @@ import com.corrodinggames.rts.gameFramework.k
 import com.github.minxyzgo.rwij.InjectMode
 import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
+import io.github.rwpp.*
 import io.github.rwpp.R
 import io.github.rwpp.android.*
 import io.github.rwpp.android.impl.ClientImpl
@@ -28,14 +29,13 @@ import io.github.rwpp.android.impl.sendKickToClient
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.CallReloadModEvent
 import io.github.rwpp.event.events.KickedEvent
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.data.RoomOption
+import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.units.GameCommandActions
-import io.github.rwpp.i18n.readI18n
-import io.github.rwpp.maxModSize
+import io.github.rwpp.net.Net
 import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ModPacket
-import io.github.rwpp.packageName
-import io.github.rwpp.protocolVersion
 import io.github.rwpp.utils.io.GameInputStream
 import net.peanuuutz.tomlkt.Toml
 import java.io.File
@@ -159,12 +159,13 @@ object NetProxy {
                         val r14 = GameEngine.t().bU
                         val str = r0.b.readUTF() // Catch: java.lang.Throwable -> L603
                         if (str.startsWith(packageName)) {
-                            controller.gameRoom.isRWPPRoom = true
-                            controller.gameRoom.option = Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
-                            val v = controller.gameRoom.option.protocolVersion
+                            val gameRoom = appKoin.get<Game>().gameRoom
+                            gameRoom.isRWPPRoom = true
+                            gameRoom.option = Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
+                            val v = gameRoom.option.protocolVersion
                             if (v != protocolVersion) {
-                                controller.gameRoom.disconnect()
-                                KickedEvent(readI18n("Different protocol version. yours: $protocolVersion server's: $v")).broadCastIn()
+                                gameRoom.disconnect()
+                                KickedEvent("Different protocol version. yours: $protocolVersion server's: $v").broadCastIn()
                                 return@addProxy InterruptResult(Unit)
                             }
                         }
@@ -205,8 +206,9 @@ object NetProxy {
                         if(i >= 4) GameEngine.ab()
 
                         val t = GameEngine.t()
+                        val gameRoom = appKoin.get<Game>().gameRoom
                         val a = com.corrodinggames.rts.gameFramework.j.bg()
-                        a.b(packageName + Toml.encodeToString(RoomOption.serializer(), controller.gameRoom.option))
+                        a.b(packageName + Toml.encodeToString(RoomOption.serializer(), gameRoom.option))
                         a.c(2)
                         a.c(t.bU.e)
                         a.c(t.a(true))
@@ -228,15 +230,16 @@ object NetProxy {
                         val j = com.corrodinggames.rts.gameFramework.j.j(packet)
                         val c = packet.a
 
-                        if(controller.gameRoom.isHost) {
-                            if(!controller.gameRoom.option.canTransferMod)
+                        val gameRoom = appKoin.get<Game>().gameRoom
+                        if(gameRoom.isHost) {
+                            if(!gameRoom.option.canTransferMod)
                                 sendKickToClient(c, "Server didn't support transferring mods.")
                             else {
                                 val str = j.b.readUTF()
 
                                 try {
                                     val mods = str.split(";")
-                                    mods.map(controller::getModByName).forEachIndexed { i, m ->
+                                    mods.map(appKoin.get<ModManager>()::getModByName).forEachIndexed { i, m ->
                                         val bytes = m!!.getBytes()
 
                                         GameEngine.t().bU.a(c,
@@ -246,7 +249,7 @@ object NetProxy {
 
                                     }
 
-                                    controller.gameRoom.getPlayers().firstOrNull { it.name == c.A?.w }
+                                    gameRoom.getPlayers().firstOrNull { it.name == c.A?.w }
                                         ?.data?.ready = false
                                 } catch (e: Exception) {
                                     e.printStackTrace()
@@ -259,7 +262,8 @@ object NetProxy {
                     }
 
                     PacketType.MOD_RELOAD_FINISH.type -> {
-                        controller.gameRoom.getPlayers().firstOrNull { it.name == packet.a.A?.w }
+                        val gameRoom = appKoin.get<Game>().gameRoom
+                        gameRoom.getPlayers().firstOrNull { it.name == packet.a.A?.w }
                             ?.data?.ready = true
                         InterruptResult(Unit)
                     }
@@ -275,9 +279,10 @@ object NetProxy {
 
                         val modSize = cacheModSize.addAndGet(bytes.size)
 
+                        val gameRoom = appKoin.get<Game>().gameRoom
                         run {
                             if(modSize > maxModSize) {
-                                controller.gameRoom.disconnect()
+                                gameRoom.disconnect()
                                 KickedEvent("Downloaded mods are too big.").broadCastIn()
                                 cacheModSize.set(0)
                                 return@run
@@ -291,8 +296,9 @@ object NetProxy {
 
                             // TODO 可能顺序存在问题
                             if(index == size - 1) {
-                                controller.modUpdate()
-                                controller.getAllMods().forEach { it.isEnabled = it.name in roomMods }
+                                val modManager = appKoin.get<ModManager>()
+                                modManager.modUpdate()
+                                modManager.getAllMods().forEach { it.isEnabled = it.name in roomMods }
                                 cacheModSize.set(0)
                                 CallReloadModEvent().broadCastIn()
                             }
@@ -302,13 +308,13 @@ object NetProxy {
                     }
                     else -> {
                         if(type in 500..1000) {
+                            val net = appKoin.get<Net>()
                             val packetType = PacketType.from(type)
-                            val listener = controller.listeners[packetType]
+                            val listener = net.listeners[packetType]
                             if (listener != null) {
                                 listener.invoke(
-                                    controller,
                                     ClientImpl(packet.a),
-                                    controller.packetDecoders[packetType]!!.invoke(
+                                    net.packetDecoders[packetType]!!.invoke(
                                         com.corrodinggames.rts.gameFramework.j.j(packet).b
                                     )
                                 )

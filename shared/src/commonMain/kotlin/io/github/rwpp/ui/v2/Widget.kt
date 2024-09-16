@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.ui.WindowManager
+import io.github.rwpp.ui.autoClearFocus
 
 @Composable
 fun ExpandedCard(
@@ -40,7 +41,7 @@ fun ExpandedCard(
             shape = RectangleShape,
             elevation =  CardDefaults.cardElevation(defaultElevation = 10.dp),
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
-            modifier = modifier,
+            modifier = modifier.autoClearFocus(),
             content = content
         )
     }

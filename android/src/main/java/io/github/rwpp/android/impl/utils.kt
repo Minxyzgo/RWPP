@@ -10,7 +10,6 @@ package io.github.rwpp.android.impl
 import android.content.Context
 import android.content.res.Resources
 import android.util.TypedValue
-import io.github.rwpp.android.controller
 import io.github.rwpp.net.Packet
 import io.github.rwpp.utils.io.GameOutputStream
 import java.io.ByteArrayOutputStream

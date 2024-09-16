@@ -21,9 +21,13 @@ import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.android.*
 import io.github.rwpp.android.impl.proxy.NetProxy
 import io.github.rwpp.android.impl.proxy.UnitPathProxy
+import io.github.rwpp.appKoin
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.*
+import io.github.rwpp.game.Game
+import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.net.Net
 import io.github.rwpp.net.packets.ModPacket
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -52,7 +56,7 @@ fun doProxy() {
         }
 
         addProxy(MultiplayerBattleroomActivity::startGame) {
-            if(!isGaming) controller.gameRoom.startGame()
+            if(!isGaming) appKoin.get<Game>().gameRoom.startGame()
         }
 
         addProxy(MultiplayerBattleroomActivity::refreshChatLog) {
@@ -163,25 +167,28 @@ fun doProxy() {
             } catch (e: Exception) {
 
                 run {
-                    if (allMods.all { controller.getModByName(it) != null }) {
-                        controller.getAllMods().forEach { it.isEnabled = it.name in allMods }
+                    val game = appKoin.get<Game>()
+                    val net = appKoin.get<Net>()
+                    val modManager = appKoin.get<ModManager>()
+                    if (allMods.all { modManager.getModByName(it) != null }) {
+                        modManager.getAllMods().forEach { it.isEnabled = it.name in allMods }
                         CallReloadModEvent().broadCastIn()
                         return@run
                     } else if(!com.corrodinggames.rts.gameFramework.e.a.f(
                             com.corrodinggames.rts.game.units.custom.ag.h()
                     )) {
-                        controller.gameRoom.disconnect()
+                        game.gameRoom.disconnect()
                         KickedEvent("No mod directory found. Please set it at first.").broadCastIn()
                         return@run
                     }
 
-                    val modsName = controller.getAllMods().map { it.name }
-                    if (controller.gameRoom.option.canTransferMod) {
-                        controller.sendPacketToServer(ModPacket.RequestPacket(allMods.filter { it !in modsName }
+                    val modsName = modManager.getAllMods().map { it.name }
+                    if (game.gameRoom.option.canTransferMod) {
+                        net.sendPacketToServer(ModPacket.RequestPacket(allMods.filter { it !in modsName }
                             .joinToString(";")))
                         CallStartDownloadModEvent().broadCastIn()
                     } else {
-                        controller.gameRoom.disconnect()
+                        game.gameRoom.disconnect()
                         KickedEvent(e.cause?.message ?: "").broadCastIn()
                     }
                 }

@@ -177,11 +177,11 @@ fun SettingsView(onExit: () -> Unit) {
                         item {
                             SettingsGroup("", "Android") {
                                 val permissionHelper = koinInject<PermissionHelper>()
-                                RWTextButton("Set External Folder") {
+                                RWTextButton(readI18n("settings.setExternalFolder")) {
                                     permissionHelper.requestExternalStoragePermission()
                                 }
 
-                                RWTextButton("Manage All Files") {
+                                RWTextButton(readI18n("settings.manageAllFiles")) {
                                     permissionHelper.requestManageFilePermission()
                                 }
                             }

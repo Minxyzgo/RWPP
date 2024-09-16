@@ -78,3 +78,7 @@ difficulty = "Difficulty"
 spawnPoint = "Spawn Point"
 team = "Team"
 fog = "Fog"
+
+[settings]
+setExternalFolder = "Set External Folder"
+manageAllFiles = "Manage All Files"

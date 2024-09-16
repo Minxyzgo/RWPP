@@ -14,7 +14,6 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -46,7 +45,6 @@ import io.github.rwpp.net.Net
 import io.github.rwpp.platform.loadSvg
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.RWIconButton
-import io.github.rwpp.ui.v2.bounceClick
 import org.koin.compose.koinInject
 
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
@@ -155,7 +153,9 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     floatingActionButtonPosition = FabPosition.End
                 ) {
                     AnimatedVisibility(
-                        showMainMenu
+                        showMainMenu,
+                        enter = fadeIn(),
+                        exit = fadeOut()
                     ) {
                         MainMenu(
                             multiplayer = {
@@ -273,7 +273,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     kickedDialogVisible,
                     onDismissRequest = { kickedDialogVisible = false }) { dismiss ->
                     BorderCard(
-                       modifier = Modifier.size(500.dp),
+                       modifier = Modifier.size(500.dp).autoClearFocus(),
                     ) {
                         ExitButton(dismiss)
 
@@ -326,7 +326,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     }
                 ) { _ ->
                     BorderCard(
-                        modifier = Modifier.fillMaxWidth(if (LocalWindowManager.current == WindowManager.Small) 0.9f else 0.75f),
+                        modifier = Modifier.fillMaxWidth(if (LocalWindowManager.current == WindowManager.Small) 0.9f else 0.75f).autoClearFocus(),
                     ) {
 
                         Box(modifier = Modifier
@@ -421,7 +421,7 @@ fun MainMenu(
         verticalArrangement = Arrangement.Center
     ) {
 
-        Spacer(modifier = Modifier.weight(0.2f))
+        Spacer(modifier = Modifier.weight(1f))
 
         Text(
             "RWPP",
@@ -439,8 +439,6 @@ fun MainMenu(
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White
         )
-
-        Spacer(modifier = Modifier.weight(1f))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -531,6 +529,6 @@ fun MainMenu(
             }
         }
 
-        Spacer(modifier = Modifier.weight(0.2f))
+        Spacer(modifier = Modifier.weight(1f))
     }
 }

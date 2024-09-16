@@ -7,9 +7,10 @@
 
 package io.github.rwpp.external
 
+import org.koin.core.component.KoinComponent
 import java.io.File
 
-interface ExternalHandler {
+interface ExternalHandler : KoinComponent {
     fun getAllResources(): List<Resource>
 
     fun getUsingResource(): Resource?

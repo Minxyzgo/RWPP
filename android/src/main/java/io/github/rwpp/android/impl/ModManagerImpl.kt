@@ -15,8 +15,10 @@ import io.github.rwpp.utils.io.calculateSize
 import io.github.rwpp.utils.io.zipFolderToByte
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.koin.core.annotation.Single
 import java.io.File
 
+@Single
 class ModManagerImpl : ModManager {
     private var mods: List<Mod>? = null
 

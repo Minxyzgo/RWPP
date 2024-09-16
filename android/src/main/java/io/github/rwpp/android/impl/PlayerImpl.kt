@@ -8,15 +8,13 @@
 package io.github.rwpp.android.impl
 
 import com.corrodinggames.rts.game.p
-import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
 import io.github.rwpp.net.Client
 
 class PlayerImpl(
-    internal val player: PlayerInternal,
-    private val room: GameRoom
+    internal val player: PlayerInternal
 ) : Player {
     override val connectHexId: String
         get() = player.S ?: ""

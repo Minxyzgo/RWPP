@@ -9,6 +9,7 @@ package io.github.rwpp.android
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
@@ -23,17 +24,25 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.corrodinggames.rts.appFramework.d
 import io.github.rwpp.App
-import io.github.rwpp.LocalController
+import io.github.rwpp.AppContext
 import io.github.rwpp.android.impl.GameEngine
+import io.github.rwpp.appKoin
+import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.ReturnMainMenuEvent
-import io.github.rwpp.i18n.parseI18n
-import kotlinx.coroutines.runBlocking
+import org.koin.android.ext.koin.androidContext
+import org.koin.compose.LocalKoinApplication
 
 class MainActivity : ComponentActivity() {
 
+    private val appContext: AppContext by appKoin.inject()
+    private val configIO: ConfigIO by appKoin.inject()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        //koinApplication.androidContext(this)
+        appKoin.declare(this, secondaryTypes = listOf(Context::class, Activity::class))
 
         gameLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -46,7 +55,6 @@ class MainActivity : ComponentActivity() {
 
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        instance = this
 
         Log.i("RWPP", "check permission: ${checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED}")
 
@@ -65,24 +73,23 @@ class MainActivity : ComponentActivity() {
 
         requestPermissions(permissions, 1)
 
-        runBlocking { parseI18n() }
-        controller.readAllConfig()
+        appContext.init()
 
         if(d.b(this, true, true)) {
             gameView = d.b(this)
         }
 
         setContent {
-            CompositionLocalProvider(
-                LocalController provides controller
-            ) {
-                val view = LocalView.current
-                val window = (view.context as Activity).window
-                WindowCompat.getInsetsController(window, view).hide(
-                    WindowInsetsCompat.Type.statusBars() or
-                            WindowInsetsCompat.Type.navigationBars()
-                )
+            val view = LocalView.current
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).hide(
+                WindowInsetsCompat.Type.statusBars() or
+                        WindowInsetsCompat.Type.navigationBars()
+            )
 
+            CompositionLocalProvider(
+                LocalKoinApplication provides appKoin,
+            ) {
                 App()
             }
         }
@@ -90,7 +97,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        controller.saveAllConfig()
+        configIO.saveAllConfig()
     }
 
     override fun onPause() {
@@ -105,23 +112,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        controller.saveAllConfig()
+        configIO.saveAllConfig()
         if(gameView != null) GameEngine.t()?.b(gameView)
     }
 
-
-
     companion object {
         var gameView: com.corrodinggames.rts.appFramework.ab? = null
-        lateinit var instance: MainActivity
 
         fun activityResume() {
             GameEngine.t()?.let {
-                gameView = d.a(instance, gameView)
-                it.a(instance, gameView, true)
+                gameView = d.a(appKoin.get(), gameView)
+                it.a(appKoin.get(), gameView, true)
             }
 
-            d.a(instance, true)
+            d.a(appKoin.get(), true)
             com.corrodinggames.rts.gameFramework.h.a.c()
         }
     }

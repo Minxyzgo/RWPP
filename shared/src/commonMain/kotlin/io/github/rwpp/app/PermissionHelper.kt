@@ -7,7 +7,9 @@
 
 package io.github.rwpp.app
 
-interface PermissionHelper {
+import org.koin.core.component.KoinComponent
+
+interface PermissionHelper : KoinComponent {
 
     /**
      * Request external storage permission. (Only Android need to implement it)

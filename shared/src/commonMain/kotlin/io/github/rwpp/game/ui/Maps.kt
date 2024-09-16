@@ -150,7 +150,7 @@ fun LazyGridItemScope.MapItem(
             Text(
                 name,
                 modifier = Modifier.padding(5.dp),
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.headlineMedium
             )
         }
     }

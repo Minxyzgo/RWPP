@@ -35,11 +35,11 @@ fun readI18n(path: String, i18nType: I18nType = I18nType.RWPP, vararg arg: Strin
     if (i18nType == I18nType.RWPP) {
         cacheMap[path]?.let { return MessageFormat.format(it, arg) }
         val strArray = path.split(".")
-        val iter = strArray.iterator()
+        val iterator = strArray.iterator()
         var table: TomlTable = i18nTable
-        while(iter.hasNext()) {
-            val next = iter.next()
-            if(!iter.hasNext()) {
+        while(iterator.hasNext()) {
+            val next = iterator.next()
+            if(!iterator.hasNext()) {
                 return table[next]!!.asTomlLiteral().content.let {
                     cacheMap[path] = it
                     MessageFormat.format(it, arg)

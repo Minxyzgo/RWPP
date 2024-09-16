@@ -7,22 +7,24 @@
 
 package io.github.rwpp.android.impl
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import io.github.rwpp.AppContext
-import io.github.rwpp.android.MainActivity
-import io.github.rwpp.net.*
+import io.github.rwpp.core.Initialization
+import io.github.rwpp.net.Client
+import io.github.rwpp.net.Net
+import io.github.rwpp.net.Packet
+import io.github.rwpp.net.PacketType
 import okhttp3.OkHttpClient
+import org.koin.core.annotation.Single
+import org.koin.core.component.get
 import java.io.DataInputStream
 
+@Single(binds = [Net::class, Initialization::class])
 class NetImpl : Net {
     override val packetDecoders: MutableMap<PacketType, (DataInputStream) -> Packet> = mutableMapOf()
-    override val listeners: MutableMap<PacketType, (AppContext, Client, Packet) -> Unit> = mutableMapOf()
+    override val listeners: MutableMap<PacketType, (Client, Packet) -> Unit> = mutableMapOf()
     override val client: OkHttpClient = OkHttpClient()
-
-    init {
-        registerListeners()
-    }
 
     override fun sendPacketToServer(packet: Packet) {
         GameEngine.t().bU.b(packet.asGamePacket())
@@ -34,6 +36,6 @@ class NetImpl : Net {
 
     override fun openUriInBrowser(uri: String) {
         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-        MainActivity.instance.startActivity(browserIntent)
+        get<Context>().startActivity(browserIntent)
     }
 }

@@ -47,6 +47,7 @@ fun BanUnitViewDialog(
             modifier = Modifier
                // .fillMaxSize(LargeProportion())
                 .padding(10.dp)
+                .autoClearFocus()
         ) {
             ExitButton(d)
             val state = rememberLazyListState()

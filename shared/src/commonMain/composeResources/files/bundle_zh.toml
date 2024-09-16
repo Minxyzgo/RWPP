@@ -76,3 +76,7 @@ difficulty = "难度"
 spawnPoint = "出生点"
 team = "队伍"
 fog = "迷雾"
+
+[settings]
+setExternalFolder = "设置外部文件权限"
+manageAllFiles = "设置管理所有文件"

@@ -21,10 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.platform.BackHandler
-import io.github.rwpp.ui.BorderCard
-import io.github.rwpp.ui.ExitButton
-import io.github.rwpp.ui.LargeDividingLine
-import io.github.rwpp.ui.WindowManager
+import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.ExpandedCard
 
 /**

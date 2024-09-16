@@ -5,12 +5,8 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.platform
+package io.github.rwpp.core
 
-import androidx.compose.runtime.Composable
-
-@Composable
-actual fun BackHandler(enabled: Boolean, onBack: () -> Unit) {
-    // do nothing
-
+interface Initialization {
+    fun init()
 }

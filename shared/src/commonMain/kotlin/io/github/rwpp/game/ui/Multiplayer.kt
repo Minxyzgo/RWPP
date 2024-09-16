@@ -730,7 +730,8 @@ fun MultiplayerView(
             BorderCard(
                 modifier = Modifier
                     .fillMaxSize(LargeProportion())
-                    .padding(10.dp),
+                    .padding(10.dp)
+                    .autoClearFocus(),
             ) {
                 ExitButton(dismiss)
                 Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {

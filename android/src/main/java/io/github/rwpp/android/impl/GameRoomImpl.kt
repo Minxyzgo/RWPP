@@ -20,7 +20,9 @@ import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.*
 import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.Settings
 import io.github.rwpp.event.broadCastIn
+import io.github.rwpp.event.events.PlayerJoinEvent
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
@@ -31,7 +33,9 @@ import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.map.NetworkMap
+import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.welcomeMessage
+import org.koin.core.component.get
 import java.util.concurrent.ConcurrentLinkedQueue
 
 
@@ -110,17 +114,24 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         get() = roomMods
     override val isStartGame: Boolean
         get() = isGaming
+    override val teamMode: TeamMode?
+        get() = _teamMode
     override var isRWPPRoom: Boolean = false
     override var option: RoomOption = RoomOption()
     override val isConnecting: Boolean
         get() = GameEngine.t().bU.C
 
+    private var _teamMode: TeamMode? = null
+
     override fun getPlayers(): List<Player> {
         return PlayerInternal.j.mapNotNull {
             if(it == null) return@mapNotNull null
             playerCacheMap.getOrPut(it) {
-                PlayerImpl(it, this)
-                    .also { sendWelcomeMessage(it) }
+                PlayerImpl(it)
+                    .also { p ->
+                        sendWelcomeMessage(p)
+                        PlayerJoinEvent(p).broadCastIn()
+                    }
             }
         }
     }
@@ -331,36 +342,40 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         GameEngine.t().bU.i(command)
     }
 
-    override fun addAI() {
-        val t: k = GameEngine.t()
-        if(!t.bU.D) {
-            if(t.bU.I) {
-                t.bU.i("-addai")
-                return
-            } else {
+    override fun addAI(count: Int) {
+
+        repeat(count) {
+            val t: k = GameEngine.t()
+            if(!t.bU.D) {
+                if(t.bU.I) {
+                    t.bU.i("-addai")
+                    return
+                } else {
 //                com.corrodinggames.rts.gameFramework.k.a(
 //                    "addAI.setOnClickListener",
 //                    "Clicked but not server or proxy controller"
 //                )
+                    return
+                }
+            }
+            val aeVar = t.bU
+            if(!aeVar.D) {
+                //com.corrodinggames.rts.gameFramework.k.a("addAIToGame", "We are not a server")
                 return
             }
+            val y: Int = PlayerInternal.y()
+            if(y != -1) {
+                //t2.g("No free slots for AI")
+                val aVar: a = a(y)
+                aVar.w = "AI"
+                aVar.s = y % 2
+                aVar.y = aeVar.aA.f
+                aeVar.B()
+                t.bU.b(null as c?)
+            }
         }
-        val aeVar = t.bU
-        if(!aeVar.D) {
-            //com.corrodinggames.rts.gameFramework.k.a("addAIToGame", "We are not a server")
-            return
-        }
-        val y: Int = PlayerInternal.y()
-        if(y != -1) {
-            //t2.g("No free slots for AI")
-            val aVar: a = a(y)
-            aVar.w = "AI"
-            aVar.s = y % 2
-            aVar.y = aeVar.aA.f
-            aeVar.B()
-            t.bU.b(null as c?)
-            RefreshUIEvent().broadCastIn()
-        }
+
+        if (isHost) updateUI()
     }
 
     override fun applyRoomConfig(
@@ -374,7 +389,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         noNukes: Boolean,
         allowSpectators: Boolean,
         teamLock: Boolean,
-        teamMode: String?
+        teamMode: TeamMode?
     ) {
         if (isHost) {
             this.maxPlayerCount = maxPlayerCount
@@ -421,16 +436,15 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         }
 
 
+        _teamMode = teamMode
         if (teamMode != null) {
-            val layout = when(teamMode) {
-                "2t" -> com.corrodinggames.rts.gameFramework.j.ba.a
-                "3t" -> com.corrodinggames.rts.gameFramework.j.ba.b
-                "FFA" -> com.corrodinggames.rts.gameFramework.j.ba.c
-                "spectators" -> com.corrodinggames.rts.gameFramework.j.ba.d
-                else -> throw RuntimeException()
+            when(teamMode.name) {
+                "2t" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.a)
+                "3t" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.b)
+                "FFA" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.c)
+                "spectators" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.d)
+                else -> teamMode.onInit(this)
             }
-
-            GameEngine.t().bU.a(layout)
         }
 
         if (isHost) GameEngine.t().bU.n()
@@ -454,6 +468,10 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         MainActivity.activityResume()
     }
 
+    override fun updateUI() {
+        MultiplayerBattleroomActivity.updateUI()
+    }
+
     override fun startGame() {
         val t: k = GameEngine.t()
         isGaming = true
@@ -468,7 +486,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         if(t.bI != null && t.bI.X) {
             t.bU.bf = true
             //GameEngine.K()
-            val intent = Intent(MainActivity.instance, InGameActivity::class.java)
+            val intent = Intent(game.get(), InGameActivity::class.java)
             intent.putExtra("level", t.di)
             gameLauncher.launch(intent)
             return
@@ -486,7 +504,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     }
 
     private fun sendWelcomeMessage(p: PlayerImpl) {
-        if(MultiplayerPreferences.instance.showWelcomeMessage != true) return
+        if(game.get<Settings>().showWelcomeMessage != true) return
         val conn = (GameEngine.t().bU.aO as ConcurrentLinkedQueue<c>).firstOrNull { it.A == p.player } ?: return
         val bgVar = bg()
         bgVar.b(welcomeMessage)
