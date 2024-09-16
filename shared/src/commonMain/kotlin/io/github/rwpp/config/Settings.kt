@@ -13,6 +13,11 @@ import org.koin.core.annotation.Single
 @Single
 @Serializable
 data class Settings(
-    var isFullscreen: Boolean = false,
+    /**
+     * Decide whether to allow game in full screen (Only PC)
+     *
+     * Since windowing support is incomplete and extremely expensive, it defaults to true
+     */
+    var isFullscreen: Boolean = true,
     var showWelcomeMessage: Boolean? = null,
 ) : Config

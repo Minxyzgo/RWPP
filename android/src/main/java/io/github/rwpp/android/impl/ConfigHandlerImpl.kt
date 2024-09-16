@@ -11,7 +11,7 @@ import android.content.Context
 import com.corrodinggames.rts.gameFramework.SettingsEngine
 import io.github.rwpp.android.MainActivity
 import io.github.rwpp.config.Config
-import io.github.rwpp.game.config.ConfigHandler
+import io.github.rwpp.game.team.ConfigHandler
 import io.github.rwpp.utils.setPropertyFromObject
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer

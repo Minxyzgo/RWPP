@@ -7,7 +7,6 @@
 
 package io.github.rwpp.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.ui.v2.bounceClick
 
 @Composable
 fun MenuButton(
@@ -30,12 +28,13 @@ fun MenuButton(
     modifier: Modifier = Modifier.size(140.dp).padding(10.dp),
     onClick: () -> Unit
 ) {
-    Card(
-        border = BorderStroke(5.dp, Color.DarkGray),
-        colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+    Surface(
+        color = Color(27, 18, 18),
         shape = RoundedCornerShape(10.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-        modifier = modifier.bounceClick(onClick),
+        shadowElevation = 10.dp,
+        tonalElevation = 10.dp,
+        modifier = modifier,
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(5.dp),

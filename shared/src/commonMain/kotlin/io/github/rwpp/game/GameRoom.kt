@@ -12,6 +12,7 @@ import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
+import io.github.rwpp.game.team.TeamMode
 
 interface GameRoom {
     val maxPlayerCount: Int
@@ -34,6 +35,7 @@ interface GameRoom {
     val teamLock: Boolean
     val mods: Array<String>
     val isStartGame: Boolean
+    val teamMode: TeamMode?
 
     /**
      * Describe the current room is whether hosted by a RWPP protocol client (or server).
@@ -77,9 +79,9 @@ interface GameRoom {
 
 
     /**
-     * Add an AI to the room. (if host)
+     * Add AIs to the room with the specific count. (if host)
      */
-    fun addAI()
+    fun addAI(count: Int = 1)
 
     /**
      * Apply the room config.
@@ -97,11 +99,11 @@ interface GameRoom {
         noNukes: Boolean,
         allowSpectators: Boolean,
         teamLock: Boolean,
-        teamMode: String?
+        teamMode: TeamMode?
     )
 
     /**
-     * Kick a player. (is host)
+     * Kick a player. (if host)
      */
     fun kickPlayer(player: Player)
 
@@ -109,6 +111,11 @@ interface GameRoom {
      * Disconnect from the room.
      */
     fun disconnect()
+
+    /**
+     * Update UI. Contains local refresh and sending info packet (if host)
+     */
+    fun updateUI()
 
     /**
      * Start game. (if host)

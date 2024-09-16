@@ -5,14 +5,13 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.config
+package io.github.rwpp.event.events
 
-/**
- * Describe a config.
- *
- * Any config that can be saved should be implemented under this package, and the corresponding code should be generated using Koin.
- *
- * @see ConfigIO
- * @see ConfigModule
- */
-interface Config
+import io.github.rwpp.event.AbstractEvent
+import io.github.rwpp.game.Player
+
+sealed class PlayerEvent(val player: Player) : AbstractEvent()
+
+class PlayerJoinEvent(player: Player) : PlayerEvent(player)
+
+class PlayerLeaveEvent(player: Player) : PlayerEvent(player)

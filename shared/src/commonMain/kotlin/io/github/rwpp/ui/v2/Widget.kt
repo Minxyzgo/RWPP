@@ -7,14 +7,22 @@
 
 package io.github.rwpp.ui.v2
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.ui.WindowManager
@@ -34,6 +42,50 @@ fun ExpandedCard(
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
             modifier = modifier,
             content = content
+        )
+    }
+}
+
+@Composable
+fun RWIconButton(
+    vector: ImageVector,
+    modifier: Modifier = Modifier,
+    size: Dp = 50.dp,
+    onClick: () -> Unit,
+) {
+    Card(
+        border = BorderStroke(3.dp, Color.DarkGray),
+        colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+        shape = RoundedCornerShape(5.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+        modifier = Modifier.then(modifier).bounceClick(onClick = onClick),
+    ) {
+        Icon(
+            vector,
+            null,
+            modifier = Modifier.size(size).align(Alignment.CenterHorizontally).padding(10.dp)
+        )
+    }
+}
+
+@Composable
+fun RWIconButton(
+    painter: Painter,
+    modifier: Modifier = Modifier,
+    size: Dp = 50.dp,
+    onClick: () -> Unit,
+) {
+    Card(
+        border = BorderStroke(3.dp, Color.DarkGray),
+        colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+        shape = RoundedCornerShape(5.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+        modifier = Modifier.then(modifier).bounceClick(onClick = onClick),
+    ) {
+        Icon(
+            painter,
+            null,
+            modifier = Modifier.size(size).align(Alignment.CenterHorizontally).padding(10.dp)
         )
     }
 }

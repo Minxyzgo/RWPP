@@ -12,6 +12,7 @@ package io.github.rwpp
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.TextStyle
@@ -43,6 +45,7 @@ import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.Net
 import io.github.rwpp.platform.loadSvg
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.v2.RWIconButton
 import io.github.rwpp.ui.v2.bounceClick
 import org.koin.compose.koinInject
 
@@ -72,6 +75,12 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
             fontFamily = jostFonts,
             fontWeight = FontWeight.Normal,
             fontSize = 19.sp
+        ),
+        headlineSmall = TextStyle(
+            color = Color.White,
+            fontFamily = jostFonts,
+            fontWeight = FontWeight.Normal,
+            fontSize = 17.sp
         ),
         bodyLarge = TextStyle(
             color = Color.White,
@@ -121,6 +130,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(
             modifier = Modifier
                 .then(sizeModifier)
+                .autoClearFocus()
                 //.background(brush),
         ) {
             CompositionLocalProvider(
@@ -314,7 +324,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             showMultiplayerView = true
                         }
                     }
-                ) { dismiss ->
+                ) { _ ->
                     BorderCard(
                         modifier = Modifier.fillMaxWidth(if (LocalWindowManager.current == WindowManager.Small) 0.9f else 0.75f),
                     ) {
@@ -330,7 +340,6 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             contentAlignment = Alignment.Center
                         ) {
                             Column(modifier = Modifier.fillMaxSize()) {
-                                ExitButton(dismiss)
                                 Row(
                                     modifier = Modifier.weight(1f).fillMaxWidth(),
                                     horizontalArrangement = Arrangement.Center,
@@ -411,110 +420,117 @@ fun MainMenu(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        BorderCard(modifier = Modifier.verticalScroll(rememberScrollState()).width(IntrinsicSize.Max)) {
-            Text(
-                "RWPP",
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                style = TextStyle(
-                    fontFamily = MaterialTheme.typography.displayLarge.fontFamily,
-                    brush = Brush.linearGradient(listOf(Color(44, 95, 45), Color(151, 188, 98))),
-                    fontSize = 100.sp
-                )
+
+        Spacer(modifier = Modifier.weight(0.2f))
+
+        Text(
+            "RWPP",
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            style = TextStyle(
+                fontFamily = MaterialTheme.typography.displayLarge.fontFamily,
+                brush = Brush.linearGradient(listOf(Color(44, 95, 45), Color(151, 188, 98))),
+                fontSize = 100.sp
             )
+        )
 
-            Text(
-                projectVersion,
-                modifier = Modifier.padding(top = 1.dp, bottom = 5.dp).align(Alignment.CenterHorizontally),
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White
-            )
+        Text(
+            projectVersion,
+            modifier = Modifier.padding(top = 1.dp, bottom = 5.dp).align(Alignment.CenterHorizontally),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.White
+        )
 
-            Row(horizontalArrangement = Arrangement.Center) {
-                MenuButton(
-                    readI18n("menu.mission"),
-                    loadSvg("destruction"),
-                    onClick = mission
-                )
+        Spacer(modifier = Modifier.weight(1f))
 
-                MenuButton(
-                    readI18n("menu.multiplayer"),
-                    loadSvg("group"),
-                    onClick = multiplayer
-                )
-
-                MenuButton(
-                    readI18n("menu.mods"),
-                    loadSvg("dns"),
-                    onClick = mods
-                )
-
-                MenuButton(
-                    readI18n("menu.sandbox"),
-                    loadSvg("edit_square"),
-                    onClick = sandbox
-                )
-            }
-
-            Row(horizontalArrangement = Arrangement.Center) {
-                MenuButton(
-                    readI18n("menu.settings"),
-                    Icons.Default.Settings,
-                    onClick = settings
-                )
-
-                MenuButton(
-                    readI18n("menu.resource"),
-                    loadSvg("stacks"),
-                    onClick = resource
-                )
-
-                MenuButton(
-                    readI18n("menu.replay"),
-                    Icons.Default.PlayArrow,
-                    onClick = replay
-                )
-
-                with(koinInject<AppContext>()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(53, 57, 53).copy(0.7f)),
+            border = BorderStroke(4.dp, Color.DarkGray),
+            shape = RectangleShape
+        ) {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                item {
                     MenuButton(
-                        readI18n("menu.exit"),
-                        loadSvg("exit"),
-                    ) { exit() }
-                }
-            }
-
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                Card(
-                    border = BorderStroke(3.dp, Color.DarkGray),
-                    colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
-                    shape = RoundedCornerShape(5.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
-                    modifier = Modifier.bounceClick { contributor() }.padding(10.dp),
-                ) {
-                    Icon(
-                        Icons.Filled.Favorite,
-                        null,
-                        modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally).padding(10.dp)
+                        readI18n("menu.mission"),
+                        loadSvg("destruction"),
+                        onClick = mission
                     )
                 }
 
-                val net = koinInject<Net>()
-
-                Card(
-                    border = BorderStroke(3.dp, Color.DarkGray),
-                    colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
-                    shape = RoundedCornerShape(5.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
-                    modifier = Modifier.bounceClick { net.openUriInBrowser("https://github.com/Minxyzgo/RWPP") }
-                        .padding(10.dp),
-                ) {
-                    Icon(
-                        painter = loadSvg("octocat"),
-                        null,
-                        modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally).padding(7.dp)
+                item {
+                    MenuButton(
+                        readI18n("menu.multiplayer"),
+                        loadSvg("group"),
+                        onClick = multiplayer
                     )
+                }
+
+                item {
+                    MenuButton(
+                        readI18n("menu.mods"),
+                        loadSvg("dns"),
+                        onClick = mods
+                    )
+                }
+
+                item {
+                    MenuButton(
+                        readI18n("menu.sandbox"),
+                        loadSvg("edit_square"),
+                        onClick = sandbox
+                    )
+                }
+
+                item {
+                    MenuButton(
+                        readI18n("menu.settings"),
+                        Icons.Default.Settings,
+                        onClick = settings
+                    )
+                }
+
+                item {
+                    MenuButton(
+                        readI18n("menu.resource"),
+                        loadSvg("stacks"),
+                        onClick = resource
+                    )
+                }
+
+                item {
+                    MenuButton(
+                        readI18n("menu.replay"),
+                        Icons.Default.PlayArrow,
+                        onClick = replay
+                    )
+                }
+
+                item {
+                    with(koinInject<AppContext>()) {
+                        MenuButton(
+                            readI18n("menu.exit"),
+                            loadSvg("exit"),
+                        ) { exit() }
+                    }
                 }
             }
         }
+
+
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            RWIconButton(Icons.Filled.Favorite, modifier = Modifier.padding(10.dp), onClick = contributor)
+
+            val net = koinInject<Net>()
+
+            RWIconButton(loadSvg("octocat"), modifier = Modifier.padding(10.dp)) {
+                net.openUriInBrowser("https://github.com/Minxyzgo/RWPP")
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(0.2f))
     }
 }

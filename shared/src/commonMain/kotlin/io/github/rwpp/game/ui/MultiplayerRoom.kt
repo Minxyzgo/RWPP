@@ -51,6 +51,7 @@ import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.Net
@@ -63,6 +64,7 @@ import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
@@ -235,7 +237,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             items(chatMessages.size) {
                                 Text(
                                     chatMessages[chatMessages.size - 1 - it],
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp)
                                 )
                             }
@@ -300,7 +302,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 Text(
                                     details,
                                     color = Color.White,
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(10.dp)
                                 )
                                 if(LocalWindowManager.current == WindowManager.Large) MapImage(Modifier.weight(.8f))
@@ -517,7 +519,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 if(isHost) {
                                     RWTextButton(
                                         readI18n("multiplayer.room.addAI"),
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp),
+                                        onLongClick = { room.addAI(10) }
                                     ) { room.addAI() }
                                 }
 
@@ -803,10 +806,15 @@ private fun MultiplayerOptionDialog(
     var aiDifficulty by remember { mutableStateOf(room.aiDifficulty) }
     var fogMode by remember { mutableStateOf(room.fogMode) }
     var startingUnits by remember { mutableStateOf(room.startingUnits) }
-    var teamMode by remember { mutableStateOf<String?>(null) }
+    var teamMode by remember { mutableStateOf(room.teamMode) }
     var startingCredits by remember { mutableStateOf(room.startingCredits) }
     var maxPlayerCount by remember { mutableStateOf(room.maxPlayerCount) }
     var realIncomeMultiplier by remember { mutableStateOf(room.incomeMultiplier) }
+
+    val koin = getKoin()
+    val teamModes = remember {
+        koin.getAll<TeamMode>()
+    }
 
     BorderCard(
         modifier = Modifier
@@ -886,31 +894,30 @@ private fun MultiplayerOptionDialog(
 
             item {
                 Row(modifier = Modifier.fillMaxWidth()) {
+
                     val teamList = remember {
-                        listOf(
-                            "2 Teams (eg 5v5)",
-                            "3 Teams (eg 1v1v1)",
-                            "No teams (FFA)",
-                            "All spectators"
-                        )
+                        buildList {
+                            add("Keep current")
+                            addAll(teamModes)
+                        }
                     }
+
+                    var selectedIndex by remember { mutableStateOf(teamMode?.let { teamModes.indexOf(teamMode) + 1 } ?: 0) }
                     LargeDropdownMenu(
                         modifier = Modifier.weight(.5f).padding(5.dp),
                         label = "Set Team",
                         enabled = room.isHost,
                         items = teamList,
-                        selectedIndex = 0,
-                        hasValue = false,
+                        selectedIndex = selectedIndex,
+                        selectedItemToString = {
+                            if (it is TeamMode) it.displayName else it.toString()
+                        },
                         onItemSelected = { index, _ ->
+                            selectedIndex = index
                             teamMode = when(index) {
-                                0 -> "2t"
-                                1 -> "3t"
-                                2 -> "FFA"
-                                3 -> "spectators"
-                                else -> throw RuntimeException()
+                                0 -> null
+                                else -> teamModes[index - 1]
                             }
-
-                            update()
                         }
                     )
 

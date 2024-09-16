@@ -189,7 +189,7 @@ fun LazyColumnScrollbar(
     selectionActionable: ScrollbarSelectionActionable = ScrollbarSelectionActionable.Always,
     hideDelay: Duration = 400.toDuration(DurationUnit.MILLISECONDS),
     showItemIndicator: ListIndicatorSettings = EnabledMirrored(
-        if (LocalWindowManager.current == WindowManager.Small) 0.dp else 100.dp,
+        if (LocalWindowManager.current == WindowManager.Small) 25.dp else 50.dp,
         MaterialTheme.colorScheme.surface
     ),
     enabled: Boolean = true,

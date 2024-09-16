@@ -26,15 +26,14 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.App
+import io.github.rwpp.AppContext
 import io.github.rwpp.appKoin
-import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.config.Settings
 import io.github.rwpp.game.Game
-import io.github.rwpp.i18n.parseI18n
+import io.github.rwpp.game.team.TeamModeModule
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.koin.compose.koinInject
@@ -83,14 +82,14 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
     appKoin = startKoin {
         logger(org.koin.core.logger.PrintLogger(org.koin.core.logger.Level.ERROR))
-        modules(ConfigModule().module, DesktopModule().module)
+        modules(ConfigModule().module, DesktopModule().module, TeamModeModule().module)
     }.koin
 
+    val app = appKoin.get<AppContext>()
 
+    app.init()
 
-    runBlocking { parseI18n() }
     Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
-    appKoin.get<ConfigIO>().readAllConfig()
     File("mods/units")
         .walk()
         .forEach {
@@ -105,7 +104,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
     val panel = ComposePanel()
     panel.isVisible = true
-    panel.size = Dimension(800, 600)
+    panel.size = displaySize.size
     panel.isOpaque = false
     panel.isFocusable = true
     rwppVisibleSetter = { panel.isVisible = it }
@@ -231,7 +230,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 requestFocus = true,
                 modifier = Modifier.fillMaxWidth().padding(10.dp)
                     .onKeyEvent {
-                        if(it.key == androidx.compose.ui.input.key.Key.Enter && chatMessage.isNotEmpty()) {
+                        if(it.key == Key.Enter && chatMessage.isNotEmpty()) {
                             game.gameRoom.sendChatMessage(chatMessage)
                             chatMessage = ""
                             sendMessageDialog.isVisible = false

@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +28,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -58,7 +60,7 @@ fun BorderCard(
     border = BorderStroke(2.dp, Color.DarkGray),
     elevation =  CardDefaults.cardElevation(defaultElevation = 10.dp),
     colors = CardDefaults.cardColors(containerColor = backgroundColor),
-    modifier = modifier,
+    modifier = modifier.autoClearFocus(),
     content = content
 )
 
@@ -108,7 +110,7 @@ fun <T> LargeDropdownMenu(
 
             OutlinedTextField(
                 label = { Text(label, fontFamily = MaterialTheme.typography.headlineLarge.fontFamily) },
-                textStyle = MaterialTheme.typography.headlineLarge.copy(color = selectedItemColor(items.getOrNull(selectedIndex), selectedIndex)),
+                textStyle = MaterialTheme.typography.headlineMedium.copy(color = selectedItemColor(items.getOrNull(selectedIndex), selectedIndex)),
                 colors = RWOutlinedTextColors,
                 value = if(hasValue) items.getOrNull(selectedIndex)?.let { selectedItemToString(it) } ?: "" else "",
                 enabled = enabled,
@@ -142,7 +144,7 @@ fun <T> LargeDropdownMenu(
         ) {
             items.forEachIndexed { index, t ->
                 DropdownMenuItem(
-                    text = { Text(selectedItemToString(t), style = MaterialTheme.typography.bodyLarge, color = selectedItemColor(t, index)) },
+                    text = { Text(selectedItemToString(t), style = MaterialTheme.typography.headlineSmall, color = selectedItemColor(t, index)) },
                     onClick = {
                         onItemSelected(index, t)
                         expanded = false
@@ -268,30 +270,38 @@ fun RWSingleOutlinedTextField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RWTextButton(
     label: String,
     modifier: Modifier = Modifier,
     leadingIcon: @Composable (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit
-) = Card(
-    border = BorderStroke(5.dp, Color.DarkGray),
-    colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
-    shape = RoundedCornerShape(10.dp),
-    elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-    modifier = modifier.bounceClick(onClick),
 ) {
-    Row(
-        modifier = Modifier.padding(5.dp),
+    CompositionLocalProvider(
+        LocalRippleConfiguration provides RippleConfiguration(Color.Transparent, RippleAlpha(0f, 0f, 0f, 0f))
     ) {
-        leadingIcon?.invoke()
+        Card(
+            border = BorderStroke(5.dp, Color.DarkGray),
+            colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+            shape = RoundedCornerShape(10.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+            modifier = modifier.bounceClick(onLongClick = onLongClick, onClick = onClick),
+        ) {
+            Row(
+                modifier = Modifier.padding(5.dp),
+            ) {
+                leadingIcon?.invoke()
 
-        Text(
-            label,
-            color = Color.White,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(5.dp)
-        )
+                Text(
+                    label,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(5.dp)
+                )
+            }
+        }
     }
 }
 

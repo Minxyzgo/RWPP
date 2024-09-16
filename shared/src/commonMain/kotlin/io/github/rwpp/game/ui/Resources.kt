@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.AppContext
 import io.github.rwpp.external.ExternalHandler
-import io.github.rwpp.game.Game
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.shared.generated.resources.Res
 import io.github.rwpp.shared.generated.resources.error_missingmap
@@ -49,7 +48,6 @@ fun ResourceView(
 ) {
     BackHandler(true, onExit)
     val appContext = koinInject<AppContext>()
-    val game = koinInject<Game>()
     val externalHandler = koinInject<ExternalHandler>()
 
     var selectedResource by remember { mutableStateOf(externalHandler.getUsingResource()) }

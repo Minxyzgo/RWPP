@@ -21,3 +21,4 @@ typealias EClass = com.corrodinggames.rts.java.e
 typealias AMClass = com.corrodinggames.rts.gameFramework.am
 typealias VClass = com.corrodinggames.rts.java.v
 typealias RwOutputStream = com.corrodinggames.rts.gameFramework.j.`as`
+typealias JClass = com.corrodinggames.rts.gameFramework.j

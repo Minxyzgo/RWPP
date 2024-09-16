@@ -134,6 +134,9 @@ injectionMultiplatform {
             "com.corrodinggames.rts.gameFramework.e.c".with(
                 "f(Ljava/lang/String;)",
                 "i(Ljava/lang/String;)"
+            ),
+            "com.corrodinggames.rts.game.n".with(
+                "I()"
             )
         )
         action {

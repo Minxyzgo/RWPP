@@ -38,12 +38,12 @@ interface Player {
     }
 
     fun applyConfigChange(
-        spawnPoint: Int,
-        team: Int,
-        color: Int?,
-        startingUnits: Int?,
-        aiDifficulty: Difficulty?,
-        changeTeamFromSpawn: Boolean
+        spawnPoint: Int = this.spawnPoint,
+        team: Int = this.team,
+        color: Int? = null,
+        startingUnits: Int? = null,
+        aiDifficulty: Difficulty? = null,
+        changeTeamFromSpawn: Boolean = false
     )
 
     companion object {

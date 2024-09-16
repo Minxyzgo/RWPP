@@ -5,14 +5,18 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.config
+package io.github.rwpp.game.team
 
-/**
- * Describe a config.
- *
- * Any config that can be saved should be implemented under this package, and the corresponding code should be generated using Koin.
- *
- * @see ConfigIO
- * @see ConfigModule
- */
-interface Config
+import io.github.rwpp.game.GameRoom
+import io.github.rwpp.game.Player
+
+interface TeamMode {
+    val name: String
+
+    val displayName: String
+        get() = name
+
+    fun onPlayerJoin(gameRoom: GameRoom, player: Player)
+
+    fun onInit(gameRoom: GameRoom)
+}

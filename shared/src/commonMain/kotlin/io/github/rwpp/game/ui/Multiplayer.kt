@@ -59,6 +59,7 @@ import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.ExpandedCard
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
+import io.github.rwpp.ui.v2.RWIconButton
 import io.github.rwpp.ui.v2.bounceClick
 import io.github.rwpp.utils.io.SizeUtils
 import kotlinx.coroutines.Dispatchers
@@ -209,7 +210,6 @@ fun MultiplayerView(
                 contentAlignment = Alignment.Center
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    ExitButton(dismiss)
                     Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text("Host Game", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = Color.White)
                     }
@@ -1077,15 +1077,7 @@ fun MultiplayerView(
 
                                 JoinServerField()
 
-                                Card(
-                                    border = BorderStroke(2.dp, Color.DarkGray),
-                                    colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
-                                    shape = RoundedCornerShape(5.dp),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
-                                    modifier = Modifier.offset(y = 25.dp).bounceClick { filterSurfaceDialogVisible = true },
-                                ) {
-                                    Icon(painter = loadSvg("tune"), null, modifier = Modifier.size(45.dp).align(Alignment.CenterHorizontally))
-                                }
+                                RWIconButton(loadSvg("tune"), modifier = Modifier.offset(y = 25.dp), size = 50.dp) { filterSurfaceDialogVisible = true }
                             }
                         }
 
@@ -1319,7 +1311,6 @@ private fun JoinServerRequestDialog(
                 contentAlignment = Alignment.Center
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    ExitButton(dismiss)
                     Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Info, null, modifier = Modifier.size(32.dp).padding(5.dp))
                         Text("Join Server?", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = Color.White)

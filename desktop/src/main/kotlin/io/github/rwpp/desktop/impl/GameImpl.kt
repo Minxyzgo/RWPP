@@ -32,7 +32,6 @@ import com.github.minxyzgo.rwij.InjectMode
 import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.*
-import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.Settings
 import io.github.rwpp.desktop.*
 import io.github.rwpp.event.GlobalEventChannel
@@ -47,10 +46,10 @@ import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.MovementType
-import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ModPacket
@@ -68,7 +67,6 @@ import javax.swing.SwingUtilities
 
 @Single
 class GameImpl : Game {
-    private val mapPrefixRegex = Regex("""^\[.*?\]""")
     private var _missions: List<Mission>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
     private var _units: List<GameUnit>? = null
@@ -169,6 +167,10 @@ class GameImpl : Game {
                     get() = LClass.B().bX.B
                 override val isStartGame: Boolean
                     get() = isGaming
+                override val teamMode: TeamMode?
+                    get() = _teamMode
+
+                private var _teamMode: TeamMode? = null
 
                 private val mapNameFormatMethod = com.corrodinggames.rts.appFramework.i::class.java.getDeclaredMethod("e", String::class.java)
 
@@ -176,7 +178,7 @@ class GameImpl : Game {
                 override fun getPlayers(): List<Player> {
                     return (asField.get(B.bX.ay) as Array<com.corrodinggames.rts.game.n?>).mapNotNull {
                         if(it == null) return@mapNotNull null
-                        playerCacheMap.getOrPut(it) { PlayerImpl(it, this) }
+                        playerCacheMap.getOrPut(it) { PlayerImpl(it, this).also { p -> PlayerJoinEvent(p).broadCastIn() } }
                     }
                 }
 
@@ -196,13 +198,31 @@ class GameImpl : Game {
                     B.bX.k(command)
                 }
 
-                override fun addAI() {
-                    if(isHost) {
-                        B.bX.ap()
-                    } else if(isHostServer) {
-                        sendQuickGameCommand("-addai")
+                override fun addAI(count: Int) {
+                    repeat(count) {
+                        if (isHost) {
+                            val var2 = com.corrodinggames.rts.game.n.G()
+                            if (var2 == -1) {
+                                return@repeat
+                            }
+
+                            val var3 = com.corrodinggames.rts.game.a.a(var2)
+                            var3.v = "AI"
+                            var3.r = var2 % 2
+                            var3.x = B.bX.ay.f
+                            B.bX.aq()
+                            B.bX.d.a(var3)
+                            B.bX.e(null as c?)
+                        } else if (isHostServer) {
+                            sendQuickGameCommand("-addai")
+                        }
+                    }
+
+                    if (isHost) {
+                        updateUI()
                     }
                 }
+
 
                 override fun applyRoomConfig(
                     maxPlayerCount: Int,
@@ -215,7 +235,7 @@ class GameImpl : Game {
                     noNukes: Boolean,
                     allowSpectators: Boolean,
                     teamLock: Boolean,
-                    teamMode: String?
+                    teamMode: TeamMode?
                 ) {
                     if (isHost) {
                         this.maxPlayerCount = maxPlayerCount
@@ -241,13 +261,14 @@ class GameImpl : Game {
                         LClass.B().bX.a(e)
                     }
 
-                    when (teamMode) {
+                    _teamMode = teamMode
+                    when (teamMode?.name) {
                         "2t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.a)
                         "3t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.b)
                         "FFA" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.c)
                         "spectators" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.d)
                         null -> {}
-                        else -> throw IllegalArgumentException("mode: $teamMode")
+                        else -> teamMode.onInit(this)
                     }
 
                     if (isHost) LClass.B().bX.L() // send server info
@@ -266,10 +287,15 @@ class GameImpl : Game {
                     option = RoomOption()
                     bannedUnitList = listOf()
                     roomMods = arrayOf()
+                    _teamMode = null
                     if(isConnecting) B.bX.b("exited")
                     B.bX.ay.a = GameMapType.a
                     B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
                     B.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
+                }
+
+                override fun updateUI() {
+                    com.corrodinggames.rts.appFramework.n::class.java.getDeclaredMethod("o").invoke(null)
                 }
 
                 override fun startGame() {
@@ -678,6 +704,13 @@ class GameImpl : Game {
                 if(o.startsWith("drawable:") && resFileExist) {
                     InterruptResult(com.corrodinggames.librocket.b.b + resOutputDir + "drawable/" + o.removePrefix("drawable:"))
                 } else Unit
+            }
+        }
+
+        com.corrodinggames.rts.game.n::class.setFunction {
+            addProxy("I", mode = InjectMode.InsertBefore) { self: com.corrodinggames.rts.game.n ->
+                playerCacheMap[self]?.let { PlayerLeaveEvent(it).broadCastIn() }
+                playerCacheMap.remove(self)
             }
         }
 

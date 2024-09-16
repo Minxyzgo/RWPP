@@ -5,14 +5,11 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.config
+package io.github.rwpp.game.team
 
-/**
- * Describe a config.
- *
- * Any config that can be saved should be implemented under this package, and the corresponding code should be generated using Koin.
- *
- * @see ConfigIO
- * @see ConfigModule
- */
-interface Config
+import org.koin.core.annotation.ComponentScan
+import org.koin.core.annotation.Module
+
+@Module
+@ComponentScan("io.github.rwpp.game.team")
+class TeamModeModule
