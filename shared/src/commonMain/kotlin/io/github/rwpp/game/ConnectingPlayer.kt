@@ -14,24 +14,30 @@ import io.github.rwpp.net.Client
 object ConnectingPlayer : Player {
     override val connectHexId: String
         get() = ""
-    override val spawnPoint: Int
+    override var spawnPoint: Int
         get() = 0
-    override val name: String
+        set(_) {}
+    override var name: String
         get() = "Connecting..."
+        set(_) {}
     override val ping: String
         get() = ""
-    override val team: Int
+    override var team: Int
         get() = 0
-    override val startingUnit: Int
+        set(_) {}
+    override var startingUnit: Int
         get() = 0
-    override val color: Int
+        set(_) {}
+    override var color: Int
         get() = 0
+        set(_) {}
     override val isSpectator: Boolean
         get() = false
     override val isAI: Boolean
         get() = false
-    override val difficulty: Difficulty?
+    override var difficulty: Difficulty?
         get() = null
+        set(_) {}
     override val data: PlayerData = PlayerData()
     override val client: Client
         get() = throw UnsupportedOperationException("Nope")

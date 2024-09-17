@@ -124,7 +124,6 @@ object UnitPathProxy {
                     options.inScaled = false
 
                     val path = resOutputDir + res.getResourceFileName(i)
-                    Log.i("RWPP", "drawable/path: $path")
 
                     val bitmap = BitmapFactory.decodeStream(
                         FileInputStream(path),
@@ -160,7 +159,6 @@ object UnitPathProxy {
                     val res = GameEngine.t().al.resources
 
                     val path = resOutputDir + res.getResourceFileName(i)
-                    Log.i("RWPP", "raw/path: $path")
                     Reflect.set(bVar, "a", self)
                     val pool = Reflect.get<SoundPool>(self, "g")!!
                     Reflect.set(bVar, "b", pool.load(path, 1))

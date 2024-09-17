@@ -7,8 +7,6 @@
 
 package io.github.rwpp.android.impl
 
-import android.app.Activity
-import android.content.Context
 import io.github.rwpp.AppContext
 import io.github.rwpp.config.ConfigIO
 import okhttp3.OkHttpClient
@@ -16,6 +14,7 @@ import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.system.exitProcess
 
 @Single
 class AppContextImpl : AppContext {
@@ -24,7 +23,6 @@ class AppContextImpl : AppContext {
     init {
         Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
     }
-
 
     override fun onExit(action: () -> Unit) {
         exitActions.add(action)
@@ -38,6 +36,6 @@ class AppContextImpl : AppContext {
             save()
         }
         exitActions.forEach { it.invoke() }
-        (get<Context>() as Activity).finish()
+        exitProcess(0)
     }
 }

@@ -14,15 +14,19 @@ import io.github.rwpp.net.Client
 
 interface Player {
     val connectHexId: String
-    val spawnPoint: Int
-    val name: String
+    var spawnPoint: Int
+    var name: String
     val ping: String
-    val team: Int
-    val startingUnit: Int
-    val color: Int
+    var team: Int
+    var startingUnit: Int
+    var color: Int
+
+    /**
+     * isSpectator: team == -3
+     */
     val isSpectator: Boolean
     val isAI: Boolean
-    val difficulty: Difficulty?
+    var difficulty: Difficulty?
 
     /**
      * The player extra data.

@@ -32,6 +32,7 @@ class ConfigIOImpl : ConfigIO {
         val name = clazz.qualifiedName
         val preferences = get<Context>().getSharedPreferences(name, Context.MODE_PRIVATE)
         val editor = preferences.edit()
+
         editor.putString("src", Toml.encodeToString(clazz.serializer() as KSerializer<Any>, config))
         editor.commit()
     }
@@ -39,6 +40,7 @@ class ConfigIOImpl : ConfigIO {
     @OptIn(InternalSerializationApi::class)
     override fun <T : Config> readConfig(clazz: KClass<T>): T? {
         val name = clazz.qualifiedName
+
         val preferences = get<Context>().getSharedPreferences(name, Context.MODE_PRIVATE)
         val src = preferences.getString("src", "")
         if(src.isNullOrBlank()) return null
@@ -59,7 +61,7 @@ class ConfigIOImpl : ConfigIO {
 
 
     override fun saveAllConfig() {
-        super.readAllConfig()
+        super.saveAllConfig()
         GameEngine.t().bN.save()
     }
 }

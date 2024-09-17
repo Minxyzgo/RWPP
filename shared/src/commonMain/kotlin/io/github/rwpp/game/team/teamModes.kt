@@ -59,3 +59,40 @@ class InternalTeamModeSpectators : InternalTeamMode {
         // It doesn't seem necessary
     }
 }
+
+@Single
+class RandomTeamMode : TeamMode {
+    override val name: String = "random-team"
+
+    override val displayName: String = "Random Team"
+
+    override fun onPlayerJoin(gameRoom: GameRoom, player: Player) {
+        // do nothing
+    }
+
+    override fun onInit(gameRoom: GameRoom) {
+        val playerSize = gameRoom.getPlayers().size
+        val shuffled = gameRoom.getPlayers().shuffled()
+
+        val teamCount = when(playerSize) {
+            in 1.. 8 -> 2
+            in 9..21 -> 3
+            in 22..32 -> 4
+            else -> 5
+        }
+
+        var leftCount = teamCount
+        var currentTeam = 0
+
+        shuffled.forEach { player ->
+            player.team = currentTeam
+
+            leftCount--
+
+            if(leftCount == 0) {
+                leftCount = teamCount
+                currentTeam++
+            }
+        }
+    }
+}

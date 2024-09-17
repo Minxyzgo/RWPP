@@ -54,7 +54,12 @@ injectionMultiplatform {
     android {
         setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity"
             .with("updateUI", "askPasswordInternal", "refreshChatLog", "addMessageToChatLog", "startGame"))
-        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.k".with("g(Ljava/lang/String;)", "d(Ljava/lang/String;)"))
+        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.k".with(
+            "g(Ljava/lang/String;)",
+            "d(Ljava/lang/String;)",
+            "b(Ljava/lang/String;Ljava/lang/String;)",
+            "c(Ljava/lang/String;)"
+        ))
         setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.d".with("b(Landroid/app/Activity;)"))
         //setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.game.i".with("n")) version
         setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.j.ae".with(

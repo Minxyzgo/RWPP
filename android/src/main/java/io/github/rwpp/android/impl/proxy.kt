@@ -9,6 +9,7 @@ package io.github.rwpp.android.impl
 
 import android.app.Activity
 import android.os.Build
+import android.util.Log
 import android.view.ViewGroup
 import com.corrodinggames.rts.appFramework.GameView
 import com.corrodinggames.rts.appFramework.GameViewOpenGL
@@ -113,6 +114,14 @@ fun doProxy() {
             }
 
             Unit
+        }
+
+        addProxy("c",String::class, mode = InjectMode.Override) { str: String? ->
+            Log.i("RustedWarfare", str ?: "")
+        }
+
+        addProxy("b", String::class, String::class, mode = InjectMode.Override) { _: Any?, _: Any?, _: Any? ->
+            //do nothing
         }
     }
 

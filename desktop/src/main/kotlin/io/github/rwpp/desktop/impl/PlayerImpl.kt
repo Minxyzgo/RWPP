@@ -20,24 +20,42 @@ class PlayerImpl(
 ) : Player {
     override val connectHexId: String
         get() = player.O ?: ""
-    override val spawnPoint: Int
+    override var spawnPoint: Int
         get() = player.k
-    override val team: Int
+        set(value) {
+            player.f(value)
+        }
+    override var team: Int
         get() = player.r
-    override val name: String
+        set(value) {
+            player.r = value
+        }
+    override var name: String
         get() = player.v ?: ""
+        set(value) {
+            player.v = value
+        }
     override val ping: String
         get() = player.z()
-    override val startingUnit: Int
+    override var startingUnit: Int
         get() = player.A ?: -1
-    override val color: Int
+        set(value) {
+            player.A = value
+        }
+    override var color: Int
         get() = player.C ?: -1
+        set(value) {
+            player.C = value
+        }
     override val isSpectator: Boolean
         get() = team == -3
     override val isAI: Boolean
         get() = player.w
-    override val difficulty: Difficulty?
+    override var difficulty: Difficulty?
         get() = if(isAI) player.z?.let { Difficulty.entries[it + 2] } else null
+        set(value) {
+            player.z = value?.ordinal?.minus(2)
+        }
     override val data: PlayerData = PlayerData()
     override val client: Client by lazy {
         ClientImpl(LClass.B().bX.c(player))

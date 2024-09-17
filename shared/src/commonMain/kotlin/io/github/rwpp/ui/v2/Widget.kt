@@ -8,10 +8,10 @@
 package io.github.rwpp.ui.v2
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -91,4 +91,27 @@ fun RWIconButton(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun LongPressFloatingActionButton(
+    vector: ImageVector,
+    modifier: Modifier = Modifier,
+    size: Dp = 50.dp,
+    onLongClick: (() -> Unit)? = null,
+    onClick: () -> Unit,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(151, 188, 98)),
+        shape = androidx.compose.foundation.shape.CircleShape,
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+        modifier = Modifier.then(modifier).combinedClickable(onLongClick = onLongClick, onClick = onClick),
+    ) {
+        Icon(
+            vector,
+            null,
+            tint = Color.Black,
+            modifier = Modifier.size(size).align(Alignment.CenterHorizontally).padding(10.dp)
+        )
+    }
+}
 

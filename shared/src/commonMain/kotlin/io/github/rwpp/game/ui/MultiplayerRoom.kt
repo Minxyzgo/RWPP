@@ -61,6 +61,7 @@ import io.github.rwpp.shared.generated.resources.Res
 import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
+import io.github.rwpp.ui.v2.LongPressFloatingActionButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -556,14 +557,12 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
             containerColor = Color.Transparent,
             floatingActionButton = {
                 if(isHost) {
-                    FloatingActionButton(
-                        onClick = { room.addAI() },
-                        shape = CircleShape,
+                    LongPressFloatingActionButton(
+                        Icons.Default.Add,
                         modifier = Modifier.padding(5.dp),
-                        containerColor = Color(151, 188, 98),
-                    ) {
-                        Icon(Icons.Default.Add, null)
-                    }
+                        onClick = { room.addAI() },
+                        onLongClick = { room.addAI(10) }
+                    )
                 }
             },
             floatingActionButtonPosition = FabPosition.End

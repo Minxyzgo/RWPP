@@ -15,11 +15,13 @@ import io.github.rwpp.game.Game
 object Logic {
     init {
         GlobalEventChannel.filter(PlayerJoinEvent::class).subscribeAlways { e ->
-            val game = appKoin.get<Game>()
-            val room = game.gameRoom
-            room.teamMode?.onPlayerJoin(room, e.player)
+            synchronized(Logic) {
+                val game = appKoin.get<Game>()
+                val room = game.gameRoom
+                room.teamMode?.onPlayerJoin(room, e.player)
 
-            room.updateUI()
+                room.updateUI()
+            }
         }
     }
 }

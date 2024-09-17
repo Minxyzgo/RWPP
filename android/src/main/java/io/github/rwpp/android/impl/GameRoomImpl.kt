@@ -21,6 +21,7 @@ import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.*
 import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.Settings
+import io.github.rwpp.core.Logic
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.PlayerJoinEvent
 import io.github.rwpp.event.events.RefreshUIEvent
@@ -435,19 +436,26 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             }
         }
 
-
-        _teamMode = teamMode
-        if (teamMode != null) {
-            when(teamMode.name) {
-                "2t" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.a)
-                "3t" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.b)
-                "FFA" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.c)
-                "spectators" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.d)
-                else -> teamMode.onInit(this)
+        if (_teamMode != teamMode) {
+            _teamMode = teamMode
+            if (teamMode != null) {
+                when(teamMode.name) {
+                    "2t" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.a)
+                    "3t" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.b)
+                    "FFA" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.c)
+                    "spectators" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.d)
+                    else -> synchronized(Logic) { teamMode.onInit(this) }
+                }
             }
         }
 
-        if (isHost) GameEngine.t().bU.n()
+        if (isHost) {
+            val ae = GameEngine.t().bU
+            ae.b()
+            ae.p()
+            ae.n()
+            updateUI()
+        }
     }
 
 
@@ -461,6 +469,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         isRWPPRoom = false
         option = RoomOption()
         roomMods = arrayOf()
+        _teamMode = null
         // 刷新地图
         GameEngine.t().bU.aA.a = at.a
         GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"

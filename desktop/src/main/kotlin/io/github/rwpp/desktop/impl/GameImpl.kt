@@ -33,6 +33,7 @@ import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.*
 import io.github.rwpp.config.Settings
+import io.github.rwpp.core.Logic
 import io.github.rwpp.desktop.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
@@ -261,17 +262,24 @@ class GameImpl : Game {
                         LClass.B().bX.a(e)
                     }
 
-                    _teamMode = teamMode
-                    when (teamMode?.name) {
-                        "2t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.a)
-                        "3t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.b)
-                        "FFA" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.c)
-                        "spectators" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.d)
-                        null -> {}
-                        else -> teamMode.onInit(this)
+                    if (_teamMode != teamMode) {
+                        _teamMode = teamMode
+                        when (teamMode?.name) {
+                            "2t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.a)
+                            "3t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.b)
+                            "FFA" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.c)
+                            "spectators" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.d)
+                            null -> {}
+                            else -> synchronized(Logic) { teamMode.onInit(this) }
+                        }
                     }
 
-                    if (isHost) LClass.B().bX.L() // send server info
+                    if (isHost) {
+                        LClass.B().bX.f()
+                        LClass.B().bX.P()
+                        LClass.B().bX.L()
+                        updateUI()
+                    }
                 }
 
                 override fun kickPlayer(player: Player) {

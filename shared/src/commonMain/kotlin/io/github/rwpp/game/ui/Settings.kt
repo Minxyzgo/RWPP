@@ -44,7 +44,7 @@ fun SettingsView(onExit: () -> Unit) {
     BackHandler(true, onExit)
 
     val configIO = koinInject<ConfigIO>()
-    val game = koinInject<Game>()
+    koinInject<Game>()
     val settings = koinInject<Settings>()
 
     Scaffold(
