@@ -27,7 +27,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.config.ConfigIO
-import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.Settings
 import io.github.rwpp.game.Game
 import io.github.rwpp.i18n.I18nType
@@ -251,7 +250,6 @@ private fun SettingsSwitchComp(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = if(customConfigSettingAction != null) labelName else readI18n("menus.settings.option.$labelName", I18nType.RW),
@@ -264,7 +262,7 @@ private fun SettingsSwitchComp(
                 Switch(
                     checked = state,
                     onCheckedChange = { onClick() },
-                    colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
+                    colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98), checkedThumbColor = Color.White),
                 )
             }
             HorizontalDivider()

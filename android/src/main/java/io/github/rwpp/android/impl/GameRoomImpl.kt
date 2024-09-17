@@ -128,7 +128,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         return PlayerInternal.j.mapNotNull {
             if(it == null) return@mapNotNull null
             playerCacheMap.getOrPut(it) {
-                PlayerImpl(it)
+                PlayerImpl(it, this)
                     .also { p ->
                         sendWelcomeMessage(p)
                         PlayerJoinEvent(p).broadCastIn()

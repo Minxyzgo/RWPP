@@ -18,7 +18,19 @@ interface Player {
     var name: String
     val ping: String
     var team: Int
+
+    /**
+     * Set player's starting unit.
+     *
+     * None if value equals -1
+     */
     var startingUnit: Int
+
+    /**
+     * Set player's color.
+     *
+     * None if value equals -1
+     */
     var color: Int
 
     /**

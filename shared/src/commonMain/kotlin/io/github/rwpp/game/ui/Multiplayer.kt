@@ -828,7 +828,7 @@ fun MultiplayerView(
                         Switch(
                             checked = enableModFilter,
                             onCheckedChange = { enableModFilter = it },
-                            colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
+                            colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98), checkedThumbColor = Color.White),
                         )
                     }
 
@@ -847,7 +847,7 @@ fun MultiplayerView(
                         Switch(
                             checked = battleroom,
                             onCheckedChange = { battleroom = it },
-                            colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98)),
+                            colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98), checkedThumbColor = Color.White),
                         )
                     }
 

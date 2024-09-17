@@ -8,22 +8,39 @@
 package io.github.rwpp.android.impl
 
 import com.corrodinggames.rts.game.p
+import io.github.rwpp.appKoin
+import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
 import io.github.rwpp.net.Client
 
 class PlayerImpl(
-    internal val player: PlayerInternal
+    internal val player: PlayerInternal,
+    private val room: GameRoom
 ) : Player {
     override val connectHexId: String
         get() = player.S ?: ""
-    override val spawnPoint: Int
+    override var spawnPoint: Int
         get() = player.l
-    override val team: Int
+        set(value) {
+            //TODO 不更新ui
+            applyConfigChange(spawnPoint = value)
+        }
+    override var team: Int
         get() = player.s
-    override val name: String
+        set(value) {
+            if (room.isHost) player.s = value
+            else if (room.isHostServer) {
+                val t = GameEngine.t()
+                t.bU.b(player, value)
+            }
+        }
+    override var name: String
         get() = player.w ?: ""
+        set(value) {
+            if (room.isHost) player.w = value
+        }
     override val ping: String
         get() {
             val t = player.t()
@@ -39,16 +56,23 @@ class PlayerImpl(
                 if(player.T == 1) "$t (HOST)" else java.lang.String.valueOf(t)
             }
         }
-    override val startingUnit: Int
+    override var startingUnit: Int
         get() = player.B ?: -1
-    override val color: Int
+        set(value) {
+            if (room.isHost) player.B = if (value == -1) null else value
+        }
+    override var color: Int
         get() = player.D ?: -1
+        set(value) {
+            if (room.isHost) player.D = if (value == -1) null else value
+        }
     override val isSpectator: Boolean
         get() = team == -3
     override val isAI: Boolean
         get() = player.x
-    override val difficulty: Difficulty?
+    override var difficulty: Difficulty?
         get() = if(isAI) player.y.let { Difficulty.entries[it + 2] } else null
+        set(value) { if(room.isHost) player.y = value?.ordinal?.minus(2) ?: 0 }
     override val data: PlayerData = PlayerData()
     override val client: Client by lazy {
         ClientImpl(GameEngine.t().bU.c(player))

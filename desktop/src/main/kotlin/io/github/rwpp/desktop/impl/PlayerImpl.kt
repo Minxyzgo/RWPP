@@ -12,7 +12,6 @@ import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
 import io.github.rwpp.net.Client
-import io.github.rwpp.net.Packet
 
 class PlayerImpl(
     internal val player: com.corrodinggames.rts.game.n,
@@ -23,29 +22,35 @@ class PlayerImpl(
     override var spawnPoint: Int
         get() = player.k
         set(value) {
-            player.f(value)
+            if (room.isHost)
+                player.f(value)
+            else if (room.isHostServer) {
+                LClass.B().bX.a(player, value, team)
+            }
         }
     override var team: Int
         get() = player.r
         set(value) {
-            player.r = value
+            if (room.isHost)
+                player.r = value
+            else if (room.isHostServer) LClass.B().bX.b(player, value)
         }
     override var name: String
         get() = player.v ?: ""
         set(value) {
-            player.v = value
+            if (room.isHost) player.v = value
         }
     override val ping: String
         get() = player.z()
     override var startingUnit: Int
         get() = player.A ?: -1
         set(value) {
-            player.A = value
+            if (room.isHost) player.A = if (value == -1) null else value
         }
     override var color: Int
         get() = player.C ?: -1
         set(value) {
-            player.C = value
+            if (room.isHost) player.C = if (value == -1) null else value
         }
     override val isSpectator: Boolean
         get() = team == -3
@@ -54,7 +59,7 @@ class PlayerImpl(
     override var difficulty: Difficulty?
         get() = if(isAI) player.z?.let { Difficulty.entries[it + 2] } else null
         set(value) {
-            player.z = value?.ordinal?.minus(2)
+            if (room.isHost) player.z = value?.ordinal?.minus(2)
         }
     override val data: PlayerData = PlayerData()
     override val client: Client by lazy {
