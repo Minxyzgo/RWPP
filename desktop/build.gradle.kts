@@ -47,18 +47,33 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Exe, TargetFormat.Dmg, TargetFormat.Deb)
-            packageName = "Rwpp"
-            mainClass = "io.github.rwpp.desktop.MainKt"
+
+            modules("jdk.unsupported")
+
+            packageName = "RWPP"
             packageVersion = rootProject.version.toString()
-           // copyright = "Copyright 2023-2024 RWPP contributors"
-           // licenseFile.set(rootProject.file("LICENSE"))
+            mainClass = "io.github.rwpp.desktop.MainKt"
+            description = "Multiplatform launcher for Rusted Warfare"
+            copyright = "Copyright 2023-2024 RWPP contributors"
+            licenseFile.set(rootProject.file("LICENSE"))
+
             jvmArgs += listOf(
                 "-Djava.net.preferIPv4Stack=true",
                 "-Xmx2000M",
                 "-Dfile.encoding=UTF-8",
-                "-Djava.library.path=.",
-                "--add-opens=java.base/java.net=ALL-UNNAMED"
+                "-Djava.library.path=\$ROOTDIR",
+                "--add-opens=java.base/java.net=ALL-UNNAMED",
+                "'-cp \$ROOTDIR/app/*;\$ROOTDIR/libs/*'"
             )
+
+            windows {
+                console = true
+                iconFile.set(project.file("logo.ico"))
+            }
+
+            linux {
+                iconFile.set(project.file("logo.png"))
+            }
 
             args += listOf("-native")
         }

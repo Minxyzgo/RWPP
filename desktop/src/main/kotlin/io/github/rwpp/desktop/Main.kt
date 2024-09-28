@@ -41,13 +41,20 @@ import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
 import java.awt.*
 import java.io.File
+import java.lang.instrument.Instrumentation
+import java.lang.reflect.Method
+import java.net.URL
+import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.imageio.ImageIO
 import javax.swing.JFrame
+import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import javax.swing.WindowConstants
+import kotlin.system.exitProcess
+
 
 typealias ColorCompose = androidx.compose.ui.graphics.Color
 
@@ -58,7 +65,7 @@ lateinit var sendMessageDialog: Dialog
 lateinit var rwppVisibleSetter: (Boolean) -> Unit
 val cacheModSize = AtomicInteger(0)
 
-fun main() {
+fun main(array: Array<String>) {
     if (File("opengl32.dll").exists()) { // for only debug
         System.loadLibrary("opengl32")
     }
@@ -71,6 +78,34 @@ fun main() {
             .run { Dimension(width, height) }
 
 
+//    if (array.contains("-native")) {
+//        println("start native")
+//
+//        val classLoader = Thread.currentThread().contextClassLoader
+//
+//        val ucp = classLoader::class.java.getDeclaredField("ucp").apply {
+//            isAccessible = true
+//        }.get(classLoader)
+//
+//        val addURL: Method = ucp::class.java.getDeclaredMethod("addURL", URL::class.java).apply {
+//            isAccessible = true
+//        }
+//
+//        val allLibFiles = File(System.getProperty("user.dir") + "/libs").walk().filter { it.extension == "jar" }
+//
+//        allLibFiles.forEach {
+//            addURL.invoke(ucp, it.toURI().toURL())
+//        }
+//    }
+
+//    Thread.setDefaultUncaughtExceptionHandler { _, e ->
+//        JOptionPane.showMessageDialog(
+//            JFrame(), e.stackTraceToString(), "Error",
+//            JOptionPane.ERROR_MESSAGE
+//        )
+//
+//        exitProcess(0)
+//    }
 
     swingApplication()
 }

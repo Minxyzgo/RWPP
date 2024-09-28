@@ -18,6 +18,7 @@ import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
 import com.corrodinggames.rts.gameFramework.h.a
 import com.corrodinggames.rts.gameFramework.j.ao
 import com.github.minxyzgo.rwij.InjectMode
+import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.android.*
 import io.github.rwpp.android.impl.proxy.NetProxy
@@ -120,8 +121,12 @@ fun doProxy() {
             Log.i("RustedWarfare", str ?: "")
         }
 
-        addProxy("b", String::class, String::class, mode = InjectMode.Override) { _: Any?, _: Any?, _: Any? ->
-            //do nothing
+        addProxy("b", String::class, String::class, mode = InjectMode.InsertBefore) { _: Any?, title: String?, _: Any? ->
+            if (title == "Players") {
+                Unit
+            } else {
+                InterruptResult(Unit)
+            }
         }
     }
 

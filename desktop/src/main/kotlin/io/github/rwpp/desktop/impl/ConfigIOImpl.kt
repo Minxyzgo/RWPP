@@ -29,7 +29,7 @@ class ConfigIOImpl : ConfigIO {
     override fun saveConfig(config: Config) {
         val clazz = config::class
         val name = clazz.qualifiedName
-        val file = File("$name.toml")
+        val file = File(System.getProperty("user.dir") + "$name.toml")
         if(!file.exists()) file.createNewFile()
         file.writeText(Toml.encodeToString(clazz.serializer() as KSerializer<Any>, config))
     }
@@ -37,7 +37,7 @@ class ConfigIOImpl : ConfigIO {
     @OptIn(InternalSerializationApi::class)
     override fun <T : Config> readConfig(clazz: KClass<T>): T? {
         val name = clazz.qualifiedName
-        val file = File("$name.toml")
+        val file = File(System.getProperty("user.dir") + "$name.toml")
         if(!file.exists()) file.createNewFile()
         val src = file.readText()
         if(src.isBlank()) return null

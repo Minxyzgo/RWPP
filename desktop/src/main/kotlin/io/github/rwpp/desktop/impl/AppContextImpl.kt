@@ -10,14 +10,8 @@ package io.github.rwpp.desktop.impl
 import com.corrodinggames.librocket.scripts.ScriptEngine
 import io.github.rwpp.AppContext
 import io.github.rwpp.config.ConfigIO
-import io.github.rwpp.i18n.parseI18n
-import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
-import java.io.File
-import java.util.logging.Level
-import java.util.logging.Logger
 import kotlin.system.exitProcess
 
 @Single
