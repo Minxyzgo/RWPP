@@ -519,14 +519,20 @@ fun MainMenu(
 
 
 
+
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             RWIconButton(Icons.Filled.Favorite, modifier = Modifier.padding(10.dp), onClick = contributor)
 
             val net = koinInject<Net>()
 
+            RWIconButton(loadSvg("library"), modifier = Modifier.padding(10.dp)) {
+                net.openUriInBrowser("https://rwpp8.wordpress.com/")
+            }
+
             RWIconButton(loadSvg("octocat"), modifier = Modifier.padding(10.dp)) {
                 net.openUriInBrowser("https://github.com/Minxyzgo/RWPP")
             }
+
         }
 
         Spacer(modifier = Modifier.weight(1f))

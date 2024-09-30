@@ -182,6 +182,7 @@ kotlin {
                 //api("com.halilibo.compose-richtext:richtext-ui:0.17.0")
                 api("com.squareup.okhttp3:okhttp:4.11.0")
                 api("net.peanuuutz.tomlkt:tomlkt:0.3.7")
+                api("com.eclipsesource.minimal-json:minimal-json:0.9.5")
                 //api("io.github.androidpoet:dropdown:1.1.2")
                 //api("com.github.nanihadesuka:LazyColumnScrollbar:1.7.2")
                 //api("com.google.code.gson:gson:2.10.1")

@@ -19,6 +19,7 @@ fun Packet.asGamePacket(): au = au(type.type).also { pack ->
     val gameOutput = GameOutputStream(
         DataOutputStream(byteArrayOutput)
     )
+
     gameOutput.use { writePacket(it) }
     val bytes = byteArrayOutput.toByteArray()
     byteArrayOutput.close()

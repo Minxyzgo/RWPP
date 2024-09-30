@@ -46,7 +46,7 @@ compose.desktop {
         }
 
         nativeDistributions {
-            targetFormats(TargetFormat.Exe, TargetFormat.Dmg, TargetFormat.Deb)
+            targetFormats(TargetFormat.Msi, TargetFormat.Dmg, TargetFormat.Deb)
 
             modules("jdk.unsupported")
 

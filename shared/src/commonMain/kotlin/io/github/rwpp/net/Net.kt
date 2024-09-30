@@ -7,6 +7,7 @@
 
 package io.github.rwpp.net
 
+import com.eclipsesource.json.Json
 import io.github.rwpp.core.Initialization
 import io.github.rwpp.game.Game
 import io.github.rwpp.net.packets.ServerPacket
@@ -39,6 +40,16 @@ interface Net : KoinComponent, Initialization {
 
     override fun init() {
         registerListeners()
+    }
+
+    fun getLatestVersion(): String? {
+        return runCatching {
+            val request = Request.Builder().url("https://api.github.com/repos/Minxyzgo/RWPP/releases/latest").build()
+            val response = client.newCall(request).execute()
+            response.body?.string()?.let { str ->
+                Json.parse(str).asObject().getString("tag_name", null)
+            }
+        }.getOrNull()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
