@@ -11,7 +11,9 @@ import io.github.rwpp.utils.io.SizeUtils
 import io.github.rwpp.platform.Platform
 import org.koin.core.Koin
 
-const val projectVersion = "1.3.0-beta01 (core v1.15)"
+const val projectVersion = "v1.3.0-beta02"
+
+const val coreVersion = "v1.15"
 
 /**
  * The protocol version.
@@ -34,7 +36,7 @@ val welcomeMessage =
         这是一个使用[RWPP]所创建的房间
         [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
         开源地址请访问 https://github.com/Minxyzgo/RWPP 
-        当前版本: $projectVersion
+        当前版本: $projectVersion (core $coreVersion)
         Copyright 2023-2024 RWPP contributors
     """.trimIndent()
 
