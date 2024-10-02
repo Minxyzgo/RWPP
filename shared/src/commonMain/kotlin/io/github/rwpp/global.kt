@@ -46,12 +46,12 @@ val maxModSize = SizeUtils.mBToByte(16)
 
 val resourcePath = if(Platform.isAndroid()) {
     "/storage/emulated/0/rustedWarfare/resource/"
-} else System.getProperty("user.dir") + "resource/"
+} else System.getProperty("user.dir") + "/resource/"
 
 val resourceOutputDir = if(Platform.isAndroid()) {
     "/storage/emulated/0/rustedWarfare/resource_generated/"
-} else System.getProperty("user.dir") + "resource_generated/"
+} else System.getProperty("user.dir") + "/resource_generated/"
 
 val resOutputDir = if(Platform.isAndroid()) {
     "/storage/emulated/0/rustedWarfare/resource_generated/res/"
-} else System.getProperty("user.dir") + "resource_generated/res/"
+} else System.getProperty("user.dir") + "/resource_generated/res/"

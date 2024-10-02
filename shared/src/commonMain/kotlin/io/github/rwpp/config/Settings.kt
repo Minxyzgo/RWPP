@@ -20,4 +20,6 @@ data class Settings(
      */
     var isFullscreen: Boolean = true,
     var showWelcomeMessage: Boolean? = null,
+    var ignoreVersion: String? = null,
+    var autoCheckUpdate: Boolean = true
 ) : Config

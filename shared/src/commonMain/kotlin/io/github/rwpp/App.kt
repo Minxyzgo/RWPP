@@ -28,10 +28,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.rwpp.config.Settings
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.KickedEvent
@@ -40,11 +42,14 @@ import io.github.rwpp.event.events.QuestionReplyEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.ui.*
+import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.Net
 import io.github.rwpp.platform.loadSvg
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.RWIconButton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
@@ -103,6 +108,21 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
     var showRoomView by remember { mutableStateOf(false) }
     var showResourceView by remember { mutableStateOf(false) }
     var showContributorList by remember { mutableStateOf(false) }
+
+    var checkUpdateDialogVisible by remember { mutableStateOf(false) }
+    var latestVersion by remember { mutableStateOf<String?>(null) }
+
+    val settings = koinInject<Settings>()
+    val net = koinInject<Net>()
+
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            if (settings.autoCheckUpdate) {
+                latestVersion = net.getLatestVersion()
+                if (latestVersion != null && latestVersion != projectVersion && settings.ignoreVersion != latestVersion) checkUpdateDialogVisible = true
+            }
+        }
+    }
 
     val showMainMenu = !(showMultiplayerView
             || showSinglePlayerView
@@ -207,9 +227,15 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 }
 
                 AnimatedVisibility(
-                    showSettingsView
+                    showSettingsView,
+                    enter = fadeIn() + slideInVertically(),
+                    exit = fadeOut() + slideOutVertically()
                 ) {
-                    SettingsView { showSettingsView = false }
+                    SettingsView({
+                        if (it == projectVersion || settings.ignoreVersion == it) return@SettingsView
+                        latestVersion = it
+                        checkUpdateDialogVisible = true
+                    }) { showSettingsView = false }
                 }
 
                 AnimatedVisibility(
@@ -286,8 +312,6 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
                         }
 
-
-
                         LargeDividingLine { 5.dp }
 
                         Column(
@@ -311,6 +335,68 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     subscribeAlways {
                         questionDialogVisible = true
                         questionEvent = it
+                    }
+                }
+
+                AnimatedAlertDialog(
+                    checkUpdateDialogVisible,
+                    onDismissRequest = { checkUpdateDialogVisible = false }
+                ) { dismiss ->
+                    BorderCard(modifier = Modifier.fillMaxWidth(GeneralProportion())) {
+
+                        Row(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
+                            HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                            Box {
+                                Icon(Icons.Default.Warning, null, tint = Color(151, 188, 98), modifier = Modifier.size(50.dp).offset(5.dp, 5.dp).blur(2.dp))
+                                Icon(Icons.Default.Warning, null, tint = Color(0xFFb6d7a8), modifier = Modifier.size(50.dp))
+                            }
+                            HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                        }
+
+                        Text(readI18n("settings.newVersion", I18nType.RWPP, latestVersion!!),
+                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(5.dp),
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+
+                        val annotatedString = buildAnnotatedString {
+                            withLink(
+                                link = LinkAnnotation
+                                    .Clickable(
+                                        tag = "gitee",
+                                        linkInteractionListener = { net.openUriInBrowser("https://gitee.com/minxyzgo/RWPP/releases") },
+                                        styles = TextLinkStyles(style = SpanStyle(color = Color(0, 0, 238), textDecoration = TextDecoration.Underline))
+                                    )
+                            ) {
+                                append(readI18n("settings.goToDownload", I18nType.RWPP, "gitee"))
+                            }
+
+                            append("\n")
+
+                            withLink(
+                                link = LinkAnnotation
+                                    .Clickable(
+                                        tag = "github",
+                                        linkInteractionListener = { net.openUriInBrowser("https://github.com/Minxyzgo/RWPP/releases") },
+                                        styles = TextLinkStyles(style = SpanStyle(color = Color(0, 0, 238), textDecoration = TextDecoration.Underline))
+                                    )
+                            ) {
+                                append(readI18n("settings.goToDownload", I18nType.RWPP, "github"))
+                            }
+                        }
+
+
+                        Text(annotatedString,
+                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(2.dp),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
+                        RWTextButton(
+                            readI18n("settings.ignoreVersion"),
+                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(5.dp)
+                        ) {
+                            settings.ignoreVersion = latestVersion
+                            dismiss()
+                        }
                     }
                 }
 
@@ -399,6 +485,8 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                         }
                     }
                 }
+
+
             }
         }
     }
@@ -526,7 +614,7 @@ fun MainMenu(
             val net = koinInject<Net>()
 
             RWIconButton(loadSvg("library"), modifier = Modifier.padding(10.dp)) {
-                net.openUriInBrowser("https://rwpp8.wordpress.com/")
+                net.openUriInBrowser("https://gitee.com/minxyzgo/RWPP/wikis/pages")
             }
 
             RWIconButton(loadSvg("octocat"), modifier = Modifier.padding(10.dp)) {

@@ -33,7 +33,7 @@ suspend fun parseI18n() {
 @Composable
 fun readI18n(path: String, i18nType: I18nType = I18nType.RWPP, vararg arg: String): String {
     if (i18nType == I18nType.RWPP) {
-        cacheMap[path]?.let { return MessageFormat.format(it, arg) }
+        cacheMap[path]?.let { return MessageFormat.format(it, *arg) }
         val strArray = path.split(".")
         val iterator = strArray.iterator()
         var table: TomlTable = i18nTable
@@ -42,13 +42,13 @@ fun readI18n(path: String, i18nType: I18nType = I18nType.RWPP, vararg arg: Strin
             if(!iterator.hasNext()) {
                 return table[next]!!.asTomlLiteral().content.let {
                     cacheMap[path] = it
-                    MessageFormat.format(it, arg)
+                    MessageFormat.format(it, *arg)
                 }
             } else table = table[next]!!.asTomlTable()
         }
     } else if (i18nType == I18nType.RW) {
         val resolver: GameI18nResolver = koinInject()
-        return resolver.i18n(path, arg)
+        return resolver.i18n(path, *arg)
     }
 
     return "null"

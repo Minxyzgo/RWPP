@@ -23,6 +23,7 @@ import okhttp3.Response
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import java.io.DataInputStream
+import java.util.Locale
 import kotlin.reflect.full.createInstance
 
 interface Net : KoinComponent, Initialization {
@@ -44,7 +45,12 @@ interface Net : KoinComponent, Initialization {
 
     fun getLatestVersion(): String? {
         return runCatching {
-            val request = Request.Builder().url("https://api.github.com/repos/Minxyzgo/RWPP/releases/latest").build()
+            val locale = Locale.getDefault()
+            val request = Request.Builder().url(
+                if (locale.country == "CN")
+                    "https://gitee.com/api/v5/repos/minxyzgo/RWPP/releases/latest"
+                else "https://api.github.com/repos/Minxyzgo/RWPP/releases/latest"
+            ).build()
             val response = client.newCall(request).execute()
             response.body?.string()?.let { str ->
                 Json.parse(str).asObject().getString("tag_name", null)

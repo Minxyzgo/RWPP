@@ -31,15 +31,22 @@ import io.github.rwpp.config.Settings
 import io.github.rwpp.game.Game
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.net.Net
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.Platform
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.v2.ExpandedCard
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
 @Composable
-fun SettingsView(onExit: () -> Unit) {
+fun SettingsView(
+    onCheckUpdate: (String) -> Unit,
+    onExit: () -> Unit
+) {
     BackHandler(true, onExit)
 
     val configIO = koinInject<ConfigIO>()
@@ -63,12 +70,25 @@ fun SettingsView(onExit: () -> Unit) {
         },
         floatingActionButtonPosition = FabPosition.End
     ) {
-        BorderCard(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp)
-        ) {
+        ExpandedCard {
             ExitButton(onExit)
+
+//            var selectedItem by remember { mutableIntStateOf(0) }
+//            val items = listOf("graphics", "gameplay")
+//
+//            NavigationBar(
+//                modifier = Modifier.fillMaxWidth(),
+//                containerColor = Color(27, 18, 18),
+//            ) {
+//                items.forEachIndexed { index, s ->
+//                    NavigationBarItem(
+//                        icon = {},
+//                        label = { Text(readI18n("menus.settings.heading.$s", I18nType.RW), style = MaterialTheme.typography.bodyLarge) },
+//                        selected = selectedItem == index,
+//                        onClick = { selectedItem = index },
+//                    )
+//                }
+//            }
 
             val state = rememberLazyListState()
 
@@ -172,6 +192,34 @@ fun SettingsView(onExit: () -> Unit) {
                         }
                     }
 
+                    item {
+                        val net = koinInject<Net>()
+                        var checking by remember { mutableStateOf(false) }
+                        val scope = rememberCoroutineScope()
+                        
+                        SettingsGroup("", readI18n("settings.client")) {
+                            Row {
+                                RWTextButton(readI18n("settings.checkUpdate"), modifier = Modifier.padding(5.dp)) {
+                                    checking = true
+                                    scope.launch(Dispatchers.IO) {
+                                        net.getLatestVersion()?.let(onCheckUpdate)
+                                        checking = false
+                                    }
+                                }
+
+                                if (checking) CircularProgressIndicator(color = Color(199, 234, 70))
+                            }
+
+                            SettingsSwitchComp(
+                                "",
+                                readI18n("settings.autoCheckUpdate"),
+                                settings.autoCheckUpdate
+                            ) {
+                                settings.autoCheckUpdate = it
+                            }
+                        }
+                    }
+
                     if(Platform.isAndroid()) {
                         item {
                             SettingsGroup("", "Android") {
@@ -201,7 +249,7 @@ private fun SettingsGroup(
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(
             displayName ?: readI18n("menus.settings.heading.$name", I18nType.RW),
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineLarge,
             color = Color(151, 188, 98),
             modifier = Modifier.padding(start = 5.dp)
         )
@@ -243,7 +291,6 @@ private fun SettingsSwitchComp(
             .fillMaxWidth(),
         onClick = onClick,
     ) {
-
         Column {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -254,13 +301,14 @@ private fun SettingsSwitchComp(
                     Text(
                         text = if(customConfigSettingAction != null) labelName else readI18n("menus.settings.option.$labelName", I18nType.RW),
                         modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Start,
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 Switch(
                     checked = state,
+                    modifier = Modifier.padding(end = 15.dp),
                     onCheckedChange = { onClick() },
                     colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98), checkedThumbColor = Color.White),
                 )
@@ -281,7 +329,7 @@ private fun SettingsSlider(
     Column(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
         Text(
             readI18n("menus.settings.option.$name", I18nType.RW),
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(5.dp)
@@ -305,7 +353,15 @@ private fun SettingsSlider(
                     modifier = Modifier.background(
                         shape = CircleShape,
                         brush = Brush.linearGradient(listOf(Color.Green, Color(151, 188, 98)))
-                    )
+                    ),
+                    content = {
+                        Text(
+                            text = "$it%",
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 )
             },
             track = {
