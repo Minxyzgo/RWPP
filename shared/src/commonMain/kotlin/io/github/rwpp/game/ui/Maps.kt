@@ -8,16 +8,15 @@
 package io.github.rwpp.game.ui
 
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridItemScope
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -33,6 +32,7 @@ import io.github.rwpp.game.map.MapType
 import io.github.rwpp.shared.generated.resources.Res
 import io.github.rwpp.shared.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.v2.RWIconButton
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
@@ -50,9 +50,12 @@ fun MapViewDialog(
         modifier = Modifier
            // .fillMaxSize(0.95f)
             .padding(10.dp)
+            .autoClearFocus()
     ) {
         ExitButton(d)
 
+        val game = koinInject<Game>()
+        var filter by remember { mutableStateOf("") }
         val room = koinInject<Game>().gameRoom
 
         Row(
@@ -63,6 +66,8 @@ fun MapViewDialog(
         }
 
         var selectedIndex0 by remember { mutableStateOf(lastSelectedMapType.ordinal) }
+        var maps by remember { mutableStateOf(listOf<GameMap>()) }
+        var mapType = remember { MapType.entries[selectedIndex0] }
 
         Row(
             horizontalArrangement = Arrangement.Center,
@@ -70,25 +75,37 @@ fun MapViewDialog(
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(top = 5.dp)
-                .scaleFit()
+
         ) {
             LargeDropdownMenu(
                 modifier = Modifier.wrapContentSize().padding(5.dp),
                 label = "Map Type",
-                items = if(room.isHost) MapType.entries else listOf(MapType.SkirmishMap),
+                items = if (room.isHost) MapType.entries else listOf(MapType.SkirmishMap),
                 selectedIndex = selectedIndex0,
                 onItemSelected = { index, _ -> selectedIndex0 = index }
             )
+
+            RWSingleOutlinedTextField(
+                "Filter",
+                filter,
+                modifier = Modifier.fillMaxWidth(.4f).padding(5.dp),
+                leadingIcon = { Icon(Icons.Default.Search, null) }
+            ) {
+                filter = it
+            }
+
+            RWIconButton(Icons.Default.Refresh, modifier = Modifier.offset(y = 10.dp).padding(5.dp), size = 50.dp) {
+                game.getAllMaps(true)
+                maps = game.getAllMapsByMapType(mapType).filter { it.displayName().contains(filter, true) }
+            }
         }
 
         LargeDividingLine { 5.dp }
 
-        with(koinInject<Game>()) {
-            var maps by remember { mutableStateOf(listOf<GameMap>()) }
-            var mapType = remember { MapType.entries[selectedIndex0] }
-            remember(selectedIndex0) {
+        with(game) {
+            remember(selectedIndex0, filter) {
                 mapType = MapType.entries[selectedIndex0]
-                maps = getAllMapsByMapType(mapType)
+                maps = getAllMapsByMapType(mapType).filter { it.displayName().contains(filter, true) }
             }
 
             val state = rememberLazyListState()

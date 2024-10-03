@@ -41,19 +41,13 @@ import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
 import java.awt.*
 import java.io.File
-import java.lang.instrument.Instrumentation
-import java.lang.reflect.Method
-import java.net.URL
-import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.imageio.ImageIO
 import javax.swing.JFrame
-import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import javax.swing.WindowConstants
-import kotlin.system.exitProcess
 
 
 typealias ColorCompose = androidx.compose.ui.graphics.Color
@@ -269,8 +263,9 @@ fun swingApplication() = SwingUtilities.invokeLater {
                             game.gameRoom.sendChatMessage(chatMessage)
                             chatMessage = ""
                             sendMessageDialog.isVisible = false
-                            true
-                        } else false
+                        }
+
+                        true
                     },
                 trailingIcon = {
                     Icon(

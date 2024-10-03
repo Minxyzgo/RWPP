@@ -56,7 +56,7 @@ fun Modifier.scaleFit(): Modifier {
 @Composable
 fun ConstraintWindowManager(width: Dp, height: Dp): WindowManager {
     return when {
-        width >= 1680.dp && height >= 900.dp -> WindowManager.Large
+        width >= 1366.dp && height >= 768.dp -> WindowManager.Large
         width >= 700.dp && height >= 500.dp -> WindowManager.Middle
         else -> WindowManager.Small
     }

@@ -207,8 +207,9 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                         if(it.key == androidx.compose.ui.input.key.Key.Enter && chatMessage.isNotEmpty()) {
                             room.sendChatMessage(chatMessage)
                             chatMessage = ""
-                            true
-                        } else false
+                        }
+
+                        true
                     },
                 trailingIcon = {
                     Icon(

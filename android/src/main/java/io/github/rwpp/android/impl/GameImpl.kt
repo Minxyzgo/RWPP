@@ -10,24 +10,17 @@ package io.github.rwpp.android.impl
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.net.Uri
-import android.os.Build
-import android.os.Build.VERSION.SDK_INT
-import android.os.Environment
-import android.provider.Settings
-import android.widget.Toast
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.core.content.ContextCompat.startActivity
 import com.corrodinggames.rts.appFramework.*
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.k
-import com.hjq.permissions.OnPermissionCallback
-import com.hjq.permissions.Permission
-import com.hjq.permissions.XXPermissions
-import io.github.rwpp.android.*
+import io.github.rwpp.android.bannedUnitList
+import io.github.rwpp.android.gameLauncher
+import io.github.rwpp.android.isSandboxGame
+import io.github.rwpp.android.questionOption
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
@@ -42,7 +35,6 @@ import io.github.rwpp.ui.LoadingContext
 import kotlinx.coroutines.*
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
-import java.io.File
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
@@ -52,6 +44,7 @@ class GameImpl : Game, CoroutineScope {
 
     private var connectingJob: Deferred<String?>? = null
     private var _missions: List<Mission>? = null
+    private var _allMaps: List<GameMap>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
     private var _units: List<GameUnit>? = null
     private var cacheUnits: ArrayList<*>? = null
@@ -231,7 +224,9 @@ class GameImpl : Game, CoroutineScope {
             }
         }
 
-        return buildList { _maps.values.forEach(::addAll) }
+        return if (!flush && _allMaps != null)
+            _allMaps!!
+        else buildList { _maps.values.forEach(::addAll) }.also { _allMaps = it }
     }
 
     override fun getAllMapsByMapType(mapType: MapType): List<GameMap> {

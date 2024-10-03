@@ -11,7 +11,7 @@ import io.github.rwpp.utils.io.SizeUtils
 import io.github.rwpp.platform.Platform
 import org.koin.core.Koin
 
-const val projectVersion = "v1.3.0-beta02"
+const val projectVersion = "v1.3.0"
 
 const val coreVersion = "v1.15"
 

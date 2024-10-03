@@ -69,6 +69,7 @@ import javax.swing.SwingUtilities
 @Single
 class GameImpl : Game {
     private var _missions: List<Mission>? = null
+    private var _allMaps: List<GameMap>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
     private var _units: List<GameUnit>? = null
     private var lastAllUnits: java.util.ArrayList<*>? = null
@@ -1122,7 +1123,9 @@ class GameImpl : Game {
             }
         }
 
-        return buildList { _maps.values.forEach(::addAll) }
+        return if (!flush && _allMaps != null)
+            _allMaps!!
+        else buildList { _maps.values.forEach(::addAll) }.also { _allMaps = it }
     }
 
     override fun getAllMapsByMapType(mapType: MapType): List<GameMap> {
