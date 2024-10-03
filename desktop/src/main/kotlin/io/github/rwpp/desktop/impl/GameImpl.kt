@@ -920,8 +920,11 @@ class GameImpl : Game {
         }
     }
 
-    override fun hostNewSandbox() {
+    override fun hostNewSinglePlayer(sandbox: Boolean) {
         container.post {
+
+            com.corrodinggames.rts.game.n.F()
+
             val root = ScriptEngine.getInstance().root
             val libRocket = ScriptContext::class.java.getDeclaredField("libRocket").run {
                 isAccessible = true
@@ -953,14 +956,18 @@ class GameImpl : Game {
             game.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
             game.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
 
-            game.bL.E = false
-            game.bS.y()
-            game.bv = true
+            if (sandbox) {
+                game.bL.E = false
+                game.bS.y()
+                game.bv = true
+            } else {
+                game.bv = false
+            }
 
 
             game.bX.y = "You"
             game.bX.o = true
-            val S: Boolean = game.bX.R()
+            val S: Boolean = if (sandbox) game.bX.R() else game.bX.S()
 
             if(S) {
                 val e = game.bX.e()

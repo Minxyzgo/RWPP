@@ -99,8 +99,8 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
         )
     )
 
-    var isSandboxGame by remember { mutableStateOf(false) }
-    var showSinglePlayerView by remember { mutableStateOf(false) }
+    var isSinglePlayerGame by remember { mutableStateOf(false) }
+    var showMissionView by remember { mutableStateOf(false) }
     var showMultiplayerView by remember { mutableStateOf(false) }
     var showReplayView by remember { mutableStateOf(false) }
     var showSettingsView by remember { mutableStateOf(false) }
@@ -125,7 +125,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
     }
 
     val showMainMenu = !(showMultiplayerView
-            || showSinglePlayerView
+            || showMissionView
             || showSettingsView
             || showModsView
             || showRoomView
@@ -159,7 +159,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 Scaffold(
                     containerColor = Color.Transparent,
                     floatingActionButton = {
-                        if(game.isGameCouldContinue() && (showMainMenu || showSinglePlayerView)) {
+                        if(game.isGameCouldContinue() && (showMainMenu || showMissionView)) {
                             FloatingActionButton(
                                 onClick = { game.continueGame() },
                                 shape = CircleShape,
@@ -179,11 +179,16 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     ) {
                         MainMenu(
                             multiplayer = {
-                                isSandboxGame = false
+                                isSinglePlayerGame = false
                                 showMultiplayerView = true
                             },
                             mission = {
-                                showSinglePlayerView = true
+                                showMissionView = true
+                            },
+                            skirmish = {
+                                showRoomView = true
+                                isSinglePlayerGame = true
+                                game.hostNewSinglePlayer(false)
                             },
                             settings = {
                                 showSettingsView = true
@@ -192,9 +197,9 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                                 showModsView = true
                             },
                             sandbox = {
-                                isSandboxGame = true
+                                isSinglePlayerGame = true
                                 showRoomView = true
-                                game.hostNewSandbox()
+                                game.hostNewSinglePlayer(sandbox = true)
                             },
                             resource = {
                                 showResourceView = true
@@ -209,9 +214,9 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     }
 
                     AnimatedVisibility(
-                        showSinglePlayerView
+                        showMissionView
                     ) {
-                        MissionView { showSinglePlayerView = false }
+                        MissionView { showMissionView = false }
                     }
                 }
 
@@ -261,8 +266,8 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                 AnimatedVisibility(
                     showRoomView
                 ) {
-                    MultiplayerRoomView(isSandboxGame) {
-                        if(!isSandboxGame) {
+                    MultiplayerRoomView(isSinglePlayerGame) {
+                        if(!isSinglePlayerGame) {
                             game.cancelJoinServer()
                             showMultiplayerView = true
                         }
@@ -496,6 +501,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
 fun MainMenu(
     multiplayer: () -> Unit,
     mission: () -> Unit,
+    skirmish: () -> Unit,
     settings: () -> Unit,
     mods: () -> Unit,
     sandbox: () -> Unit,
@@ -522,7 +528,7 @@ fun MainMenu(
         )
 
         Text(
-            projectVersion,
+            "$projectVersion (core $coreVersion)",
             modifier = Modifier.padding(top = 1.dp, bottom = 5.dp).align(Alignment.CenterHorizontally),
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White
@@ -543,6 +549,14 @@ fun MainMenu(
                         readI18n("menu.mission"),
                         loadSvg("destruction"),
                         onClick = mission
+                    )
+                }
+
+                item {
+                    MenuButton(
+                        readI18n("menus.singlePlayer.skirmish", I18nType.RW),
+                        loadSvg("swords"),
+                        onClick = skirmish
                     )
                 }
 

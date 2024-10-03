@@ -44,9 +44,9 @@ interface Game : KoinComponent {
     )
 
     /**
-     * Host a new sandbox game.
+     * Host a new single player game.
      */
-    fun hostNewSandbox()
+    fun hostNewSinglePlayer(sandbox: Boolean)
 
     /**
      * Set the name of the local player.

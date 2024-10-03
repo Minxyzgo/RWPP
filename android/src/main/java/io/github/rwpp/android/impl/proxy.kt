@@ -122,7 +122,7 @@ fun doProxy() {
         }
 
         addProxy("b", String::class, String::class, mode = InjectMode.InsertBefore) { _: Any?, title: String?, _: Any? ->
-            if (title == "Players") {
+            if (title == "Players" || title == "Briefing") {
                 Unit
             } else {
                 InterruptResult(Unit)
