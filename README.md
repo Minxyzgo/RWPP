@@ -32,9 +32,15 @@
 You can download RWPP release version in the releases.
 
 # Run
+## Zip Version
+- Extract everything in the RWPP zip to the rw root directory
+> e.g. SteamLibrary\steamapps\common\Rusted Warfare\
+- Run RWPP.exe
+
+## Jar Version
 - Install Java 17
-- Copy RWPP to your rw root directory.
-> eg. SteamLibrary\steamapps\common\Rusted Warfare\
+- Copy RWPP.jar to your rw root directory.
+> e.g. SteamLibrary\steamapps\common\Rusted Warfare\
 - Run launcher.bat
 
 # Build
