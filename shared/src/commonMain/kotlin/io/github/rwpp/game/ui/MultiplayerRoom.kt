@@ -433,7 +433,14 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         TableCell(player.name + if(player.startingUnit != -1) " - ${options.first { it.first == player.startingUnit }.second}" else "",
                                             color = if(player.color != -1) Player.getTeamColor(player.color) else Color.White,
                                             weight = playerNameWeight, drawStroke = false,
-                                            modifier = Modifier.fillMaxHeight())
+                                            modifier = Modifier.fillMaxHeight()) {
+                                            if (!player.data.ready) {
+                                                CircularProgressIndicator(
+                                                    color = Color(199, 234, 70),
+                                                    modifier = Modifier.size(15.dp).padding(0.dp, 2.dp, 0.dp, 2.dp)
+                                                )
+                                            }
+                                        }
                                         TableCell(
                                             if(player.isSpectator)
                                                 "S"

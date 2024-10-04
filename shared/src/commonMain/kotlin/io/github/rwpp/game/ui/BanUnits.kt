@@ -8,16 +8,22 @@
 package io.github.rwpp.game.ui
 
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.ui.*
 import org.koin.compose.koinInject
 
@@ -42,7 +49,7 @@ fun BanUnitViewDialog(
     AnimatedAlertDialog(
         visible = visible, onDismissRequest = onDismissRequest
     ) { d ->
-        val selectedUnits = remember(lastSelectedUnits) { mutableListOf<GameUnit>().apply { addAll(lastSelectedUnits) } }
+        val selectedUnits = remember(lastSelectedUnits) { SnapshotStateList<GameUnit>().apply { addAll(lastSelectedUnits) } }
         BorderCard(
             modifier = Modifier
                // .fillMaxSize(LargeProportion())
@@ -57,6 +64,22 @@ fun BanUnitViewDialog(
 
             val current = LocalWindowManager.current
 
+            val movementTypeToUnits = remember(allUnits) {
+                buildMap<MovementType, MutableList<GameUnit>> {
+                    allUnits.forEach { u ->
+                        getOrPut(u.movementType) { mutableListOf() }.add(u)
+                    }
+                }
+            }
+
+            val expandedMap = remember {
+                SnapshotStateMap<MovementType, Boolean>().apply {
+                    MovementType.entries.forEach {
+                        put(it, false)
+                    }
+                }
+            }
+
             if (current != WindowManager.Small) {
                 //Fix the filter field
                 FilterField(filter) { filter = it }
@@ -69,22 +92,32 @@ fun BanUnitViewDialog(
                     item { FilterField(filter) { filter = it } }
                 }
 
-                items(
-                    allUnits.size,
-                ) {
-                    val unit by remember(allUnits) { mutableStateOf(allUnits[it]) }
-                    var checked by remember(lastSelectedUnits, unit) { mutableStateOf(selectedUnits.contains(unit)) }
-                    BanUnitItem(
-                        it,
-                        checked,
-                        state,
-                        unit
-                    ) { c ->
-                        checked = c
-                        if(c) {
-                            selectedUnits.add(unit)
-                        } else {
-                            selectedUnits.remove(unit)
+                movementTypeToUnits.forEach { (t, units) ->
+                    item {
+                        val checked = remember(units, selectedUnits.size) { selectedUnits.containsAll(units) }
+                        BanUnitHeader("$t: ${units.size}", expandedMap[t]!!, checked,
+                            { if (!checked) selectedUnits.addAll(units) else selectedUnits.removeAll(units) }
+                        ) { expandedMap[t] = !expandedMap[t]!! }
+                    }
+
+                    if (expandedMap[t]!!) {
+                        items(
+                            units.size,
+                        ) {
+                            val unit by remember(units) { mutableStateOf(units[it]) }
+                            val checked = remember(lastSelectedUnits, unit, selectedUnits.size) { selectedUnits.contains(unit) }
+                            BanUnitItem(
+                                it,
+                                checked,
+                                state,
+                                unit
+                            ) { c ->
+                                if(c) {
+                                    selectedUnits.add(unit)
+                                } else {
+                                    selectedUnits.remove(unit)
+                                }
+                            }
                         }
                     }
                 }
@@ -107,7 +140,7 @@ fun BanUnitViewDialog(
 }
 
 @Composable
-fun BanUnitItem(
+private fun BanUnitItem(
     index: Int,
     checked: Boolean,
     state: LazyListState,
@@ -150,6 +183,35 @@ fun BanUnitItem(
             }
         }
     }
+}
+
+@Composable
+private fun BanUnitHeader(
+    text: String,
+    isExpanded: Boolean,
+    checked: Boolean,
+    onChecked: () -> Unit,
+    onHeaderClicked: () -> Unit
+) {
+    Row(modifier = Modifier
+        .clickable { onHeaderClicked() }
+        .background(Color(27, 18, 18))
+        .padding(vertical = 8.dp, horizontal = 16.dp)) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1.0f)
+        )
+
+        RWCheckbox(checked, modifier = Modifier.padding(5.dp), onCheckedChange = {
+            onChecked()
+        })
+
+        val icon = if(isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+        Icon(icon, "", tint = Color.White)
+    }
+
+    HorizontalDivider(modifier = Modifier.fillMaxWidth(), 2.dp)
 }
 
 @Composable

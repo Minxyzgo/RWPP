@@ -30,7 +30,6 @@ import io.github.rwpp.appKoin
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.ReturnMainMenuEvent
-import org.koin.android.ext.koin.androidContext
 import org.koin.compose.LocalKoinApplication
 
 class MainActivity : ComponentActivity() {
@@ -48,7 +47,7 @@ class MainActivity : ComponentActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) {
             isGaming = false
-            isSandboxGame = false
+            isSinglePlayerGame = false
             if(!isReturnToBattleRoom) { ReturnMainMenuEvent().broadCastIn() }
             isReturnToBattleRoom = false
         }

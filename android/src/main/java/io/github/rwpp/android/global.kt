@@ -9,19 +9,12 @@ package io.github.rwpp.android
 
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
-import io.github.rwpp.AppContext
-import io.github.rwpp.config.ConfigModule
-import io.github.rwpp.game.team.TeamModeModule
-import org.koin.android.ext.koin.androidLogger
-import org.koin.compose.KoinApplication
 import org.koin.core.KoinApplication
-import org.koin.dsl.koinApplication
-import org.koin.ksp.generated.module
 import java.util.concurrent.atomic.AtomicInteger
 
 lateinit var gameLauncher: ActivityResultLauncher<Intent>
 var questionOption: String? = null
-var isSandboxGame: Boolean = false
+var isSinglePlayerGame: Boolean = false
 var isGaming = false
 var isReturnToBattleRoom = false
 var roomMods = arrayOf<String>()

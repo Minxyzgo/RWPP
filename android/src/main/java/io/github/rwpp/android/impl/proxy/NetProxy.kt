@@ -26,6 +26,7 @@ import io.github.rwpp.android.impl.ClientImpl
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.asGamePacket
 import io.github.rwpp.android.impl.sendKickToClient
+import io.github.rwpp.config.Settings
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.CallReloadModEvent
 import io.github.rwpp.event.events.KickedEvent
@@ -253,7 +254,7 @@ object NetProxy {
                                         ?.data?.ready = false
                                 } catch (e: Exception) {
                                     e.printStackTrace()
-                                    sendKickToClient(c, "Mod download error. cause: ${e.message}")
+                                    sendKickToClient(c, "Mod download error. cause: ${e.stackTraceToString().substring(0..100)}...")
                                 }
                             }
                         }
@@ -341,6 +342,24 @@ object NetProxy {
                         InterruptResult(Unit)
                     } else Unit
                 } else Unit
+            }
+        }
+
+        val wField = com.corrodinggames.rts.gameFramework.e::class.java.getDeclaredField("w").apply {
+            isAccessible = true
+        }
+        val settings = appKoin.get<Settings>()
+        com.corrodinggames.rts.gameFramework.e::class.setFunction {
+            addProxy("a", com.corrodinggames.rts.gameFramework.j.bg::class, mode = InjectMode.InsertBefore) { self:  com.corrodinggames.rts.gameFramework.e ->
+                if (settings.enhancedReinforceTroops) {
+                    val actionString = self.k.b
+                    if (actionString != "-1") {
+                        val l = wField.get(self) as List<com.corrodinggames.rts.game.units.d.s>
+                        val m = com.corrodinggames.rts.gameFramework.utility.p(l.sortedBy { it.cY().size })
+                        wField.set(self, m)
+                    }
+                }
+                Unit
             }
         }
     }

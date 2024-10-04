@@ -432,6 +432,23 @@ class GameImpl : Game {
             }
         }
 
+        val vField = com.corrodinggames.rts.gameFramework.e::class.java.getDeclaredField("v").apply { isAccessible = true }
+        val settings = appKoin.get<Settings>()
+        com.corrodinggames.rts.gameFramework.e::class.setFunction {
+            addProxy("a", com.corrodinggames.rts.gameFramework.j.`as`::class, mode = InjectMode.InsertBefore) { self: com.corrodinggames.rts.gameFramework.e ->
+                if (settings.enhancedReinforceTroops) {
+                    val actionString = self.k.a()
+                    if (actionString != "-1") {
+                        val l = vField.get(self) as List<com.corrodinggames.rts.game.units.y>
+                        val m = com.corrodinggames.rts.gameFramework.utility.m(l.sortedBy { (it as com.corrodinggames.rts.game.units.d.l).dx().size })
+                        vField.set(self, m)
+                    }
+                }
+
+                Unit
+            }
+        }
+
         // ban units proxy
         com.corrodinggames.rts.gameFramework.j.ad::class.setFunction {
             addProxy("a", com.corrodinggames.rts.gameFramework.e::class, mode = InjectMode.InsertBefore) { _: Any?, b3: com.corrodinggames.rts.gameFramework.e ->
@@ -510,7 +527,7 @@ class GameImpl : Game {
                                         ?.data?.ready = false
                                 } catch (e: Exception) {
                                     e.printStackTrace()
-                                    B.bX.a(c, "Mod download error. cause: ${e.message}")
+                                    B.bX.a(c, "Mod download error. cause: ${e.stackTraceToString().substring(0..100)}...")
                                 }
                             }
                         }

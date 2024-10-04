@@ -19,7 +19,7 @@ import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.bannedUnitList
 import io.github.rwpp.android.gameLauncher
-import io.github.rwpp.android.isSandboxGame
+import io.github.rwpp.android.isSinglePlayerGame
 import io.github.rwpp.android.questionOption
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.RefreshUIEvent
@@ -83,14 +83,14 @@ class GameImpl : Game, CoroutineScope {
         }
     }
 
-    override fun hostNewSandbox() {
+    override fun hostNewSinglePlayer(sandbox: Boolean) {
         val t = GameEngine.t()
         LevelSelectActivity.loadSinglePlayerMapRaw("skirmish/[z;p10]Crossing Large (10p).tmx", true, 3, 1, true, true)
-        t.bU.b("starting singleplayer (sandbox)")
+        t.bU.b("starting singleplayer")
         t.bU.y = "You"
         t.bU.o = true
-        t.bU.r()
-        isSandboxGame = true
+        if (sandbox) t.bU.r() else t.bU.s()
+        isSinglePlayerGame = true
         GameEngine.t().bU.aA.a = at.a
         GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
         GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"

@@ -21,5 +21,6 @@ data class Settings(
     var isFullscreen: Boolean = true,
     var showWelcomeMessage: Boolean? = null,
     var ignoreVersion: String? = null,
-    var autoCheckUpdate: Boolean = true
+    var autoCheckUpdate: Boolean = true,
+    var enhancedReinforceTroops: Boolean = false
 ) : Config

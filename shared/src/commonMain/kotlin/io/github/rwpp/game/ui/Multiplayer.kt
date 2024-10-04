@@ -748,14 +748,6 @@ fun MultiplayerView(
                         mutableStateOf(false)
                     }
 
-                    LargeOutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        label = {  },
-                        value = "Blacklist"
-                    ) {
-                        showBlacklistDialog = true
-                    }
-
                     BlacklistTargetDialog(showBlacklistDialog) { showBlacklistDialog = false }
 
                     OutlinedTextField(
@@ -796,7 +788,7 @@ fun MultiplayerView(
                         },
                     )
 
-                    var range by remember { mutableStateOf(playerLimitRange) }
+                    var range by remember(playerLimitRange) { mutableStateOf(playerLimitRange) }
                     Column(modifier = Modifier.wrapContentSize()) {
                         Text(
                             "${readI18n("multiplayer.playerLimit")} : $range",
@@ -851,11 +843,11 @@ fun MultiplayerView(
                         )
                     }
 
-                    LargeOutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(readI18n("multiplayer.reset")) },
-                        value = ""
-                    ) {
+                    RWTextButton("Blacklist", modifier = Modifier.padding(5.dp)) {
+                        showBlacklistDialog = true
+                    }
+
+                    RWTextButton(readI18n("multiplayer.reset"), modifier = Modifier.padding(5.dp)) {
                         resetFilter()
                     }
                 }

@@ -125,6 +125,14 @@ fun SettingsView(
                             SettingsSwitchComp("showWarLogOnScreen")
                             SettingsSwitchComp("smartSelection_v2", "smartSelection") //v2 ???
                             SettingsSwitchComp("forceEnglish")
+
+                            SettingsSwitchComp(
+                                "",
+                                "Enhance Reinforce Troops",
+                                settings.enhancedReinforceTroops
+                            ) {
+                                settings.enhancedReinforceTroops = it
+                            }
                             var teamUnitCapSinglePlayer by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapSinglePlayer")) }
                             RWSingleOutlinedTextField(
                                 "teamUnitCapSinglePlayer",

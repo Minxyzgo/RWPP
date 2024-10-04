@@ -7,6 +7,7 @@
 
 package io.github.rwpp.utils
 
+import java.lang.reflect.Modifier
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.declaredMemberProperties
 
@@ -16,4 +17,19 @@ fun <T : Any> T.setPropertyFromObject(obj: T) {
             member.setter.call(this, member.getter.call(obj))
         }
     }
+}
+
+fun <T : Any> T.printObject(targetClass: Class<*> = this::class.java) {
+    println("class: " + targetClass.canonicalName + ": $this" + " {")
+    targetClass.declaredFields.forEach { field ->
+        field.isAccessible = true
+        val static = Modifier.isStatic(field.modifiers)
+        val v = if (static) field.get(null) else field.get(this)
+        println((if(static) "static: " else "") + field.name + ": " + when(v) {
+            is Array<*> -> "[size:${v.size}{${v.joinToString(", ")}}]"
+            is List<*> -> "[size:${v.size}{${v.joinToString(", ")}}]"
+            else -> v
+        })
+    }
+    println("}")
 }

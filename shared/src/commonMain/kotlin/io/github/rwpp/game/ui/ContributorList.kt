@@ -60,7 +60,6 @@ fun ContributorList(
         contributors.split(";").forEach {
             Text(it, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.align(Alignment.CenterHorizontally))
         }
-
     }
 
     Text("特别鸣谢", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))

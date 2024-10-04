@@ -28,7 +28,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -322,7 +321,8 @@ fun RowScope.TableCell(
     color: Color = Color.White,
     drawStroke: Boolean = true,
     modifier: Modifier = Modifier,
-    strokeColor: Color = Color(160, 191, 124)
+    strokeColor: Color = Color(160, 191, 124),
+    iconLeader: (@Composable () -> Unit)? = null,
 ) {
     val border = if(drawStroke) Modifier.border(1.dp, strokeColor) else Modifier
     Row(
@@ -333,6 +333,8 @@ fun RowScope.TableCell(
             .padding(0.dp, 2.dp, 0.dp, 2.dp)
             .then(modifier)
     ) {
+        iconLeader?.invoke()
+
         Text(
             text,
             maxLines = 1,

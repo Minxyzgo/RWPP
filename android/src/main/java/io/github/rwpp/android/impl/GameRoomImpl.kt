@@ -19,12 +19,10 @@ import com.corrodinggames.rts.gameFramework.j.bg
 import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.*
-import io.github.rwpp.config.MultiplayerPreferences
 import io.github.rwpp.config.Settings
 import io.github.rwpp.core.Logic
 import io.github.rwpp.event.broadCastIn
 import io.github.rwpp.event.events.PlayerJoinEvent
-import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
@@ -171,7 +169,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                         return@Label_1604;
                     }
                     s3 = "" + bu.F;
-                } else if(isHost && !isSandboxGame) {
+                } else if(isHost && !isSinglePlayerGame) {
                     if(s != null) {
                         var string = "Local IP address: " + s + " port: " + t2.bU.m + "\n";
                         var s4: String? = null;
@@ -464,7 +462,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     }
 
     override fun disconnect() {
-        isSandboxGame = false
+        isSinglePlayerGame = false
         if(isConnecting) GameEngine.t().bU.b("exited")
         isRWPPRoom = false
         option = RoomOption()
@@ -485,7 +483,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         val t: k = GameEngine.t()
         isGaming = true
 
-        if(isHost || isSandboxGame) {
+        if(isHost || isSinglePlayerGame) {
             t.bU.q()
             t.bU.n()
             t.bU.a(null, false)

@@ -14,6 +14,7 @@ import com.github.minxyzgo.rwij.injectionMultiplatform
 import javassist.ClassMap
 import javassist.CtClass
 import javassist.Modifier
+import javassist.bytecode.Bytecode
 
 group = "io.github.rwpp"
 
@@ -87,7 +88,10 @@ injectionMultiplatform {
             ), // proxy res/raw
             "com.corrodinggames.rts.gameFramework.bc".with(
                 "a(Z)"
-            ) // music
+            ), // music
+            "com.corrodinggames.rts.gameFramework.e".with(
+                "a(Lcom/corrodinggames/rts/gameFramework/j/bg;)"
+            ) // game command packet
         )
         action {
             Libs.`android-game-lib`.classTree.defPool["com.corrodinggames.rts.gameFramework.j.ae"].apply {
@@ -140,11 +144,15 @@ injectionMultiplatform {
                 "f(Ljava/lang/String;)",
                 "i(Ljava/lang/String;)"
             ),
+            "com.corrodinggames.rts.gameFramework.e".with(
+                "a(Lcom/corrodinggames/rts/gameFramework/j/as;)"
+            ),
             "com.corrodinggames.rts.game.n".with(
                 "I()"
             )
         )
         action {
+
             // set all members of Main to public
             com.github.minxyzgo.rwij.Libs.`game-lib`.classTree.defPool["com.corrodinggames.rts.java.Main"].apply {
                 this.declaredMethods.forEach {
@@ -154,6 +162,15 @@ injectionMultiplatform {
                 this.declaredFields.forEach {
                     it.modifiers = Modifier.setPublic(it.modifiers)
                 }
+
+                // support steam
+                val code = Bytecode(classFile.constPool)
+                code.maxLocals = 2
+                code.addIconst(0)
+                code.addAnewarray("java/lang/String")
+                code.addInvokestatic("io/github/rwpp/desktop/MainKt", "main", "([Ljava/lang/String;)V")
+                code.addReturn(CtClass.voidType)
+                this.getDeclaredMethod("main").methodInfo.codeAttribute = code.toCodeAttribute()
             }
         }
     }
