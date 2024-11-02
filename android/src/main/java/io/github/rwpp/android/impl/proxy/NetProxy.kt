@@ -354,8 +354,8 @@ object NetProxy {
                 if (settings.enhancedReinforceTroops) {
                     val actionString = self.k.b
                     if (actionString != "-1") {
-                        val l = wField.get(self) as List<com.corrodinggames.rts.game.units.d.s>
-                        val m = com.corrodinggames.rts.gameFramework.utility.p(l.sortedBy { it.cY().size })
+                        val l = wField.get(self) as List<*>
+                        val m = com.corrodinggames.rts.gameFramework.utility.p(l.sortedBy { (it as? com.corrodinggames.rts.game.units.d.s)?.cY()?.size ?: 0 })
                         wField.set(self, m)
                     }
                 }

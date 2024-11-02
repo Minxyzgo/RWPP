@@ -60,7 +60,6 @@ import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.ExpandedCard
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import io.github.rwpp.ui.v2.RWIconButton
-import io.github.rwpp.ui.v2.bounceClick
 import io.github.rwpp.utils.io.SizeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -257,14 +256,14 @@ fun MultiplayerView(
             }
 
             var password by remember { mutableStateOf("") }
-            RWSingleOutlinedTextField("password", password, modifier = Modifier.fillMaxWidth().padding(5.dp)) { password = it }
+            RWSingleOutlinedTextField(readI18n("multiplayer.password"), password, modifier = Modifier.fillMaxWidth().padding(5.dp)) { password = it }
 
             Spacer(modifier = Modifier.weight(1f))
 
 
             val rcnAddress = "43.248.96.172:5123"
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                RWTextButton("Host Private", modifier = Modifier.padding(5.dp)) {
+                RWTextButton(readI18n("multiplayer.hostPrivate"), modifier = Modifier.padding(5.dp)) {
                     dismiss()
                     game.gameRoom.option = RoomOption(transferMod)
                     if(hostByRCN) {
@@ -278,7 +277,7 @@ fun MultiplayerView(
                         onHost()
                     }
                 }
-                RWTextButton("Host Public", modifier = Modifier.padding(5.dp)) {
+                RWTextButton(readI18n("multiplayer.hostPublic"), modifier = Modifier.padding(5.dp)) {
                     dismiss()
                     game.gameRoom.option = RoomOption(transferMod)
                     if(hostByRCN) {
@@ -563,9 +562,9 @@ fun MultiplayerView(
                     val mapName = remember(info) {
                         info?.run { mapName } ?: ""
                     }
-                    val ping = remember(info) {
-                        info?.run { ping.toString() } ?: ""
-                    }
+//                    val ping = remember(info) {
+//                        info?.run { ping.toString() } ?: ""
+//                    }
                     val mods = remember(info) {
                         info?.run { mods } ?: ""
                     }
@@ -598,7 +597,7 @@ fun MultiplayerView(
                                     appendLine("player: $playerCount")
                                     appendLine("playing map: $mapName")
                                     appendLine(description)
-                                    appendLine("ping: ${ping}ms")
+                                 //   appendLine("ping: ${ping}ms")
                                     if (mods.isNotBlank()) appendLine("enabled mods: $mods")
                                 },
                                 modifier = Modifier.padding(3.dp),

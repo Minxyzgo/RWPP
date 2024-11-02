@@ -18,6 +18,9 @@ battleroom = "战役室"
 transferMod = "传输模组 (实验性)"
 addToBlackList = "添加进黑名单"
 join = "加入"
+password = "密码"
+hostPublic = "创建公开"
+hostPrivate = "创建私有"
 admitting = """
 为了使RWPP能变得更好，我们希望您在开房时向进入的玩家发送一条消息用以推广RWPP
 您是否同意？(该对话框第一次显示后将不再显示，稍后可在 设置 - Show Welcome Message中更改)

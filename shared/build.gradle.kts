@@ -197,9 +197,10 @@ kotlin {
                 api("io.insert-koin:koin-compose:$koinVersion")
                 api("io.insert-koin:koin-annotations:$koinAnnotationsVersion")
                 //api("com.halilibo.compose-richtext:richtext-ui:0.17.0")
-                api("com.squareup.okhttp3:okhttp:4.11.0")
+                api("com.squareup.okhttp3:okhttp:4.12.0")
                 api("net.peanuuutz.tomlkt:tomlkt:0.3.7")
                 api("com.eclipsesource.minimal-json:minimal-json:0.9.5")
+                api("com.mikepenz:multiplatform-markdown-renderer:0.27.0-rc02")
                 //api("io.github.androidpoet:dropdown:1.1.2")
                 //api("com.github.nanihadesuka:LazyColumnScrollbar:1.7.2")
                 //api("com.google.code.gson:gson:2.10.1")
@@ -211,9 +212,9 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
-                api("androidx.activity:activity-compose:1.9.1")
+                api("androidx.activity:activity-compose:1.9.3")
                 api("androidx.appcompat:appcompat:1.7.0")
-                api("androidx.core:core-ktx:1.13.1")
+                api("androidx.core:core-ktx:1.15.0")
             }
         }
 
@@ -246,8 +247,22 @@ android {
 
 dependencies {
     val rwijVersion = findProperty("rwij.version") as String
+    commonMainApi(project(":utils"))
+    commonMainApi(project(":annotations"))
+  //  ksp(project(":annotations"))
+
     commonMainApi("com.github.minxyzgo.rw-injection:core:$rwijVersion")
 
     val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
-    ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
+    add("kspCommonMainMetadata", "io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().all {
+    if(name != "kspCommonMainKotlinMetadata") {
+        dependsOn("kspCommonMainKotlinMetadata")
+    }
+}
+
+kotlin.sourceSets.commonMain {
+    kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
 }

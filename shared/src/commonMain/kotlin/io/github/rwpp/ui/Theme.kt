@@ -51,5 +51,19 @@ val RWSelectionColors
         Color(151, 188, 98)
     )
 
+val RWTextFieldColors
+    @Composable get() = TextFieldDefaults.colors(
+        focusedTextColor = Color.White,
+        unfocusedTextColor = Color.White,
+        focusedContainerColor = Color.DarkGray.copy(alpha = 0.8f),
+        unfocusedContainerColor = Color.DarkGray.copy(alpha = 0.8f),
+        cursorColor = Color(151, 188, 98),
+        focusedLabelColor = Color(151, 188, 98),
+        unfocusedLabelColor = Color.White,
+        focusedIndicatorColor = Color.Transparent,
+        unfocusedIndicatorColor = Color.Transparent,
+        disabledIndicatorColor = Color.Transparent
+    )
+
 val RWCheckBoxColors
     @Composable get() = CheckboxDefaults.colors(checkedColor = Color(151, 188, 98))

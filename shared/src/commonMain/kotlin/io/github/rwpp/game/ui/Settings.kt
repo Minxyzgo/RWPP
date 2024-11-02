@@ -31,6 +31,7 @@ import io.github.rwpp.config.Settings
 import io.github.rwpp.game.Game
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.net.LatestVersionProfile
 import io.github.rwpp.net.Net
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.Platform
@@ -44,7 +45,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun SettingsView(
-    onCheckUpdate: (String) -> Unit,
+    onCheckUpdate: (LatestVersionProfile) -> Unit,
     onExit: () -> Unit
 ) {
     BackHandler(true, onExit)
@@ -210,7 +211,7 @@ fun SettingsView(
                                 RWTextButton(readI18n("settings.checkUpdate"), modifier = Modifier.padding(5.dp)) {
                                     checking = true
                                     scope.launch(Dispatchers.IO) {
-                                        net.getLatestVersion()?.let(onCheckUpdate)
+                                        net.getLatestVersionProfile()?.let(onCheckUpdate)
                                         checking = false
                                     }
                                 }

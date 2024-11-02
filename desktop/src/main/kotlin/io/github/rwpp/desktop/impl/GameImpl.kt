@@ -440,7 +440,7 @@ class GameImpl : Game {
                     val actionString = self.k.a()
                     if (actionString != "-1") {
                         val l = vField.get(self) as List<com.corrodinggames.rts.game.units.y>
-                        val m = com.corrodinggames.rts.gameFramework.utility.m(l.sortedBy { (it as com.corrodinggames.rts.game.units.d.l).dx().size })
+                        val m = com.corrodinggames.rts.gameFramework.utility.m(l.sortedBy { (it as? com.corrodinggames.rts.game.units.d.l)?.dx()?.size ?: 0 })
                         vField.set(self, m)
                     }
                 }

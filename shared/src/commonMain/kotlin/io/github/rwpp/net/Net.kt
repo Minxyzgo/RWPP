@@ -43,7 +43,7 @@ interface Net : KoinComponent, Initialization {
         registerListeners()
     }
 
-    fun getLatestVersion(): String? {
+    fun getLatestVersionProfile(): LatestVersionProfile? {
         return runCatching {
             val locale = Locale.getDefault()
             val request = Request.Builder().url(
@@ -52,8 +52,11 @@ interface Net : KoinComponent, Initialization {
                 else "https://api.github.com/repos/Minxyzgo/RWPP/releases/latest"
             ).build()
             val response = client.newCall(request).execute()
+
             response.body?.string()?.let { str ->
-                Json.parse(str).asObject().getString("tag_name", null)
+                val version = Json.parse(str).asObject().getString("tag_name", "null")
+                val body = Json.parse(str).asObject().getString("body", "null")
+                LatestVersionProfile(version, body)
             }
         }.getOrNull()
     }

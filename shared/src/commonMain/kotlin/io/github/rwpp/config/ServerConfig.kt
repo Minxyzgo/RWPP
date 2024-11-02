@@ -14,7 +14,6 @@ import io.github.rwpp.utils.io.SizeUtils
 import kotlinx.serialization.Serializable
 import okio.buffer
 import okio.source
-import org.koin.core.annotation.Single
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream

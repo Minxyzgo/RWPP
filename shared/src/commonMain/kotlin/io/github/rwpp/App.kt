@@ -29,10 +29,18 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.model.DefaultMarkdownColors
+import com.mikepenz.markdown.model.DefaultMarkdownTypography
+import com.mikepenz.markdown.model.MarkdownColors
+import com.mikepenz.markdown.model.MarkdownTypography
+import io.github.rwpp.config.CoreData
 import io.github.rwpp.config.Settings
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn
@@ -51,6 +59,7 @@ import io.github.rwpp.ui.v2.RWIconButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
+import java.util.Date
 
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
 
@@ -111,15 +120,31 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
 
     var checkUpdateDialogVisible by remember { mutableStateOf(false) }
     var latestVersion by remember { mutableStateOf<String?>(null) }
+    var latestVersionBody by remember { mutableStateOf<String>("null") }
 
+    val coreData = koinInject<CoreData>()
     val settings = koinInject<Settings>()
     val net = koinInject<Net>()
 
+
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            if (settings.autoCheckUpdate) {
-                latestVersion = net.getLatestVersion()
-                if (latestVersion != null && latestVersion != projectVersion && settings.ignoreVersion != latestVersion) checkUpdateDialogVisible = true
+        val now = System.currentTimeMillis()
+        coreData.lastPlayTime = now
+        // per day
+        if ((now - (coreData.lastAutoCheckUpdateTime + 1000 * 60 * 60 * 24) > 0) || coreData.debug) {
+            withContext(Dispatchers.IO) {
+                if (settings.autoCheckUpdate) {
+                    val profile = net.getLatestVersionProfile()
+
+                    if (profile != null) {
+                        coreData.lastAutoCheckUpdateTime = now
+                        latestVersion = profile.version
+                        latestVersionBody = profile.body
+                        if (latestVersion != projectVersion && settings.ignoreVersion != latestVersion || coreData.debug) {
+                            checkUpdateDialogVisible = true
+                        }
+                    }
+                }
             }
         }
     }
@@ -237,8 +262,8 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     exit = fadeOut() + slideOutVertically()
                 ) {
                     SettingsView({
-                        if (it == projectVersion || settings.ignoreVersion == it) return@SettingsView
-                        latestVersion = it
+                        if (it.version == projectVersion || settings.ignoreVersion == it.version) return@SettingsView
+                        latestVersion = it.version
                         checkUpdateDialogVisible = true
                     }) { showSettingsView = false }
                 }
@@ -347,7 +372,7 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                     checkUpdateDialogVisible,
                     onDismissRequest = { checkUpdateDialogVisible = false }
                 ) { dismiss ->
-                    BorderCard(modifier = Modifier.fillMaxWidth(GeneralProportion())) {
+                    BorderCard(modifier = Modifier.fillMaxWidth(GeneralProportion()).verticalScroll(rememberScrollState())) {
 
                         Row(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
                             HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
@@ -367,12 +392,12 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             withLink(
                                 link = LinkAnnotation
                                     .Clickable(
-                                        tag = "gitee",
-                                        linkInteractionListener = { net.openUriInBrowser("https://gitee.com/minxyzgo/RWPP/releases") },
+                                        tag = "github",
+                                        linkInteractionListener = { net.openUriInBrowser("https://github.com/Minxyzgo/RWPP/releases") },
                                         styles = TextLinkStyles(style = SpanStyle(color = Color(0, 0, 238), textDecoration = TextDecoration.Underline))
                                     )
                             ) {
-                                append(readI18n("settings.goToDownload", I18nType.RWPP, "gitee"))
+                                append(readI18n("settings.goToDownload", I18nType.RWPP, "github"))
                             }
 
                             append("\n")
@@ -380,12 +405,12 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                             withLink(
                                 link = LinkAnnotation
                                     .Clickable(
-                                        tag = "github",
-                                        linkInteractionListener = { net.openUriInBrowser("https://github.com/Minxyzgo/RWPP/releases") },
+                                        tag = "123pan",
+                                        linkInteractionListener = { net.openUriInBrowser("https://www.123684.com/s/6Rijjv-79Fi?提取码:VtDG") },
                                         styles = TextLinkStyles(style = SpanStyle(color = Color(0, 0, 238), textDecoration = TextDecoration.Underline))
                                     )
                             ) {
-                                append(readI18n("settings.goToDownload", I18nType.RWPP, "github"))
+                                append(readI18n("settings.goToDownload", I18nType.RWPP, "123pan"))
                             }
                         }
 
@@ -401,6 +426,37 @@ fun App(sizeModifier: Modifier = Modifier.fillMaxSize()) {
                         ) {
                             settings.ignoreVersion = latestVersion
                             dismiss()
+                        }
+
+                        BorderCard(backgroundColor = Color.DarkGray.copy(alpha = 0.8f)) {
+                            Markdown(latestVersionBody, modifier = Modifier.padding(5.dp), colors = DefaultMarkdownColors(
+                                text = MaterialTheme.colorScheme.onBackground,
+                                codeText = MaterialTheme.colorScheme.onBackground,
+                                inlineCodeText= MaterialTheme.colorScheme.onBackground,
+                                linkText = MaterialTheme.colorScheme.onBackground,
+                                codeBackground = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
+                                inlineCodeBackground = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
+                                dividerColor = MaterialTheme.colorScheme.outlineVariant,
+                            ), typography = DefaultMarkdownTypography(
+                                h1 = MaterialTheme.typography.displayLarge,
+                                h2 = MaterialTheme.typography.displayMedium,
+                                h3 = MaterialTheme.typography.displaySmall,
+                                h4 = MaterialTheme.typography.headlineMedium,
+                                h5 = MaterialTheme.typography.headlineSmall,
+                                h6= MaterialTheme.typography.titleLarge,
+                                text = MaterialTheme.typography.bodyLarge,
+                                code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                                inlineCode = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
+                                quote = MaterialTheme.typography.bodyMedium.plus(SpanStyle(fontStyle = FontStyle.Italic)),
+                                paragraph = MaterialTheme.typography.bodyLarge,
+                                ordered = MaterialTheme.typography.bodyLarge,
+                                bullet = MaterialTheme.typography.bodyLarge,
+                                list = MaterialTheme.typography.bodyLarge,
+                                link = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    textDecoration = TextDecoration.Underline
+                                )
+                            ))
                         }
                     }
                 }
@@ -628,7 +684,7 @@ fun MainMenu(
             val net = koinInject<Net>()
 
             RWIconButton(loadSvg("library"), modifier = Modifier.padding(10.dp)) {
-                net.openUriInBrowser("https://gitee.com/minxyzgo/RWPP/wikis/pages")
+                net.openUriInBrowser("https://rwpp.netlify.app/")
             }
 
             RWIconButton(loadSvg("octocat"), modifier = Modifier.padding(10.dp)) {

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -97,7 +98,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     val isHost = remember(update) { room.isHost || room.isHostServer }
     val updateAction = { update = !update }
 
-    val chatMessages = remember { SnapshotStateList<AnnotatedString>() }
+    var chatMessages by remember { mutableStateOf(AnnotatedString("")) }
 
     var playerOverrideVisible by remember { mutableStateOf(false) }
     var selectedPlayer by remember { mutableStateOf(players.firstOrNull() ?: ConnectingPlayer) }
@@ -126,7 +127,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     GlobalEventChannel.filter(ChatMessageEvent::class).onDispose {
         subscribeAlways {
             scope.launch {
-                chatMessages.add(
+                chatMessages =
                     buildAnnotatedString {
                         if(it.sender == "RELAY_CN-ADMIN") {
                             val result = relayRegex.find(it.message)?.value
@@ -148,8 +149,9 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                         withStyle(style = SpanStyle(color = Color.White)) {
                             append(it.message)
                         }
-                    }
-                )
+
+                        append("\n")
+                    } + chatMessages
             }
         }
     }
@@ -230,36 +232,30 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         }
 
         @Composable
-        fun MessageView(modifier: Modifier = Modifier) {
+        fun MessageView() {
+            var value by remember(chatMessages) { mutableStateOf(TextFieldValue(chatMessages)) }
 
-                if(LocalWindowManager.current == WindowManager.Large) {
-                    val listState = rememberLazyListState()
-                    SelectionContainer(modifier) {
-                        LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                            items(chatMessages.size) {
-                                Text(
-                                    chatMessages[chatMessages.size - 1 - it],
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp)
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    Column {
-                        for(i in chatMessages.indices) {
-                            if(i >= 100) break
-                            SelectionContainer {
-                                Text(
-                                    chatMessages[chatMessages.size - 1 - i],
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(5.dp, 1.dp, 0.dp, 0.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
+            if (LocalWindowManager.current == WindowManager.Large) {
+                TextField(
+                    value = value,
+                    onValueChange = { value = it },
+                    readOnly = true,
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = RWTextFieldColors,
+                    maxLines = 100
+                )
+            } else {
+                TextField(
+                    value = value,
+                    onValueChange = { value = it },
+                    readOnly = true,
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = RWTextFieldColors,
+                    maxLines = 100
+                )
+            }
         }
 
         BorderCard(
@@ -551,7 +547,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     .padding(5.dp),
                                 backgroundColor = Color.DarkGray.copy(.7f)
                             ) {
-                                MessageView(Modifier.weight(1f))
+                                MessageView()
                             }
                         }
                     }
