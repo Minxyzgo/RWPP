@@ -53,6 +53,7 @@ compose.desktop {
             packageName = "RWPP"
             packageVersion = rootProject.version.toString()
             mainClass = "io.github.rwpp.desktop.MainKt"
+            vendor = "RWPP Contributors"
             description = "Multiplatform launcher for Rusted Warfare"
             copyright = "Copyright 2023-2024 RWPP contributors"
             licenseFile.set(rootProject.file("LICENSE"))
@@ -69,6 +70,7 @@ compose.desktop {
             windows {
                 console = true
                 iconFile.set(project.file("logo.ico"))
+                upgradeUuid = "abc38343-cdb8-4e3f-aa7f-0ead99385de1"
             }
 
             linux {
@@ -78,6 +80,11 @@ compose.desktop {
             args += listOf("-native")
         }
     }
+}
+
+task("packageWixDistribution") {
+    dependsOn("createReleaseDistributable")
+    //TODO
 }
 
 

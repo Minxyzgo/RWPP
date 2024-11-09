@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net472</TargetFramework>
+        <RootNamespace>RSetup</RootNamespace>
+        <AssemblyName>RWPP Setup</AssemblyName>
+        <OutputType>Exe</OutputType>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <UseWPF>true</UseWPF>
+        <RollForward>Major</RollForward>
+        <!-- https://stackoverflow.com/questions/58844785/how-to-reference-system-windows-forms-in-net-core-3-0-for-wpf-apps -->
+        <UseWindowsForms>true</UseWindowsForms>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Remove="*.msi"/>
+        <None Remove="*.exe"/>
+        <None Remove="*.wxs"/>
+        <None Remove="*.wixpdb"/>
+        <None Remove="*.wixobj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="WixSharp-wix4.WPF" Version="2.4.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="System.Windows.Forms"/>
+        <Reference Include="System.Xaml">
+            <RequiredTargetFramework>4.0</RequiredTargetFramework>
+        </Reference>
+        <Reference Include="WindowsBase"/>
+        <Reference Include="PresentationCore"/>
+        <Reference Include="PresentationFramework"/>
+    </ItemGroup>
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+        <Exec Command="cd .\&#xD;&#xA;set ide=true&#xD;&#xA;&quot;$(TargetPath)&quot;"/>
+    </Target>
+
+</Project>

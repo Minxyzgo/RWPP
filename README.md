@@ -32,8 +32,8 @@
 You can download RWPP release version in the releases.
 
 # Run
-## Zip Version
-- Extract everything in the RWPP zip to the rw root directory
+## Msi Version
+- Install RWPP to your rw root directory
 > e.g. SteamLibrary\steamapps\common\Rusted Warfare\
 - Run RWPP.exe
 

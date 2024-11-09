@@ -248,7 +248,6 @@ android {
 dependencies {
     val rwijVersion = findProperty("rwij.version") as String
     commonMainApi(project(":utils"))
-    commonMainApi(project(":annotations"))
   //  ksp(project(":annotations"))
 
     commonMainApi("com.github.minxyzgo.rw-injection:core:$rwijVersion")
