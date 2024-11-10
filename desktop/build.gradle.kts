@@ -84,7 +84,7 @@ compose.desktop {
 
 task("packageWixDistribution") {
     dependsOn("createReleaseDistributable")
-    //TODO
+
 }
 
 

@@ -5,6 +5,7 @@ using WixSharp;
 using WixSharp.UI.Forms;
 
 using WixSharp.UI.WPF;
+using Wpf.Ui.Appearance;
 
 namespace RSetup.RDialogs
 {
@@ -22,6 +23,7 @@ namespace RSetup.RDialogs
         public InstallDirDialog()
         {
             InitializeComponent();
+            ApplicationThemeManager.Apply(this);
         }
 
         /// <summary>

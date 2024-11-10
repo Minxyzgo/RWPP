@@ -85,7 +85,7 @@
                 Orientation="Horizontal">
                 <Button
                     x:Name="Print"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     Click="Print_Click">
                     [WixUIPrint]
@@ -93,7 +93,7 @@
                 <Separator Width="10" Opacity="0" />
                 <Button
                     x:Name="GoPrev"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     Click="GoPrev_Click">
                     [WixUIBack]
@@ -101,7 +101,7 @@
                 <Separator Width="10" Opacity="0" />
                 <Button
                     x:Name="GoNext"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     Click="GoNext_Click"
                     IsEnabled="{Binding CanGoNext}">
@@ -110,7 +110,7 @@
                 <Separator Width="20" Opacity="0" />
                 <Button
                     x:Name="Cancel"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     Click="Cancel_Click">
                     [WixUICancel]

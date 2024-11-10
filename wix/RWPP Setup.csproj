@@ -12,29 +12,30 @@
         <UseWindowsForms>true</UseWindowsForms>
     </PropertyGroup>
     <ItemGroup>
-        <None Remove="*.msi"/>
-        <None Remove="*.exe"/>
-        <None Remove="*.wxs"/>
-        <None Remove="*.wixpdb"/>
-        <None Remove="*.wixobj"/>
+        <None Remove="*.msi" />
+        <None Remove="*.exe" />
+        <None Remove="*.wxs" />
+        <None Remove="*.wixpdb" />
+        <None Remove="*.wixobj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="WixSharp-wix4.WPF" Version="2.4.2"/>
+        <PackageReference Include="WixSharp-wix4.WPF" Version="2.4.2" />
+        <PackageReference Include="WPF-UI" Version="3.0.5" />
     </ItemGroup>
-
+    
     <ItemGroup>
-        <Reference Include="System.Windows.Forms"/>
+        <Reference Include="System.Windows.Forms" />
         <Reference Include="System.Xaml">
             <RequiredTargetFramework>4.0</RequiredTargetFramework>
         </Reference>
-        <Reference Include="WindowsBase"/>
-        <Reference Include="PresentationCore"/>
-        <Reference Include="PresentationFramework"/>
+        <Reference Include="WindowsBase" />
+        <Reference Include="PresentationCore" />
+        <Reference Include="PresentationFramework" />
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-        <Exec Command="cd .\&#xD;&#xA;set ide=true&#xD;&#xA;&quot;$(TargetPath)&quot;"/>
+        <Exec Command="cd .\&#xD;&#xA;set ide=true&#xD;&#xA;&quot;$(TargetPath)&quot;" />
     </Target>
 
 </Project>

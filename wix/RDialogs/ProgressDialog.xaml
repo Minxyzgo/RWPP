@@ -98,7 +98,7 @@
                 <Separator Width="10" Opacity="0" />
                 <Button
                     x:Name="GoPrev"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     IsEnabled="False">
                     [WixUIBack]
@@ -106,7 +106,7 @@
                 <Separator Width="10" Opacity="0" />
                 <Button
                     x:Name="GoNext"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     IsEnabled="False">
                     [WixUINext]
@@ -114,7 +114,7 @@
                 <Separator Width="20" Opacity="0" />
                 <Button
                     x:Name="Cancel"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     Click="Cancel_Click">
                     [WixUICancel]

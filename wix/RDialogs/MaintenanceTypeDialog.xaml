@@ -61,7 +61,7 @@
             </Grid.RowDefinitions>
             <Button
                 x:Name="Change"
-                Height="23"
+                Height="28"
                 MinWidth="112"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
@@ -80,7 +80,7 @@
             <Button
                 x:Name="Repair"
                 Grid.Row="1"
-                Height="23"
+                Height="28"
                 MinWidth="112"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
@@ -100,7 +100,7 @@
             <Button
                 x:Name="Remove"
                 Grid.Row="2"
-                Height="23"
+                Height="28"
                 MinWidth="112"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
@@ -140,7 +140,7 @@
                 <Separator Width="10" Opacity="0" />
                 <Button
                     x:Name="GoNext"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     IsEnabled="false">
                     [WixUINext]
@@ -148,7 +148,7 @@
                 <Separator Width="20" Opacity="0" />
                 <Button
                     x:Name="Cancel"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     Click="Cancel_Click">
                     [WixUICancel]

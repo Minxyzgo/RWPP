@@ -15,9 +15,9 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="53" />
         </Grid.RowDefinitions>
-        <Image
-            x:Name="Banner"
-            Source="{Binding Banner}" Stretch="Fill" />
+        <!-- <Image -->
+        <!--     x:Name="Banner" -->
+        <!--     Source="{Binding Banner}" Stretch="Fill" /> -->
         <Border
             Margin="-1,-1,-1,0"
             HorizontalAlignment="Stretch"
@@ -76,7 +76,7 @@
                 <Separator Width="10" Opacity="0" />
                 <Button
                     x:Name="GoNext"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     Click="GoNext_Click">
                     [WixUINext]
@@ -84,7 +84,7 @@
                 <Separator Width="20" Opacity="0" />
                 <Button
                     x:Name="Cancel"
-                    Height="23"
+                    Height="28"
                     MinWidth="73"
                     Click="Cancel_Click">
                     [WixUICancel]

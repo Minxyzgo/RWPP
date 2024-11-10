@@ -3,6 +3,8 @@ using System.Windows.Media.Imaging;
 using WixSharp;
 using WixSharp.UI.Forms;
 using WixSharp.UI.WPF;
+using Wpf.Ui.Appearance;
+using Wpf.Ui.Controls;
 
 namespace RSetup.RDialogs
 {
@@ -22,6 +24,8 @@ namespace RSetup.RDialogs
         public WelcomeDialog()
         {
             InitializeComponent();
+            ApplicationThemeManager.Apply(ApplicationTheme.Light);
+            ApplicationThemeManager.Apply(this);
         }
 
         /// <summary>

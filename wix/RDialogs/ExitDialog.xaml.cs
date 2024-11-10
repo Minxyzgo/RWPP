@@ -9,6 +9,7 @@ using WixSharp.UI.Forms;
 using IO = System.IO;
 
 using WixSharp.UI.WPF;
+using Wpf.Ui.Appearance;
 
 namespace RSetup.RDialogs
 {
@@ -26,6 +27,7 @@ namespace RSetup.RDialogs
         public ExitDialog()
         {
             InitializeComponent();
+            ApplicationThemeManager.Apply(this);
         }
 
         /// <summary>
