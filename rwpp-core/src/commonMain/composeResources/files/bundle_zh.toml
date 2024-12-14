@@ -1,0 +1,86 @@
+[mission]
+title = "战役"
+type = "战役类型"
+
+[multiplayer]
+host = "创建房间"
+replay = "观看回放"
+joinLastGame = "加入上一次游戏"
+blacklist = "黑名单"
+playerLimit = "玩家限制"
+enableMods = "启动模组"
+reset = "重置"
+hostByRCN = "以RCN创建房间"
+joinServer = "加入服务器"
+userName = "用户名"
+useAsDefaultList = "用作默认房间列表"
+battleroom = "战役室"
+transferMod = "传输模组 (实验性)"
+addToBlackList = "添加进黑名单"
+join = "加入"
+password = "密码"
+hostPublic = "创建公开"
+hostPrivate = "创建私有"
+admitting = """
+为了使RWPP能变得更好，我们希望您在开房时向进入的玩家发送一条消息用以推广RWPP
+您是否同意？(该对话框第一次显示后将不再显示，稍后可在 设置 - Show Welcome Message中更改)
+"""
+
+[multiplayer.room]
+selectMap = "选择地图"
+option = "选项"
+start = "开始"
+changeSite = "更换位置"
+addAI = "添加AI"
+kick = "踢出"
+apply = "应用"
+sendMessage = "发送消息"
+noNukes = "禁用核弹"
+sharedControl = "共享控制"
+allowSpectators = "允许观战"
+teamLock = "队伍锁定"
+playerConfig = "玩家配置"
+startingUnit = "初始单位"
+startingCredits = "初始资金"
+maxPlayer = "最大玩家数"
+incomeMultiplier = "资金倍率"
+teamUnitCapHostedGame = "团队最大单位数量"
+banUnits = "禁用单位"
+
+[mod]
+update = "刷新"
+reload = "重载"
+disableAll = "禁用全部"
+apply = "应用"
+cancel = "取消"
+delete = "删除"
+networkModInfo = """
+警告：这是一个从多人游戏中下载的模组，之后它就会被删除
+如果你不想这么做，请点击下方的'取消'按钮。
+"""
+
+[menu]
+mission = "战役"
+sandbox = "沙盒编辑器"
+multiplayer = "多人游戏"
+mods = "模组"
+resource = "资源"
+settings = "设置"
+exit = "退出"
+replay = "观看回放"
+
+[common]
+difficulty = "难度"
+spawnPoint = "出生点"
+team = "队伍"
+fog = "迷雾"
+
+[settings]
+setExternalFolder = "设置外部文件权限"
+manageAllFiles = "设置管理所有文件"
+client = "客户端"
+autoCheckUpdate = "自动检测更新"
+checkUpdate = "检测更新"
+newVersion = "检测到新版本: {0}, 可以前往以下站点下载"
+goToDownload = "前往 {0} 下载"
+ignoreVersion = "忽略此版本"

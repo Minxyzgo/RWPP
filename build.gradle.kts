@@ -14,6 +14,7 @@ plugins {
     id("com.android.library").apply(false)
     id("org.jetbrains.compose").apply(false)
     id("com.google.devtools.ksp").apply(false)
+    id("com.github.gmazzo.buildconfig").apply(false)
 }
 
 allprojects {

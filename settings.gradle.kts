@@ -7,9 +7,11 @@
 
 rootProject.name = "RWPP"
 
-include(":android")
-include(":shared")
-include(":desktop")
+include(":rwpp-android")
+include(":rwpp-desktop")
+include(":rwpp-core")
+include(":rwpp-ksp")
+include(":rwpp-core-utils")
 
 pluginManagement {
     repositories {
@@ -23,6 +25,7 @@ pluginManagement {
         val agpVersion = extra["agp.version"] as String
         val composeVersion = extra["compose.version"] as String
         val kspVersion = extra["ksp.version"] as String
+        val buildconfigVersion = extra["buildconfig.version"] as String
 
         kotlin("jvm").version(kotlinVersion)
         kotlin("multiplatform").version(kotlinVersion)
@@ -34,6 +37,7 @@ pluginManagement {
         id("com.android.library").version(agpVersion)
         id("org.jetbrains.compose").version(composeVersion)
         id("com.google.devtools.ksp").version(kspVersion)
+        id("com.github.gmazzo.buildconfig").version(buildconfigVersion)
     }
 }
 plugins {
@@ -47,5 +51,4 @@ dependencyResolutionManagement {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 }
-include("annotations")
-include("utils")
+

@@ -18,10 +18,12 @@
 [![Issues](https://img.shields.io/github/issues/Minxyzgo/RWPP)]()
 </div>
 
+## Help
+[Chinese wiki](https://rwpp.netlify.app/)
+
 ## Implemented
  - __Ban Units__
  - __IME fixed__
- - __Transferring mod__ (experimental)
  - __Blacklists__
  - __List filter__
  - __More room options__ (Such as lock room and team look)
@@ -44,18 +46,19 @@ You can download RWPP release version in the releases.
 - Run launcher.bat
 
 # Build
-Run gradle task `shared:rebuildJar` to build necessary libs at first.
+Using OpenJdk 17 or above.
 
-OpenJdk 17 or above
+Run gradle task `kspKotlin` to build necessary libs at first.
 
-For desktop, run task `desktop:packageReleaseUberJarForCurrentOS`
+For desktop, run task `rwpp-desktop:packageReleaseUberJarForCurrentOS`
+
+To build msi, run task `rwpp-desktop:packageWixDistribution` (Note that you need .net SDK)
 
 For android, assets and res are missing for some reason,
 you can find them in your Rusted Warfare client.
 
 # Contribute
-If you want to create international support for your native language,
-You can go `shared/src/commonMain/composeResources/files` to create a new bundle.
+If you find any bugs or have any suggestions, please create an issue.
 
 # Thanks
 

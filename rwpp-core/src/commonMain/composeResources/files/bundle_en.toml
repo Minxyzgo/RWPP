@@ -1,0 +1,86 @@
+[mission]
+title = "Missions"
+type = "Mission Type"
+
+[multiplayer]
+host = "Host new game"
+replay = "Watch Replay"
+joinLastGame = "Join the last game"
+blacklist = "blacklist"
+playerLimit = "Player Limit"
+enableMods = "Enable Mods"
+reset = "Reset"
+hostByRCN = "Host By RCN"
+joinServer = "Join Server"
+userName = "User Name"
+useAsDefaultList = "Use as default room list"
+battleroom = "Battleroom"
+transferMod = "Transfer Mod (Experimental)"
+addToBlackList = "Add to Blacklist"
+join = "Join"
+password = "password"
+hostPublic = "Host Public"
+hostPrivate = "Host Private"
+admitting = """
+In order to make RWPP even better, we want you to send a message to joining players to promote RWPP when you are a host
+Do you agree? (The dialog will no longer be displayed, and can be changed later in Settings - Show Welcome Message)
+"""
+
+[multiplayer.room]
+selectMap = "Select Map"
+option = "Option"
+start = "Start"
+changeSite = "Change Site"
+addAI = "Add AI"
+kick = "Kick"
+apply = "Apply"
+sendMessage = "Send Message"
+noNukes = "No Nukes"
+sharedControl = "Shared Control"
+allowSpectators = "Allow Spectators"
+teamLock = "Team Lock"
+playerConfig = "Player Config"
+startingUnit = "Starting Unit"
+startingCredits = "Starting Credits"
+maxPlayer = "Max Player"
+incomeMultiplier = "Income Multiplier"
+teamUnitCapHostedGame = "Team Unit Cap Hosted Game"
+banUnits = "Ban Units"
+
+[mod]
+update = "Update"
+reload = "Reload"
+disableAll = "DisableAll"
+apply = "Apply"
+cancel = "Cancel"
+delete = "Delete"
+networkModInfo = """
+Warning: this is a mod downloaded from multiplayer game, and it will be deleted later,
+if you don't want to do so, please touch the button 'Cancel'.
+"""
+
+[menu]
+mission = "Mission"
+sandbox = "Sandbox Editor"
+multiplayer = "Multiplayer"
+mods = "Mods"
+resource = "Resource"
+settings = "Settings"
+exit = "Exit"
+replay = "Watch Replay"
+
+[common]
+difficulty = "Difficulty"
+spawnPoint = "Spawn Point"
+team = "Team"
+fog = "Fog"
+
+[settings]
+setExternalFolder = "Set External Folder"
+manageAllFiles = "Manage All Files"
+client = "Client"
+autoCheckUpdate = "Auto Check Update"
+checkUpdate = "Check Update"
+newVersion = "New version detected: {0}, can be downloaded from the following sites"
+goToDownload = "Go to {0} to download"
+ignoreVersion = "Ignore this version"
