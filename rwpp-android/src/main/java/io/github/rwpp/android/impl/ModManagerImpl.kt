@@ -82,18 +82,6 @@ class ModManagerImpl : ModManager {
                     override var isEnabled: Boolean
                         get() = !it.f
                         set(value) { it.f = !value }
-                    override var isNetworkMod: Boolean
-                        get() = it.c.contains(".network")
-                        set(value) {
-                            if (!value) {
-                                val newName = it.c.replace(".network", "")
-                                File("/storage/emulated/0/rustedWarfare/units/${it.c}").copyTo(File("/storage/emulated/0/rustedWarfare/units/$newName.netbak"))
-                                it.c = newName
-                            } else {
-                                throw RuntimeException("Cannot set a mod to network mod.")
-                            }
-                        }
-
                     override fun getRamUsed(): String {
                         return it.k()
                     }

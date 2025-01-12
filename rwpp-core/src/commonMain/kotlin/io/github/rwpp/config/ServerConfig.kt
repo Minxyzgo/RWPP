@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -11,6 +11,7 @@ import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.packets.ServerPacket
 import io.github.rwpp.io.GameInputStream
 import io.github.rwpp.io.SizeUtils
+import io.github.rwpp.net.InternalPacketType
 import kotlinx.serialization.Serializable
 import okio.buffer
 import okio.source
@@ -55,7 +56,7 @@ data class ServerConfig(
             .apply {
                 val bytes = ServerPacket.ServerInfoGetPacket().toBytes()
                 writeInt(bytes.size)
-                writeInt(PacketType.PRE_GET_SERVER_INFO_FROM_LIST.type)
+                writeInt(InternalPacketType.PRE_GET_SERVER_INFO_FROM_LIST.type)
                 write(bytes)
             }
 
@@ -68,7 +69,7 @@ data class ServerConfig(
             //limit image size
             val bytes = buffer.readByteArray(size.toLong().coerceAtMost(SizeUtils.kBToByte(10)))
 
-            if(type == PacketType.RECEIVE_SERVER_INFO_FROM_LIST.type) {
+            if(type == InternalPacketType.RECEIVE_SERVER_INFO_FROM_LIST.type) {
                 socket.close()
                 return ServerPacket.ServerInfoReceivePacket().apply {
                     readPacket(

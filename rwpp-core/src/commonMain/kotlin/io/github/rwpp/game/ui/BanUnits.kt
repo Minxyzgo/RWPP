@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -8,14 +8,12 @@
 package io.github.rwpp.game.ui
 
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -26,12 +24,11 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.game.Game
-import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.ui.*
 import org.koin.compose.koinInject
@@ -40,8 +37,8 @@ import org.koin.compose.koinInject
 fun BanUnitViewDialog(
     visible: Boolean,
     onDismissRequest: () -> Unit,
-    lastSelectedUnits: List<GameUnit>,
-    onSelectedUnits: (List<GameUnit>) -> Unit
+    lastSelectedUnits: List<UnitType>,
+    onSelectedUnits: (List<UnitType>) -> Unit
 ) {
 
     val game = koinInject<Game>()
@@ -49,7 +46,7 @@ fun BanUnitViewDialog(
     AnimatedAlertDialog(
         visible = visible, onDismissRequest = onDismissRequest
     ) { d ->
-        val selectedUnits = remember(lastSelectedUnits) { SnapshotStateList<GameUnit>().apply { addAll(lastSelectedUnits) } }
+        val selectedUnits = remember(lastSelectedUnits) { SnapshotStateList<UnitType>().apply { addAll(lastSelectedUnits) } }
         BorderCard(
             modifier = Modifier
                // .fillMaxSize(LargeProportion())
@@ -65,7 +62,7 @@ fun BanUnitViewDialog(
             val current = LocalWindowManager.current
 
             val movementTypeToUnits = remember(allUnits) {
-                buildMap<MovementType, MutableList<GameUnit>> {
+                buildMap<MovementType, MutableList<UnitType>> {
                     allUnits.forEach { u ->
                         getOrPut(u.movementType) { mutableListOf() }.add(u)
                     }
@@ -123,7 +120,7 @@ fun BanUnitViewDialog(
                 }
             }
 
-            LargeDividingLine { 5.dp }
+            LargeDividingLine { 0.dp }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 RWTextButton("Clear", Modifier.padding(5.dp)) {
                     onSelectedUnits(listOf())
@@ -144,7 +141,7 @@ private fun BanUnitItem(
     index: Int,
     checked: Boolean,
     state: LazyListState,
-    unit: GameUnit,
+    unit: UnitType,
     onChanged: (checked: Boolean) -> Unit
 ) {
     val (_, easing) = state.calculateDelayAndEasing(index, 5)
@@ -158,7 +155,7 @@ private fun BanUnitItem(
             .fillMaxWidth()
             .padding(10.dp)
             .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp),
-        backgroundColor = Color.DarkGray.copy(.7f)
+        backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -195,7 +192,7 @@ private fun BanUnitHeader(
 ) {
     Row(modifier = Modifier
         .clickable { onHeaderClicked() }
-        .background(Color(27, 18, 18))
+        .background(MaterialTheme.colorScheme.surface)
         .padding(vertical = 8.dp, horizontal = 16.dp)) {
         Text(
             text = text,
@@ -208,7 +205,7 @@ private fun BanUnitHeader(
         })
 
         val icon = if(isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
-        Icon(icon, "", tint = Color.White)
+        Icon(icon, "", tint = MaterialTheme.colorScheme.surfaceTint)
     }
 
     HorizontalDivider(modifier = Modifier.fillMaxWidth(), 2.dp)

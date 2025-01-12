@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -30,8 +30,11 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -39,28 +42,22 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.config.*
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.data.RoomOption
-import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.gameVersion
 import io.github.rwpp.i18n.readI18n
-import io.github.rwpp.maxModSize
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.ServerStatus
 import io.github.rwpp.net.sorted
-import io.github.rwpp.platform.BackHandler
-import io.github.rwpp.platform.loadSvg
-import io.github.rwpp.platform.readPainterByBytes
+import io.github.rwpp.platform.*
+import io.github.rwpp.rwpp_core.generated.resources.Res
+import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.ExpandedCard
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import io.github.rwpp.ui.v2.RWIconButton
-import io.github.rwpp.io.SizeUtils
-import io.github.rwpp.rwpp_core.generated.resources.Res
-import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -68,7 +65,6 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MultiplayerView(
     onExit: () -> Unit,
@@ -80,7 +76,6 @@ fun MultiplayerView(
     val settings = koinInject<Settings>()
     val configIO = koinInject<ConfigIO>()
     val game = koinInject<Game>()
-    val modManager = koinInject<ModManager>()
     val net = koinInject<Net>()
     val blacklistsInstance = koinInject<Blacklists>()
 
@@ -194,28 +189,28 @@ fun MultiplayerView(
     ) { dismiss ->
         BorderCard(
             modifier = Modifier
-                .size(500.dp)
-                //.fillMaxSize(LargeProportion())
+                .width(500.dp)
                 .padding(10.dp)
-                .verticalScroll(rememberScrollState()),
+                .autoClearFocus(),
         ) {
             Box(modifier = Modifier
                 .fillMaxWidth()
-                .height(if (LocalWindowManager.current == WindowManager.Small) 75.dp else 150.dp)
+                .height(75.dp)
                 .background(
                     brush = Brush.linearGradient(
-                        listOf(Color(44, 95, 45), Color(151, 188, 98)))
+                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary))
                 ),
                 contentAlignment = Alignment.Center
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text("Host Game", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = Color.White)
+                        Text("Host Game", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
 
-            LargeDividingLine { 10.dp }
+            LargeDividingLine { 0.dp }
+
             var enableMods by remember { mutableStateOf(false) }
             var hostByRCN by remember { mutableStateOf(false) }
             // var transferMod by remember { mutableStateOf(false) }
@@ -255,11 +250,27 @@ fun MultiplayerView(
 //                )
 //            }
 
+
             var password by remember { mutableStateOf("") }
-            RWSingleOutlinedTextField(readI18n("multiplayer.password"), password, modifier = Modifier.fillMaxWidth().padding(5.dp)) { password = it }
+            RWSingleOutlinedTextField(
+                readI18n("multiplayer.password"),
+                password,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 2.dp),
+                enabled = !hostByRCN,
+            ) { password = it }
 
-            Spacer(modifier = Modifier.weight(1f))
-
+            var port by remember { mutableStateOf(configIO.getGameConfig<Int?>("networkPort")) }
+            RWSingleOutlinedTextField(
+                readI18n("multiplayer.port"),
+                port?.toString() ?: "",
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp),
+                lengthLimitCount = 5,
+                typeInNumberOnly = true,
+                enabled = !hostByRCN,
+            ) {
+                port = it.toIntOrNull()
+                configIO.setGameConfig("networkPort", port ?: 5123)
+            }
 
             val rcnAddress = "43.248.96.172:5123"
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
@@ -329,11 +340,11 @@ fun MultiplayerView(
             val desc = descriptions[index]
             Row(
                 modifier = Modifier
-                    .animateItemPlacement()
+                    .animateItem()
                     .height(IntrinsicSize.Max)
                     .padding(5.dp)
                     .clip(CircleShape)
-                    .border(BorderStroke(2.dp, Color(160, 191, 124)), CircleShape)
+                    .border(BorderStroke(2.dp, MaterialTheme.colorScheme.primary), CircleShape)
                     .fillMaxWidth()
                     .clickable {
                         selectedRoomDescription = desc
@@ -475,12 +486,12 @@ fun MultiplayerView(
         }
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
     fun LazyListScope.ServerList(
         serverDataList: List<ServerData>
     ) {
         items(
-            count = serverDataList.size
+            count = serverDataList.size,
+            key = { "d$it" }
         ) { index ->
             var selectedDefaultRoomList by remember { mutableStateOf(allServerData.firstOrNull { it.config.useAsDefaultList }) }
 
@@ -498,13 +509,13 @@ fun MultiplayerView(
                         refresh.trySend(Unit)
                     }
                 },
-                modifier = Modifier.animateItemPlacement()
+                modifier = Modifier.animateItem()
                     .fillMaxWidth()
                     .wrapContentHeight()
                     .padding(5.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18).copy(0.9f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(0.9f)),
                 elevation =  CardDefaults.cardElevation(defaultElevation = 10.dp),
-                border = BorderStroke(2.dp, Color.DarkGray),
+                border = BorderStroke(2.dp,  MaterialTheme.colorScheme.surfaceContainer),
                 shape = RoundedCornerShape(20.dp)
             ) {
                 //do not edit official room list
@@ -547,7 +558,7 @@ fun MultiplayerView(
                                 null,
                                 modifier = Modifier.size(120.dp).padding(5.dp)
                             )
-                            if (serverData.isLoading) CircularProgressIndicator(color = Color(199, 234, 70))
+                            if (serverData.isLoading) CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
                         }
                     }
 
@@ -631,7 +642,6 @@ fun MultiplayerView(
         playerLimitRange = 0..100
         mapNameFilter = ""
         creatorNameFilter = ""
-
     }
 
     @Composable
@@ -741,7 +751,7 @@ fun MultiplayerView(
                         Text("Filter", style = MaterialTheme.typography.headlineMedium)
                     }
 
-                    LargeDividingLine { 5.dp }
+                    LargeDividingLine { 0.dp }
 
                     var showBlacklistDialog by remember {
                         mutableStateOf(false)
@@ -819,7 +829,7 @@ fun MultiplayerView(
                         Switch(
                             checked = enableModFilter,
                             onCheckedChange = { enableModFilter = it },
-                            colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98), checkedThumbColor = Color.White),
+                            colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary, checkedThumbColor = MaterialTheme.colorScheme.onSurface)
                         )
                     }
 
@@ -838,15 +848,23 @@ fun MultiplayerView(
                         Switch(
                             checked = battleroom,
                             onCheckedChange = { battleroom = it },
-                            colors = SwitchDefaults.colors(checkedTrackColor = Color(151, 188, 98), checkedThumbColor = Color.White),
+                            colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary, checkedThumbColor = MaterialTheme.colorScheme.onSurface)
                         )
                     }
 
-                    RWTextButton("Blacklist", modifier = Modifier.padding(5.dp)) {
+                    RWTextButton("Blacklist",
+                        modifier = Modifier.padding(5.dp)
+                            .fillMaxWidth(0.5f)
+                            .align(Alignment.CenterHorizontally)
+                    ) {
                         showBlacklistDialog = true
                     }
 
-                    RWTextButton(readI18n("multiplayer.reset"), modifier = Modifier.padding(5.dp)) {
+                    RWTextButton(readI18n("multiplayer.reset"),
+                        modifier = Modifier.padding(5.dp)
+                            .fillMaxWidth(0.5f)
+                            .align(Alignment.CenterHorizontally)
+                    ) {
                         resetFilter()
                     }
                 }
@@ -900,6 +918,7 @@ fun MultiplayerView(
         onExit(); onOpenRoomView(); game.setUserName(userName)
     }
 
+
     Scaffold(
         containerColor = Color.Transparent,
         bottomBar = {
@@ -931,27 +950,46 @@ fun MultiplayerView(
                             onClick = { isShowingRoomList = false },
                             shape = CircleShape,
                             modifier = Modifier.padding(5.dp),
-                            containerColor = Color(151, 188, 98),
-                        ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.surfaceTint) }
                     } else {
                         FloatingActionButton(
                             onClick = { selectedServerConfig = null; showServerInfoConfig = true },
                             shape = CircleShape,
                             modifier = Modifier.padding(5.dp),
-                            containerColor = Color(151, 188, 98),
-                        ) { Icon(Icons.Default.Add, null) }
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        ) { Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.surfaceTint) }
                     }
 
-                    FloatingActionButton(
-                        onClick = { if(!isRefreshing) scope.launch { refresh.trySend(Unit) } },
-                        shape = CircleShape,
-                        modifier = Modifier.padding(5.dp),
-                        containerColor = Color(151, 188, 98),
-                    ) {
-                        if(isRefreshing) {
-                            CircularProgressIndicator(color = Color(199, 234, 70))
-                        } else {
-                            Icon(Icons.Default.Refresh, null)
+                    Box {
+                        val requester = remember { FocusRequester() }
+
+                        LaunchedEffect(Unit) {
+                            requester.requestFocus()
+                        }
+
+                        FloatingActionButton(
+                            onClick = { if(!isRefreshing) scope.launch { refresh.trySend(Unit) } },
+                            shape = CircleShape,
+                            modifier = Modifier.padding(5.dp).focusRequester(requester),
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        ) {
+                            if(isRefreshing) {
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.onSecondary)
+                            } else {
+                                Icon(Icons.Default.Refresh, null, tint = MaterialTheme.colorScheme.surfaceTint)
+                            }
+                        }
+
+                        if (Platform.isDesktop()) {
+                            Card(
+                                modifier = Modifier.align(Alignment.BottomCenter).padding(1.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary),
+                            ) {
+                                Text("space", modifier = Modifier.padding(1.dp), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
                 }
@@ -1034,7 +1072,7 @@ fun MultiplayerView(
             ) { showServerInfoConfig = false }
 
             CompositionLocalProvider(
-                LocalContentColor provides Color.White
+                LocalContentColor provides MaterialTheme.colorScheme.onSurface
             ) {
                 val state = rememberLazyListState()
                 LazyColumnScrollbar(
@@ -1096,7 +1134,6 @@ fun MultiplayerView(
 
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AnimatedBlackList(
     visible: Boolean,
@@ -1106,21 +1143,20 @@ private fun AnimatedBlackList(
     onTapAddButton: () -> Unit,
 ) = AnimatedVisibility(visible) {
     CompositionLocalProvider(
-        LocalContentColor provides Color.White
+        LocalContentColor provides MaterialTheme.colorScheme.onSurface,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(readI18n("multiplayer.blacklist"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(15.dp))
-            LargeDividingLine { 5.dp }
+            LargeDividingLine { 0.dp }
 
             LazyColumn(
                 modifier = Modifier.selectableGroup().weight(1f),
             ) {
                 items(count = blacklists.size) { index ->
                     val blacklist = blacklists[index]
-                    Row(modifier = Modifier
+                    Modifier
                         .wrapContentSize()
-                        .animateItemPlacement()
-                    ) {
+                    Row(modifier = Modifier.animateItem()) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 blacklist.name,
@@ -1234,11 +1270,10 @@ private fun WelcomeMessageAdmittingDialog(
                     "Admitting",
                     modifier = Modifier.padding(5.dp),
                     style = MaterialTheme.typography.headlineLarge,
-                    color = Color(151, 188, 98)
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
-            LargeDividingLine { 5.dp }
-
+            LargeDividingLine { 0.dp }
             Column(
                 modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.Center,
@@ -1248,7 +1283,7 @@ private fun WelcomeMessageAdmittingDialog(
                     readI18n("multiplayer.admitting").trimIndent(),
                     modifier = Modifier.padding(5.dp),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.secondary
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -1290,41 +1325,43 @@ private fun JoinServerRequestDialog(
                 .size(500.dp)
                 .padding(10.dp)
                 .verticalScroll(rememberScrollState()),
-            backgroundColor = Color(53, 57, 53)
         ) {
 
             Box(modifier = Modifier
                 .fillMaxWidth()
-                .height(if (LocalWindowManager.current == WindowManager.Small) 75.dp else 150.dp)
+                .height(75.dp)
                 .background(
                     brush = Brush.linearGradient(
-                        listOf(Color(44, 95, 45), Color(151, 188, 98)))
+                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary))
                 ),
                 contentAlignment = Alignment.Center
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    Row(modifier = Modifier.weight(1f).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(Icons.Default.Info, null, modifier = Modifier.size(32.dp).padding(5.dp))
-                        Text("Join Server?", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = Color.White)
+                        Text("Join Server?", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
 
-            LargeDividingLine { 5.dp }
-            Text("creator: ${roomDescription.creator}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-            Text("map: ${roomDescription.mapName}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-            Text("players: ${roomDescription.playerCurrentCount ?: ""}/${roomDescription.playerMaxCount ?: ""}" , modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-            Text("version: ${roomDescription.version}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-            Text("mods: ${roomDescription.mods}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            LargeDividingLine { 0.dp }
+
+            Text("creator: ${roomDescription.creator}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text("map: ${roomDescription.mapName}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text("players: ${roomDescription.playerCurrentCount ?: ""}/${roomDescription.playerMaxCount ?: ""}" , modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text("version: ${roomDescription.version}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text("mods: ${roomDescription.mods}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.weight(1f))
             Row(
                 modifier = Modifier.fillMaxWidth()
                     .height(IntrinsicSize.Min)
-                    .background(color = Color(27, 18, 18))
+                    .background(color = MaterialTheme.colorScheme.surface)
                     .padding(5.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-
                 Box(
                     modifier = Modifier
                         .padding(8.dp)

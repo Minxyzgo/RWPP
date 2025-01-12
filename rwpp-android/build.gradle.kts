@@ -1,3 +1,10 @@
+/*
+ * Copyright 2023-2025 RWPP contributors
+ * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ */
+
 import com.android.build.api.variant.ApplicationVariant
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree.Companion.main
 
@@ -12,15 +19,26 @@ plugins {
     kotlin("android")
     id("com.android.application")
     id("org.jetbrains.compose")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
+}
+
+ksp {
+    arg("libDir", project.buildDir.absolutePath + "/generated/libs")
 }
 
 
 dependencies {
     implementation(project(":rwpp-core"))
+    implementation("ru.bartwell:exfilepicker:2.1")
     implementation("com.github.getActivity:XXPermissions:20.0")
-    implementation(fileTree(
-        "dir" to project(":rwpp-core").dependencyProject.projectDir.absolutePath + "/build/generated/lib",
+    compileOnly(fileTree(
+        "dir" to rootDir.absolutePath + "/lib",
+        "include" to "*.jar",
+        "exclude" to "game-lib.jar"
+    ))
+    runtimeOnly(fileTree(
+        "dir" to buildDir.absolutePath + "/generated/libs",
         "include" to "android-game-lib.jar",
     ))
 
@@ -28,6 +46,7 @@ dependencies {
     val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
     ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
     implementation("io.insert-koin:koin-android:$koinVersion")
+    ksp(project(":rwpp-ksp"))
 }
 
 

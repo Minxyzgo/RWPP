@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,15 +26,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
+import io.github.rwpp.core.UI
 import io.github.rwpp.ui.WindowManager
-import io.github.rwpp.ui.autoClearFocus
 
 @Composable
 fun ExpandedCard(
-    modifier: Modifier = Modifier
-        .fillMaxHeight()
-        .fillMaxWidth(if (LocalWindowManager.current == WindowManager.Small) 0.95f else 0.75f),
-    backgroundColor: Color = Color(53, 57, 53).copy(0.9f),
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = MaterialTheme.colorScheme.background.copy((UI.backgroundTransparency + 0.2f).coerceAtMost(1f)),
     content: @Composable ColumnScope.() -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -41,7 +40,10 @@ fun ExpandedCard(
             shape = RectangleShape,
             elevation =  CardDefaults.cardElevation(defaultElevation = 10.dp),
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
-            modifier = modifier.autoClearFocus(),
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(if (LocalWindowManager.current == WindowManager.Small) 0.95f else 0.75f)
+                .then(modifier),
             content = content
         )
     }
@@ -55,8 +57,8 @@ fun RWIconButton(
     onClick: () -> Unit,
 ) {
     Card(
-        border = BorderStroke(3.dp, Color.DarkGray),
-        colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+        border = BorderStroke(3.dp, MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(5.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
         modifier = Modifier.then(modifier).bounceClick(onClick = onClick),
@@ -64,6 +66,7 @@ fun RWIconButton(
         Icon(
             vector,
             null,
+            tint = MaterialTheme.colorScheme.surfaceTint,
             modifier = Modifier.size(size).align(Alignment.CenterHorizontally).padding(10.dp)
         )
     }
@@ -77,8 +80,8 @@ fun RWIconButton(
     onClick: () -> Unit,
 ) {
     Card(
-        border = BorderStroke(3.dp, Color.DarkGray),
-        colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+        border = BorderStroke(3.dp, MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(5.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
         modifier = Modifier.then(modifier).bounceClick(onClick = onClick),
@@ -86,6 +89,7 @@ fun RWIconButton(
         Icon(
             painter,
             null,
+            tint = MaterialTheme.colorScheme.surfaceTint,
             modifier = Modifier.size(size).align(Alignment.CenterHorizontally).padding(10.dp)
         )
     }
@@ -101,7 +105,7 @@ fun LongPressFloatingActionButton(
     onClick: () -> Unit,
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(151, 188, 98)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
         shape = androidx.compose.foundation.shape.CircleShape,
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
         modifier = Modifier.then(modifier).combinedClickable(onLongClick = onLongClick, onClick = onClick),
@@ -109,7 +113,7 @@ fun LongPressFloatingActionButton(
         Icon(
             vector,
             null,
-            tint = Color.Black,
+            tint = MaterialTheme.colorScheme.surfaceTint,
             modifier = Modifier.size(size).align(Alignment.CenterHorizontally).padding(10.dp)
         )
     }

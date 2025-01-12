@@ -21,7 +21,7 @@ import io.github.rwpp.android.bannedUnitList
 import io.github.rwpp.android.gameLauncher
 import io.github.rwpp.android.isSinglePlayerGame
 import io.github.rwpp.android.questionOption
-import io.github.rwpp.event.broadCastIn
+import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
@@ -29,7 +29,7 @@ import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
-import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.ui.LoadingContext
 import kotlinx.coroutines.*
@@ -46,7 +46,7 @@ class GameImpl : Game, CoroutineScope {
     private var _missions: List<Mission>? = null
     private var _allMaps: List<GameMap>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
-    private var _units: List<GameUnit>? = null
+    private var _units: List<UnitType>? = null
     private var cacheUnits: ArrayList<*>? = null
 
     override val gameRoom: GameRoom = GameRoomImpl(this)
@@ -79,7 +79,7 @@ class GameImpl : Game, CoroutineScope {
             GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
             GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
             delay(100)
-            RefreshUIEvent().broadCastIn()
+            RefreshUIEvent().broadcastIn()
         }
     }
 
@@ -94,7 +94,7 @@ class GameImpl : Game, CoroutineScope {
         GameEngine.t().bU.aA.a = at.a
         GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
         GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
-        RefreshUIEvent().broadCastIn()
+        RefreshUIEvent().broadcastIn()
     }
 
     override fun setUserName(name: String) {
@@ -246,11 +246,11 @@ class GameImpl : Game, CoroutineScope {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun getAllUnits(): List<GameUnit> {
+    override fun getAllUnits(): List<UnitType> {
         val units = (com.corrodinggames.rts.game.units.cj.ae as ArrayList<com.corrodinggames.rts.game.units.el>)
         if(cacheUnits != units || _units == null) {
             _units = units.map {
-                object : GameUnit {
+                object : UnitType {
                     override val name: String = it.i()
                     override val displayName: String = it.e()
                     override val description: String = it.f()
@@ -266,7 +266,7 @@ class GameImpl : Game, CoroutineScope {
         return _units!!
     }
 
-    override fun onBanUnits(units: List<GameUnit>) {
+    override fun onBanUnits(units: List<UnitType>) {
         bannedUnitList = units.map { it.name }
         if(units.isNotEmpty()) gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${
             units.joinToString(

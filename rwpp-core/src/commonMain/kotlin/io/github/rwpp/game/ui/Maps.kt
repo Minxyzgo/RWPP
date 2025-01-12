@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
@@ -74,6 +75,11 @@ fun MapViewDialog(
         var maps by remember { mutableStateOf(listOf<GameMap>()) }
         var mapType = remember { MapType.entries[selectedIndex0] }
 
+        val permissionHelper = koinInject<PermissionHelper>()
+        remember(mapType) {
+            if (mapType != MapType.SkirmishMap) permissionHelper.requestExternalStoragePermission()
+        }
+
         Row(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier
@@ -105,7 +111,7 @@ fun MapViewDialog(
             }
         }
 
-        LargeDividingLine { 5.dp }
+        LargeDividingLine { 0.dp }
 
         with(game) {
             remember(selectedIndex0, filter) {
@@ -146,19 +152,12 @@ fun LazyGridItemScope.MapItem(
     showImage: Boolean = true,
     onClick: () -> Unit,
 ) {
-    val (_, easing) = state.calculateDelayAndEasing(index, 5)
-    val animation = tween<Float>(durationMillis = 500, delayMillis = 0, easing = easing)
-    val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
-    val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
-
     BorderCard(
-        modifier = Modifier
-            .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
-            .animateItemPlacement()
+        modifier = Modifier.animateItem()
             .padding(10.dp)
             .sizeIn(maxHeight = 200.dp * scaleFitFloat(), maxWidth = 200.dp * scaleFitFloat())
             .clickable { onClick() },
-        backgroundColor = Color.DarkGray.copy(.7f)
+        backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),

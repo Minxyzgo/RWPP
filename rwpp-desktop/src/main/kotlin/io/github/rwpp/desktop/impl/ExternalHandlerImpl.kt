@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -9,9 +9,10 @@ package io.github.rwpp.desktop.impl
 
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
+import io.github.rwpp.core.Initialization
 import io.github.rwpp.external.ExternalHandler
-import io.github.rwpp.external.Resource
-import io.github.rwpp.external.ResourceConfig
+import io.github.rwpp.external.Extension
+import io.github.rwpp.external.ExtensionConfig
 import io.github.rwpp.impl.BaseExternalHandlerImpl
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
@@ -20,12 +21,14 @@ import org.koin.core.annotation.Single
 import java.io.File
 import java.util.zip.ZipFile
 import javax.imageio.ImageIO
+import javax.swing.JFileChooser
 
-@Single(binds = [ExternalHandler::class])
+@Single(binds = [ExternalHandler::class, Initialization::class])
 class ExternalHandlerImpl : BaseExternalHandlerImpl() {
-    override fun enableResource(resource: Resource?) {
-        _usingResource = resource
-        resource ?: run {
+    override fun enableResource(extension: Extension?) {
+        if (extension?.config?.hasResource == false) return
+        _usingExtension = extension
+        extension ?: run {
             File(resourceOutputDir).let {
                 if (it.exists()) it.deleteRecursively()
             }
@@ -50,19 +53,31 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
             )
         }
 
-        resource.resourceFile.unzipTo(File(resourceOutputDir))
+        resourceList.forEach {
+            extension.file.unzipTo(File(resourceOutputDir), "$it/")
+        }
+
+        extension.file.unzipTo(File(resourceOutputDir), "res/")
+
+    }
+
+    override fun openFileChooser(onChooseFile: (File) -> Unit) {
+        val fileChooser = JFileChooser()
+        val result = fileChooser.showOpenDialog(null)
+        if (result == JFileChooser.APPROVE_OPTION) {
+            onChooseFile(fileChooser.selectedFile)
+        }
     }
 
 
-    override fun newResource(id: Int, resourceFile: File, config: ResourceConfig): Resource {
-        return object : Resource(
-            id, resourceFile, config
+    override fun newExtension(isEnabled: Boolean, extensionFile: File, config: ExtensionConfig): Extension {
+        return object : Extension(
+            isEnabled, extensionFile, ZipFile(extensionFile), config
         ) {
             override val iconPainter: Painter? by lazy {
                 if (config.icon.isBlank())
                     null
                 else {
-                    val zipFile = ZipFile(resourceFile)
                     val iconEntry = zipFile.getEntry(config.icon)
                     ImageIO.read(zipFile.getInputStream(iconEntry))
                         .toPainter()

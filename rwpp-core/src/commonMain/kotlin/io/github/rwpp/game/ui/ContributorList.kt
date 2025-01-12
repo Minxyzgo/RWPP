@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -33,8 +33,6 @@ import io.github.rwpp.ui.v2.ExpandedCard
 fun ContributorList(
     onExit: () -> Unit,
 ) = ExpandedCard(modifier = Modifier
-    .fillMaxHeight()
-    .fillMaxWidth(if (LocalWindowManager.current == WindowManager.Small) 0.95f else 0.75f)
     .verticalScroll(rememberScrollState())
 ) {
     ExitButton(onExit)
@@ -47,7 +45,7 @@ fun ContributorList(
             "铁锈盒子 (ww.rtsbox.cn)",
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.align(Alignment.CenterHorizontally),
-            color = Color(151, 188, 98)
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 

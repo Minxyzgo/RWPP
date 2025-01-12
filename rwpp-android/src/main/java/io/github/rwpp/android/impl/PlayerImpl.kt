@@ -9,6 +9,7 @@ package io.github.rwpp.android.impl
 
 import com.corrodinggames.rts.game.p
 import io.github.rwpp.appKoin
+import io.github.rwpp.core.Logic
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
@@ -19,12 +20,11 @@ class PlayerImpl(
     internal val player: PlayerInternal,
     private val room: GameRoom
 ) : Player {
-    override val connectHexId: String
-        get() = player.S ?: ""
+    override val connectHexId: String = Logic.getNextPlayerId().toString()
+        get() = player.S ?: field
     override var spawnPoint: Int
         get() = player.l
         set(value) {
-            //TODO 不更新ui
             applyConfigChange(spawnPoint = value)
         }
     override var team: Int

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -9,7 +9,8 @@ package io.github.rwpp.game
 
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
-import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.UnitType
+import io.github.rwpp.game.world.World
 import io.github.rwpp.ui.LoadingContext
 import org.koin.core.component.KoinComponent
 
@@ -18,6 +19,10 @@ interface Game : KoinComponent {
      * Current game room.
      */
     val gameRoom: GameRoom
+
+
+    //TODO Not Implemented
+    val world: World
 
 
     /**
@@ -49,7 +54,7 @@ interface Game : KoinComponent {
     fun hostNewSinglePlayer(sandbox: Boolean)
 
     /**
-     * Set the name of the local player.
+     * Set the displayName of the local player.
      */
     fun setUserName(name: String)
 
@@ -108,7 +113,7 @@ interface Game : KoinComponent {
     /**
      * Get starting unit option list.
      *
-     * It will return like (index -> option name).
+     * It will return like (index -> option displayName).
      *
      * You can use the index to set [GameRoom.startingUnits].
      */
@@ -117,12 +122,12 @@ interface Game : KoinComponent {
     /**
      * Get all the unit list.
      */
-    fun getAllUnits(): List<GameUnit>
+    fun getAllUnits(): List<UnitType>
 
     /**
      * Ban given unit, and all actions about the unit will not executed.
      */
-    fun onBanUnits(units: List<GameUnit>)
+    fun onBanUnits(units: List<UnitType>)
 
     /**
      * Get all replays.

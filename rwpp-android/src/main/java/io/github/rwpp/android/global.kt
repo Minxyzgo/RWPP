@@ -10,8 +10,10 @@ package io.github.rwpp.android
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
 import org.koin.core.KoinApplication
+import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
+const val EX_FILE_PICKER_RESULT: Int = 1001
 lateinit var gameLauncher: ActivityResultLauncher<Intent>
 var questionOption: String? = null
 var isSinglePlayerGame: Boolean = false
@@ -21,4 +23,4 @@ var roomMods = arrayOf<String>()
 var bannedUnitList: List<String> = listOf()
 val cacheModSize = AtomicInteger(0)
 lateinit var koinApplication: KoinApplication
-
+val pickFileActions = mutableListOf<(File) -> Unit>()

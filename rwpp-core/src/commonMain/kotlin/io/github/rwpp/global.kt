@@ -1,18 +1,31 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
 package io.github.rwpp
-import io.github.rwpp.io.SizeUtils
+import io.github.rwpp.command.CommandHandler
+import io.github.rwpp.command.CommandHandler.Command
+import io.github.rwpp.game.Game
+import io.github.rwpp.game.Player
 import io.github.rwpp.platform.Platform
 import io.github.rwpp.rwpp_core.BuildConfig
 import org.koin.core.Koin
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 
+/**
+ * The version of the project.
+ */
 const val projectVersion = "v" + BuildConfig.VERSION
 
+/**
+ * The version of the game core.
+ */
 const val coreVersion = "v1.15"
 
 /**
@@ -42,11 +55,53 @@ val welcomeMessage =
 
 const val packageName = "io.github.rwpp"
 
-val maxModSize = SizeUtils.mBToByte(16)
+//val maxModSize = SizeUtils.mBToByte(16)
 
-val resourcePath = if(Platform.isAndroid()) {
-    "/storage/emulated/0/rustedWarfare/resource/"
-} else System.getProperty("user.dir") + "/resource/"
+/**
+ * global logger.
+ */
+val logger: Logger = LoggerFactory.getLogger(packageName)
+
+/**
+ * global command handler.
+ */
+val commands = CommandHandler("/").apply {
+    register<Player>("help", "[page]", "Lists all commands.") { args, player ->
+        val room = appKoin.get<Game>().gameRoom
+        if (args.isNotEmpty() && args[0].toIntOrNull() == null) {
+            room.sendMessageToPlayer(player, "RWPP", "'page' must be a number.")
+            return@register
+        }
+        val commandsPerPage = 6
+        var page = if (args.isNotEmpty()) args[0].toInt() else 1
+        val pages = ceil(commandList.size.toDouble() / commandsPerPage).roundToInt()
+
+        page--
+
+        if (page >= pages || page < 0) {
+            room.sendMessageToPlayer(player, "RWPP", "'page' must be a number between 1 and $pages.")
+            return@register
+        }
+
+        val result = StringBuilder()
+        result.append("--- Commands Page ${(page + 1)}/${pages} ---\n",)
+
+        for (i in commandsPerPage * page..<Math.min(
+            commandsPerPage * (page + 1),
+            commandList.size
+        )) {
+            val command: Command = commandList[i]
+            result.append("- /").append(command.text).append(command.paramText)
+                .append(" - ").append(command.description).append("\n")
+
+        }
+        room.sendMessageToPlayer(player, "RWPP", result.toString())
+    }
+}
+
+val extensionPath = if(Platform.isAndroid()) {
+    "/storage/emulated/0/rustedWarfare/extension/"
+} else System.getProperty("user.dir") + "/extension/"
 
 val resourceOutputDir = if(Platform.isAndroid()) {
     "/storage/emulated/0/rustedWarfare/resource_generated/"

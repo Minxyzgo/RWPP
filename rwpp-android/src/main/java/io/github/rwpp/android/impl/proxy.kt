@@ -21,8 +21,8 @@ import com.github.minxyzgo.rwij.InjectMode
 import com.github.minxyzgo.rwij.InterruptResult
 import com.github.minxyzgo.rwij.setFunction
 import io.github.rwpp.android.*
-import io.github.rwpp.android.impl.proxy.NetProxy
-import io.github.rwpp.android.impl.proxy.UnitPathProxy
+import io.github.rwpp.android.impl.inject.NetProxy
+import io.github.rwpp.android.impl.inject.UnitPathProxy
 import io.github.rwpp.appKoin
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadCastIn

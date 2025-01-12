@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -33,7 +33,6 @@ internal object InjectApi {
         @Suppress("NAME_SHADOWING")
         val methodArgs = methodArgs.toMutableList()
 
-        //TODO int[] float[] etc.
         for ((i, v) in methodArgs.withIndex()) {
             when (v) {
                 "kotlin.Int" -> methodArgs[i] = "int"
@@ -46,6 +45,14 @@ internal object InjectApi {
                 "kotlin.Short" -> methodArgs[i] = "short"
                 "kotlin.String" -> methodArgs[i] = "java.lang.String"
                 "kotlin.Array" -> methodArgs[i] = "java.lang.Object[]"
+                "kotlin.IntArray" -> methodArgs[i] = "int[]"
+                "kotlin.LongArray" -> methodArgs[i] = "long[]"
+                "kotlin.FloatArray" -> methodArgs[i] = "float[]"
+                "kotlin.DoubleArray" -> methodArgs[i] = "double[]"
+                "kotlin.BooleanArray" -> methodArgs[i] = "boolean[]"
+                "kotlin.ByteArray" -> methodArgs[i] = "byte[]"
+                "kotlin.CharArray" -> methodArgs[i] = "char[]"
+                "kotlin.ShortArray" -> methodArgs[i] = "short[]"
                 "kotlin.collections.List" -> methodArgs[i] = "java.util.List"
                 "kotlin.collections.Map" -> methodArgs[i] = "java.util.Map"
                 "kotlin.collections.Set" -> methodArgs[i] = "java.util.Set"
@@ -72,11 +79,8 @@ internal object InjectApi {
         }
 
         var codeAttribute = method.methodInfo.codeAttribute
-
         val injectClass = injectFunctionPath.substringBeforeLast(".")
-
         val bytecode = Bytecode(clazz.classFile.constPool)
-
         bytecode.addGetstatic(injectClass, "INSTANCE", Descriptor.of(injectClass))
 
         var i = 0
@@ -202,9 +206,9 @@ internal object InjectApi {
             }
 
             InjectMode.InsertAfter -> {
-                if (returnClassIsVoid) return
                 method.addLocalVariable("result2", method.returnType)
                 method.insertBefore("\$r result2 = $originalCode")
+                if (returnClassIsVoid) return
                 method.insertAfter(
                     """
                         if(result != kotlin.Unit.INSTANCE) {

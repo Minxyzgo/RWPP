@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -99,10 +99,12 @@ suspend fun <E : Event> E.broadcast(): E {
  * 广播一个事件的途径. 通过给定的上下文启动新协程来处理事件
  *
  * @param coroutineContext 需要给定的协程上下文. 默认为[EmptyCoroutineContext]
+ * @param onFinished 事件处理完成后的回调函数. 默认不执行任何操作.
  */
+@JvmOverloads
 @Suppress("unused")
-fun <E : Event> E.broadCastIn(coroutineContext: CoroutineContext = EmptyCoroutineContext): E {
-    GlobalEventChannel.launch(coroutineContext) { broadcast() }
+fun <E : Event> E.broadcastIn(onFinished: (E) -> Unit = {}, coroutineContext: CoroutineContext = EmptyCoroutineContext): E {
+    GlobalEventChannel.launch(coroutineContext) { broadcast() }.invokeOnCompletion { onFinished(this) }
     return this
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -24,7 +24,7 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun MenuLoadingView(
-    message: String
+    message: String,
 ) {
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Image(painter = painterResource(Res.drawable.title), contentDescription = "Menu", modifier = Modifier.scale(1.7f).padding(10.dp))
@@ -32,7 +32,7 @@ fun MenuLoadingView(
         LineSpinFadeLoaderIndicator(
             radius = 25f,
             penThickness = 8f,
-            color = Color(151, 188, 98)
+            color = Color.White,
         )
         Text(
             message,

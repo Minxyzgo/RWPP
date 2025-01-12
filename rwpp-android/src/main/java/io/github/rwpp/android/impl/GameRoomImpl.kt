@@ -461,9 +461,9 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         GameEngine.t().bU.d((player as PlayerImpl).player)
     }
 
-    override fun disconnect() {
+    override fun disconnect(reason: String) {
         isSinglePlayerGame = false
-        if(isConnecting) GameEngine.t().bU.b("exited")
+        if(isConnecting) GameEngine.t().bU.b(reason)
         isRWPPRoom = false
         option = RoomOption()
         roomMods = arrayOf()

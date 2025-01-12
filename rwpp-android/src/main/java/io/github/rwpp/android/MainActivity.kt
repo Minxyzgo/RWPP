@@ -9,16 +9,30 @@ package io.github.rwpp.android
 
 import android.Manifest
 import android.app.Activity
+import android.app.ComponentCaller
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -28,9 +42,13 @@ import io.github.rwpp.AppContext
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.ConfigIO
-import io.github.rwpp.event.broadCastIn
+import io.github.rwpp.config.Settings
+import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.events.ReturnMainMenuEvent
 import org.koin.compose.LocalKoinApplication
+import ru.bartwell.exfilepicker.data.ExFilePickerResult
+import java.io.File
 
 class MainActivity : ComponentActivity() {
 
@@ -47,15 +65,16 @@ class MainActivity : ComponentActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) {
             isGaming = false
+            QuitGameEvent().broadcastIn()
             isSinglePlayerGame = false
-            if(!isReturnToBattleRoom) { ReturnMainMenuEvent().broadCastIn() }
+            if(!isReturnToBattleRoom) { ReturnMainMenuEvent().broadcastIn() }
             isReturnToBattleRoom = false
         }
 
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
-        Log.i("RWPP", "check permission: ${checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED}")
+        Log.i("RWPP", "check permission: ${checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED}")
 
         val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arrayOf(
@@ -74,7 +93,10 @@ class MainActivity : ComponentActivity() {
 
         appContext.init()
 
-        if(d.b(this, true, true)) {
+        val settings = appKoin.get<Settings>()
+        var backgroundImagePath by mutableStateOf(settings.backgroundImagePath ?: "")
+
+        if(d.b(this, true, true) && backgroundImagePath.isBlank()) {
             gameView = d.b(this)
         }
 
@@ -86,10 +108,36 @@ class MainActivity : ComponentActivity() {
                         WindowInsetsCompat.Type.navigationBars()
             )
 
-            CompositionLocalProvider(
-                LocalKoinApplication provides appKoin,
+            val isPremium = true
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                App()
+                val painter = remember (backgroundImagePath) {
+                    if (backgroundImagePath.isNotBlank() && isPremium) {
+                        runCatching { BitmapPainter(BitmapFactory.decodeFile(backgroundImagePath).asImageBitmap()) }.getOrNull()
+                    } else {
+                        null
+                    }
+                }
+
+                if (backgroundImagePath.isNotBlank() && isPremium && painter != null) {
+                    Image(
+                        painter = painter,
+                        null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                CompositionLocalProvider(
+                    LocalKoinApplication provides appKoin,
+                ) {
+                    App(isPremium = isPremium) {
+                        backgroundImagePath = it
+                    }
+                }
             }
         }
     }
@@ -102,6 +150,20 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         if(gameView != null) GameEngine.t()?.b(gameView)
+    }
+
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?,
+        caller: ComponentCaller
+    ) {
+        if (resultCode == EX_FILE_PICKER_RESULT) {
+            val result = ExFilePickerResult.getFromIntent(data)
+            if (result?.count!! > 1) {
+                pickFileActions.forEach { it(File(result.path)) }
+            }
+        }
     }
 
     override fun onResume() {

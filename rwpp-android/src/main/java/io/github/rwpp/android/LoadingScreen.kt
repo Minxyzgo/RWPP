@@ -44,12 +44,6 @@ class LoadingScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
-        if (SDK_INT >= Build.VERSION_CODES.R) {
-            if (Environment.isExternalStorageManager()) removeNetworkMod()
-        } else if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            removeNetworkMod()
-        }
-
         doProxy()
 
         setContent {
@@ -92,17 +86,5 @@ class LoadingScreen : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun removeNetworkMod() {
-        File("/storage/emulated/0/rustedWarfare/units/")
-            .walk()
-            .forEach {
-                if (it.name.contains(".network")) {
-                    it.delete()
-                } else if (it.name.endsWith(".netbak")) {
-                    it.renameTo(File(it.absolutePath.removeSuffix(".netbak")))
-                }
-            }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -12,10 +12,11 @@ import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.ServerStatus
 import io.github.rwpp.io.GameInputStream
 import io.github.rwpp.io.GameOutputStream
+import io.github.rwpp.net.InternalPacketType
 
 sealed class ServerPacket(type: PacketType) : Packet(type) {
 
-    class ServerInfoGetPacket : ServerPacket(PacketType.PRE_GET_SERVER_INFO_FROM_LIST) {
+    class ServerInfoGetPacket : ServerPacket(InternalPacketType.PRE_GET_SERVER_INFO_FROM_LIST) {
         override fun readPacket(input: GameInputStream) {
             input.readInt()
         }
@@ -35,7 +36,7 @@ sealed class ServerPacket(type: PacketType) : Packet(type) {
         var mods: String = "",
         var status: ServerStatus = ServerStatus.BattleRoom,
         var iconBytes: ByteArray = byteArrayOf(),
-    ): ServerPacket(PacketType.RECEIVE_SERVER_INFO_FROM_LIST) {
+    ): ServerPacket(InternalPacketType.RECEIVE_SERVER_INFO_FROM_LIST) {
         var ping: Int = 0
         override fun readPacket(input: GameInputStream) {
             name = input.readUTF()

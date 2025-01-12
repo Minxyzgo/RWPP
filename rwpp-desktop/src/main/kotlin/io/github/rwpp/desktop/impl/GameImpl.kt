@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -24,13 +24,11 @@ import com.corrodinggames.rts.java.b
 import com.corrodinggames.rts.java.b.a
 import com.corrodinggames.rts.java.u
 import io.github.rwpp.core.Logic
+import io.github.rwpp.core.UI
 import io.github.rwpp.desktop.*
 import io.github.rwpp.event.GlobalEventChannel
-import io.github.rwpp.event.broadCastIn
-import io.github.rwpp.event.events.KickedEvent
-import io.github.rwpp.event.events.PlayerJoinEvent
-import io.github.rwpp.event.events.RefreshUIEvent
-import io.github.rwpp.event.events.StartGameEvent
+import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.*
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
@@ -40,8 +38,9 @@ import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.team.TeamMode
-import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.MovementType
+import io.github.rwpp.game.world.World
 import io.github.rwpp.ui.LoadingContext
 import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.channels.Channel
@@ -57,7 +56,7 @@ class GameImpl : Game {
     private var _missions: List<Mission>? = null
     private var _allMaps: List<GameMap>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
-    private var _units: List<GameUnit>? = null
+    private var _units: List<UnitType>? = null
     private var lastAllUnits: java.util.ArrayList<*>? = null
     private val asField = PlayerInternal::class.java.getDeclaredField("as")
         .apply { isAccessible = true }
@@ -162,7 +161,7 @@ class GameImpl : Game {
                 override fun getPlayers(): List<Player> {
                     return (asField.get(B.bX.ay) as Array<com.corrodinggames.rts.game.n?>).mapNotNull {
                         if(it == null) return@mapNotNull null
-                        playerCacheMap.getOrPut(it) { PlayerImpl(it, this).also { p -> PlayerJoinEvent(p).broadCastIn() } }
+                        playerCacheMap.getOrPut(it) { PlayerImpl(it, this).also { p -> PlayerJoinEvent(p).broadcastIn() } }
                     }
                 }
 
@@ -180,6 +179,27 @@ class GameImpl : Game {
 
                 override fun sendQuickGameCommand(command: String) {
                     B.bX.k(command)
+                }
+
+                override fun sendMessageToPlayer(player: Player?, title: String, message: String, color: Int) {
+                    if (player?.client != null) {
+                        val rwOutputStream = RwOutputStream()
+                        rwOutputStream.c(message)
+                        rwOutputStream.c(3)
+                        rwOutputStream.b(title)
+                        rwOutputStream.a(null as c?)
+                        rwOutputStream.a(color)
+                        GameEngine.B().bX.a((player.client as ClientImpl).client, rwOutputStream.b(141))
+                    } else {
+                        Reflect.call(
+                            GameEngine.B().bX, "b", listOf(
+                                com.corrodinggames.rts.gameFramework.j.c::class,
+                                Int::class,
+                                String::class,
+                                String::class,
+                            ), listOf(null, color, title, message)
+                        )
+                    }
                 }
 
                 override fun addAI(count: Int) {
@@ -271,7 +291,7 @@ class GameImpl : Game {
                     // playerCacheMap.remove(p) maybe kick didn't work out
                 }
 
-                override fun disconnect() {
+                override fun disconnect(reason: String) {
                     playerCacheMap.clear()
                     isSandboxGame = false
                     isRWPPRoom = false
@@ -279,10 +299,11 @@ class GameImpl : Game {
                     bannedUnitList = listOf()
                     roomMods = arrayOf()
                     _teamMode = null
-                    if(isConnecting) B.bX.b("exited")
+                    if(isConnecting) B.bX.b(reason)
                     B.bX.ay.a = GameMapType.a
                     B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
                     B.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
+                    DisconnectEvent(reason).broadcastIn()
                 }
 
                 override fun updateUI() {
@@ -302,74 +323,8 @@ class GameImpl : Game {
             }
         }
     }
-/*
-    init {
-
-
-
-        .setFunction {
-            addProxy(com.corrodinggames.rts.java.b.a::p) {
-
-            }
-        }
-
-
-
-
-        }
-
-        com.corrodinggames.rts.game.units.custom.l::class.setFunction {
-            addProxy("a", com.corrodinggames.rts.game.units.custom.ab::class, java.util.HashMap::class) { p1: Any?, p2: HashMap<Any?, com.corrodinggames.rts.game.units.custom.ac> ->
-                val allMods = buildList {
-                    p2.values.forEach { ac ->
-                        val name = ac::class.java.getDeclaredField("a")
-                            .also { it.isAccessible = true }
-                            .get(ac)
-                        if(name != null && name != "null") add(name as String)
-                    }
-                }
-
-                roomMods = allMods.toTypedArray()
-
-                val met = UnitEngine::class.java.getDeclaredMethod("__proxy__a",
-                    com.corrodinggames.rts.game.units.custom.ab::class.java, java.util.HashMap::class.java).apply { isAccessible = true }
-                try {
-                    met.invoke(null, p1, p2)
-                } catch (e: Exception) {
-
-                    run {
-                        val modManager = get<ModManager>()
-                        if(allMods.all { modManager.getModByName(it) != null }) {
-                            modManager.getAllMods().forEach { it.isEnabled = it.name in allMods }
-                            CallReloadModEvent().broadCastIn()
-                            return@run
-                        }
-
-                        val modsName = modManager.getAllMods().map { it.name }
-                        if(gameRoom.option.canTransferMod) {
-                            get<Net>().sendPacketToServer(ModPacket.RequestPacket(allMods.filter { it !in modsName }.joinToString(";")))
-                            CallStartDownloadModEvent().broadCastIn()
-                        } else {
-                            gameRoom.disconnect()
-                            KickedEvent(e.cause?.message ?: "").broadCastIn()
-                        }
-                    }
-                }
-                Unit
-            }
-        }
-
-
-
-        .setFunction {
-            addProxy("I", mode = InjectMode.InsertBefore) { self: com.corrodinggames.rts.game.n ->
-
-            }
-        }
-
-
-    }
-*/
+    override val world: World
+        get() = TODO("Not yet implemented")
 
     init {
         GlobalEventChannel.filter(StartGameEvent::class).subscribeAlways {
@@ -397,7 +352,7 @@ class GameImpl : Game {
                 isAccessible = true
                 get(root)
             } as a
-            //root.loadConfigAndStartNew("maps/normal/${mission.tmx.name}")
+            //root.loadConfigAndStartNew("maps/normal/${mission.tmx.displayName}")
             val game = l.B()
             game.bQ.aiDifficulty = difficulty.ordinal - 2 // fuck code
 
@@ -435,7 +390,7 @@ class GameImpl : Game {
 
                 override fun a(p0: String, p1: Int) {
                     if (p0.startsWith("kicked", ignoreCase = true)) {
-                        KickedEvent(p0).broadCastIn()
+                        UI.showWarning(p0, true)
                     } else {
                         i.a(p0, p1)
                     }
@@ -445,7 +400,7 @@ class GameImpl : Game {
                     if (p0.startsWith("Briefing", ignoreCase = true) || p0.startsWith("Players", ignoreCase = true)) {
                         i.a(p0, p1)
                     } else {
-                        KickedEvent("$p0: $p1").broadCastIn()
+                        UI.showWarning("$p0: $p1", true)
                     }
                 }
 
@@ -636,7 +591,7 @@ class GameImpl : Game {
             }
 
 
-            RefreshUIEvent().broadCastIn()
+            RefreshUIEvent().broadcastIn()
         }
     }
 
@@ -812,11 +767,11 @@ class GameImpl : Game {
         return list
     }
     @Suppress("UNCHECKED_CAST")
-    override fun getAllUnits(): List<GameUnit> {
+    override fun getAllUnits(): List<UnitType> {
         val gameUnits = (com.corrodinggames.rts.game.units.ar.ae as ArrayList<com.corrodinggames.rts.game.units.`as`>)
         if(_units == null || lastAllUnits != gameUnits) {
             _units = gameUnits.map {
-                object : GameUnit {
+                object : UnitType {
                     override val name: String
                         get() = it.v()
                     override val displayName: String
@@ -846,10 +801,10 @@ class GameImpl : Game {
         return _units!!
     }
 
-    override fun onBanUnits(units: List<GameUnit>) {
-        bannedUnitList = units.map(GameUnit::name)
+    override fun onBanUnits(units: List<UnitType>) {
+        bannedUnitList = units.map(UnitType::name)
         if(units.isNotEmpty())
-            gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.map(GameUnit::displayName).joinToString(", ")}")
+            gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.map(UnitType::displayName).joinToString(", ")}")
     }
 
     override fun getAllReplays(): List<Replay> {

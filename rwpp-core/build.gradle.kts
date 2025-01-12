@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -12,6 +12,7 @@ plugins {
     kotlin("plugin.serialization")
     id("com.android.library")
     id("org.jetbrains.compose")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
     id("com.github.gmazzo.buildconfig")
 }
@@ -169,18 +170,18 @@ kotlin {
                 api(compose.ui)
                 val koinVersion = findProperty("koin.version") as String
                 val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
+                val markdownVersion = findProperty("markdown.version") as String
                 api("io.insert-koin:koin-core:$koinVersion")
                 api("io.insert-koin:koin-compose:$koinVersion")
                 api("io.insert-koin:koin-annotations:$koinAnnotationsVersion")
-                //api("com.halilibo.compose-richtext:richtext-ui:0.17.0")
                 api("com.squareup.okhttp3:okhttp:4.12.0")
                 api("net.peanuuutz.tomlkt:tomlkt:0.3.7")
                 api("com.eclipsesource.minimal-json:minimal-json:0.9.5")
-                api("com.mikepenz:multiplatform-markdown-renderer:0.27.0-rc02")
-                //api("io.github.androidpoet:dropdown:1.1.2")
-                //api("com.github.nanihadesuka:LazyColumnScrollbar:1.7.2")
-                //api("com.google.code.gson:gson:2.10.1")
-                //api("io.github.oleksandrbalan:modalsheet:0.5.0")
+                api("com.mikepenz:multiplatform-markdown-renderer:$markdownVersion")
+                api("com.mikepenz:multiplatform-markdown-renderer-m3:$markdownVersion")
+                api("party.iroiro.luajava:luajava:4.0.2")
+                api("party.iroiro.luajava:lua54:4.0.2")
+                api("org.slf4j:slf4j-simple:2.0.16")
             }
         }
 

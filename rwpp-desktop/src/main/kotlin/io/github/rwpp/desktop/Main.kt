@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -7,6 +7,7 @@
 
 package io.github.rwpp.desktop
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,21 +18,29 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
+import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.toPainter
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType.Companion.KeyDown
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.App
 import io.github.rwpp.AppContext
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.config.Settings
+import io.github.rwpp.event.GlobalEventChannel
+import io.github.rwpp.event.events.QuitGameEvent
+import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.Game
+import io.github.rwpp.game.sendChatMessageOrCommand
 import io.github.rwpp.game.team.TeamModeModule
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -41,7 +50,6 @@ import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
 import java.awt.*
 import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.imageio.ImageIO
@@ -71,42 +79,10 @@ fun main(array: Array<String>) {
             .displayMode
             .run { Dimension(width, height) }
 
-
-//    if (array.contains("-native")) {
-//        println("start native")
-//
-//        val classLoader = Thread.currentThread().contextClassLoader
-//
-//        val ucp = classLoader::class.java.getDeclaredField("ucp").apply {
-//            isAccessible = true
-//        }.get(classLoader)
-//
-//        val addURL: Method = ucp::class.java.getDeclaredMethod("addURL", URL::class.java).apply {
-//            isAccessible = true
-//        }
-//
-//        val allLibFiles = File(System.getProperty("user.dir") + "/libs").walk().filter { it.extension == "jar" }
-//
-//        allLibFiles.forEach {
-//            addURL.invoke(ucp, it.toURI().toURL())
-//        }
-//    }
-
-//    Thread.setDefaultUncaughtExceptionHandler { _, e ->
-//        JOptionPane.showMessageDialog(
-//            JFrame(), e.stackTraceToString(), "Error",
-//            JOptionPane.ERROR_MESSAGE
-//        )
-//
-//        exitProcess(0)
-//    }
-
     swingApplication()
 }
 
 fun swingApplication() = SwingUtilities.invokeLater {
-
-
     val window = JFrame()
 
     appKoin = startKoin {
@@ -122,9 +98,9 @@ fun swingApplication() = SwingUtilities.invokeLater {
 //    File("mods/units")
 //        .walk()
 //        .forEach {
-//            if (it.name.contains(".network")) {
+//            if (it.displayName.contains(".network")) {
 //                it.delete()
-//            } else if (it.name.endsWith(".netbak")) {
+//            } else if (it.displayName.endsWith(".netbak")) {
 //                it.renameTo(File(it.absolutePath.removeSuffix(".netbak")))
 //            }
 //        }
@@ -140,7 +116,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
     window.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     window.title = "Rusted Warfare Plus Plus"
-    window.iconImage = ImageIO.read(ClassLoader.getSystemResource("drawable/logo.png"))
+    window.iconImage = ImageIO.read(ClassLoader.getSystemResource("composeResources/io.github.rwpp.rwpp_core.generated.resources/drawable/logo.png"))
     //window.extendedState = JFrame.MAXIMIZED_BOTH
 
     val canvas = Canvas()
@@ -171,24 +147,52 @@ fun swingApplication() = SwingUtilities.invokeLater {
             }
         }
 
-        Box(
-            modifier = Modifier.fillMaxSize().background(
-                brush = Brush.verticalGradient(
-                    listOf(
-                        ColorCompose.Black,
-                        androidx.compose.ui.graphics.Color(52, 52, 52),
-                        androidx.compose.ui.graphics.Color(2, 48, 32),
-                        androidx.compose.ui.graphics.Color(52, 52, 52),
-                        ColorCompose.Black
-                    )
-                )
-            ),
-            contentAlignment = Alignment.Center
-        ) {
-            if (isLoading) MenuLoadingView(message) else App()
+        val settings = koinInject<Settings>()
+        val isPremium = true
+        var backgroundImagePath by remember { mutableStateOf(settings.backgroundImagePath ?: "") }
+
+        val painter = remember (backgroundImagePath) {
+            if (backgroundImagePath.isNotBlank() && isPremium) {
+                runCatching { ImageIO.read(File(backgroundImagePath)).toPainter() }.getOrNull()
+            } else {
+                null
+            }
         }
 
+        Box(
+            modifier = Modifier.fillMaxSize().composed {
+                if (backgroundImagePath.isBlank() || !isPremium || painter == null) {
+                    background(
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                ColorCompose.Black,
+                                androidx.compose.ui.graphics.Color(52, 52, 52),
+                                androidx.compose.ui.graphics.Color(2, 48, 32),
+                                androidx.compose.ui.graphics.Color(52, 52, 52),
+                                ColorCompose.Black
+                            )
+                        )
+                    )
+                } else {
+                    this
+                }
+            },
+            contentAlignment = Alignment.Center
+        ) {
 
+            if (backgroundImagePath.isNotBlank() && isPremium && painter != null) {
+                Image(
+                    painter = painter,
+                    null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            if (isLoading) MenuLoadingView(message) else App(isPremium = isPremium) {
+                backgroundImagePath = it
+            }
+        }
     }
 
 
@@ -203,34 +207,10 @@ fun swingApplication() = SwingUtilities.invokeLater {
     }
 
     window.isVisible = true
-
-//    window.addComponentListener(object : ComponentListener {
-//        override fun componentResized(p0: ComponentEvent) {
-//            println(p0.component.size)
-//        }
-//
-//        override fun componentMoved(p0: ComponentEvent?) {
-//        }
-//
-//        override fun componentShown(p0: ComponentEvent) {
-//            val size = p0.component.size
-//            canvas.size = size
-//            canvas.doLayout()
-//            val mode = canvas.graphicsConfiguration.device.displayMode
-//            println("graphics bounds: ${canvas.graphicsConfiguration.bounds.size}")
-//            println("bounds size: " + canvas.bounds.size)
-//            println("mode: ${mode.width} ${mode.height}")
-//            println("screen size toolkit: " + canvas.toolkit.screenSize)
-//        }
-//
-//        override fun componentHidden(p0: ComponentEvent?) {
-//        }
-//
-//    })
-
     panel.requestFocus()
 
     val panel2 = ComposePanel()
+
 
     panel2.isOpaque = false
     panel2.isFocusable = true
@@ -247,20 +227,26 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 }
                 true
             },
+
             shape = RectangleShape
         ) {
             var chatMessage by remember { mutableStateOf("") }
             ExitButton {
                 sendMessageDialog.isVisible = false
             }
+
+            GlobalEventChannel.filter(QuitGameEvent::class).onDispose {
+                subscribeAlways { sendMessageDialog.isVisible = false }
+            }
+
             RWSingleOutlinedTextField(
-                label = "Send Message",
+                label = readI18n("ingame.sendMessage"),
                 value = chatMessage,
                 requestFocus = true,
                 modifier = Modifier.fillMaxWidth().padding(10.dp)
                     .onKeyEvent {
                         if(it.key == Key.Enter && chatMessage.isNotEmpty()) {
-                            game.gameRoom.sendChatMessage(chatMessage)
+                            game.gameRoom.sendChatMessageOrCommand(chatMessage)
                             chatMessage = ""
                             sendMessageDialog.isVisible = false
                         }
@@ -272,7 +258,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                         Icons.AutoMirrored.Filled.ArrowForward,
                         null,
                         modifier = Modifier.clickable {
-                            game.gameRoom.sendChatMessage(chatMessage)
+                            game.gameRoom.sendChatMessageOrCommand(chatMessage)
                             chatMessage = ""
                             sendMessageDialog.isVisible = false
                         }
@@ -285,13 +271,13 @@ fun swingApplication() = SwingUtilities.invokeLater {
             )
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                RWTextButton("Send Message") {
-                    game.gameRoom.sendChatMessage(chatMessage)
+                RWTextButton(readI18n("ingame.sendMessage")) {
+                    game.gameRoom.sendChatMessageOrCommand(chatMessage)
                     chatMessage = ""
                     sendMessageDialog.isVisible = false
                 }
 
-                RWTextButton("Send Team Message") {
+                RWTextButton(readI18n("ingame.sendTeamMessage")) {
                     game.gameRoom.sendChatMessage("-t $chatMessage")
                     chatMessage = ""
                     sendMessageDialog.isVisible = false
@@ -315,6 +301,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
 fun showSendMessageDialog() {
     sendMessageDialog.isVisible = true
     val window = mainJFrame
+    sendMessageDialog.requestFocus()
     sendMessageDialog.setLocation(window.x + window.width / 2 - sendMessageDialog.width / 2, window.y + window.height / 2 - sendMessageDialog.height / 2)
 }
 

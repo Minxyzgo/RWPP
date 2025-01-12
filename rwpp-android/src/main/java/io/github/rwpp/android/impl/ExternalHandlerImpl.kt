@@ -7,6 +7,7 @@
 
 package io.github.rwpp.android.impl
 
+import android.app.Activity
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.os.Build
@@ -16,15 +17,22 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import io.github.rwpp.R
+import io.github.rwpp.android.EX_FILE_PICKER_RESULT
+import io.github.rwpp.android.pickFileActions
+import io.github.rwpp.app.PermissionHelper
+import io.github.rwpp.appKoin
+import io.github.rwpp.external.Extension
+import io.github.rwpp.external.ExtensionConfig
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.external.Resource
 import io.github.rwpp.external.ResourceConfig
 import io.github.rwpp.impl.BaseExternalHandlerImpl
+import io.github.rwpp.io.unzipTo
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
-import io.github.rwpp.io.unzipTo
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
+import ru.bartwell.exfilepicker.ExFilePicker
 import java.io.File
 import java.util.zip.ZipFile
 
@@ -69,15 +77,26 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         resource.resourceFile.unzipTo(File(resourceOutputDir))
     }
 
-    override fun newResource(id: Int, resourceFile: File, config: ResourceConfig): Resource {
-        return object : Resource(
-            id, resourceFile, config
+    override fun openFileChooser(onChooseFile: (File) -> Unit) {
+        val permissionHelper = appKoin.get<PermissionHelper>()
+        permissionHelper.requestManageFilePermission()
+        exFilePicker.start(appKoin.get<Context>() as Activity, EX_FILE_PICKER_RESULT)
+        pickFileActions += onChooseFile
+    }
+
+    override fun newExtension(
+        isEnabled: Boolean,
+        extensionFile: File,
+        config: ExtensionConfig
+    ): Extension {
+        return object : Extension(
+            isEnabled, extensionFile, ZipFile(extensionFile), config
         ) {
             override val iconPainter: Painter? by lazy {
                 if (config.icon.isBlank())
                     null
                 else {
-                    val zipFile = ZipFile(resourceFile)
+                    val zipFile = ZipFile(extensionFile)
                     val iconEntry = zipFile.getEntry(config.icon)
                     BitmapPainter(
                         BitmapFactory.decodeStream(zipFile.getInputStream(iconEntry))
@@ -88,11 +107,5 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         }
     }
 
-    override fun getUsingResource(): Resource? {
-        if (SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()) return null
-        }
-
-        return super.getUsingResource()
-    }
+    private val exFilePicker = ExFilePicker()
 }

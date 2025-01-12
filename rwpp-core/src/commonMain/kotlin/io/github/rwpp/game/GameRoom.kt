@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -7,6 +7,7 @@
 
 package io.github.rwpp.game
 
+import io.github.rwpp.commands
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.FogMode
@@ -54,39 +55,50 @@ interface GameRoom {
 
     /**
      * Get all players from the room.
+     * @return all players from the room.
      */
     fun getPlayers(): List<Player>
 
     /**
      * Describe the detailed options of the room.
+     * @return the detailed options of the room.
      */
     suspend fun roomDetails(): String
 
     /**
      * Send chat message by local player's own.
+     * @param message the content of the message.
      */
     fun sendChatMessage(message: String)
 
     /**
      * Send system message. (if host)
+     * @param message the content of the message.
      */
     fun sendSystemMessage(message: String)
 
     /**
      * Send quick game command.
+     * @param command the command to send.
      */
     fun sendQuickGameCommand(command: String)
 
+    /**
+     * Send message to a player. (if host)
+     * @param player the target player to send message. if null, send to local player.
+     * @param title the title of the message.
+     * @param message the content of the message.
+     */
+    fun sendMessageToPlayer(player: Player?, title: String, message: String, color: Int = -1)
 
     /**
      * Add AIs to the room with the specific count. (if host)
+     * @param count the count of AIs to add.r
      */
     fun addAI(count: Int = 1)
 
     /**
      * Apply the room config.
-     *
-     * @param teamMode available mods: 2t, 3t, FFA, spectators
      */
     fun applyRoomConfig(
         maxPlayerCount: Int,
@@ -104,13 +116,15 @@ interface GameRoom {
 
     /**
      * Kick a player. (if host)
+     * @param player the target player to kick.
      */
     fun kickPlayer(player: Player)
 
     /**
      * Disconnect from the room.
+     * @param reason the reason of the disconnect.
      */
-    fun disconnect()
+    fun disconnect(reason: String = "excited")
 
     /**
      * Update UI. Contains local refresh and sending info packet (if host)
@@ -121,4 +135,10 @@ interface GameRoom {
      * Start game. (if host)
      */
     fun startGame()
+}
+
+fun GameRoom.sendChatMessageOrCommand(message: String) {
+    if (isHost && message.startsWith(commands.prefix)) {
+        commands.handleCommandMessage(message, localPlayer) { sendMessageToPlayer(localPlayer, "RWPP", it) }
+    } else sendChatMessage(message)
 }

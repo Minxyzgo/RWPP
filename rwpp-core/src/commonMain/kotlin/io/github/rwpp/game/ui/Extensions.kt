@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -8,8 +8,6 @@
 
 package io.github.rwpp.game.ui
 
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,13 +21,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.AppContext
+import io.github.rwpp.app.PermissionHelper
+import io.github.rwpp.appKoin
+import io.github.rwpp.config.EnabledExtensions
+import io.github.rwpp.core.UI
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.rwpp_core.generated.resources.Res
@@ -41,16 +42,22 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ResourceView(
+fun ExtensionView(
     onExit: () -> Unit
 ) {
     BackHandler(true, onExit)
     val appContext = koinInject<AppContext>()
     val externalHandler = koinInject<ExternalHandler>()
+    val extensions = externalHandler.getAllExtensions().onFailure {
+        UI.showWarning(it.message ?: "Unexpected error")
+    }.getOrDefault(listOf())
 
-    var selectedResource by remember { mutableStateOf(externalHandler.getUsingResource()) }
+    val permissionHelper = koinInject<PermissionHelper>()
+    LaunchedEffect(Unit) {
+        permissionHelper.requestManageFilePermission()
+    }
+
     var showResultView by remember { mutableStateOf(false) }
 
     var isLoading by remember { mutableStateOf(false) }
@@ -61,29 +68,30 @@ fun ResourceView(
     }) {
         message("Loading")
         result = kotlin.runCatching {
+            appKoin.get<EnabledExtensions>().values = extensions.filter { it.isEnabled }.map { it.config.id }
             withContext(Dispatchers.IO) {
-                externalHandler.enableResource(selectedResource)
+                extensions.forEach(externalHandler::enableResource)
             }
         }.exceptionOrNull()?.stackTraceToString() ?: "Loading successfully. You should restart RWPP to enable changes."
         true
     }
     AnimatedAlertDialog(
         showResultView,
-        onDismissRequest = { }) { dismiss ->
+        onDismissRequest = { }) { _ ->
         BorderCard(
             modifier = Modifier.size(500.dp),
         ) {
 
             Row(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
-                HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = MaterialTheme.colorScheme.surfaceContainer)
                 Box {
-                    Icon(Icons.Default.Warning, null, tint = Color(151, 188, 98), modifier = Modifier.size(50.dp).offset(5.dp, 5.dp).blur(2.dp))
-                    Icon(Icons.Default.Warning, null, tint = Color(0xFFb6d7a8), modifier = Modifier.size(50.dp))
+                    Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(50.dp).offset(5.dp, 5.dp).blur(2.dp))
+                    Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(50.dp))
                 }
-                HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = MaterialTheme.colorScheme.surfaceContainer)
             }
 
-            LargeDividingLine { 5.dp }
+            LargeDividingLine { 0.dp }
 
             Column(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -93,7 +101,7 @@ fun ResourceView(
                 Text(
                     result,
                     modifier = Modifier.padding(5.dp),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyLarge
                 )
 
@@ -132,7 +140,6 @@ fun ResourceView(
             ExitButton(onExit)
 
             val state = rememberLazyListState()
-            val resources = externalHandler.getAllResources()
 
             LazyColumnScrollbar(
                 listState = state,
@@ -143,44 +150,56 @@ fun ResourceView(
                     state = state
                 ) {
                     items(
-                        key = { resources[it].id },
-                        count = resources.size
+                        key = { extensions[it].config.id },
+                        count = extensions.size
                     ) { index ->
-                        val resource = resources[index]
-                        val (delay, easing) = state.calculateDelayAndEasing(index, 1)
-                        val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
-                        val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
-                        val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
+                        val extension = extensions[index]
                         BorderCard(
-                            backgroundColor = Color.DarkGray.copy(.6f),
-                            modifier = Modifier
-                                .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
-                                .animateItemPlacement()
+                            backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.6f),
+                            modifier = Modifier.animateItem()
                                 .fillMaxWidth()
                                 .wrapContentHeight()
                                 .padding(5.dp)
                         ) {
                             Column {
-                                var checked by remember(selectedResource) {
-                                    mutableStateOf(selectedResource == resource)
+                                var checked by remember {
+                                    mutableStateOf(extension.isEnabled)
                                 }
 
                                 Row {
                                     Image(
-                                        resource.iconPainter ?: painterResource(Res.drawable.error_missingmap),
+                                        extension.iconPainter ?: painterResource(Res.drawable.error_missingmap),
                                         null,
                                         modifier = Modifier.size(120.dp).padding(5.dp)
                                     )
-                                    RWCheckbox(checked, onCheckedChange = {
-                                        checked = !checked
-                                        selectedResource = if(checked) resource else null
-                                    }, modifier = Modifier.padding(5.dp))
-                                    Text(
-                                        resource.config.name,
-                                        modifier = Modifier.padding(5.dp),
-                                        style = MaterialTheme.typography.headlineLarge,
-                                        color = Color(151, 188, 98)
-                                    )
+                                    Column(modifier = Modifier.padding(5.dp)) {
+                                        Row {
+                                            RWCheckbox(checked, onCheckedChange = {
+                                                checked = !checked
+                                                extension.isEnabled = checked
+                                            }, modifier = Modifier.padding(5.dp))
+                                            Text(
+                                                extension.config.displayName,
+                                                modifier = Modifier.padding(5.dp),
+                                                style = MaterialTheme.typography.headlineLarge,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+
+                                        Text(
+                                            "Author: ${extension.config.author}",
+                                            modifier = Modifier.padding(2.dp),
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+
+                                        Text(
+                                            "Version: ${extension.config.version}",
+                                            modifier = Modifier.padding(top = 0.dp, bottom = 2.dp),
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
                                 }
 
                                 val expandedStyle = remember {
@@ -194,9 +213,9 @@ fun ResourceView(
 
                                 SelectionContainer {
                                     ExpandableText(
-                                        text = resource.config.description,
+                                        text = extension.config.description,
                                         style = MaterialTheme.typography.bodyMedium,
-                                        textModifier = Modifier.padding(top = 5.dp),
+                                        textModifier = Modifier.padding(top = 5.dp, start = 5.dp),
                                         showMoreStyle = expandedStyle,
                                         showLessStyle = expandedStyle
                                     )

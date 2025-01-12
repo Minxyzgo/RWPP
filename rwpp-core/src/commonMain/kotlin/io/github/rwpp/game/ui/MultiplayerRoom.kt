@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -29,34 +29,27 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.core.UI.chatMessages
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.events.*
 import io.github.rwpp.event.onDispose
-import io.github.rwpp.game.ConnectingPlayer
-import io.github.rwpp.game.Game
-import io.github.rwpp.game.GameRoom
-import io.github.rwpp.game.Player
+import io.github.rwpp.game.*
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.MapType
-import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.team.TeamMode
-import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.i18n.readI18n
-import io.github.rwpp.net.Net
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.rwpp_core.generated.resources.Res
 import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
+import io.github.rwpp.scripts.ExtraScriptApi
+import io.github.rwpp.scripts.Render
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import io.github.rwpp.ui.v2.LongPressFloatingActionButton
@@ -66,17 +59,12 @@ import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
-
-private val relayRegex = Regex("""R\d+""")
-
 @Composable
 fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     BackHandler(true, onExit)
 
     val configIO = koinInject<ConfigIO>()
     val game = koinInject<Game>()
-    val modManager = koinInject<ModManager>()
-    val net = koinInject<Net>()
     val room = game.gameRoom
 
     var update by remember { mutableStateOf(false) }
@@ -85,32 +73,30 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
     var optionVisible by remember { mutableStateOf(false) }
     var banUnitVisible by remember { mutableStateOf(false) }
-    var downloadModViewVisible by remember { mutableStateOf(false) }
+    //var downloadModViewVisible by remember { mutableStateOf(false) }
     var loadModViewVisible by remember { mutableStateOf(false) }
-    var selectedBanUnits by remember { mutableStateOf(listOf<GameUnit>()) }
+    var selectedBanUnits by remember { mutableStateOf(listOf<UnitType>()) }
 
     var showMapSelectView by remember { mutableStateOf(false) }
     val players = remember(update) { room.getPlayers().sortedBy { it.team } }
     val isHost = remember(update) { room.isHost || room.isHostServer }
     val updateAction = { update = !update }
 
-    var chatMessages by remember { mutableStateOf(AnnotatedString("")) }
-
     var playerOverrideVisible by remember { mutableStateOf(false) }
     var selectedPlayer by remember { mutableStateOf(players.firstOrNull() ?: ConnectingPlayer) }
 
     val scope = rememberCoroutineScope()
-
-    GlobalEventChannel.filter(CallReloadModEvent::class).onDispose {
-        subscribeAlways {
-            loadModViewVisible = true
-            downloadModViewVisible = false
-        }
-    }
-
-    GlobalEventChannel.filter(CallStartDownloadModEvent::class).onDispose {
-        subscribeAlways { downloadModViewVisible = true }
-    }
+//
+//    GlobalEventChannel.filter(CallReloadModEvent::class).onDispose {
+//        subscribeAlways {
+//            loadModViewVisible = true
+//            downloadModViewVisible = false
+//        }
+//    }
+//
+//    GlobalEventChannel.filter(CallStartDownloadModEvent::class).onDispose {
+//        subscribeAlways { downloadModViewVisible = true }
+//    }
 
     GlobalEventChannel.filter(RefreshUIEvent::class).onDispose {
         subscribeAlways { updateAction() }
@@ -120,37 +106,6 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         subscribeAlways { onExit() }
     }
 
-    GlobalEventChannel.filter(ChatMessageEvent::class).onDispose {
-        subscribeAlways {
-            scope.launch {
-                chatMessages =
-                    buildAnnotatedString {
-                        if(it.sender == "RELAY_CN-ADMIN") {
-                            val result = relayRegex.find(it.message)?.value
-
-                            if(!result.isNullOrBlank()) {
-                                configIO.setGameConfig("lastNetworkIP", result)
-                            }
-                        }
-
-                        if(it.sender.isNotBlank()) {
-                            withStyle(style = SpanStyle(
-                                color = Player.getTeamColor(it.spawn),
-                                fontWeight = FontWeight.Bold
-                            )) {
-                                append(it.sender + ": ")
-                            }
-                        }
-
-                        withStyle(style = SpanStyle(color = Color.White)) {
-                            append(it.message)
-                        }
-
-                        append("\n")
-                    } + chatMessages
-            }
-        }
-    }
 
 //    LoadingView(loadModViewVisible, { loadModViewVisible = false }) {
 //        message("reloading mods...")
@@ -176,7 +131,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         lastSelectedIndex = index
     }
 
-    MultiplayerOptionDialog(
+    MultiplayerOption(
         optionVisible,
         { optionVisible = false },
         updateAction,
@@ -203,7 +158,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(10.dp)
                     .onKeyEvent {
                         if(it.key == androidx.compose.ui.input.key.Key.Enter && chatMessage.isNotEmpty()) {
-                            room.sendChatMessage(chatMessage)
+                            room.sendChatMessageOrCommand(chatMessage)
                             chatMessage = ""
                         }
 
@@ -214,10 +169,10 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                         Icons.AutoMirrored.Filled.ArrowForward,
                         null,
                         modifier = Modifier.clickable {
-                            room.sendChatMessage(chatMessage)
+                            room.sendChatMessageOrCommand(chatMessage)
                             chatMessage = ""
                         },
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.surfaceTint
                     )
                 },
                 onValueChange =
@@ -270,7 +225,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 .padding(10.dp)
                                 .then(if(LocalWindowManager.current == WindowManager.Small)
                                         Modifier.verticalScroll(rememberScrollState()) else Modifier),
-                            backgroundColor = Color.DarkGray.copy(.7f)
+                            backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
                         ) {
                             var details by remember { mutableStateOf("Getting details...") }
 
@@ -281,7 +236,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     null,
                                     contentScale = ContentScale.Fit,
                                     modifier = Modifier.then(modifier).padding(10.dp)
-                                        .border(BorderStroke(2.dp, Color.DarkGray))
+                                        .border(BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceContainer))
                                         .clickable(isHost) { showMapSelectView = true }
                                 )
                             }
@@ -296,7 +251,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             ), horizontalArrangement = Arrangement.Center) {
                                 Text(
                                     details,
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(10.dp)
                                 )
@@ -313,7 +268,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 style = MaterialTheme.typography.headlineLarge,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                color = Color(151, 188, 98)
+                                color = MaterialTheme.colorScheme.primary
                             )
 
                             Text(
@@ -322,7 +277,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 style = MaterialTheme.typography.headlineMedium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onSurface
                             )
 
                             @Composable
@@ -338,7 +293,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp),
                                         enabled = room.isHost,
                                     ) {
-                                        Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else Color.White)
+                                        Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else MaterialTheme.colorScheme.onSurface)
                                     }
                                 }
                                 RWTextButton(
@@ -385,37 +340,59 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                         ) {
                             BorderCard(
                                 modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 200.dp).padding(5.dp),
-                                backgroundColor = Color.DarkGray.copy(.7f)
+                                backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .padding(5.dp)
-                                        .border(BorderStroke(2.dp, Color(101, 147, 74)), CircleShape)
+                                        .border(BorderStroke(2.dp, MaterialTheme.colorScheme.secondary), CircleShape)
                                         .fillMaxWidth()
                                 ) {
-                                    TableCell("name", playerNameWeight, drawStroke = false)
-                                    TableCell("spawn", playerSpawnWeight)
-                                    TableCell("team", playerTeamWeight)
-                                    TableCell("ping", playerPingWeight, drawStroke = false)
+                                    TableCell("name", playerNameWeight, drawStroke = false, strokeColor = MaterialTheme.colorScheme.secondaryContainer)
+                                    TableCell("spawn", playerSpawnWeight, strokeColor = MaterialTheme.colorScheme.secondaryContainer)
+                                    TableCell("team", playerTeamWeight,  strokeColor = MaterialTheme.colorScheme.secondaryContainer)
+                                    TableCell("ping", playerPingWeight, drawStroke = false,  strokeColor = MaterialTheme.colorScheme.secondaryContainer)
                                 }
 
                                 @Composable
-                                fun PlayerTable(index: Int) {
+                                fun PlayerTable(
+                                    index: Int,
+                                    modifier: Modifier = Modifier
+                                    //animateItem: (Modifier.() -> Unit)? = null
+                                ) {
                                     val options = remember {
                                         game.getStartingUnitOptions()
                                     }
                                     val player = players[index]
-                                    var (delay, easing) = state.calculateDelayAndEasing(index, 1)
-                                    if(LocalWindowManager.current != WindowManager.Large) delay = 0
-                                    val animation = tween<Float>(durationMillis = 500, delayMillis = delay, easing = easing)
-                                    val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
-                                    val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
+
                                     Row(
                                         modifier = Modifier
-                                            .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+                                            .apply {
+                                                if (LocalWindowManager.current == WindowManager.Middle) {
+                                                    var (delay, easing) = state.calculateDelayAndEasing(index, 1)
+                                                    if (LocalWindowManager.current != WindowManager.Large) delay = 0
+                                                    val animation = tween<Float>(
+                                                        durationMillis = 500,
+                                                        delayMillis = delay,
+                                                        easing = easing
+                                                    )
+                                                    val args = ScaleAndAlphaArgs(
+                                                        fromScale = 2f,
+                                                        toScale = 1f,
+                                                        fromAlpha = 0f,
+                                                        toAlpha = 1f
+                                                    )
+                                                    val (scale, alpha) = scaleAndAlpha(
+                                                        args = args,
+                                                        animation = animation
+                                                    )
+                                                    graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+                                                }
+                                            }
+                                            .then(modifier)
                                             .height(IntrinsicSize.Max)
                                             .padding(5.dp)
-                                            .border(BorderStroke(2.dp, Color(160, 191, 124)), CircleShape)
+                                            .border(BorderStroke(2.dp, MaterialTheme.colorScheme.primary), CircleShape)
                                             .fillMaxWidth()
                                             .clickable(room.isHost || room.isHostServer || room.localPlayer == player) {
                                                 selectedPlayer = player
@@ -423,7 +400,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                             }
                                     ) {
                                         TableCell(player.name + if(player.startingUnit != -1) " - ${options.first { it.first == player.startingUnit }.second}" else "",
-                                            color = if(player.color != -1) Player.getTeamColor(player.color) else Color.White,
+                                            color = if(player.color != -1) Player.getTeamColor(player.color) else MaterialTheme.colorScheme.onSurface,
                                             weight = playerNameWeight, drawStroke = false,
                                             modifier = Modifier.fillMaxHeight()) {
 //                                            if (!player.data.ready) {
@@ -464,9 +441,9 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         ) {
                                             items(
                                                 count = players.size,
-                                                //key = { players[it].connectHexId }
+                                                key = { players[it].connectHexId }
                                             ) { index ->
-                                                PlayerTable(index)
+                                                PlayerTable(index, Modifier.animateItem())
                                             }
                                         }
                                     }
@@ -476,7 +453,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             if(LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
                                 BorderCard(
                                     modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 200.dp).padding(5.dp),
-                                    backgroundColor = Color.DarkGray.copy(.7f)
+                                    backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
                                 ) {
                                     Row(modifier = Modifier.fillMaxWidth()) {
                                         RWTextButton(
@@ -503,7 +480,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                     BorderCard(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(10.dp)
+                            .padding(10.dp),
+                        backgroundColor = MaterialTheme.colorScheme.surfaceContainer
                     ) {
                         Column {
                             Row(modifier = Modifier.fillMaxWidth()
@@ -532,7 +510,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     enabled = isHost,
                                     modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
                                 ) {
-                                    Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else Color.White)
+                                    Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else MaterialTheme.colorScheme.surfaceTint)
                                 }
 
                                 if(!isSandboxGame) MessageTextField()
@@ -541,7 +519,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             if(!isSandboxGame) BorderCard(
                                 modifier = Modifier
                                     .padding(5.dp),
-                                backgroundColor = Color.DarkGray.copy(.7f)
+                                backgroundColor = MaterialTheme.colorScheme.surface.copy(.7f)
                             ) {
                                 MessageView()
                             }
@@ -575,7 +553,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 }
 
 @Composable
-private fun MultiplayerOptionDialog(
+private fun MultiplayerOption(
     label: String,
     value: Boolean,
     enabled: Boolean = true,
@@ -590,7 +568,7 @@ private fun MultiplayerOptionDialog(
     Text(label,
         modifier = Modifier.padding(top = 10.dp),
         style = MaterialTheme.typography.headlineMedium,
-        color = if (enabled) Color(151, 188, 98) else Color.DarkGray
+        color = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.inversePrimary
     )
 }
 
@@ -629,9 +607,9 @@ private fun PlayerOverrideDialog(
                 readI18n("multiplayer.room.playerConfig"),
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp),
                 style = MaterialTheme.typography.headlineMedium,
-                color = Color(151, 188, 98)
+                color = MaterialTheme.colorScheme.primary
             )
-            LargeDividingLine { 5.dp }
+            LargeDividingLine { 0.dp }
             Column(modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
                 var expanded0 by remember { mutableStateOf(false) }
                 RWSingleOutlinedTextField(
@@ -668,7 +646,7 @@ private fun PlayerOverrideDialog(
                 Text(
                     "The spawn point controls where on the map this player starts. Most maps use old-even spawn points.",
                     modifier = Modifier.padding(5.dp),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyLarge
                 )
 
@@ -708,7 +686,7 @@ private fun PlayerOverrideDialog(
                 Text(
                     "Players with the same team will be allied together.",
                     modifier = Modifier.padding(5.dp),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyLarge
                 )
 
@@ -731,7 +709,7 @@ private fun PlayerOverrideDialog(
                         },
                         selectedIndex = playerColor + 1,
                         onItemSelected = { i, _ -> playerColor = i - 1 },
-                        selectedItemColor = { _, i -> if (i > 0) Player.getTeamColor(i - 1) else Color.White }
+                        selectedItemColor = { _, i -> if (i > 0) Player.getTeamColor(i - 1) else MaterialTheme.colorScheme.onSurface }
                     )
 
                     LargeDropdownMenu(
@@ -757,9 +735,13 @@ private fun PlayerOverrideDialog(
             }
 
 
-            LargeDividingLine { 5.dp }
+            LargeDividingLine { 0.dp }
             Row(modifier = Modifier.fillMaxWidth().padding(end = 10.dp),
                  horizontalArrangement = Arrangement.Center) {
+
+                for (widget in ExtraScriptApi.extraPlayerOptionBottomButtons) {
+                    widget.Render()
+                }
 
                 if(player != room.localPlayer && room.isHost)
                     RWTextButton(readI18n("multiplayer.room.kick"), Modifier.padding(5.dp)) {
@@ -785,7 +767,7 @@ private fun PlayerOverrideDialog(
 }
 
 @Composable
-private fun MultiplayerOptionDialog(
+private fun MultiplayerOption(
     visible: Boolean,
     onDismissRequest: () -> Unit,
     update: () -> Unit,
@@ -813,7 +795,7 @@ private fun MultiplayerOptionDialog(
 
     val koin = getKoin()
     val teamModes = remember {
-        koin.getAll<TeamMode>()
+        koin.getAll<TeamMode>().toMutableList().apply { addAll(ExtraScriptApi.extraTeamModes) }
     }
 
     BorderCard(
@@ -824,21 +806,21 @@ private fun MultiplayerOptionDialog(
         LazyColumn(modifier = Modifier.weight(1f).padding(10.dp)) {
             item {
                 LazyRow(horizontalArrangement = Arrangement.Center) {
-                    item { MultiplayerOptionDialog(readI18n("multiplayer.room.noNukes"), noNukes) { noNukes = it } }
+                    item { MultiplayerOption(readI18n("multiplayer.room.noNukes"), noNukes) { noNukes = it } }
                     item {
-                        MultiplayerOptionDialog(
+                        MultiplayerOption(
                             readI18n("multiplayer.room.sharedControl"),
                             sharedControl
                         ) { sharedControl = it }
                     }
                     item {
-                        MultiplayerOptionDialog(
+                        MultiplayerOption(
                             readI18n("multiplayer.room.allowSpectators"),
                             allowSpectators, room.isHost
                         ) { allowSpectators = it }
                     }
                     item {
-                        MultiplayerOptionDialog(readI18n("multiplayer.room.teamLock"), teamLock, room.isHost) { teamLock = it }
+                        MultiplayerOption(readI18n("multiplayer.room.teamLock"), teamLock, room.isHost) { teamLock = it }
                     }
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -7,17 +7,44 @@
 
 package io.github.rwpp.desktop.impl.inject
 
-import io.github.rwpp.desktop.impl.GameImpl.Companion.main
-import io.github.rwpp.desktop.impl.ServerCallbackImpl
+import android.app.Activity
+import com.corrodinggames.rts.gameFramework.h.a
+import com.corrodinggames.rts.gameFramework.j.ae
+import io.github.rwpp.core.UI
+import io.github.rwpp.desktop.impl.GameEngine
+import io.github.rwpp.desktop.rcnOption
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 
-@InjectClass(com.corrodinggames.rts.java.b.a::class)
+
+@InjectClass(com.corrodinggames.librocket.a::class)
 object CallbackInject {
-    @Inject("p")
-    fun onSetCallback() {
-        ServerCallbackImpl().apply {
-            f = main
+    @Inject("a")
+    fun onSetCallback(ae: ae) {
+        if(rcnOption != null) {
+            ae.a(rcnOption)
+            rcnOption = null
+            return
         }
+
+        UI.showQuestion(
+            if(ae.b != null)
+                "Server Question"
+            else ae.e ?: "Password Required",
+            if(ae.b != null)
+                a.c(ae.b)
+            else "This server requires a password to join"
+        ) {
+            if (it == null) {
+                ae.a()
+            } else {
+                ae.a(it)
+            }
+        }
+    }
+
+    @Inject("b")
+    fun com.corrodinggames.librocket.a.noMainMenu() {
+        GameEngine.B()?.a(null as Activity?, this.c, true)
     }
 }

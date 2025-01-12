@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -182,14 +182,14 @@ fun LazyColumnScrollbar(
     thickness: Dp = 6.dp,
     padding: Dp = 8.dp,
     thumbMinHeight: Float = 0.1f,
-    thumbColor: Color = Color(0, 255, 127),
-    thumbSelectedColor: Color = Color(124, 252, 0),
+    thumbColor: Color = MaterialTheme.colorScheme.primary,
+    thumbSelectedColor: Color = MaterialTheme.colorScheme.inversePrimary,
     thumbShape: Shape = CircleShape,
     selectionMode: ScrollbarSelectionMode = ScrollbarSelectionMode.Full,
     selectionActionable: ScrollbarSelectionActionable = ScrollbarSelectionActionable.Always,
     hideDelay: Duration = 400.toDuration(DurationUnit.MILLISECONDS),
     showItemIndicator: ListIndicatorSettings = EnabledMirrored(
-        if (LocalWindowManager.current == WindowManager.Small) 25.dp else 50.dp,
+        if (LocalWindowManager.current == WindowManager.Small) 5.dp else 15.dp,
         MaterialTheme.colorScheme.surface
     ),
     enabled: Boolean = true,

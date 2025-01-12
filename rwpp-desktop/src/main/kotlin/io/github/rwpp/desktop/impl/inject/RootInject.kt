@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -12,16 +12,22 @@ package io.github.rwpp.desktop.impl.inject
 import com.corrodinggames.librocket.scripts.Root
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
-import io.github.rwpp.inject.Inject
 import io.github.rwpp.appKoin
-import io.github.rwpp.desktop.*
+import io.github.rwpp.commands
+import io.github.rwpp.core.UI
+import io.github.rwpp.desktop.gameCanvas
+import io.github.rwpp.desktop.impl.ClientImpl
 import io.github.rwpp.desktop.impl.GameEngine
 import io.github.rwpp.desktop.isGaming
 import io.github.rwpp.desktop.isSandboxGame
-import io.github.rwpp.event.broadCastIn
+import io.github.rwpp.desktop.rwppVisibleSetter
+import io.github.rwpp.desktop.showSendMessageDialog
+import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.ChatMessageEvent
+import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.events.ReturnMainMenuEvent
 import io.github.rwpp.game.Game
+import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import javax.swing.SwingUtilities
 
@@ -43,7 +49,8 @@ object RootInject {
             libRocket.closeActiveDocument()
             libRocket.clearHistory()
 
-            ReturnMainMenuEvent().broadCastIn()
+            QuitGameEvent().broadcastIn()
+            ReturnMainMenuEvent().broadcastIn()
         }
     }
 
@@ -60,18 +67,10 @@ object RootInject {
             } as com.corrodinggames.librocket.b
             libRocket.closeActiveDocument()
             libRocket.clearHistory()
+
+            QuitGameEvent().broadcastIn()
         }
     }
-
-    @Suppress("UNUSED_PARAMETER")
-    @Inject("receiveChatMessage")
-    fun onReceiveChatMessage(
-        spawn: Int, s: String?, s1: String?, sender: com.corrodinggames.rts.gameFramework.j.c?
-    ) {
-        if(playerCacheMap.isEmpty()) appKoin.get<Game>().gameRoom.getPlayers()
-        ChatMessageEvent(s ?: "", s1 ?: "", spawn).broadCastIn()
-    }
-
     @Inject("makeSendMessagePopup")
     fun onMakeSendMessagePopup() {
         SwingUtilities.invokeLater {

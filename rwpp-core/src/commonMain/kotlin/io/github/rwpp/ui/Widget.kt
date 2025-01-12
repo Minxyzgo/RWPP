@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -8,11 +8,8 @@
 package io.github.rwpp.ui
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -21,15 +18,12 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
@@ -43,20 +37,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.rwpp_core.generated.resources.Res
-import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
+import io.github.rwpp.core.UI
 import io.github.rwpp.ui.v2.bounceClick
-import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun BorderCard(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color(53, 57, 53).copy(0.9f),
+    backgroundColor: Color = MaterialTheme.colorScheme.background.copy(UI.backgroundTransparency),
     shape: Shape = RoundedCornerShape(20.dp),
     content: @Composable ColumnScope.() -> Unit
 ) = Card(
     shape = shape,
-    border = BorderStroke(2.dp, Color.DarkGray),
+    border = BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceContainer),
     elevation =  CardDefaults.cardElevation(defaultElevation = 10.dp),
     colors = CardDefaults.cardColors(containerColor = backgroundColor),
     modifier = modifier,
@@ -95,7 +87,7 @@ fun <T> LargeDropdownMenu(
     selectedIndex: Int = -1,
     onItemSelected: (index: Int, item: T) -> Unit,
     selectedItemToString: (T) -> String = { it.toString() },
-    selectedItemColor: (T?, Int) -> Color = { _, _ -> Color.White }
+    selectedItemColor: @Composable (T?, Int) -> Color = { _, _ -> MaterialTheme.colorScheme.onSurface }
 ) {
     var expanded by remember { mutableStateOf(false) }
     val focusRequest = remember { FocusRequester() }
@@ -116,7 +108,7 @@ fun <T> LargeDropdownMenu(
                 modifier = Modifier.fillMaxWidth().focusRequester(focusRequest),
                 trailingIcon = {
                     val icon = if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
-                    Icon(icon, "", tint = Color.White)
+                    Icon(icon, "", tint = MaterialTheme.colorScheme.surfaceTint)
                 },
                 onValueChange = { },
                 shape = RoundedCornerShape(10.dp),
@@ -282,8 +274,8 @@ fun RWTextButton(
         LocalRippleConfiguration provides RippleConfiguration(Color.Transparent, RippleAlpha(0f, 0f, 0f, 0f))
     ) {
         Card(
-            border = BorderStroke(5.dp, Color.DarkGray),
-            colors = CardDefaults.cardColors(containerColor = Color(27, 18, 18)),
+            border = BorderStroke(5.dp, MaterialTheme.colorScheme.surfaceContainer),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(10.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
             modifier = modifier.bounceClick(onLongClick = onLongClick, onClick = onClick),
@@ -295,7 +287,7 @@ fun RWTextButton(
 
                 Text(
                     label,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(5.dp)
                 )
@@ -318,13 +310,13 @@ fun RWCheckbox(
 fun RowScope.TableCell(
     text: String,
     weight: Float,
-    color: Color = Color.White,
+    color: Color = MaterialTheme.colorScheme.onSurface,
     drawStroke: Boolean = true,
     modifier: Modifier = Modifier,
-    strokeColor: Color = Color(160, 191, 124),
+    strokeColor: Color = MaterialTheme.colorScheme.primaryContainer,
     iconLeader: (@Composable () -> Unit)? = null,
 ) {
-    val border = if(drawStroke) Modifier.border(1.dp, strokeColor) else Modifier
+    val border = if(drawStroke) Modifier.border(0.5f.dp, strokeColor) else Modifier
     Row(
         horizontalArrangement = Arrangement.Center,
         modifier = Modifier
@@ -341,12 +333,12 @@ fun RowScope.TableCell(
             color = color,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(0.dp, 2.dp, 0.dp, 2.dp),
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyLarge
         )
     }
 }
 
-const val DEFAULT_MINIMUM_TEXT_LINE = 5
+private const val DEFAULT_MINIMUM_TEXT_LINE = 5
 
 @Composable
 fun ExpandableText(
@@ -405,47 +397,6 @@ fun ExpandableText(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun LazyGridItemScope.MapItem(
-    index: Int,
-    state: LazyListState,
-    name: String,
-    image: Painter?,
-    showImage: Boolean = true,
-    onClick: () -> Unit,
-) {
-    val (_, easing) = state.calculateDelayAndEasing(index, 5)
-    val animation = tween<Float>(durationMillis = 500, delayMillis = 0, easing = easing)
-    val args = ScaleAndAlphaArgs(fromScale = 2f, toScale = 1f, fromAlpha = 0f, toAlpha = 1f)
-    val (scale, alpha) = scaleAndAlpha(args = args, animation = animation)
-
-    BorderCard(
-        modifier = Modifier
-            .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
-            .animateItemPlacement()
-            .padding(10.dp)
-            .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
-            .clickable { onClick() },
-        backgroundColor = Color.DarkGray.copy(.7f)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if(showImage) Image(
-                modifier = Modifier.padding(5.dp).weight(1f),
-                painter = image ?: painterResource(Res.drawable.error_missingmap),
-                contentDescription = null
-            )
-            Text(
-                name,
-                modifier = Modifier.padding(5.dp),
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-    }
-}
 //@Composable
 //fun Modifier.simpleVerticalScrollbar(
 //    state: LazyListState,

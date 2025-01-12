@@ -48,6 +48,19 @@ class ConfigIOImpl : ConfigIO {
         return Toml.decodeFromString(clazz.serializer(), src)
     }
 
+    override fun saveSingleConfig(group: String, key: String, value: Any?) {
+        val preferences = get<Context>().getSharedPreferences(group, Context.MODE_PRIVATE)
+        val editor = preferences.edit()
+
+        editor.putString(key, value.toString())
+        editor.commit()
+    }
+
+    override fun readSingleConfig(group: String, key: String): String? {
+        val preferences = get<Context>().getSharedPreferences(group, Context.MODE_PRIVATE)
+        return preferences.getString(key, "")
+    }
+
     @Suppress("unchecked_cast")
     override fun <T> getGameConfig(name: String): T {
         val field = fieldCache.getOrPut(name) { SettingsEngine::class.java.getDeclaredField(name) }

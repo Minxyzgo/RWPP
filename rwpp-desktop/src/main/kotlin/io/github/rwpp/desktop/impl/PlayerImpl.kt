@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -7,6 +7,7 @@
 
 package io.github.rwpp.desktop.impl
 
+import io.github.rwpp.core.Logic
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
@@ -17,8 +18,8 @@ class PlayerImpl(
     internal val player: com.corrodinggames.rts.game.n,
     private val room: GameRoom
 ) : Player {
-    override val connectHexId: String
-        get() = player.O ?: ""
+    override val connectHexId: String = Logic.getNextPlayerId().toString()
+        get() = player.O ?: field
     override var spawnPoint: Int
         get() = player.k
         set(value) {
@@ -62,8 +63,8 @@ class PlayerImpl(
             if (room.isHost) player.z = value?.ordinal?.minus(2)
         }
     override val data: PlayerData = PlayerData()
-    override val client: Client by lazy {
-        ClientImpl(GameEngine.B().bX.c(player))
+    override val client: Client? by lazy {
+        GameEngine.B().bX.c(player)?.let { ClientImpl(it) }
     }
 
     override fun applyConfigChange(

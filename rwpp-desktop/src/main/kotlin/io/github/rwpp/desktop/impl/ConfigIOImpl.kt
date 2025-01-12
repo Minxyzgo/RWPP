@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -18,11 +18,13 @@ import net.peanuuutz.tomlkt.Toml
 import org.koin.core.annotation.Single
 import java.io.File
 import java.lang.reflect.Field
+import java.util.Properties
 import kotlin.reflect.KClass
 
 @Single(binds = [ConfigIO::class, Initialization::class])
 class ConfigIOImpl : ConfigIO {
     private val fieldCache = mutableMapOf<String, Field>()
+    private val propertiesCache = mutableMapOf<String, Properties>()
 
     @OptIn(InternalSerializationApi::class)
     @Suppress("UNCHECKED_CAST")
@@ -42,6 +44,27 @@ class ConfigIOImpl : ConfigIO {
         val src = file.readText()
         if(src.isBlank()) return null
         return Toml.decodeFromString(clazz.serializer(), src)
+    }
+
+    override fun saveSingleConfig(group: String, key: String, value: Any?) {
+        val properties = propertiesCache[group] ?: Properties().apply {
+            val file = File(System.getProperty("user.dir") + "/$group.properties")
+            if (file.exists()) load(file.inputStream())
+            propertiesCache[group] = this
+        }
+
+        properties.setProperty(key, value.toString())
+        properties.store(File(System.getProperty("user.dir") + "/$group.properties").outputStream(), null)
+    }
+
+    override fun readSingleConfig(group: String, key: String): String? {
+        val properties = propertiesCache[group] ?: Properties().apply {
+            val file = File(System.getProperty("user.dir") + "/$group.properties")
+            if (file.exists()) load(file.inputStream())
+            propertiesCache[group] = this
+        }
+
+        return properties.getProperty(key)
     }
 
     @Suppress("UNCHECKED_CAST")

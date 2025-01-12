@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -7,7 +7,7 @@
 
 package io.github.rwpp.i18n
 
-import androidx.compose.runtime.Composable
+import io.github.rwpp.appKoin
 import io.github.rwpp.rwpp_core.generated.resources.Res
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,7 +16,6 @@ import net.peanuuutz.tomlkt.TomlTable
 import net.peanuuutz.tomlkt.asTomlLiteral
 import net.peanuuutz.tomlkt.asTomlTable
 import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.koin.compose.koinInject
 import java.text.MessageFormat
 import java.util.*
 
@@ -30,7 +29,6 @@ suspend fun parseI18n() {
     }.decodeToString().replace("\r", "\n"))
 }
 
-@Composable
 fun readI18n(path: String, i18nType: I18nType = I18nType.RWPP, vararg arg: String): String {
     if (i18nType == I18nType.RWPP) {
         cacheMap[path]?.let { return MessageFormat.format(it, *arg) }
@@ -47,7 +45,7 @@ fun readI18n(path: String, i18nType: I18nType = I18nType.RWPP, vararg arg: Strin
             } else table = table[next]!!.asTomlTable()
         }
     } else if (i18nType == I18nType.RW) {
-        val resolver: GameI18nResolver = koinInject()
+        val resolver: GameI18nResolver = appKoin.get()
         return resolver.i18n(path, *arg)
     }
 
