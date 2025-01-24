@@ -29,11 +29,12 @@ import io.github.rwpp.event.events.ReturnMainMenuEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
+import io.github.rwpp.inject.InjectMode
 import javax.swing.SwingUtilities
 
 @InjectClass(Root::class)
 object RootInject {
-    @Inject("showMainMenu")
+    @Inject("showMainMenu", InjectMode.Override)
     fun onShowMainMenu() {
         if(isGaming) {
             if(isSandboxGame) appKoin.get<Game>().gameRoom.disconnect()
@@ -54,7 +55,7 @@ object RootInject {
         }
     }
 
-    @Inject("showBattleroom")
+    @Inject("showBattleroom", InjectMode.Override)
     fun onShowBattleroom() {
         if(isGaming) {
             GameEngine.B().bS.u = false
@@ -71,7 +72,7 @@ object RootInject {
             QuitGameEvent().broadcastIn()
         }
     }
-    @Inject("makeSendMessagePopup")
+    @Inject("makeSendMessagePopup", InjectMode.Override)
     fun onMakeSendMessagePopup() {
         SwingUtilities.invokeLater {
             showSendMessageDialog()
@@ -79,7 +80,7 @@ object RootInject {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    @Inject("makeSendTeamMessagePopupWithDefaultText")
+    @Inject("makeSendTeamMessagePopupWithDefaultText", InjectMode.Override)
     fun onMakeSendTeamMessagePopupWithDefaultText(str: String) {
         SwingUtilities.invokeLater {
             showSendMessageDialog()

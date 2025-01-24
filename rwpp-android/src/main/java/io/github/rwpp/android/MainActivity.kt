@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -8,28 +8,29 @@
 package io.github.rwpp.android
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ComponentCaller
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.database.Cursor
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
@@ -37,22 +38,20 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.corrodinggames.rts.appFramework.d
-import io.github.rwpp.App
-import io.github.rwpp.AppContext
+import io.github.rwpp.*
 import io.github.rwpp.android.impl.GameEngine
-import io.github.rwpp.appKoin
+import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.Settings
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.events.ReturnMainMenuEvent
-import org.koin.compose.LocalKoinApplication
-import ru.bartwell.exfilepicker.data.ExFilePickerResult
+import org.koin.compose.KoinContext
 import java.io.File
+import kotlin.math.log
+
 
 class MainActivity : ComponentActivity() {
-
-    private val appContext: AppContext by appKoin.inject()
     private val configIO: ConfigIO by appKoin.inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,6 +70,18 @@ class MainActivity : ComponentActivity() {
             isReturnToBattleRoom = false
         }
 
+        fileChooser = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val uri = result.data?.data
+            appKoin.get<PermissionHelper>().requestManageFilePermission {
+                if (uri != null) {
+                    pickFileActions.forEach { it(File(FileHelper.getRealPathFromURI(this, uri))) }
+                }
+            }
+
+            pickFileActions.clear()
+        }
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
@@ -91,49 +102,53 @@ class MainActivity : ComponentActivity() {
 
         requestPermissions(permissions, 1)
 
-        appContext.init()
-
         val settings = appKoin.get<Settings>()
         var backgroundImagePath by mutableStateOf(settings.backgroundImagePath ?: "")
 
-        if(d.b(this, true, true) && backgroundImagePath.isBlank()) {
+        if(d.b(this, true, true)) {
             gameView = d.b(this)
         }
 
         setContent {
-            val view = LocalView.current
-            val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).hide(
-                WindowInsetsCompat.Type.statusBars() or
-                        WindowInsetsCompat.Type.navigationBars()
-            )
+            KoinContext(appKoin) {
+                val view = LocalView.current
+                val window = (view.context as Activity).window
+                WindowCompat.getInsetsController(window, view).hide(
+                    WindowInsetsCompat.Type.statusBars() or
+                            WindowInsetsCompat.Type.navigationBars()
+                )
 
-            val isPremium = true
+                val isPremium = true
 
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                val painter = remember (backgroundImagePath) {
-                    if (backgroundImagePath.isNotBlank() && isPremium) {
-                        runCatching { BitmapPainter(BitmapFactory.decodeFile(backgroundImagePath).asImageBitmap()) }.getOrNull()
-                    } else {
-                        null
-                    }
-                }
-
-                if (backgroundImagePath.isNotBlank() && isPremium && painter != null) {
-                    Image(
-                        painter = painter,
-                        null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-
-                CompositionLocalProvider(
-                    LocalKoinApplication provides appKoin,
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
+                    val painter = remember(backgroundImagePath) {
+                        if (backgroundImagePath.isNotBlank() && isPremium && appKoin.get<PermissionHelper>()
+                                .hasManageFilePermission()
+                        ) {
+                            runCatching {
+                                BitmapPainter(
+                                    BitmapFactory.decodeFile(backgroundImagePath).asImageBitmap()
+                                )
+                            }.getOrNull()
+                        } else {
+                            null
+                        }
+                    }
+
+                    if (backgroundImagePath.isNotBlank() && isPremium && painter != null) {
+                        Image(
+                            painter = painter,
+                            null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
+
+
                     App(isPremium = isPremium) {
                         backgroundImagePath = it
                     }
@@ -150,20 +165,6 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         if(gameView != null) GameEngine.t()?.b(gameView)
-    }
-
-    override fun onActivityResult(
-        requestCode: Int,
-        resultCode: Int,
-        data: Intent?,
-        caller: ComponentCaller
-    ) {
-        if (resultCode == EX_FILE_PICKER_RESULT) {
-            val result = ExFilePickerResult.getFromIntent(data)
-            if (result?.count!! > 1) {
-                pickFileActions.forEach { it(File(result.path)) }
-            }
-        }
     }
 
     override fun onResume() {

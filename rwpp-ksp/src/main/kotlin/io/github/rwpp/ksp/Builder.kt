@@ -17,26 +17,25 @@ import java.util.zip.ZipOutputStream
 @Suppress("MemberVisibilityCanBePrivate")
 internal object Builder {
     var libDir = "lib"
+    var outputDir = "build"
     var releaseLibActions = mutableMapOf<GameLibraries, (GameLibraries, File, ClassLoader) -> Unit>()
 
     /**
-     * 保存现有已修改的lib到[libDir]
+     * 保存现有已修改的lib到[outputDir]
      */
     fun saveLib() {
-         GameLibraries.includes.forEach { v ->
-             val jarFile = File("$libDir/${v.realName}.jar")
-             buildJar(jarFile, v.classTree.allClasses)
-         }
+        GameLibraries.includes.forEach { v ->
+            val jarFile = File("$outputDir/${v.realName}.jar")
+            buildJar(jarFile, v.classTree.allClasses)
+        }
     }
 
     /**
      * 根据[libDir]加载lib，若[libDir]不存在，则返回[FileNotFoundException]
      */
     fun loadLib() {
-        releaseLibs()
-
         val libFile = File(libDir)
-        if(!libFile.exists()) {
+        if (!libFile.exists()) {
             throw FileNotFoundException("libFile: $libDir is not exists")
         }
 
@@ -46,17 +45,17 @@ internal object Builder {
     }
 
     /**
-     * 释放包内的lib资源到[libDir]
+     * 释放包内的lib资源到[targetDir]
      */
     fun releaseLibs(
         cl: ClassLoader = Thread.currentThread().contextClassLoader,
-        targetDir: String = libDir,
+        targetDir: String = outputDir,
     ) {
         GameLibraries.entries.forEach { releaseLib(cl, it, targetDir) }
     }
 
     /**
-     * 释放包内指定的lib资源到[libDir]
+     * 释放包内指定的lib资源到[targetDir]
      */
     fun releaseLib(
         cl: ClassLoader = Builder::class.java.classLoader,
@@ -68,7 +67,7 @@ internal object Builder {
         releaseLibActions[lib]?.let {
             it(lib, jarFile, cl)
         } ?: cl.getResourceAsStream("${libName}.jar")!!.use {
-            if(!jarFile.exists()) {
+            if (!jarFile.exists()) {
                 jarFile.parentFile.mkdirs()
                 jarFile.createNewFile()
             }
@@ -82,7 +81,11 @@ internal object Builder {
      * @param jar 生成jar的文件
      * @param classes 给定的类列表
      */
-     fun buildJar(jar: File, classes: Iterable<CtClass>) {
+    fun buildJar(jar: File, classes: Iterable<CtClass>) {
+        if (!jar.exists()) {
+            jar.parentFile.mkdirs()
+            jar.createNewFile()
+        }
         val tempFile = File.createTempFile("temp-${jar.name}", ".jar")
         val zipOut = ZipOutputStream(
             tempFile.outputStream()
@@ -92,7 +95,6 @@ internal object Builder {
             classes.forEach {
                 zip.putNextEntry(ZipEntry(Descriptor.toJvmName(it) + ".class"))
                 zip.write(it.toBytecode())
-                it.defrost()
             }
         }
 

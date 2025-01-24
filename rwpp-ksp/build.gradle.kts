@@ -25,7 +25,7 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation("org.javassist:javassist:3.30.2-GA")
-                implementation("com.google.devtools.ksp:symbol-processing-api:1.9.24-1.0.20")
+                implementation("com.google.devtools.ksp:symbol-processing-api:2.1.0-1.0.29")
                 api(project(":rwpp-core-utils"))
                 //compileOnly(project(":desktop"))
             }

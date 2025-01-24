@@ -25,7 +25,7 @@ object Reflect {
     }
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T, K> call(
+    inline fun <reified T, K : Any> call(
         any: T?,
         method: String,
         classes: List<KClass<*>>,

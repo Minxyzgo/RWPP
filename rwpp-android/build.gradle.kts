@@ -24,13 +24,14 @@ plugins {
 }
 
 ksp {
-    arg("libDir", project.buildDir.absolutePath + "/generated/libs")
+    arg("outputDir", project.buildDir.absolutePath + "/generated/libs")
+    arg("lib", "android-game-lib")
 }
 
 
 dependencies {
     implementation(project(":rwpp-core"))
-    implementation("ru.bartwell:exfilepicker:2.1")
+    //implementation("ru.bartwell:exfilepicker:2.1")
     implementation("com.github.getActivity:XXPermissions:20.0")
     compileOnly(fileTree(
         "dir" to rootDir.absolutePath + "/lib",
@@ -47,6 +48,8 @@ dependencies {
     ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
     implementation("io.insert-koin:koin-android:$koinVersion")
     ksp(project(":rwpp-ksp"))
+
+    runtimeOnly("party.iroiro.luajava:android:4.0.2:lua54@aar")
 }
 
 

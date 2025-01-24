@@ -15,8 +15,8 @@ import io.github.rwpp.event.events.DisconnectEvent
 import io.github.rwpp.event.events.PlayerJoinEvent
 import io.github.rwpp.game.Game
 
-object Logic {
-    init {
+object Logic : Initialization {
+    override fun init() {
         GlobalEventChannel.filter(PlayerJoinEvent::class).subscribeAlways(priority = EventPriority.MONITOR) { e ->
             synchronized(Logic) {
                 val game = appKoin.get<Game>()

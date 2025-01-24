@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -74,8 +74,8 @@ class PlayerImpl(
         get() = if(isAI) player.y.let { Difficulty.entries[it + 2] } else null
         set(value) { if(room.isHost) player.y = value?.ordinal?.minus(2) ?: 0 }
     override val data: PlayerData = PlayerData()
-    override val client: Client by lazy {
-        ClientImpl(GameEngine.t().bU.c(player))
+    override val client: Client? by lazy {
+        GameEngine.t().bU.c(player)?.let { ClientImpl(it) }
     }
 
 

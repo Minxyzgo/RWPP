@@ -11,7 +11,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ExtensionConfig(
-    val id: String,
+    @Deprecated("Use id instead")
+    private val name: String = "",
+
+    val id: String = name,
     val version: String = "1.0.0",
     val author: String = "",
     val displayName: String = id,

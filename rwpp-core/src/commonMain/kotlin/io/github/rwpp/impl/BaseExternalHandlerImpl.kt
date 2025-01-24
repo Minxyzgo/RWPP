@@ -9,60 +9,92 @@ package io.github.rwpp.impl
 
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.EnabledExtensions
-import io.github.rwpp.external.ExternalHandler
+import io.github.rwpp.extensionPath
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExtensionConfig
-import io.github.rwpp.resourceOutputDir
-import io.github.rwpp.extensionPath
+import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.logger
+import io.github.rwpp.resourceOutputDir
+import io.github.rwpp.scripts.Scripts
 import net.peanuuutz.tomlkt.Toml
 import net.peanuuutz.tomlkt.decodeFromNativeReader
-import io.github.rwpp.scripts.Scripts
 import java.io.File
 import java.io.FileNotFoundException
 
 abstract class BaseExternalHandlerImpl : ExternalHandler {
-    protected var _usingExtension: Extension? = null
+    protected var _usingResource: Extension? = null
     protected var extensions: List<Extension>? = null
 
-    override fun getAllExtensions(): Result<List<Extension>> {
-        return Result.success(extensions ?: File(extensionPath).let { file ->
-            if (file.exists()) {
-                mutableListOf<Extension>()
-                    .also { extensions = it }
-                    .apply {
-                        file
-                            .walk()
-                            .filter { it.name.endsWith(".rwext") || it.name.endsWith(".rwres") }
-                            .forEachIndexed { i, zip ->
-                                val zipFile = java.util.zip.ZipFile(zip)
-                                val entry = zipFile.getEntry("info.toml")
-                                var config: ExtensionConfig? = null
+    private val fileExists by lazy {
+        File(resourceOutputDir).exists()
+    }
 
+    override fun getAllExtensions(update: Boolean): Result<List<Extension>> {
+        return Result.success(
+            if (extensions != null && !update)
+                extensions!!
+            else File(extensionPath).let { file ->
+                if (file.exists()) {
+                    val enabledExtension =
+                        appKoin.get<EnabledExtensions>().values.also { logger.info("Enabled extensions: ${it.joinToString()}") }
+                    mutableListOf<Extension>()
+                        .also { extensions = it }
+                        .apply {
+                            file
+                                .walk()
+                                .filter { it.name.endsWith(".rwext") || it.name.endsWith(".rwres") || it.isDirectory }
+                                .forEachIndexed { _, fi ->
+                                    var config: ExtensionConfig? = null
 
-                                if (entry != null) {
-                                    val input = zipFile.getInputStream(entry)
-                                    config = Toml.decodeFromNativeReader(input.reader())
-                                }
+                                    if (fi.absolutePath == extensionPath) return@forEachIndexed
 
-                                config
-                                    ?: return Result.failure(FileNotFoundException("No info.toml found in extension: ${zip.absolutePath}"))
+                                    if (fi.isDirectory) {
+                                        val infoTomlFile = File(fi, "info.toml")
+                                        if (!infoTomlFile.exists()) return@forEachIndexed
+                                        config = Toml.decodeFromNativeReader(infoTomlFile.reader())
+                                    } else {
+                                        val zipFile = java.util.zip.ZipFile(fi)
+                                        val entry = zipFile.getEntry("info.toml")
 
-                                if (extensions!!.any { it.config.id == config.id }) return Result.failure(
-                                    IllegalStateException("Duplicate extension id found: ${config.id}")
-                                )
+                                        if (entry != null) {
+                                            val input = zipFile.getInputStream(entry)
+                                            config = Toml.decodeFromNativeReader(input.reader())
+                                        }
+                                    }
 
-                                add(
-                                    newExtension(
-                                        appKoin.get<EnabledExtensions>().values.contains(config.id),
-                                        zip,
-                                        config
+                                    config
+                                        ?: return Result.failure(FileNotFoundException("No info.toml found in extension: ${fi.absolutePath}"))
+
+                                    if (extensions!!.any { it.config.id == config.id }) return Result.failure(
+                                        IllegalStateException("Duplicate extension id found: ${config.id}")
                                     )
-                                )
-                            }
-                    }
-            } else emptyList()
-        })
+
+                                    add(
+                                        newExtension(
+                                            enabledExtension.contains(config.id),
+                                            !fi.isDirectory,
+                                            fi,
+                                            config
+                                        )
+                                    )
+                                }
+                        }
+                } else emptyList()
+            })
+    }
+
+    override fun getUsingResource(): Extension? {
+        return _usingResource ?: run {
+            val infoTomlFile = File(resourceOutputDir + "info.toml")
+
+            if (!fileExists || !infoTomlFile.exists()) return@run null
+
+            val info = Toml.decodeFromNativeReader<ExtensionConfig>(
+                infoTomlFile.reader()
+            )
+
+            getAllExtensions().getOrNull()?.first { it.config.displayName == info.displayName }
+        }.also { _usingResource = it }
     }
 
     override fun init() {
@@ -71,8 +103,14 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
             if (extension.isEnabled) {
                 try {
                     logger.info("Init for ${extension.config.id}")
-                    val entry = extension.zipFile.getEntry("scripts/main.lua")
-                    Scripts.loadScript(extension.config.id, extension.zipFile.getInputStream(entry).reader().readText())
+
+                    Scripts.loadScript(
+                        extension.config.id,
+                        extension.zipFile?.let { zip ->
+                            val entry = zip.getEntry("scripts/main.lua")
+                            zip.getInputStream(entry).reader().readText()
+                        } ?: File(extension.file, "scripts/main.lua").readText()
+                    )
                 } catch (e: Exception) { e.printStackTrace() }
             }
         }

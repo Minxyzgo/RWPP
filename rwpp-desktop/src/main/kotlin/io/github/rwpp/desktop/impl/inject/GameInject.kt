@@ -9,10 +9,11 @@ package io.github.rwpp.desktop.impl.inject
 
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
+import io.github.rwpp.inject.InjectMode
 
 @InjectClass(com.corrodinggames.rts.game.i::class)
 object GameInject {
-    @Inject("x")
+    @Inject("x", InjectMode.Override)
     fun noBackground() {
 
     }

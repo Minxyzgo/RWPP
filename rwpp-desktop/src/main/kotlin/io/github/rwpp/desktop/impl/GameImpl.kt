@@ -41,6 +41,7 @@ import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.game.world.World
+import io.github.rwpp.net.packets.GamePacket
 import io.github.rwpp.ui.LoadingContext
 import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.channels.Channel
@@ -77,7 +78,7 @@ class GameImpl : Game {
                     get() {
                         val p = playerCacheMap[B.bX.z]
                         if(p == null) getPlayers()
-                        return playerCacheMap[B.bX.z] ?: PlayerImpl(B.bs, this)
+                        return playerCacheMap[B.bX.z] ?: PlayerImpl(B.bs)
                     }
                 override var sharedControl: Boolean
                     get() = l
@@ -161,7 +162,7 @@ class GameImpl : Game {
                 override fun getPlayers(): List<Player> {
                     return (asField.get(B.bX.ay) as Array<com.corrodinggames.rts.game.n?>).mapNotNull {
                         if(it == null) return@mapNotNull null
-                        playerCacheMap.getOrPut(it) { PlayerImpl(it, this).also { p -> PlayerJoinEvent(p).broadcastIn() } }
+                        playerCacheMap.getOrPut(it) { PlayerImpl(it).also { p -> PlayerJoinEvent(p).broadcastIn() } }
                     }
                 }
 
@@ -181,16 +182,11 @@ class GameImpl : Game {
                     B.bX.k(command)
                 }
 
-                override fun sendMessageToPlayer(player: Player?, title: String, message: String, color: Int) {
+                override fun sendMessageToPlayer(player: Player?, title: String?, message: String, color: Int) {
                     if (player?.client != null) {
-                        val rwOutputStream = RwOutputStream()
-                        rwOutputStream.c(message)
-                        rwOutputStream.c(3)
-                        rwOutputStream.b(title)
-                        rwOutputStream.a(null as c?)
-                        rwOutputStream.a(color)
-                        GameEngine.B().bX.a((player.client as ClientImpl).client, rwOutputStream.b(141))
+                        player.client!!.sendPacketToClient(GamePacket.getChatPacket(title, message, color))
                     } else {
+                        // New Message:
                         Reflect.call(
                             GameEngine.B().bX, "b", listOf(
                                 com.corrodinggames.rts.gameFramework.j.c::class,
@@ -299,10 +295,12 @@ class GameImpl : Game {
                     bannedUnitList = listOf()
                     roomMods = arrayOf()
                     _teamMode = null
+
                     if(isConnecting) B.bX.b(reason)
                     B.bX.ay.a = GameMapType.a
                     B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
                     B.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
+
                     DisconnectEvent(reason).broadcastIn()
                 }
 
@@ -338,10 +336,9 @@ class GameImpl : Game {
     override fun startNewMissionGame(difficulty: Difficulty, mission: Mission) {
         rwppVisibleSetter(false)
         gameCanvas.isVisible = true
-
         gameCanvas.requestFocus()
-
         isGaming = true
+
         container.post {
             val root = ScriptEngine.getInstance().root
             val libRocket = ScriptContext::class.java.getDeclaredField("libRocket").run {
@@ -523,7 +520,9 @@ class GameImpl : Game {
         B.bX.n = password
         B.bX.q = isPublic
         B.bX.o = useMods
+
         gameRoom.isRWPPRoom = true
+
         if(B.bX.b(false)) {
             B.bX.ay.a = GameMapType.a
             B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
@@ -533,7 +532,6 @@ class GameImpl : Game {
 
     override fun hostNewSinglePlayer(sandbox: Boolean) {
         container.post {
-
             com.corrodinggames.rts.game.n.F()
 
             val root = ScriptEngine.getInstance().root

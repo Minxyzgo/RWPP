@@ -14,10 +14,12 @@ import java.util.zip.ZipFile
 abstract class Extension(
     var isEnabled: Boolean = false,
     val file: File,
-    val zipFile: ZipFile,
+
+    /**
+     * Null if the extension is a folder.
+     */
+    val zipFile: ZipFile?,
     val config: ExtensionConfig,
 ) {
-
-
     abstract val iconPainter: Painter?
 }

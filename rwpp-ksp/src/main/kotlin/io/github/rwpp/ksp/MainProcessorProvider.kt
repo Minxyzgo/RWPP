@@ -10,10 +10,13 @@ package io.github.rwpp.ksp
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
+import io.github.rwpp.rwpp_ksp.BuildConfig
 
 class MainProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
-        Builder.libDir = environment.options["libDir"].toString()
+        Builder.libDir = BuildConfig.DEFAULT_LIB_DIR
+        Builder.outputDir = environment.options["outputDir"].toString()
+        GameLibraries.includes.add(GameLibraries.valueOf(environment.options["lib"].toString()))
         return MainProcessor(environment.logger)
     }
 }

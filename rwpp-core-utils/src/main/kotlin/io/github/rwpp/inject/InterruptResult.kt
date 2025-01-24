@@ -10,4 +10,8 @@ package io.github.rwpp.inject
 /**
  * 当注入模式为[InjectMode.InsertBefore]有效，若注入的函数代码返回[InterruptResult]时，则中断方法继续运行，并返回给定结果。
  */
-class InterruptResult(val result: Any? = Unit)
+class InterruptResult(val result: Any? = kotlin.Unit) {
+    companion object {
+        val Unit = InterruptResult(kotlin.Unit)
+    }
+}

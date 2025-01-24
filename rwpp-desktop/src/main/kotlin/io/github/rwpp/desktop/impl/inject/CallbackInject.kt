@@ -15,11 +15,12 @@ import io.github.rwpp.desktop.impl.GameEngine
 import io.github.rwpp.desktop.rcnOption
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
+import io.github.rwpp.inject.InjectMode
 
 
 @InjectClass(com.corrodinggames.librocket.a::class)
 object CallbackInject {
-    @Inject("a")
+    @Inject("a", InjectMode.Override)
     fun onSetCallback(ae: ae) {
         if(rcnOption != null) {
             ae.a(rcnOption)
@@ -43,7 +44,7 @@ object CallbackInject {
         }
     }
 
-    @Inject("b")
+    @Inject("b", InjectMode.Override)
     fun com.corrodinggames.librocket.a.noMainMenu() {
         GameEngine.B()?.a(null as Activity?, this.c, true)
     }

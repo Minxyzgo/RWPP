@@ -21,11 +21,22 @@ import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.Settings
 import io.github.rwpp.game.Player
 
-object UI {
+object UI : Initialization {
     internal var backgroundTransparency by mutableStateOf(appKoin.get<Settings>().backgroundTransparency)
     internal var question by mutableStateOf<Question?>(null)
     internal var chatMessages by mutableStateOf(AnnotatedString(""))
     internal var warning by mutableStateOf<Warning?>(null)
+
+    var showMissionView by mutableStateOf(false)
+    var showMultiplayerView by mutableStateOf(false)
+    var showReplayView by mutableStateOf(false)
+    var showSettingsView by mutableStateOf(false)
+    var showModsView by mutableStateOf(false)
+    var showRoomView by mutableStateOf(false)
+    var showExtensionView by mutableStateOf(false)
+    var showContributorList by mutableStateOf(false)
+
+    var updateExtensionWhenVisible by mutableStateOf(false)
 
     private val relayRegex = Regex("""R\d+""")
 
@@ -88,4 +99,8 @@ object UI {
      * @see [showWarning]
      */
     data class Warning(val reason: String, val isKicked: Boolean = false)
+
+    override fun init() {
+
+    }
 }

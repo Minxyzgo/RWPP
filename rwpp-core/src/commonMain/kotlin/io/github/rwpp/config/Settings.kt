@@ -26,4 +26,5 @@ data class Settings(
     var backgroundImagePath: String? = null,
     var selectedTheme: String? = null,
     var backgroundTransparency: Float = 0.7f,
+    var backgroundImageTransparency: Float = 1f,
 ) : Config

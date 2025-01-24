@@ -17,12 +17,15 @@ import org.koin.core.annotation.Single
 import java.awt.Desktop
 import java.io.DataInputStream
 import java.net.URI
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.timer
 
 @Single(binds = [Net::class, Initialization::class])
 class NetImpl : Net {
     override val packetDecoders: MutableMap<PacketType, (DataInputStream) -> Packet> = mutableMapOf()
     override val listeners: MutableMap<PacketType, (Client, Packet) -> Unit> = mutableMapOf()
-    override val client: OkHttpClient = OkHttpClient()
+    override val client: OkHttpClient = OkHttpClient.Builder()
+        .readTimeout(5000L, TimeUnit.MILLISECONDS).build()
 
     override fun sendPacketToServer(packet: Packet) {
         GameEngine.B().bX.f(packet.asGamePacket())

@@ -97,6 +97,7 @@ teamUnitCapSinglePlayer = "Team Unit Cap Single Player"
 colorScheme = "Color Scheme"
 setBackgroundImagePath = "Set Background Image Path"
 backgroundTransparency = "Background Transparency"
+backgroundImageTransparency = "Background Image Transparency"
 
 [ingame]
 sendMessage = "Send Message"

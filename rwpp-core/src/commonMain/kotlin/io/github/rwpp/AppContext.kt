@@ -7,6 +7,7 @@
 
 package io.github.rwpp
 
+import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.core.Initialization
 import io.github.rwpp.core.Logic
 import io.github.rwpp.core.UI
@@ -14,14 +15,16 @@ import io.github.rwpp.i18n.parseI18n
 import io.github.rwpp.scripts.Scripts
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
 interface AppContext : KoinComponent {
     fun init() {
         runBlocking { parseI18n() }
+        get<ConfigIO>().readAllConfig()
+        Logic.init()
+        Scripts.init()
+        UI.init()
         getKoin().getAll<Initialization>().forEach(Initialization::init)
-        Logic
-        Scripts
-        UI
     }
 
 

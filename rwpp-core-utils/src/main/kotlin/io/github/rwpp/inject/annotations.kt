@@ -53,12 +53,14 @@ annotation class InjectClass(
 @Retention(AnnotationRetention.SOURCE)
 annotation class Inject(
     val method: String,
-    val injectMode: InjectMode = InjectMode.Override,
+    val injectMode: InjectMode,
+    val desc: String = "",
 )
 
-
-@Target(AnnotationTarget.CLASS)
+@Repeatable
+@Target(AnnotationTarget.FILE)
 @Retention(AnnotationRetention.SOURCE)
 annotation class RedirectTo(
-    val clazz: KClass<*>,
+    val from: String,
+    val to: String,
 )

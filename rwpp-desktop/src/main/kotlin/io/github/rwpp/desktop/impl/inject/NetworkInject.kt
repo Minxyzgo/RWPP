@@ -26,7 +26,6 @@ import io.github.rwpp.inject.InjectMode
 import io.github.rwpp.inject.InterruptResult
 import io.github.rwpp.net.InternalPacketType
 import io.github.rwpp.net.Net
-import io.github.rwpp.net.PacketType
 import net.peanuuutz.tomlkt.Toml
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
@@ -39,7 +38,7 @@ object NetworkInject {
         val actionString = netPacket.k.a()
         if(actionString.startsWith("u_")) {
             if(actionString.removePrefix("u_").removePrefix("c_") in bannedUnitList) {
-                return interruptResult
+                return InterruptResult.Unit
             }
         }
         if(netPacket.j == null) return Unit
@@ -47,7 +46,7 @@ object NetworkInject {
         val u = netPacket.j.a()
         return if(u is com.corrodinggames.rts.game.units.`as`) {
             if(realAction == GameCommandActions.BUILD && u.v() in bannedUnitList) {
-                interruptResult
+                InterruptResult.Unit
             } else Unit
         } else Unit
     }
@@ -63,16 +62,16 @@ object NetworkInject {
                     val str = kVar16.l()
                     if (str.startsWith(packageName)) {
                         gameRoom.isRWPPRoom = true
-                        gameRoom.option = Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
-                        val v = gameRoom.option.protocolVersion
-                        if (v != protocolVersion) {
-                            gameRoom.disconnect()
-                            UI.showWarning(
-                                "Different protocol version. yours: $protocolVersion server's: $v",
-                                true
-                            )
-                            return@with
-                        }
+//                        gameRoom.option = Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
+//                        val v = gameRoom.option.protocolVersion
+//                        if (v != protocolVersion) {
+//                            gameRoom.disconnect()
+//                            UI.showWarning(
+//                                "Different protocol version. yours: $protocolVersion server's: $v",
+//                                true
+//                            )
+//                            return@with
+//                        }
                     }
                     val f11 = kVar16.f()
                     val f12 = kVar16.f()
@@ -91,7 +90,7 @@ object NetworkInject {
                     h(cVar14)
                 }
 
-                interruptResult
+                InterruptResult.Unit
             }
 
             else -> {
@@ -108,7 +107,7 @@ object NetworkInject {
                                 )
                             )
                         )
-                        return interruptResult
+                        return InterruptResult.Unit
                     }
                 }
 
@@ -117,12 +116,12 @@ object NetworkInject {
         }
     }
 
-    @Inject("g")
+    @Inject("g", InjectMode.Override)
     fun onPlayerJoin(c: com.corrodinggames.rts.gameFramework.j.c) {
         val asVar = `as`()
         try {
             val B = GameEngine.B()
-            asVar.c(packageName + Toml.encodeToString(RoomOption.serializer(), gameRoom.option))
+            asVar.c(packageName /* + Toml.encodeToString(RoomOption.serializer(), gameRoom.option) */)
             asVar.a(2)
             asVar.a(B.bX.e)
             asVar.a(B.c(true))
@@ -155,7 +154,7 @@ object NetworkInject {
             && room.isHost
         ) {
             commands.handleCommandMessage(str2 ?: "", player) { room.sendMessageToPlayer(player, "RWPP", it) }
-            return interruptResult
+            return InterruptResult.Unit
         } else {
             return Unit
         }
@@ -176,7 +175,7 @@ object NetworkInject {
             }
 
         if ((str2 ?: "").startsWith(commands.prefix) && room.isHost)
-            return interruptResult
+            return InterruptResult.Unit
 
         if (player == null) {
             UI.onReceiveChatMessage(str ?: "",str2 ?: "", i)
@@ -191,6 +190,5 @@ object NetworkInject {
         return Unit
     }
 
-    private val interruptResult = InterruptResult(Unit)
     private val gameRoom by lazy { appKoin.get<Game>().gameRoom }
 }

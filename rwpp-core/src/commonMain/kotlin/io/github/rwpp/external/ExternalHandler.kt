@@ -12,14 +12,17 @@ import org.koin.core.component.KoinComponent
 import java.io.File
 
 interface ExternalHandler : KoinComponent, Initialization {
-    fun getAllExtensions(): Result<List<Extension>>
+    fun getAllExtensions(update: Boolean = false): Result<List<Extension>>
 
-    fun enableResource(extension: Extension?)
+    fun enableResource(resource: Extension?)
+
+    fun getUsingResource(): Extension?
 
     fun openFileChooser(onChooseFile: (File) -> Unit)
 
     fun newExtension(
         isEnabled: Boolean,
+        isZip: Boolean,
         extensionFile: File,
         config: ExtensionConfig
     ): Extension

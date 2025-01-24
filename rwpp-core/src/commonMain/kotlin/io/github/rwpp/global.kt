@@ -91,7 +91,7 @@ val commands = CommandHandler("/").apply {
             commandList.size
         )) {
             val command: Command = commandList[i]
-            result.append("- /").append(command.text).append(command.paramText)
+            result.append("- /").append(command.text).append(" ").append(command.paramText)
                 .append(" - ").append(command.description).append("\n")
 
         }

@@ -45,6 +45,7 @@ import io.github.rwpp.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
@@ -189,8 +190,8 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 )
             }
 
-            if (isLoading) MenuLoadingView(message) else App(isPremium = isPremium) {
-                backgroundImagePath = it
+            if (isLoading) MenuLoadingView(message) else App(isPremium = isPremium) { path ->
+                backgroundImagePath = path
             }
         }
     }

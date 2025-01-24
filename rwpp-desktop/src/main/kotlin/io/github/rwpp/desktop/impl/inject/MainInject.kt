@@ -14,28 +14,26 @@ import com.corrodinggames.rts.gameFramework.l
 import com.corrodinggames.rts.java.Main
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.Settings
-import io.github.rwpp.desktop.impl.ClientImpl
 import io.github.rwpp.desktop.impl.GameEngine
-import io.github.rwpp.desktop.impl.PlayerImpl
 import io.github.rwpp.desktop.impl.RwOutputStream
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.event.events.StartGameEvent
-import io.github.rwpp.game.Game
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
+import io.github.rwpp.inject.InjectMode
 import io.github.rwpp.utils.Reflect
 import io.github.rwpp.welcomeMessage
 
 @InjectClass(Main::class)
 object MainInject {
 
-    @Inject("c")
+    @Inject("c", InjectMode.Override)
     fun onRefreshUI() {
         RefreshUIEvent().broadcastIn()
     }
 
-    @Inject("c")
+    @Inject("c", InjectMode.Override)
     fun onPlayerJoin(
         player: c, m1: String?, m2: String?
     ) {
@@ -49,7 +47,7 @@ object MainInject {
         GameEngine.B().bX.a(player, rwOutputStream.b(141))
     }
 
-    @Inject("b")
+    @Inject("b", InjectMode.Override)
     fun Main.onStartGame() {
         val f = Reflect.get<com.corrodinggames.rts.gameFramework.utility.aj>(this, "f")!!
         f.a(Runnable

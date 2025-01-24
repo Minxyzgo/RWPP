@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
@@ -15,7 +16,8 @@ plugins {
 }
 
 ksp {
-    arg("libDir", project.buildDir.absolutePath + "/generated/libs")
+    arg("outputDir", project.buildDir.absolutePath + "/generated/libs")
+    arg("lib", "game-lib")
 }
 
 sourceSets.main.get().resources.srcDir(rootDir.absolutePath + "/rwpp-core/src/commonMain/resources")

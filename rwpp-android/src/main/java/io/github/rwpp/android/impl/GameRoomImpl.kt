@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -21,8 +21,10 @@ import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.*
 import io.github.rwpp.config.Settings
 import io.github.rwpp.core.Logic
-import io.github.rwpp.event.broadCastIn
+import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.DisconnectEvent
 import io.github.rwpp.event.events.PlayerJoinEvent
+import io.github.rwpp.event.events.StartGameEvent
 import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
@@ -33,13 +35,14 @@ import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.map.NetworkMap
 import io.github.rwpp.game.team.TeamMode
+import io.github.rwpp.net.packets.GamePacket
+import io.github.rwpp.utils.Reflect
 import io.github.rwpp.welcomeMessage
 import org.koin.core.component.get
 import java.util.concurrent.ConcurrentLinkedQueue
 
 
 class GameRoomImpl(private val game: GameImpl) : GameRoom {
-    private var playerCacheMap = mutableMapOf<PlayerInternal, Player>()
     override var maxPlayerCount: Int
         get() = PlayerInternal.c
         set(value) { PlayerInternal.b(value, true) }
@@ -129,7 +132,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                 PlayerImpl(it, this)
                     .also { p ->
                         sendWelcomeMessage(p)
-                        PlayerJoinEvent(p).broadCastIn()
+                        PlayerJoinEvent(p).broadcastIn()
                     }
             }
         }
@@ -278,11 +281,11 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                     }
                     var string6 = string5;
                     if(t2.bU.aA.i) {
-                        string6 = string5 + "\n" + "No nukes" ;
+                        string6 = "$string5\nNo nukes";
                     }
                     var string7 = string6;
                     if(t2.bU.aA.l) {
-                        string7 = string6 + "\n" + "Shared control: On";
+                        string7 = "$string6\nShared control: On";
                     }
                     string2 = string7;
                     if(bu.D) {
@@ -303,7 +306,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                             string2 = string9;
                             if(!t2.bU.G) {
                                 val i = t2.bW.i();
-                                var s13 = string9 + "-- Required Mods: --" + "\n";
+                                var s13 =  "$string9-- Required Mods: --\n";
                                 val iterator2 = i.iterator();
                                 var n4 = n;
                                 while(iterator2.hasNext()) {
@@ -316,7 +319,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                                     var b2 = (b as com.corrodinggames.rts.gameFramework.i.b).b();
                                     b2.replace("\"", "'");
                                     b2.replace(";", ".");
-                                    s13 = s13 + " mod: $b2";
+                                    s13 = "$s13 mod: $b2";
                                 }
                                 string2 = s13;
                             }
@@ -339,6 +342,22 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
 
     override fun sendQuickGameCommand(command: String) {
         GameEngine.t().bU.i(command)
+    }
+
+    override fun sendMessageToPlayer(player: Player?, title: String?, message: String, color: Int) {
+        if (player?.client != null) {
+            player.client!!.sendPacketToClient(GamePacket.getChatPacket(title, message, color))
+        } else {
+            Reflect.call(GameEngine.t().bU, "a",
+                listOf(
+                    com.corrodinggames.rts.gameFramework.j.c::class,
+                    Int::class,
+                    String::class,
+                    String::class
+                ),
+                listOf(null, color, title, message)
+            )
+        }
     }
 
     override fun addAI(count: Int) {
@@ -473,6 +492,8 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
         GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
         MainActivity.activityResume()
+
+        DisconnectEvent(reason).broadcastIn()
     }
 
     override fun updateUI() {
@@ -508,6 +529,8 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         }
         aeVar.aY = false
         aeVar.h("Map load failed.")
+
+        StartGameEvent().broadcastIn()
     }
 
     private fun sendWelcomeMessage(p: PlayerImpl) {

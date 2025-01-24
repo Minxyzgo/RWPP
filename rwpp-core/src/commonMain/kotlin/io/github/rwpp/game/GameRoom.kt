@@ -46,6 +46,7 @@ interface GameRoom {
     /**
      * The extra option of the RWPP room. If not, all the options are default.
      */
+    @Deprecated("Useless")
     var option: RoomOption
 
     /**
@@ -89,7 +90,7 @@ interface GameRoom {
      * @param title the title of the message.
      * @param message the content of the message.
      */
-    fun sendMessageToPlayer(player: Player?, title: String, message: String, color: Int = -1)
+    fun sendMessageToPlayer(player: Player?, title: String?, message: String, color: Int = -1)
 
     /**
      * Add AIs to the room with the specific count. (if host)

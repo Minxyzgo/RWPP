@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -22,9 +22,17 @@ class PermissionHelperImpl : PermissionHelper {
         d.c(get<Context>() as Activity)
     }
 
-    override fun requestManageFilePermission() {
-        XXPermissions.with(get<Context>())
-            .permission(Permission.MANAGE_EXTERNAL_STORAGE)
-            .request { _, _ -> }
+    override fun requestManageFilePermission(callback: () -> Unit) {
+        if (hasManageFilePermission()) {
+            callback()
+        } else {
+            XXPermissions.with(get<Context>())
+                .permission(Permission.MANAGE_EXTERNAL_STORAGE)
+                .request { _, allGranted ->  if (allGranted) callback() }
+        }
+    }
+
+    override fun hasManageFilePermission(): Boolean {
+        return XXPermissions.isGranted(get(), Permission.MANAGE_EXTERNAL_STORAGE)
     }
 }

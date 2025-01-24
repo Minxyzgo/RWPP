@@ -7,7 +7,9 @@
 
 package io.github.rwpp.desktop.impl
 
+import io.github.rwpp.appKoin
 import io.github.rwpp.core.Logic
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
@@ -16,8 +18,9 @@ import io.github.rwpp.net.Client
 
 class PlayerImpl(
     internal val player: com.corrodinggames.rts.game.n,
-    private val room: GameRoom
 ) : Player {
+    private val room: GameRoom = appKoin.get<Game>().gameRoom
+
     override val connectHexId: String = Logic.getNextPlayerId().toString()
         get() = player.O ?: field
     override var spawnPoint: Int

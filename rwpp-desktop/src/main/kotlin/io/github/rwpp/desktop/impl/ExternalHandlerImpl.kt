@@ -25,10 +25,10 @@ import javax.swing.JFileChooser
 
 @Single(binds = [ExternalHandler::class, Initialization::class])
 class ExternalHandlerImpl : BaseExternalHandlerImpl() {
-    override fun enableResource(extension: Extension?) {
-        if (extension?.config?.hasResource == false) return
-        _usingExtension = extension
-        extension ?: run {
+    override fun enableResource(resource: Extension?) {
+        if (resource?.config?.hasResource == false) return
+        _usingResource = resource
+        resource ?: run {
             File(resourceOutputDir).let {
                 if (it.exists()) it.deleteRecursively()
             }
@@ -53,12 +53,8 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
             )
         }
 
-        resourceList.forEach {
-            extension.file.unzipTo(File(resourceOutputDir), "$it/")
-        }
 
-        extension.file.unzipTo(File(resourceOutputDir), "res/")
-
+        resource.file.unzipTo(File(resourceOutputDir))
     }
 
     override fun openFileChooser(onChooseFile: (File) -> Unit) {
@@ -79,7 +75,9 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
                     null
                 else {
                     val iconEntry = zipFile.getEntry(config.icon)
-                    ImageIO.read(zipFile.getInputStream(iconEntry))
+                    ImageIO.read(
+                        zipFile.getInputStream(iconEntry)
+                    )
                         .toPainter()
                 }
             }

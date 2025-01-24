@@ -91,6 +91,7 @@ teamUnitCapSinglePlayer = "单人最大单位数量"
 colorScheme = "配色方案"
 setBackgroundImagePath = "设置背景图片路径"
 backgroundTransparency = "背景透明度"
+backgroundImageTransparency = "背景图片透明度"
 
 [ingame]
 sendMessage = "发送消息"

@@ -7,6 +7,31 @@
 
 package io.github.rwpp.net.packets
 
-object GamePacket {
+import io.github.rwpp.io.GameInputStream
+import io.github.rwpp.io.GameOutputStream
+import io.github.rwpp.net.InternalPacketType
+import io.github.rwpp.net.Packet
+import io.github.rwpp.net.PacketType
 
+@Suppress("MemberVisibilityCanBePrivate")
+object GamePacket {
+    fun getPacket(packetType: PacketType, action: (GameOutputStream) -> Unit): Packet {
+        return object : Packet(packetType) {
+            override fun readPacket(input: GameInputStream) {}
+
+            override fun writePacket(output: GameOutputStream) {
+                action(output)
+            }
+        }
+    }
+
+    fun getChatPacket(title: String?, message: String, color: Int): Packet {
+        return getPacket(InternalPacketType.CHAT) { output ->
+            output.writeUTF(message)
+            output.writeByte(3)
+            output.writeOptionalUTF(title)
+            output.writeInt(0)
+            output.writeInt(color)
+        }
+    }
 }

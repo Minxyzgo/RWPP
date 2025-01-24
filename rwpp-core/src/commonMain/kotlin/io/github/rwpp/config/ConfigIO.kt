@@ -8,6 +8,7 @@
 package io.github.rwpp.config
 
 import io.github.rwpp.core.Initialization
+import io.github.rwpp.logger
 import io.github.rwpp.utils.setPropertyFromObject
 import org.koin.core.component.KoinComponent
 import kotlin.reflect.KClass
@@ -17,7 +18,7 @@ import kotlin.reflect.KClass
  *
  * To get it, use `koinInject<ConfigIO>()` or `appKoin.get<ConfigIO>()`
  */
-interface ConfigIO : KoinComponent, Initialization {
+interface ConfigIO : KoinComponent {
     /**
      * Save a rw-pp configuration.
      */
@@ -27,6 +28,11 @@ interface ConfigIO : KoinComponent, Initialization {
      * Read a rw-pp configuration from the file.
      */
     fun <T : Config> readConfig(clazz: KClass<T>): T?
+
+    /**
+     * Delete the file of a rw-pp configuration
+     */
+    fun <T : Config> deleteConfig(clazz: KClass<T>)
 
     /**
      * Save a single configuration.
@@ -69,12 +75,14 @@ interface ConfigIO : KoinComponent, Initialization {
     fun readAllConfig() {
         val configs = getKoin().getAll<Config>()
         configs.forEach { config ->
-            runCatching { readConfig(config::class)?.let { config.setPropertyFromObject(it) } }
-                .onFailure { it.printStackTrace() }
+            runCatching {
+                logger.info("Reading config ${config::class.simpleName}...")
+                readConfig(config::class)?.let { config.setPropertyFromObject(it) }
+            }
+                .onFailure {
+                    logger.error("Failed to read config ${config::class.simpleName}. Delete it.", it)
+                    deleteConfig(config::class)
+                }
         }
-    }
-
-    override fun init() {
-        readAllConfig()
     }
 }

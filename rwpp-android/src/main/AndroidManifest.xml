@@ -58,6 +58,18 @@
             </intent-filter>
         </activity>
         <activity
+                android:name="io.github.rwpp.android.ExternalHelperActivity"
+                android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name="com.corrodinggames.rts.appFramework.IntroScreen"
             android:screenOrientation="behind"
             android:configChanges="screenSize|orientation|keyboardHidden"

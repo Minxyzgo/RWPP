@@ -83,6 +83,15 @@ import com.mikepenz.markdown.m3.markdownTypography
 import io.github.rwpp.config.CoreData
 import io.github.rwpp.config.Settings
 import io.github.rwpp.core.UI
+import io.github.rwpp.core.UI.showRoomView
+import io.github.rwpp.core.UI.showMultiplayerView
+import io.github.rwpp.core.UI.showMissionView
+import io.github.rwpp.core.UI.showReplayView
+import io.github.rwpp.core.UI.showSettingsView
+import io.github.rwpp.core.UI.showModsView
+import io.github.rwpp.core.UI.showExtensionView
+import io.github.rwpp.core.UI.showContributorList
+import io.github.rwpp.core.UI.updateExtensionWhenVisible
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.ui.ContributorList
 import io.github.rwpp.game.ui.ExtensionView
@@ -174,14 +183,6 @@ fun App(
     )
 
     var isSinglePlayerGame by remember { mutableStateOf(false) }
-    var showMissionView by remember { mutableStateOf(false) }
-    var showMultiplayerView by remember { mutableStateOf(false) }
-    var showReplayView by remember { mutableStateOf(false) }
-    var showSettingsView by remember { mutableStateOf(false) }
-    var showModsView by remember { mutableStateOf(false) }
-    var showRoomView by remember { mutableStateOf(false) }
-    var showExtensionView by remember { mutableStateOf(false) }
-    var showContributorList by remember { mutableStateOf(false) }
 
     var checkUpdateDialogVisible by remember { mutableStateOf(false) }
     var latestVersion by remember { mutableStateOf<String?>(null) }
@@ -343,7 +344,10 @@ fun App(
                 AnimatedVisibility(
                     showExtensionView
                 ) {
-                    ExtensionView { showExtensionView = false }
+                    ExtensionView(updateExtensionWhenVisible) {
+                        showExtensionView = false
+                        updateExtensionWhenVisible = false
+                    }
                 }
 
                 AnimatedVisibility(

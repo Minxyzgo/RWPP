@@ -32,26 +32,29 @@ import io.github.rwpp.appKoin
 import io.github.rwpp.config.EnabledExtensions
 import io.github.rwpp.core.UI
 import io.github.rwpp.external.ExternalHandler
+import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.logger
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.rwpp_core.generated.resources.Res
 import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 @Composable
 fun ExtensionView(
+    update: Boolean = false,
     onExit: () -> Unit
 ) {
     BackHandler(true, onExit)
     val appContext = koinInject<AppContext>()
     val externalHandler = koinInject<ExternalHandler>()
-    val extensions = externalHandler.getAllExtensions().onFailure {
-        UI.showWarning(it.message ?: "Unexpected error")
-    }.getOrDefault(listOf())
+    var extensions by remember {
+        mutableStateOf(externalHandler.getAllExtensions(update).onFailure {
+            UI.showWarning(it.message ?: "Unexpected error")
+        }.getOrDefault(listOf()))
+    }
 
     val permissionHelper = koinInject<PermissionHelper>()
     LaunchedEffect(Unit) {
@@ -69,9 +72,10 @@ fun ExtensionView(
         message("Loading")
         result = kotlin.runCatching {
             appKoin.get<EnabledExtensions>().values = extensions.filter { it.isEnabled }.map { it.config.id }
-            withContext(Dispatchers.IO) {
-                extensions.forEach(externalHandler::enableResource)
-            }
+            logger.info("Enabled extensions: ${appKoin.get<EnabledExtensions>().values.joinToString(",")}")
+//            withContext(Dispatchers.IO) {
+//                extensions.filter { it. }.forEach(externalHandler::enableResource)
+//            }
         }.exceptionOrNull()?.stackTraceToString() ?: "Loading successfully. You should restart RWPP to enable changes."
         true
     }
@@ -124,7 +128,12 @@ fun ExtensionView(
         bottomBar = {
             Row(modifier = Modifier.fillMaxWidth().padding(10.dp), horizontalArrangement = Arrangement.Center) {
                 RWTextButton(
-                    "Apply",
+                    readI18n("mod.update"),
+                    modifier = Modifier.padding(5.dp),
+                )  { extensions = externalHandler.getAllExtensions(true).getOrDefault(listOf()) }
+
+                RWTextButton(
+                    readI18n("mod.apply"),
                     modifier = Modifier.padding(5.dp),
                 ) {
                     isLoading = true

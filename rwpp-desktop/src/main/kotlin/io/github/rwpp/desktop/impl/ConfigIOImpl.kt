@@ -21,7 +21,7 @@ import java.lang.reflect.Field
 import java.util.Properties
 import kotlin.reflect.KClass
 
-@Single(binds = [ConfigIO::class, Initialization::class])
+@Single(binds = [ConfigIO::class])
 class ConfigIOImpl : ConfigIO {
     private val fieldCache = mutableMapOf<String, Field>()
     private val propertiesCache = mutableMapOf<String, Properties>()
@@ -44,6 +44,12 @@ class ConfigIOImpl : ConfigIO {
         val src = file.readText()
         if(src.isBlank()) return null
         return Toml.decodeFromString(clazz.serializer(), src)
+    }
+
+    override fun <T : Config> deleteConfig(clazz: KClass<T>) {
+        val name = clazz.qualifiedName
+        val file = File(System.getProperty("user.dir") + "/$name.toml")
+        if(file.exists()) file.delete()
     }
 
     override fun saveSingleConfig(group: String, key: String, value: Any?) {

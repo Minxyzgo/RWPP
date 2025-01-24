@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -9,11 +9,7 @@ package io.github.rwpp.android
 
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.content.pm.PackageManager
-import android.os.Build
-import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
-import android.os.Environment
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -27,7 +23,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.android.impl.GameEngine
-import io.github.rwpp.android.impl.doProxy
 import io.github.rwpp.appKoin
 import io.github.rwpp.ui.ConstraintWindowManager
 import io.github.rwpp.ui.MenuLoadingView
@@ -37,14 +32,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.LocalKoinApplication
-import java.io.File
 
 class LoadingScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
-        doProxy()
 
         setContent {
 
@@ -78,6 +70,8 @@ class LoadingScreen : ComponentActivity() {
                                 }
 
                                 GameEngine.c(this@LoadingScreen)
+
+                                gameLoaded = true
                                 startActivityForResult(Intent(this@LoadingScreen, MainActivity::class.java), 0)
                                 finish()
                             }

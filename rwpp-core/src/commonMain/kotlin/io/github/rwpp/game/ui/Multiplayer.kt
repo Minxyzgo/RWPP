@@ -227,15 +227,16 @@ fun MultiplayerView(
 //                if(!enableMods) transferMod = false
 //            }
 
-            Row {
-                RWCheckbox(enableMods, onCheckedChange = { enableMods = !enableMods }, modifier = Modifier.padding(5.dp))
-                Text(readI18n("multiplayer.enableMods"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 15.dp))
-            }
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Row {
+                    RWCheckbox(enableMods, onCheckedChange = { enableMods = !enableMods }, modifier = Modifier.padding(5.dp))
+                    Text(readI18n("multiplayer.enableMods"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 15.dp))
+                }
 
-            Row {
-                RWCheckbox(hostByRCN, onCheckedChange = { hostByRCN = !hostByRCN }, modifier = Modifier.padding(5.dp))
-                Text(readI18n("multiplayer.hostByRCN"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 15.dp))
-            }
+                Row {
+                    RWCheckbox(hostByRCN, onCheckedChange = { hostByRCN = !hostByRCN }, modifier = Modifier.padding(5.dp))
+                    Text(readI18n("multiplayer.hostByRCN"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 15.dp))
+                }
 
 //            Row {
 //                RWCheckbox(transferMod,
@@ -251,58 +252,61 @@ fun MultiplayerView(
 //            }
 
 
-            var password by remember { mutableStateOf("") }
-            RWSingleOutlinedTextField(
-                readI18n("multiplayer.password"),
-                password,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 2.dp),
-                enabled = !hostByRCN,
-            ) { password = it }
+                var password by remember { mutableStateOf("") }
+                RWSingleOutlinedTextField(
+                    readI18n("multiplayer.password"),
+                    password,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 2.dp),
+                    enabled = !hostByRCN,
+                ) { password = it }
 
-            var port by remember { mutableStateOf(configIO.getGameConfig<Int?>("networkPort")) }
-            RWSingleOutlinedTextField(
-                readI18n("multiplayer.port"),
-                port?.toString() ?: "",
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp),
-                lengthLimitCount = 5,
-                typeInNumberOnly = true,
-                enabled = !hostByRCN,
-            ) {
-                port = it.toIntOrNull()
-                configIO.setGameConfig("networkPort", port ?: 5123)
-            }
+                var port by remember { mutableStateOf(configIO.getGameConfig<Int?>("networkPort")) }
+                RWSingleOutlinedTextField(
+                    readI18n("multiplayer.port"),
+                    port?.toString() ?: "",
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp),
+                    lengthLimitCount = 5,
+                    typeInNumberOnly = true,
+                    enabled = !hostByRCN,
+                ) {
+                    port = it.toIntOrNull()
+                    configIO.setGameConfig("networkPort", port ?: 5123)
+                }
 
-            val rcnAddress = "43.248.96.172:5123"
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                RWTextButton(readI18n("multiplayer.hostPrivate"), modifier = Modifier.padding(5.dp)) {
-                    dismiss()
-                    game.gameRoom.option = RoomOption()
-                    if(hostByRCN) {
-                        game.onQuestionCallback(if(enableMods) "smod" else "snew")
-                        serverAddress = rcnAddress
-                        isConnecting = true
-                    } else {
-                        game.hostStartWithPasswordAndMods(
-                            false, password.ifBlank { null }, enableMods,
-                        )
-                        onHost()
+                val rcnAddress = "43.248.96.172:5123"
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    RWTextButton(readI18n("multiplayer.hostPrivate"), modifier = Modifier.padding(5.dp)) {
+                        dismiss()
+                        game.gameRoom.option = RoomOption()
+                        if (hostByRCN) {
+                            game.onQuestionCallback(if (enableMods) "smod" else "snew")
+                            serverAddress = rcnAddress
+                            isConnecting = true
+                        } else {
+                            game.hostStartWithPasswordAndMods(
+                                false, password.ifBlank { null }, enableMods,
+                            )
+                            onHost()
+                        }
+                    }
+                    RWTextButton(readI18n("multiplayer.hostPublic"), modifier = Modifier.padding(5.dp)) {
+                        dismiss()
+                        game.gameRoom.option = RoomOption()
+                        if (hostByRCN) {
+                            game.onQuestionCallback(if (enableMods) "smodup" else "snewup")
+                            serverAddress = rcnAddress
+                            isConnecting = true
+                        } else {
+                            game.hostStartWithPasswordAndMods(
+                                true, password.ifBlank { null }, enableMods,
+                            )
+                            onHost()
+                        }
                     }
                 }
-                RWTextButton(readI18n("multiplayer.hostPublic"), modifier = Modifier.padding(5.dp)) {
-                    dismiss()
-                    game.gameRoom.option = RoomOption()
-                    if(hostByRCN) {
-                        game.onQuestionCallback(if(enableMods) "smodup" else "snewup")
-                        serverAddress = rcnAddress
-                        isConnecting = true
-                    } else {
-                        game.hostStartWithPasswordAndMods(
-                            true, password.ifBlank { null }, enableMods,
-                        )
-                        onHost()
-                    }
-                }
             }
+
+
         }
     }
 
@@ -975,7 +979,7 @@ fun MultiplayerView(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
                             if(isRefreshing) {
-                                CircularProgressIndicator(color = MaterialTheme.colorScheme.onSecondary)
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
                             } else {
                                 Icon(Icons.Default.Refresh, null, tint = MaterialTheme.colorScheme.surfaceTint)
                             }

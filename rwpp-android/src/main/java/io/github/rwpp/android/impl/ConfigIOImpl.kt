@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 RWPP contributors
+ * Copyright 2023-2025 RWPP contributors
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
@@ -21,7 +21,7 @@ import org.koin.core.component.get
 import java.lang.reflect.Field
 import kotlin.reflect.KClass
 
-@Single(binds = [ConfigIO::class, Initialization::class])
+@Single(binds = [ConfigIO::class])
 class ConfigIOImpl : ConfigIO {
     private val fieldCache = mutableMapOf<String, Field>()
 
@@ -46,6 +46,15 @@ class ConfigIOImpl : ConfigIO {
         if(src.isNullOrBlank()) return null
 
         return Toml.decodeFromString(clazz.serializer(), src)
+    }
+
+    override fun <T : Config> deleteConfig(clazz: KClass<T>) {
+        val name = clazz.qualifiedName
+        val preferences = get<Context>().getSharedPreferences(name, Context.MODE_PRIVATE)
+        val editor = preferences.edit()
+
+        editor.putString("src", "")
+        editor.commit()
     }
 
     override fun saveSingleConfig(group: String, key: String, value: Any?) {

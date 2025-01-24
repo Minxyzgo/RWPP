@@ -95,9 +95,9 @@ enum class GameLibraries {
         }
 
         /**
-         * 需要被加载为[ClassTree]的lib, 默认只需要game-lib被加载
+         * 需要被加载为[ClassTree]的lib
          */
-        internal val includes by lazy { mutableSetOf(`game-lib`) }
+        internal val includes by lazy { mutableSetOf<GameLibraries>() }
     }
 
     private var isLoaded = false

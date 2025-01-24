@@ -10,7 +10,9 @@
 package io.github.rwpp.ksp
 
 import io.github.rwpp.inject.InjectMode
+import javassist.ClassMap
 import javassist.CtClass
+import javassist.CtMethod
 import javassist.CtNewMethod
 import javassist.Modifier
 import javassist.bytecode.Bytecode
@@ -20,6 +22,12 @@ import javassist.bytecode.LocalVariableAttribute
 
 internal object InjectApi {
 
+    fun redirectClassName(classMap: ClassMap) {
+        GameLibraries.includes.first().classTree.allClasses.forEach {
+            it.replaceClassName(classMap)
+        }
+    }
+
     fun injectMethod(
         className: String,
         hasReceiver: Boolean,
@@ -28,6 +36,7 @@ internal object InjectApi {
         injectMode: InjectMode,
         returnClassIsVoid: Boolean,
         injectFunctionPath: String,
+        desc: String
     ) {
 
         @Suppress("NAME_SHADOWING")
@@ -63,10 +72,13 @@ internal object InjectApi {
             }
         }
 
-        val classPool = GameLibraries.`game-lib`.classTree.defPool
+        val classPool = GameLibraries.includes.first().classTree.defPool
         val clazz = classPool.get(className)
 
-        val method = clazz.getDeclaredMethod(methodName, methodArgs.map(classPool::get).toTypedArray())
+        val method = if (desc.isNotBlank())
+            clazz.getMethod(methodName, desc)
+        else clazz.getDeclaredMethod(methodName, methodArgs.map(classPool::get).toTypedArray())
+
         val isNative = Modifier.isNative(method.modifiers)
 
         val originalName = "__original__${method.name}"

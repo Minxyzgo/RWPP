@@ -11,6 +11,7 @@ import io.github.rwpp.AppContext
 import io.github.rwpp.appKoin
 import io.github.rwpp.commands
 import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.core.Initialization
 import io.github.rwpp.event.Event
 import io.github.rwpp.event.EventPriority
 import io.github.rwpp.event.GlobalEventChannel
@@ -27,14 +28,15 @@ import party.iroiro.luajava.ClassPathLoader.BufferOutputStream
 import party.iroiro.luajava.lua54.Lua54
 import party.iroiro.luajava.value.RefLuaValue
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.nio.ByteBuffer
 import kotlin.reflect.KClass
 
 @Suppress("MemberVisibilityCanBePrivate")
-object Scripts {
+object Scripts : Initialization {
     val lua = Lua54()
 
-    init {
+    override fun init() {
         try {
             lua.setExternalLoader { module, _ ->
                 val extension = appKoin.get<ExternalHandler>()
@@ -44,8 +46,14 @@ object Scripts {
                     ?: throw IllegalArgumentException("Extension not found: $module")
 
 
-                val entry = extension.zipFile.getEntry(module.removePrefix(extension.config.id + "scripts/"))
-                extension.zipFile.getInputStream(entry).use { input ->
+                val path = module.removePrefix(extension.config.id + "scripts/")
+
+                val inputStream = extension.zipFile?.let { zip ->
+                    val entry = zip.getEntry(path)
+                    zip.getInputStream(entry)
+                } ?: File(extension.file, path).inputStream()
+
+                inputStream.use { input ->
                     val output = ByteArrayOutputStream()
                     val bytes = ByteArray(4096)
                     var i: Int
@@ -74,6 +82,7 @@ object Scripts {
         lua["isAndroid"] = Platform.isAndroid()
         lua["isDesktop"] = Platform.isDesktop()
         lua["version"] = projectVersion
+        lua["extraScriptApi"] = ExtraScriptApi
 
         @Suppress("UNCHECKED_CAST")
         lua.register("filterEvents") { _, args ->

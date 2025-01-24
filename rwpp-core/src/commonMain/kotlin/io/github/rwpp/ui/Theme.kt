@@ -23,7 +23,7 @@ val RWOutlinedTextColors
             selectionColors = TextSelectionColors(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.primaryContainer.copy(.4f)),
             focusedBorderColor = MaterialTheme.colorScheme.secondaryContainer,
             unfocusedBorderColor = MaterialTheme.colorScheme.surfaceContainer,
-            focusedLabelColor = MaterialTheme.colorScheme.secondary,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
             unfocusedLabelColor = MaterialTheme.colorScheme.onSurface,
             disabledLabelColor = MaterialTheme.colorScheme.onSurface
         )
@@ -33,7 +33,7 @@ val RWSliderColors
         SliderDefaults.colors(
             thumbColor =  MaterialTheme.colorScheme.primary,
             activeTrackColor =  MaterialTheme.colorScheme.primary,
-            activeTickColor = MaterialTheme.colorScheme.onSecondary,
+            activeTickColor = MaterialTheme.colorScheme.secondary,
             inactiveTrackColor = MaterialTheme.colorScheme.onSurface,
             inactiveTickColor = MaterialTheme.colorScheme.onSurface
         )
@@ -66,15 +66,16 @@ val defaultRWPPColorScheme = darkColorScheme(
         surfaceContainer = Color.DarkGray,
         onSurface = Color.White,
         primaryContainer = Color(151, 188, 98),
-        secondary = Color(160, 191, 124),
+        secondary = Color(44, 95, 45),
         secondaryContainer = Color(151, 188, 98),
         onSecondaryContainer = Color(151, 188, 98),
         primary = Color(151, 188, 98),
-        onSecondary = Color(44, 95, 45),
+        onSecondary = Color(0xFF000000),
         background = Color(53, 57, 53),
-        inversePrimary = Color.Green,
+        inversePrimary = Color(44, 95, 45),
         onTertiaryContainer = Color.White,
         surfaceTint = Color.White,
+        onPrimary = Color(0xFF000000),
     )
 
 

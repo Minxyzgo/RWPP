@@ -12,12 +12,13 @@ import com.corrodinggames.rts.`R$raw`
 import io.github.rwpp.desktop.impl.FClass
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
+import io.github.rwpp.inject.InjectMode
 import io.github.rwpp.resOutputDir
 import java.io.File
 
 @InjectClass(FClass::class)
 object ResInject {
-    @Inject("f")
+    @Inject("f", InjectMode.Override)
     fun redirectRes(i: Int): Any? {
         val a2: String? = FClass.a(`R$drawable`::class.java, i)
         val resFileExist = File(resOutputDir).exists()

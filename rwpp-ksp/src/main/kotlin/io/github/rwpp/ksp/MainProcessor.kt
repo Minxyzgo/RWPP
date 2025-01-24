@@ -14,7 +14,9 @@ import com.google.devtools.ksp.symbol.*
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
+import io.github.rwpp.inject.RedirectTo
 import io.github.rwpp.rwpp_ksp.BuildConfig
+import javassist.ClassMap
 import java.io.File
 
 class MainProcessor(
@@ -25,15 +27,32 @@ class MainProcessor(
         //only run once
         if (finished) return emptyList()
 
+        val classMap = ClassMap()
+
+        for (file in resolver.getSymbolsWithAnnotation(RedirectTo::class.qualifiedName!!)) {
+            if (!init) {
+                init = true
+                Builder.loadLib()
+            }
+
+            file.annotations.forEach { annotation ->
+                if (annotation.shortName.asString() == RedirectTo::class.simpleName) {
+                    val from = annotation.arguments.first().value as String
+                    val to = annotation.arguments[1].value as String
+                    logger.warn("redirecting $from to $to")
+                    classMap[from] = to
+                }
+            }
+        }
+
+        if (classMap.isNotEmpty()) {
+            InjectApi.redirectClassName(classMap)
+        }
+
 
         for (clazz in resolver.getSymbolsWithAnnotation(InjectClass::class.qualifiedName!!)) {
             if (!init) {
                 init = true
-                for (lib in GameLibraries.entries) {
-                    Builder.releaseLibActions[lib] = { _, file, _ ->
-                        File(BuildConfig.DEFAULT_LIB_DIR + "/" + file.name).copyTo(file, overwrite = true)
-                    }
-                }
                 Builder.loadLib()
             }
 
@@ -72,6 +91,7 @@ class MainProcessor(
                                                 " of ${declaration.simpleName.asString()} must be of type $injectClassName"
                                     )
 
+
                             //if (injectClass.declaration.parentDeclaration != null) MainProcessorProvider.logger.warn(injectClass.declaration.parentDeclaration!!::class.qualifiedName!!)
                                 InjectApi.injectMethod(
                                     injectClassName,
@@ -80,7 +100,8 @@ class MainProcessor(
                                     declaration.parameters.map { it.type.resolve().declaration.qualifiedName!!.asString() },
                                     InjectMode.valueOf((annotation.arguments[1].value as KSType).declaration.simpleName.asString()),
                                     declaration.returnType!!.resolve().declaration.qualifiedName!!.asString() == Unit::class.qualifiedName!!,
-                                    "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}"
+                                    "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}",
+                                    (annotation.arguments.getOrNull(2)?.value as? String) ?: "",
                                 )
                             }
                         }

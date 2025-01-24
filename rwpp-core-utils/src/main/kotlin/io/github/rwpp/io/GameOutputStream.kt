@@ -18,4 +18,9 @@ class GameOutputStream(
         writeInt(bytes.size)
         write(bytes)
     }
+
+    fun writeOptionalUTF(string: String?) {
+        writeBoolean(string != null)
+        if (string != null) writeUTF(string)
+    }
 }
