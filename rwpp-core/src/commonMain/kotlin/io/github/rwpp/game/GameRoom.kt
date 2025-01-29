@@ -13,7 +13,9 @@ import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
+import io.github.rwpp.game.map.XMLMap
 import io.github.rwpp.game.team.TeamMode
+import io.github.rwpp.net.Packet
 
 interface GameRoom {
     val maxPlayerCount: Int
@@ -24,6 +26,7 @@ interface GameRoom {
     val randomSeed: Int
     val mapType: MapType
     var selectedMap: GameMap
+    var displayMapName: String
     val startingCredits: Int
     val startingUnits: Int
     val fogMode: FogMode
@@ -37,6 +40,11 @@ interface GameRoom {
     val mods: Array<String>
     val isStartGame: Boolean
     val teamMode: TeamMode?
+
+    /**
+     * Transform the map before loading. (if host)
+     */
+    var gameMapTransformer: ((XMLMap) -> Unit)?
 
     /**
      * Describe the current room is whether hosted by a RWPP protocol client (or server).
@@ -93,6 +101,23 @@ interface GameRoom {
     fun sendMessageToPlayer(player: Player?, title: String?, message: String, color: Int = -1)
 
     /**
+     * Let a player surrender. (if host)
+     * @param player the target player to surrender.
+     */
+    fun sendSurrender(player: Player)
+
+    /**
+     * Sync all players. (if host)
+     */
+    fun syncAllPlayer()
+
+    /**
+     * Add a command packet to the game. (if host)
+     * @param packet the packet to add.
+     */
+    fun addCommandPacket(packet: Packet)
+
+    /**
      * Add AIs to the room with the specific count. (if host)
      * @param count the count of AIs to add.r
      */
@@ -114,6 +139,12 @@ interface GameRoom {
         teamLock: Boolean,
         teamMode: TeamMode?
     )
+
+    /**
+     * Get the remaining players count.
+     * @return the remaining players count.
+     */
+    fun remainingPlayersCount(): Int
 
     /**
      * Kick a player. (if host)

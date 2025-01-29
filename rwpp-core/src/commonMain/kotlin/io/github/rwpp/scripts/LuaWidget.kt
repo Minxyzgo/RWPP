@@ -11,12 +11,17 @@ sealed class LuaWidget {
     class LuaText @JvmOverloads constructor(
         val text: String,
         val size: Int = 16,
-        val color: LuaColor = LuaColor(0, 0, 0, 255),
+        val color: LuaColor = LuaColor(0),
     ) : LuaWidget()
     class LuaImage(val imageUrl: String) : LuaWidget()
     class LuaTextButton(val text: String, val onClick: () -> Unit) : LuaWidget()
     class LuaCheckbox(val text: String, val checked: Boolean, val onClick: String) : LuaWidget()
     class LuaSlider(val min: Int, val max: Int, val value: Int, val onChange: String) : LuaWidget()
-    class LuaDropdown(val options: List<String>, val selected: Int, val onChange: String) : LuaWidget()
+    class LuaDropdown(
+        val options: Array<String>,
+        val label: String,
+        val defaultValue: () -> String,
+        val onChange: (Int, String) -> Unit
+    ) : LuaWidget()
     class LuaInput(val placeholder: String, val value: String, val onChange: String) : LuaWidget()
 }

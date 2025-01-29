@@ -14,6 +14,7 @@ import kotlin.reflect.KClass
 /**
  * 该注解用于标记一个顶层对象，用于其它 inject 注解识别注入类.
  *
+ * @see InjectClassByString
  * @param clazz 需要注入的类.
  */
 @Target(AnnotationTarget.CLASS)
@@ -21,6 +22,18 @@ import kotlin.reflect.KClass
 annotation class InjectClass(
     val clazz: KClass<*>,
 )
+
+/**
+ * 该注解用于标记一个顶层对象，用于其它 inject 注解识别注入类.
+ *
+ * @param className 需要注入的类名.
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.SOURCE)
+annotation class InjectClassByString(
+    val className: String,
+)
+
 
 /**
  * 该注解用于标记一个函数, 该函数将以指定方式[injectMode]注入到目标类的方法中.

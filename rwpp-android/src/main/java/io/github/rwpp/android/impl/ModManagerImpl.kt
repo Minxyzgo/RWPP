@@ -32,13 +32,13 @@ class ModManagerImpl : ModManager {
         t.bo = false
         t.q()
     }
-
-    override fun modUpdate() {
-        //LClass.B().bZ.k()
-        GameEngine.t().bW.j()
-        mods = null
-        mods = getAllMods()
-    }
+//
+//    override fun modUpdate() {
+//        //LClass.B().bZ.k()
+//        GameEngine.t().bW.j()
+//        mods = null
+//        mods = getAllMods()
+//    }
 
     override suspend fun modSaveChange() {
         val t = GameEngine.t()

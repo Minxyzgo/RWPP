@@ -7,12 +7,23 @@
 
 package io.github.rwpp.desktop
 
+import io.github.rwpp.desktop.impl.PlayerInternal
 import io.github.rwpp.game.Player
+import java.util.concurrent.CopyOnWriteArraySet
 
 @Volatile
 internal var isGaming = false
+@Volatile
+internal var gameOver = false
+     set(value) {
+         field = value
+         if (!value) {
+             defeatedPlayerSet.clear()
+         }
+     }
 internal var roomMods: Array<String> = arrayOf()
 internal var rcnOption: String? = null
 internal var isSandboxGame: Boolean = false
 internal var bannedUnitList: List<String> = listOf()
 internal var playerCacheMap = mutableMapOf<com.corrodinggames.rts.game.n, Player>()
+internal val defeatedPlayerSet = CopyOnWriteArraySet<PlayerInternal>()

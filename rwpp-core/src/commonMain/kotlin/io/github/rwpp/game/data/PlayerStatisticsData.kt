@@ -5,14 +5,13 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.mod
+package io.github.rwpp.game.data
 
-interface ModManager {
-    suspend fun modReload()
-
-    suspend fun modSaveChange()
-
-    fun getModByName(name: String): Mod?
-
-    fun getAllMods(): List<Mod>
-}
+data class PlayerStatisticsData(
+    val unitsKilled: Int,
+    val buildingsKilled: Int,
+    val experimentalsKilled: Int,
+    val unitsLost: Int,
+    val buildingsLost: Int,
+    val experimentalsLost: Int
+)

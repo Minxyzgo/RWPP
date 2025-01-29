@@ -7,7 +7,7 @@
 
 package io.github.rwpp.net
 
-enum class InternalPacketType(override val type: Int) : PacketType {
+enum class InternalPacketType(@JvmField val type: Int) {
     /**
      * CUSTOM PACKET
      *

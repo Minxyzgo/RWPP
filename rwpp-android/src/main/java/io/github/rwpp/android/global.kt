@@ -13,10 +13,13 @@ import io.github.rwpp.android.impl.PlayerInternal
 import io.github.rwpp.game.Player
 import org.koin.core.KoinApplication
 import java.io.File
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicInteger
 
 lateinit var gameLauncher: ActivityResultLauncher<Intent>
 lateinit var fileChooser: ActivityResultLauncher<Intent>
+var gameOver = false
+val defeatedPlayerSet = CopyOnWriteArraySet<PlayerInternal>()
 var questionOption: String? = null
 var isSinglePlayerGame: Boolean = false
 var isGaming = false

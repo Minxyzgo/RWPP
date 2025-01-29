@@ -14,7 +14,9 @@ import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
+import io.github.rwpp.game.data.PlayerStatisticsData
 import io.github.rwpp.net.Client
+import kotlin.math.roundToInt
 
 class PlayerImpl(
     internal val player: PlayerInternal,
@@ -74,6 +76,19 @@ class PlayerImpl(
         get() = if(isAI) player.y.let { Difficulty.entries[it + 2] } else null
         set(value) { if(room.isHost) player.y = value?.ordinal?.minus(2) ?: 0 }
     override val data: PlayerData = PlayerData()
+    override var credits: Int
+        get() = player.p.roundToInt()
+        set(value) { player.p = value.toDouble() }
+    override val statisticsData: PlayerStatisticsData
+        get() = with(GameEngine.t().bV.a(player)) {
+            PlayerStatisticsData(c, d, e, f, g, h)
+        }
+    override val income: Int
+        get() = player.q()
+    override val isDefeated: Boolean
+        get() = player.I || player.J
+    override val isWipedOut: Boolean
+        get() = player.J
     override val client: Client? by lazy {
         GameEngine.t().bU.c(player)?.let { ClientImpl(it) }
     }

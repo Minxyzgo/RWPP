@@ -9,21 +9,52 @@ package io.github.rwpp.event.events
 
 import io.github.rwpp.event.AbstractEvent
 import io.github.rwpp.game.Player
+import io.github.rwpp.game.map.GameMap
 
 sealed class GameEvent : AbstractEvent()
+
 
 class RefreshUIEvent : GameEvent()
 
 class ReturnMainMenuEvent : GameEvent()
 
+/**
+ * Event that is fired when the game is loaded.
+ */
+class GameLoadedEvent : GameEvent()
+
+/**
+ * Event that is fired when the game is started.
+ */
 class StartGameEvent : GameEvent()
 
+/**
+ * Event that is fired when the local player quits the game.
+ */
 class QuitGameEvent : GameEvent()
 
-//TODO
-class GameOverEvent : GameEvent()
+/**
+ * Event that is fired when the game is over.
+ */
+class GameOverEvent(val gameTime: Int, val winTeam: Int) : GameEvent()
 
+/**
+ * Event that is fired when the map changes.
+ */
+class MapChangedEvent(val mapName: String) : GameEvent()
+
+/**
+ * Event that is fired when a player disconnects from the game.
+ */
 class DisconnectEvent(val reason: String) : GameEvent()
 
+/**
+ * Event that is fired when a player sends a chat message.
+ */
 class ChatMessageEvent(var sender: String, var message: String, val player: Player, var color: Int) : GameEvent()
+
+/**
+ * Event that is fired when the room sends a system message.
+ */
+class SystemMessageEvent(val message: String) : GameEvent()
 

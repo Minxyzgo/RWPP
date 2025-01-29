@@ -17,8 +17,8 @@ class PermissionHelperImpl : PermissionHelper {
         //do nothing
     }
 
-    override fun requestManageFilePermission(callback: () -> Unit) {
-        callback()
+    override fun requestManageFilePermission(callback: (Boolean) -> Unit) {
+        callback(true)
     }
 
     override fun hasManageFilePermission(): Boolean {

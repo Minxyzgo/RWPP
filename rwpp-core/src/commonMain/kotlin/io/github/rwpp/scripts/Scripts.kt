@@ -17,20 +17,22 @@ import io.github.rwpp.event.EventPriority
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
+import io.github.rwpp.game.audio.GameSoundPool
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.net.Client
-import io.github.rwpp.net.InternalPacketType
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
 import io.github.rwpp.platform.Platform
 import io.github.rwpp.projectVersion
+import io.github.rwpp.ui.parseColorToArgb
 import party.iroiro.luajava.ClassPathLoader.BufferOutputStream
 import party.iroiro.luajava.lua54.Lua54
 import party.iroiro.luajava.value.RefLuaValue
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.ByteBuffer
-import kotlin.reflect.KClass
+import kotlin.concurrent.timer
+import kotlin.math.roundToInt
 
 @Suppress("MemberVisibilityCanBePrivate")
 object Scripts : Initialization {
@@ -75,6 +77,8 @@ object Scripts : Initialization {
 
         lua["scripts"] = lua
         lua["game"] = appKoin.get<Game>()
+        lua["externalHandler"] = appKoin.get<ExternalHandler>()
+        lua["soundPool"] = appKoin.get<GameSoundPool>()
         lua["net"] = appKoin.get<Net>()
         lua["modManager"] = appKoin.get<ModManager>()
         lua["config"] = appKoin.get<ConfigIO>()
@@ -86,36 +90,34 @@ object Scripts : Initialization {
 
         @Suppress("UNCHECKED_CAST")
         lua.register("filterEvents") { _, args ->
-            GlobalEventChannel.filter(
+            GlobalEventChannel.subscribeGlobalAlways(
                 Class.forName(
                     "io.github.rwpp.event.events." + args[0].toJavaObject() as String
-                ).kotlin as KClass<Event>
-            )
-                .subscribeAlways(
-                    priority = if (args.size > 2)
-                        EventPriority.valueOf(args[1].toJavaObject() as String)
-                    else EventPriority.NORMAL
-                ) {
+                ) as Class<Event>, priority = if (args.size > 2)
+                    EventPriority.valueOf(args[1].toJavaObject() as String)
+                else EventPriority.NORMAL
+            ) {
+                synchronized(lua.mainState) {
                     (args[if (args.size > 2) 2 else 1] as RefLuaValue).call(it)
                 }
+            }
 
             arrayOf()
         }
 
         @Suppress("UNCHECKED_CAST")
         lua.register("filterEventsOnce") { _, args ->
-            GlobalEventChannel.filter(
+            GlobalEventChannel.subscribeGlobalOnce(
                 Class.forName(
                     "io.github.rwpp.event.events." + args[0].toJavaObject() as String
-                ).kotlin as KClass<Event>
-            )
-                .subscribeOnce(
-                    priority = if (args.size > 2)
-                        EventPriority.valueOf(args[1].toJavaObject() as String)
-                    else EventPriority.NORMAL
-                ) {
+                ) as Class<Event>, priority = if (args.size > 2)
+                    EventPriority.valueOf(args[1].toJavaObject() as String)
+                else EventPriority.NORMAL
+            ) {
+                synchronized(lua.mainState) {
                     args[if (args.size > 2) 2 else 1].call(it)
                 }
+            }
 
             arrayOf()
         }
@@ -140,32 +142,82 @@ object Scripts : Initialization {
 
         @Suppress("UNCHECKED_CAST")
         lua.register("registerPacketListener") { _, args ->
-            val packetType = InternalPacketType.valueOf(args[0].toJavaObject() as String)
-            appKoin.get<Net>().listeners[packetType] = args[1].toProxy(Function2::class.java) as (Client, Packet) -> Unit
+            val packetType = args[0].toInteger().toInt()
+            appKoin.get<Net>().listeners.getOrPut(packetType) { mutableListOf() }.add(
+                args[1].toProxy(Function2::class.java) as (Client, Packet) -> Unit
+            )
             arrayOf()
+        }
+
+
+
+        //UI
+        lua.register("color") { l, args ->
+            l.pushJavaObject(LuaColor(
+                parseColorToArgb(args[0].toJavaObject() as String)
+            ))
+            arrayOf(l.get())
+        }
+
+        lua.register("timer")  { l, args ->
+            l.pushJavaObject(timer(
+                initialDelay = args[0].toNumber().toLong(),
+                period = args[1].toNumber().toLong()) {
+                synchronized(lua.mainState) {
+                    args[2].call()
+                }
+            })
+            arrayOf(l.get())
+        }
+
+        lua.register("text") { l, args ->
+            l.pushJavaObject(LuaWidget.LuaText(
+                args[0].toJavaObject() as String,
+                args[1].toNumber().roundToInt(),
+                args[2].toJavaObject() as LuaColor,
+            ))
+            arrayOf(l.get())
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        lua.register("dropdown") { l, args ->
+            l.pushJavaObject(LuaWidget.LuaDropdown(
+                (args[0].toJavaObject() as HashMap<*, String>).values.toTypedArray(), args[1].toJavaObject() as String,
+                { args[2].call().first().toJavaObject() as String },
+                { index, value -> args[3].call(index, value) }
+            ))
+            arrayOf(l.get())
+        }
+
+        lua.register("textButton") { l, args ->
+            l.pushJavaObject(LuaWidget.LuaTextButton(
+                args[0].toJavaObject() as String
+            ) { args[1].call() })
+            arrayOf(l.get())
         }
     }
 
     fun loadScript(id: String, src: String) {
         try {
             val body = """
-                local extension = '$id' 
+                local id = '$id' 
+                local extension = externalHandler:getExtensionById(id)
                 local info = function(msg) 
                     local logger = java.method(java.import('io.github.rwpp.GlobalKt'), 'getLogger')() 
-                    logger:info('[' .. extension .. '] ' .. msg) 
+                    logger:info('[' .. id .. '] ' .. msg) 
                 end
                 local getConfig = function(key) 
-                    return config:readSingleConfig(extension, key)
+                    return config:readSingleConfig(id, key)
                 end
                 local setConfig = function(key, value) 
-                    config:saveSingleConfig(extension, key, value)
+                    config:saveSingleConfig(id, key, value)
                 end
                 local broadcast = function(eventClass, ...) 
                     java.import('io.github.rwpp.event.EventKt'):broadcastIn(java.import('io.github.rwpp.event.events.' .. eventClass)(...))
                 end
                 local reply = function(player, message, title, color)
                      local gameRoom = game:getGameRoom()
-                     gameRoom:sendMessageToPlayer(player, title or extension, message, color or -1)
+                     gameRoom:sendMessageToPlayer(player, title or id, message, color or -1)
                 end
                 local functionN = function(count, func) 
                     return java.proxy('kotlin.jvm.functions.Function' .. count, func)

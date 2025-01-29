@@ -7,9 +7,11 @@
 
 package io.github.rwpp.io
 
+import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.io.DataOutput
 import java.io.DataOutputStream
+import java.util.zip.GZIPOutputStream
 
 class GameOutputStream(
     private val stream: DataOutputStream
@@ -22,5 +24,13 @@ class GameOutputStream(
     fun writeOptionalUTF(string: String?) {
         writeBoolean(string != null)
         if (string != null) writeUTF(string)
+    }
+
+    fun compressToGZIP(bytes: ByteArray): ByteArray {
+        val baos = ByteArrayOutputStream()
+        GZIPOutputStream(baos).use {
+            it.write(bytes)
+        }
+        return baos.toByteArray()
     }
 }

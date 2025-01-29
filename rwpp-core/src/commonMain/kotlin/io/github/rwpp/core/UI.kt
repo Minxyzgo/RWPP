@@ -36,8 +36,6 @@ object UI : Initialization {
     var showExtensionView by mutableStateOf(false)
     var showContributorList by mutableStateOf(false)
 
-    var updateExtensionWhenVisible by mutableStateOf(false)
-
     private val relayRegex = Regex("""R\d+""")
 
     fun showWarning(reason: String, isKicked: Boolean = false) {

@@ -5,14 +5,11 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.mod
+package io.github.rwpp.game.audio
 
-interface ModManager {
-    suspend fun modReload()
+import org.koin.core.component.KoinComponent
+import java.io.InputStream
 
-    suspend fun modSaveChange()
-
-    fun getModByName(name: String): Mod?
-
-    fun getAllMods(): List<Mod>
+interface GameSoundPool : KoinComponent {
+    fun newSound(input: InputStream, name: String): GameSound
 }

@@ -14,7 +14,7 @@ import io.github.rwpp.io.GameOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 
-fun Packet.asGamePacket(): au = au(type.type).also { pack ->
+fun Packet.asGamePacket(): au = au(type!!).also { pack ->
     val byteArrayOutput = ByteArrayOutputStream()
     val gameOutput = GameOutputStream(
         DataOutputStream(byteArrayOutput)

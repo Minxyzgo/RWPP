@@ -5,8 +5,8 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.net
+package io.github.rwpp.game.audio
 
-interface PacketType {
-    val type: Int
+interface GameSound {
+    fun play()
 }

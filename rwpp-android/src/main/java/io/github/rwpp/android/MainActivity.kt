@@ -8,19 +8,13 @@
 package io.github.rwpp.android
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.ComponentCaller
 import android.content.Context
-import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
-import android.database.Cursor
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -48,7 +42,6 @@ import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.events.ReturnMainMenuEvent
 import org.koin.compose.KoinContext
 import java.io.File
-import kotlin.math.log
 
 
 class MainActivity : ComponentActivity() {
@@ -64,6 +57,7 @@ class MainActivity : ComponentActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) {
             isGaming = false
+            gameOver = false
             QuitGameEvent().broadcastIn()
             isSinglePlayerGame = false
             if(!isReturnToBattleRoom) { ReturnMainMenuEvent().broadcastIn() }

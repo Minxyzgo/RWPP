@@ -7,11 +7,10 @@
 
 package io.github.rwpp.config
 
-import io.github.rwpp.net.PacketType
-import io.github.rwpp.net.packets.ServerPacket
 import io.github.rwpp.io.GameInputStream
 import io.github.rwpp.io.SizeUtils
 import io.github.rwpp.net.InternalPacketType
+import io.github.rwpp.net.packets.ServerPacket
 import kotlinx.serialization.Serializable
 import okio.buffer
 import okio.source

@@ -9,7 +9,8 @@ package io.github.rwpp.desktop.impl.inject
 
 import com.corrodinggames.rts.gameFramework.j.`as`
 import com.corrodinggames.rts.gameFramework.j.k
-import io.github.rwpp.*
+import io.github.rwpp.appKoin
+import io.github.rwpp.commands
 import io.github.rwpp.core.UI
 import io.github.rwpp.desktop.bannedUnitList
 import io.github.rwpp.desktop.impl.ClientImpl
@@ -17,16 +18,17 @@ import io.github.rwpp.desktop.impl.GameEngine
 import io.github.rwpp.desktop.impl.PlayerImpl
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.ChatMessageEvent
+import io.github.rwpp.event.events.SystemMessageEvent
 import io.github.rwpp.game.Game
-import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
 import io.github.rwpp.inject.InterruptResult
+import io.github.rwpp.logger
 import io.github.rwpp.net.InternalPacketType
 import io.github.rwpp.net.Net
-import net.peanuuutz.tomlkt.Toml
+import io.github.rwpp.packageName
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.IOException
@@ -94,21 +96,16 @@ object NetworkInject {
             }
 
             else -> {
-                val packetType = InternalPacketType.from(type)
-
-                if (packetType != null) {
-                    val listener = appKoin.get<Net>().listeners[packetType]
-                    if (listener != null) {
-                        listener.invoke(
-                            ClientImpl(auVar.a),
-                            appKoin.get<Net>().packetDecoders[packetType]!!.invoke(
-                                DataInputStream(
-                                    ByteArrayInputStream(auVar.c)
-                                )
+                net.listeners[type]?.forEach { listener ->
+                    listener.invoke(
+                        ClientImpl(auVar.a),
+                        net.packetDecoders[type]!!.invoke(
+                            DataInputStream(
+                                ByteArrayInputStream(auVar.c)
                             )
                         )
-                        return InterruptResult.Unit
-                    }
+                    )
+                    return InterruptResult.Unit
                 }
 
                 Unit
@@ -178,7 +175,9 @@ object NetworkInject {
             return InterruptResult.Unit
 
         if (player == null) {
-            UI.onReceiveChatMessage(str ?: "",str2 ?: "", i)
+            SystemMessageEvent(str2 ?: "").broadcastIn(onFinished = {
+                UI.onReceiveChatMessage(str ?: "",str2 ?: "", i)
+            })
         } else {
             logger.info("Received chat message from ${player.name}")
             ChatMessageEvent(
@@ -190,5 +189,6 @@ object NetworkInject {
         return Unit
     }
 
+    private val net by lazy { appKoin.get<Net>() }
     private val gameRoom by lazy { appKoin.get<Game>().gameRoom }
 }

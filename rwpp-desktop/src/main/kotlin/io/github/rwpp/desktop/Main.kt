@@ -29,26 +29,29 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import io.github.rwpp.App
-import io.github.rwpp.AppContext
-import io.github.rwpp.appKoin
+import io.github.rwpp.*
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.config.Settings
 import io.github.rwpp.event.GlobalEventChannel
+import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.GameLoadedEvent
 import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.sendChatMessageOrCommand
 import io.github.rwpp.game.team.TeamModeModule
+import io.github.rwpp.i18n.parseI18n
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.ui.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
+import org.slf4j.LoggerFactory
 import java.awt.*
 import java.io.File
 import java.util.logging.Level
@@ -73,6 +76,8 @@ fun main(array: Array<String>) {
         System.loadLibrary("opengl32")
     }
 
+    logger = LoggerFactory.getLogger(packageName)
+
     displaySize =
         GraphicsEnvironment
             .getLocalGraphicsEnvironment()
@@ -93,9 +98,18 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
     val app = appKoin.get<AppContext>()
 
+    runBlocking { parseI18n() }
+
     app.init()
 
     Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
+
+    File("mods/maps/")
+        .walk()
+        .filter { it.name.startsWith("generated_") }
+        .forEach {
+            it.delete()
+        }
 //    File("mods/units")
 //        .walk()
 //        .forEach {
@@ -143,6 +157,8 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 game.load(
                     LoadingContext { message = it }
                 )
+
+                GameLoadedEvent().broadcastIn()
 
                 isLoading = false
             }

@@ -66,19 +66,23 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
     }
 
 
-    override fun newExtension(isEnabled: Boolean, extensionFile: File, config: ExtensionConfig): Extension {
+    override fun newExtension(
+        isEnabled: Boolean,
+        isZip: Boolean,
+        extensionFile: File,
+        config: ExtensionConfig
+    ): Extension {
         return object : Extension(
-            isEnabled, extensionFile, ZipFile(extensionFile), config
+            isEnabled, extensionFile, if (isZip) ZipFile(extensionFile) else null, config
         ) {
             override val iconPainter: Painter? by lazy {
                 if (config.icon.isBlank())
                     null
                 else {
-                    val iconEntry = zipFile.getEntry(config.icon)
                     ImageIO.read(
-                        zipFile.getInputStream(iconEntry)
-                    )
-                        .toPainter()
+                        zipFile?.let { it.getInputStream(it.getEntry(config.icon)) }
+                            ?: File(extensionFile, config.icon).inputStream()
+                    ).toPainter()
                 }
             }
         }

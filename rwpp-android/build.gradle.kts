@@ -31,8 +31,8 @@ ksp {
 
 dependencies {
     implementation(project(":rwpp-core"))
-    //implementation("ru.bartwell:exfilepicker:2.1")
     implementation("com.github.getActivity:XXPermissions:20.0")
+    implementation("com.github.tony19:logback-android:3.0.0")
     compileOnly(fileTree(
         "dir" to rootDir.absolutePath + "/lib",
         "include" to "*.jar",

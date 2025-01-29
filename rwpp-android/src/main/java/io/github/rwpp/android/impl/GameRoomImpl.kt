@@ -21,8 +21,10 @@ import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.*
 import io.github.rwpp.config.Settings
 import io.github.rwpp.core.Logic
+import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.DisconnectEvent
+import io.github.rwpp.event.events.MapChangedEvent
 import io.github.rwpp.event.events.PlayerJoinEvent
 import io.github.rwpp.event.events.StartGameEvent
 import io.github.rwpp.game.ConnectingPlayer
@@ -30,11 +32,10 @@ import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.RoomOption
-import io.github.rwpp.game.map.FogMode
-import io.github.rwpp.game.map.GameMap
-import io.github.rwpp.game.map.MapType
-import io.github.rwpp.game.map.NetworkMap
+import io.github.rwpp.game.map.*
 import io.github.rwpp.game.team.TeamMode
+import io.github.rwpp.logger
+import io.github.rwpp.net.Packet
 import io.github.rwpp.net.packets.GamePacket
 import io.github.rwpp.utils.Reflect
 import io.github.rwpp.welcomeMessage
@@ -65,21 +66,24 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override val mapType: MapType
         get() = MapType.entries[GameEngine.t().bU.aA.a.ordinal]
     override var selectedMap: GameMap
-        get() = game.getAllMaps().firstOrNull { (it.mapName + ".tmx").replace("\\", "/").endsWith(GameEngine.t().bU.aA.b ?: "") }
+        get() = game.getAllMaps().firstOrNull { GameEngine.t().bU.aB?.contains(getMapRealPath(it)).also { _ ->
+           // logger.info("map Name: ${GameEngine.t().bU.aB} getMapName: ${(it.mapName + it.getMapSuffix()).replace("\\", "/")}")
+        } == true }
             ?: NetworkMap(LevelSelectActivity.convertLevelFileNameForDisplay(GameEngine.t().bU.aA.b))
         set(value) {
             if (isHostServer) {
                 GameEngine.t().bU.i("-map" + com.corrodinggames.rts.gameFramework.e.a.q(LevelSelectActivity.convertLevelFileNameForDisplay(value.mapName)) + "'")
             } else {
-                val realPath =
-                    (if(value.mapType == MapType.SkirmishMap) "maps/skirmish/" else "") +
-                            (value.mapName + value.getMapSuffix()).replace("\\", "/")
-                GameEngine.t().bU.aB = com.corrodinggames.rts.gameFramework.e.a.b.f(realPath)
+                GameEngine.t().bU.aB = getMapRealPath(value)
                 GameEngine.t().bU.aA.a = com.corrodinggames.rts.gameFramework.j.at.entries[value.mapType.ordinal]
                 GameEngine.t().bU.aA.b = (value.mapName + value.getMapSuffix())
-                GameEngine.t().bU.n()
+                MapChangedEvent(value.displayName()).broadcastIn()
+                updateUI()
             }
         }
+    override var displayMapName: String
+        get() = LevelSelectActivity.convertLevelFileNameForDisplay(GameEngine.t().bU.aA.b)
+        set(value) { GameEngine.t().bU.aA.b = value }
     override var startingCredits: Int
         get() = GameEngine.t().bU.aA.c
         set(value) { GameEngine.t().bU.aA.c = value }
@@ -118,6 +122,14 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         get() = isGaming
     override val teamMode: TeamMode?
         get() = _teamMode
+    override var gameMapTransformer: ((XMLMap) -> Unit)? = null
+        set(value) {
+            if (field != null) {
+                throw IllegalStateException("GameMapTransformer is already set. If you want to change it, please set it to null first")
+            } else {
+                field = value
+            }
+        }
     override var isRWPPRoom: Boolean = false
     override var option: RoomOption = RoomOption()
     override val isConnecting: Boolean
@@ -128,11 +140,12 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override fun getPlayers(): List<Player> {
         return PlayerInternal.j.mapNotNull {
             if(it == null) return@mapNotNull null
+
             playerCacheMap.getOrPut(it) {
                 PlayerImpl(it, this)
                     .also { p ->
                         sendWelcomeMessage(p)
-                        PlayerJoinEvent(p).broadcastIn()
+                        if (it != GameEngine.t().bU.A) PlayerJoinEvent(p).broadcastIn()
                     }
             }
         }
@@ -345,8 +358,8 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     }
 
     override fun sendMessageToPlayer(player: Player?, title: String?, message: String, color: Int) {
-        if (player?.client != null) {
-            player.client!!.sendPacketToClient(GamePacket.getChatPacket(title, message, color))
+        if (player != null && player != localPlayer) {
+            player.client?.sendPacketToClient(GamePacket.getChatPacket(title, message, color))
         } else {
             Reflect.call(GameEngine.t().bU, "a",
                 listOf(
@@ -358,6 +371,35 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                 listOf(null, color, title, message)
             )
         }
+    }
+
+    override fun sendSurrender(player: Player) {
+        if (player == localPlayer) {
+            sendChatMessage("-surrender")
+        } else if (player.client != null) {
+            Reflect.call<ae, Any>(
+                GameEngine.t().bU,
+                "b",
+                listOf(com.corrodinggames.rts.gameFramework.j.c::class, com.corrodinggames.rts.game.p::class, String::class, String::class),
+                listOf((player.client as ClientImpl).client, (player as PlayerImpl).player, player.name, "-surrender")
+            )
+        }
+    }
+
+    override fun syncAllPlayer() {
+        //gamesave
+        if (isHost) {
+            Reflect.call<ae, Any>(
+                GameEngine.t().bU,
+                "a",
+                listOf(Boolean::class, Boolean::class, Boolean::class),
+                listOf(false, false, true)
+            )
+        }
+    }
+
+    override fun addCommandPacket(packet: Packet) {
+        TODO("Not yet implemented")
     }
 
     override fun addAI(count: Int) {
@@ -475,6 +517,10 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         }
     }
 
+    override fun remainingPlayersCount(): Int {
+        return Reflect.call<com.corrodinggames.rts.game.p, Int>(null, "P", listOf(), listOf())!!
+    }
+
 
     override fun kickPlayer(player: Player) {
         GameEngine.t().bU.d((player as PlayerImpl).player)
@@ -487,6 +533,8 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         option = RoomOption()
         roomMods = arrayOf()
         _teamMode = null
+        defeatedPlayerSet.clear()
+        gameOver = false
         // 刷新地图
         GameEngine.t().bU.aA.a = at.a
         GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
@@ -502,9 +550,23 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
 
     override fun startGame() {
         val t: k = GameEngine.t()
+        gameOver = false
+        defeatedPlayerSet.clear()
         isGaming = true
 
         if(isHost || isSinglePlayerGame) {
+            if (!isSinglePlayerGame && gameMapTransformer != null) {
+                val xmlMap = XMLMap(selectedMap)
+                gameMapTransformer!!.invoke(xmlMap)
+                val path = "/storage/emulated/0/rustedWarfare/maps/generated_${LevelSelectActivity.convertLevelFileNameForDisplay(selectedMap.mapName + selectedMap.getMapSuffix()) + selectedMap.getMapSuffix()}"
+                val file = xmlMap.saveToFile(path)
+                GameEngine.t().bU.aB = path
+                GlobalEventChannel.filter(DisconnectEvent::class).subscribeOnce {
+                    file.delete()
+                }
+                GameEngine.t().bU.aA.a = com.corrodinggames.rts.gameFramework.j.at.entries[1]
+                updateUI()
+            }
             t.bU.q()
             t.bU.n()
             t.bU.a(null, false)
@@ -531,6 +593,13 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         aeVar.h("Map load failed.")
 
         StartGameEvent().broadcastIn()
+    }
+
+    private fun getMapRealPath(map: GameMap): String {
+        val realPath =
+            (if(map.mapType == MapType.SkirmishMap) "maps/skirmish/" else "") +
+                    (map.mapName + map.getMapSuffix()).replace("\\", "/")
+        return com.corrodinggames.rts.gameFramework.e.a.b.f(realPath)
     }
 
     private fun sendWelcomeMessage(p: PlayerImpl) {

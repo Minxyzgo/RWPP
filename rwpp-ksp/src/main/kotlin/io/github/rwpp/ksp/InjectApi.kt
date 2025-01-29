@@ -202,7 +202,7 @@ internal object InjectApi {
                     )
                 } else {
                     method.insertAfter("""
-                        $originalCode
+                        $returnCode $originalCode
                     """.trimIndent())
                 }
 
@@ -220,16 +220,22 @@ internal object InjectApi {
             InjectMode.InsertAfter -> {
                 method.addLocalVariable("result2", method.returnType)
                 method.insertBefore("\$r result2 = $originalCode")
-                if (returnClassIsVoid) return
-                method.insertAfter(
-                    """
+                if (returnClassIsVoid) {
+                    method.insertAfter(
+                        """
                         if(result != kotlin.Unit.INSTANCE) {
                             $returnCode result;
                         } else {
                             $returnCode result2;
                         }
                     """.trimIndent()
-                )
+                    )
+                } else {
+                    method.insertAfter(
+                        """
+                        $returnCode result2;
+                        """.trimIndent())
+                }
             }
         }
     }

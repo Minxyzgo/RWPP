@@ -25,6 +25,7 @@ sourceSets.main.get().resources.srcDir(rootDir.absolutePath + "/rwpp-core/src/co
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation(project(":rwpp-core"))
+    implementation("org.slf4j:slf4j-simple:2.0.16")
     compileOnly(fileTree(
         "dir" to rootDir.absolutePath + "/lib",
         "include" to "*.jar",
@@ -95,9 +96,7 @@ compose.desktop {
 }
 
 task("packageWixDistribution") {
-    doFirst {
-        dependsOn("createReleaseDistributable")
-    }
+    dependsOn("createReleaseDistributable")
 
     doLast {
         val process = Runtime.getRuntime().exec(

@@ -27,7 +27,7 @@ namespace RSetup
         private static void Main(string[] args)
         {
             //使用release的distribution, 需要先运行gradle task
-            var appDir = @"desktop\build\compose\binaries\main-release\app\RWPP";
+            var appDir = @"rwpp-desktop\build\compose\binaries\main-release\app\RWPP";
 
             var appFeature = new Feature("App", "RWPP运行的主要部分", true, false);
             var jvmFeature = new Feature("Jvm64", "RWPP运行时Jvm", true, true);
@@ -57,7 +57,7 @@ namespace RSetup
 
             project.ValidateBackgroundImage = false;
             project.BackgroundImage = @"wix\panel1.png";
-            project.BannerImage = @"desktop\logo.ico";
+            project.BannerImage = @"rwpp-desktop\logo.ico";
 
             project.LicenceFile = @"wix\agpl-3.0.rtf";
 
@@ -70,7 +70,7 @@ namespace RSetup
             {
                 info.Readme = "https://github.com/Minxyzgo/RWPP";
                 info.HelpLink = "https://rwpp.netlify.app/";
-                info.ProductIcon = $@"{RootDir}\desktop\logo.ico";
+                info.ProductIcon = $@"{RootDir}\rwpp-desktop\logo.ico";
                 info.Contact = "RWPP Contributors";
                 info.Manufacturer = "Minxyzgo";
                 info.Comments = "Multiplatform launcher for Rusted Warfare";

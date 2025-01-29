@@ -7,9 +7,11 @@
 
 package io.github.rwpp.android
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -21,59 +23,101 @@ import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import io.github.rwpp.AppContext
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.android.impl.GameEngine
+import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
+import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.GameLoadedEvent
 import io.github.rwpp.ui.ConstraintWindowManager
 import io.github.rwpp.ui.MenuLoadingView
 import io.github.rwpp.ui.RWSelectionColors
 import io.github.rwpp.ui.v2.TitleBrush
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.koin.compose.LocalKoinApplication
+import org.koin.compose.KoinContext
+import org.koin.compose.koinInject
+import java.io.File
+import kotlin.system.exitProcess
 
 class LoadingScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
+        appKoin.declare(this, secondaryTypes = listOf(Context::class))
+
         setContent {
+            KoinContext {
+                val brush = TitleBrush()
 
-            val brush = TitleBrush()
-
-            MaterialTheme(
-                typography = typography,
-                colorScheme = lightColorScheme()
-            ) {
-                BoxWithConstraints(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(brush),
+                MaterialTheme(
+                    typography = typography,
+                    colorScheme = lightColorScheme()
                 ) {
-                    CompositionLocalProvider(
-                        LocalKoinApplication provides appKoin,
-                        LocalTextSelectionColors provides RWSelectionColors,
-                        LocalWindowManager provides ConstraintWindowManager(maxWidth, maxHeight)
+                    BoxWithConstraints(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(brush),
                     ) {
-                        var message by remember { mutableStateOf("loading") }
+                        CompositionLocalProvider(
+                            LocalTextSelectionColors provides RWSelectionColors,
+                            LocalWindowManager provides ConstraintWindowManager(maxWidth, maxHeight)
+                        ) {
+                            val permissionHelper = koinInject<PermissionHelper>()
+                            var hasPermission by remember { mutableStateOf(permissionHelper.hasManageFilePermission()) }
 
-                        MenuLoadingView(message)
-
-                        LaunchedEffect(Unit) {
-                            withContext(Dispatchers.IO) {
-                                launch {
-                                    while (GameEngine.t()?.bg != true) {
-                                        val msg = GameEngine.t()?.dF
-                                        message = (if (msg.isNullOrBlank()) "loading..." else msg)
+                            if (!hasPermission) {
+                                LaunchedEffect(Unit) {
+                                    Toast.makeText(
+                                        appKoin.get(),
+                                        "RWPP需要管理文件权限才能正常运行！",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    permissionHelper.requestManageFilePermission {
+                                        if (it) hasPermission = true
+                                        else {
+                                            exitProcess(0)
+                                        }
                                     }
                                 }
+                            } else {
+                                var message by remember { mutableStateOf("loading") }
 
-                                GameEngine.c(this@LoadingScreen)
+                                MenuLoadingView(message)
 
-                                gameLoaded = true
-                                startActivityForResult(Intent(this@LoadingScreen, MainActivity::class.java), 0)
-                                finish()
+                                LaunchedEffect(Unit) {
+                                    appKoin.get<AppContext>().init()
+
+                                    withContext(Dispatchers.IO) {
+
+                                        File("/storage/emulated/0/rustedWarfare/maps/")
+                                            .walk()
+                                            .filter { it.name.startsWith("generated_") }
+                                            .forEach {
+                                                it.delete()
+                                            }
+
+                                        val job = launch {
+                                            while (true) {
+                                                val msg = GameEngine.t()?.dF
+                                                message = (if (msg.isNullOrBlank()) "loading..." else msg)
+                                            }
+                                        }
+
+                                        async { GameEngine.c(this@LoadingScreen) }.await()
+
+                                        job.cancel()
+
+                                        gameLoaded = true
+                                        GameLoadedEvent().broadcastIn()
+                                        startActivityForResult(Intent(this@LoadingScreen, MainActivity::class.java), 0)
+                                        finish()
+                                    }
+                                }
                             }
                         }
                     }

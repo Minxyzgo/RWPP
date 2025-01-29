@@ -92,11 +92,11 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
                 if (config.icon.isBlank())
                     null
                 else {
-                    val zipFile = ZipFile(extensionFile)
-                    val iconEntry = zipFile.getEntry(config.icon)
                     BitmapPainter(
-                        BitmapFactory.decodeStream(zipFile.getInputStream(iconEntry))
-                          .asImageBitmap()
+                        BitmapFactory.decodeStream(
+                            zipFile?.let { it.getInputStream(it.getEntry(config.icon)) }
+                            ?: File(extensionFile, config.icon).inputStream()
+                        ).asImageBitmap()
                     )
                 }
             }

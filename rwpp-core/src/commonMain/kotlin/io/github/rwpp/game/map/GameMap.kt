@@ -8,7 +8,7 @@
 package io.github.rwpp.game.map
 
 import androidx.compose.ui.graphics.painter.Painter
-import java.io.File
+import java.io.InputStream
 
 interface GameMap {
     val id: Int
@@ -18,6 +18,8 @@ interface GameMap {
     val mapName: String
 
     val mapType: MapType
+
+    fun openInputStream(): InputStream
 
     fun displayName() = mapName.replace(mapPrefixRegex, "")
 

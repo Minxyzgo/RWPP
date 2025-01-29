@@ -50,7 +50,7 @@ val welcomeMessage =
         [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
         开源地址请访问 https://github.com/Minxyzgo/RWPP 
         当前版本: $projectVersion (core $coreVersion)
-        Copyright 2023-2024 RWPP contributors
+        Copyright 2023-2025 RWPP contributors
     """.trimIndent()
 
 const val packageName = "io.github.rwpp"
@@ -60,7 +60,7 @@ const val packageName = "io.github.rwpp"
 /**
  * global logger.
  */
-val logger: Logger = LoggerFactory.getLogger(packageName)
+lateinit var logger: Logger
 
 /**
  * global command handler.

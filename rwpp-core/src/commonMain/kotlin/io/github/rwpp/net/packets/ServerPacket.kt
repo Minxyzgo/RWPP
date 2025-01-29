@@ -8,15 +8,14 @@
 package io.github.rwpp.net.packets
 
 import io.github.rwpp.net.Packet
-import io.github.rwpp.net.PacketType
 import io.github.rwpp.net.ServerStatus
 import io.github.rwpp.io.GameInputStream
 import io.github.rwpp.io.GameOutputStream
 import io.github.rwpp.net.InternalPacketType
 
-sealed class ServerPacket(type: PacketType) : Packet(type) {
+sealed class ServerPacket(type: Int) : Packet(type) {
 
-    class ServerInfoGetPacket : ServerPacket(InternalPacketType.PRE_GET_SERVER_INFO_FROM_LIST) {
+    class ServerInfoGetPacket : ServerPacket(InternalPacketType.PRE_GET_SERVER_INFO_FROM_LIST.type) {
         override fun readPacket(input: GameInputStream) {
             input.readInt()
         }
@@ -36,7 +35,7 @@ sealed class ServerPacket(type: PacketType) : Packet(type) {
         var mods: String = "",
         var status: ServerStatus = ServerStatus.BattleRoom,
         var iconBytes: ByteArray = byteArrayOf(),
-    ): ServerPacket(InternalPacketType.RECEIVE_SERVER_INFO_FROM_LIST) {
+    ): ServerPacket(InternalPacketType.RECEIVE_SERVER_INFO_FROM_LIST.type) {
         var ping: Int = 0
         override fun readPacket(input: GameInputStream) {
             name = input.readUTF()

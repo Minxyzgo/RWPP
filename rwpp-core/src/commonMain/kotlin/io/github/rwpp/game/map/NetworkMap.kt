@@ -9,6 +9,7 @@ package io.github.rwpp.game.map
 
 import androidx.compose.ui.graphics.painter.Painter
 import java.io.File
+import java.io.InputStream
 
 class NetworkMap(private val _mapName: String) : GameMap {
     override val id: Int
@@ -19,4 +20,8 @@ class NetworkMap(private val _mapName: String) : GameMap {
         get() = _mapName
     override val mapType: MapType
         get() = MapType.CustomMap
+
+    override fun openInputStream(): InputStream {
+        throw RuntimeException("NetworkMap is not supported")
+    }
 }

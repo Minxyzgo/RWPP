@@ -8,7 +8,10 @@
 package io.github.rwpp.external
 
 import androidx.compose.ui.graphics.painter.Painter
+import io.github.rwpp.logger
+import io.github.rwpp.scripts.LuaWidget
 import java.io.File
+import java.io.InputStream
 import java.util.zip.ZipFile
 
 abstract class Extension(
@@ -22,4 +25,17 @@ abstract class Extension(
     val config: ExtensionConfig,
 ) {
     abstract val iconPainter: Painter?
+
+    @JvmField
+    var settingPanel = mutableListOf<LuaWidget>()
+
+    @Suppress("unused")
+    fun openInputStream(entryName: String): InputStream {
+        return if (zipFile != null) {
+            logger.debug("Opening input stream for $entryName from zip file")
+            zipFile.getInputStream(zipFile.getEntry(entryName))
+        } else {
+            File(file, entryName).inputStream()
+        }
+    }
 }

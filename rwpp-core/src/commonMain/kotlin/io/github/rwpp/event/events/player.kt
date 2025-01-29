@@ -12,6 +12,17 @@ import io.github.rwpp.game.Player
 
 sealed class PlayerEvent(val player: Player) : AbstractEvent()
 
+/**
+ * Event that is fired when a player joins the game.
+ */
 class PlayerJoinEvent(player: Player) : PlayerEvent(player)
 
+/**
+ * Event that is fired when a player leaves the game.
+ */
 class PlayerLeaveEvent(player: Player, reason: String) : PlayerEvent(player)
+
+/**
+ * Event that is fired when a player is defeated.
+ */
+class PlayerDefeatedEvent(player: Player) : PlayerEvent(player)

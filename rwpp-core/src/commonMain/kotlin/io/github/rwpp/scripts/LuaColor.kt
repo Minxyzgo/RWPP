@@ -9,8 +9,8 @@ package io.github.rwpp.scripts
 
 import androidx.compose.ui.graphics.Color
 
-data class LuaColor(val r: Int, val g: Int, val b: Int, val a: Int) {
+data class LuaColor(val color: Int) {
     fun toComposeColor(): Color {
-        return Color(r, g, b, a)
+        return Color(color)
     }
 }

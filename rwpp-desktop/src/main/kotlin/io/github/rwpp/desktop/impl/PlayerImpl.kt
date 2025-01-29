@@ -14,7 +14,9 @@ import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
+import io.github.rwpp.game.data.PlayerStatisticsData
 import io.github.rwpp.net.Client
+import kotlin.math.roundToInt
 
 class PlayerImpl(
     internal val player: com.corrodinggames.rts.game.n,
@@ -66,6 +68,21 @@ class PlayerImpl(
             if (room.isHost) player.z = value?.ordinal?.minus(2)
         }
     override val data: PlayerData = PlayerData()
+    override var credits: Int
+        //4000.0d
+        get() = player.o.roundToInt()
+        set(value) { player.o = value.toDouble() }
+    override val statisticsData: PlayerStatisticsData
+        get() = with(GameEngine.B().bY.a(player)) {
+            PlayerStatisticsData(c, d, e, f, g, h)
+        }
+    override val income: Int
+        get() = player.v()
+
+    override val isDefeated: Boolean
+        get() = player.F || player.G
+    override val isWipedOut: Boolean
+        get() = player.G
     override val client: Client? by lazy {
         GameEngine.B().bX.c(player)?.let { ClientImpl(it) }
     }

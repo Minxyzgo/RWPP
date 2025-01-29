@@ -67,7 +67,7 @@ class ConfigIOImpl : ConfigIO {
 
     override fun readSingleConfig(group: String, key: String): String? {
         val preferences = get<Context>().getSharedPreferences(group, Context.MODE_PRIVATE)
-        return preferences.getString(key, "")
+        return preferences.getString(key, "")!!.ifBlank { null }
     }
 
     @Suppress("unchecked_cast")

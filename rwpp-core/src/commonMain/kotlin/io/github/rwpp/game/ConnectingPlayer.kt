@@ -9,6 +9,7 @@ package io.github.rwpp.game
 
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
+import io.github.rwpp.game.data.PlayerStatisticsData
 import io.github.rwpp.net.Client
 
 object ConnectingPlayer : Player {
@@ -39,8 +40,19 @@ object ConnectingPlayer : Player {
         get() = null
         set(_) {}
     override val data: PlayerData = PlayerData()
+    override var credits: Int
+        get() = 0
+        set(_) {}
+    override val statisticsData: PlayerStatisticsData
+        get() = PlayerStatisticsData(0, 0 ,0 , 0, 0, 0)
+    override val income: Int
+        get() = 0
+    override val isDefeated: Boolean
+        get() = false
+    override val isWipedOut: Boolean
+        get() = false
     override val client: Client?
-        get() = throw UnsupportedOperationException("Nope")
+        get() = null
 
     override fun applyConfigChange(
         spawnPoint: Int,

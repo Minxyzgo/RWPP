@@ -96,3 +96,10 @@ backgroundImageTransparency = "背景图片透明度"
 [ingame]
 sendMessage = "发送消息"
 sendTeamMessage = "发送团队消息"
+
+[android]
+importMod = "成功导入模组: {0}。请点击`重载`按钮更新模组列表。"
+importExtension = "成功导入扩展: {0}。请点击`刷新`按钮更新扩展列表。"
+importMap = "成功导入地图: {0}。"
+importSave = "成功导入存档: {0}。"
+importReplay = "成功导入回放: {0}。"

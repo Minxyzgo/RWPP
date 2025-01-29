@@ -9,11 +9,17 @@
 package io.github.rwpp.game.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,12 +37,14 @@ import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.EnabledExtensions
 import io.github.rwpp.core.UI
+import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.logger
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.rwpp_core.generated.resources.Res
 import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
+import io.github.rwpp.scripts.Render
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
 import org.jetbrains.compose.resources.painterResource
@@ -44,14 +52,13 @@ import org.koin.compose.koinInject
 
 @Composable
 fun ExtensionView(
-    update: Boolean = false,
     onExit: () -> Unit
 ) {
     BackHandler(true, onExit)
     val appContext = koinInject<AppContext>()
     val externalHandler = koinInject<ExternalHandler>()
     var extensions by remember {
-        mutableStateOf(externalHandler.getAllExtensions(update).onFailure {
+        mutableStateOf(externalHandler.getAllExtensions().onFailure {
             UI.showWarning(it.message ?: "Unexpected error")
         }.getOrDefault(listOf()))
     }
@@ -61,8 +68,25 @@ fun ExtensionView(
         permissionHelper.requestManageFilePermission()
     }
 
-    var showResultView by remember { mutableStateOf(false) }
+    var showExtensionSetting by remember { mutableStateOf(false) }
+    var selectedExtension by remember { mutableStateOf<Extension?>(null) }
+    AnimatedAlertDialog(
+        showExtensionSetting,
+        onDismissRequest = { showExtensionSetting = false }) { _ ->
+        BorderCard(
+            modifier = Modifier.size(500.dp),
+        ) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(selectedExtension!!.config.displayName, modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
+                LargeDividingLine { 0.dp }
+                for (widget in selectedExtension!!.settingPanel) {
+                    widget.Render()
+                }
+            }
+        }
+    }
 
+    var showResultView by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf("") }
     LoadingView(isLoading, onLoaded = {
@@ -170,6 +194,22 @@ fun ExtensionView(
                                 .wrapContentHeight()
                                 .padding(5.dp)
                         ) {
+                            if (extension.settingPanel.isNotEmpty()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    Icon(
+                                        Icons.Default.Settings,
+                                        null,
+                                        modifier = Modifier.padding(5.dp, 5.dp, 20.dp, 5.dp).clickable {
+                                            selectedExtension = extension
+                                            showExtensionSetting = true
+                                        }, tint = MaterialTheme.colorScheme.surfaceTint
+                                    )
+                                }
+                            }
+
                             Column {
                                 var checked by remember {
                                     mutableStateOf(extension.isEnabled)

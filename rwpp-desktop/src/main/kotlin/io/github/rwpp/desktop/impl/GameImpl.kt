@@ -41,6 +41,7 @@ import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.game.world.World
+import io.github.rwpp.net.Packet
 import io.github.rwpp.net.packets.GamePacket
 import io.github.rwpp.ui.LoadingContext
 import io.github.rwpp.utils.Reflect
@@ -50,6 +51,7 @@ import org.koin.core.component.get
 import org.lwjgl.opengl.Display
 import java.awt.image.BufferedImage
 import java.io.*
+import java.util.TimerTask
 import javax.imageio.ImageIO
 
 @Single
@@ -88,7 +90,7 @@ class GameImpl : Game {
                 override val mapType: MapType
                     get() = MapType.entries[a.ordinal]
                 override var selectedMap: GameMap
-                    get() = getAllMaps().firstOrNull { (it.mapName + it.getMapSuffix()).replace("\\", "/").endsWith(B.bX.ay.b ?: "") }
+                    get() = getAllMaps().firstOrNull { B.bX.az.endsWith((it.mapName + it.getMapSuffix()).replace("\\", "/")) }
                         ?: NetworkMap(mapNameFormatMethod.invoke(null, B.bX.ay.b) as String)
                     set(value) {
                         if(isHostServer) {
@@ -108,9 +110,13 @@ class GameImpl : Game {
                             B.bX.az = realPath
                             B.bX.ay.a = com.corrodinggames.rts.gameFramework.j.ai.entries[value.mapType.ordinal]
                             b = (value.mapName + value.getMapSuffix())
-                            GameEngine.B().bX.L() // send server info
+                            MapChangedEvent(value.displayName()).broadcastIn()
+                            updateUI()
                         }
                     }
+                override var displayMapName: String
+                    get() = mapNameFormatMethod.invoke(null, B.bX.ay.b) as String
+                    set(value) { B.bX.ay.b = value }
                 override var startingCredits: Int
                     get() = c
                     set(value) { c = value }
@@ -153,6 +159,14 @@ class GameImpl : Game {
                     get() = isGaming
                 override val teamMode: TeamMode?
                     get() = _teamMode
+                override var gameMapTransformer: ((XMLMap) -> Unit)? = null
+                    set(value) {
+                        if (field != null) {
+                            throw IllegalStateException("GameMapTransformer is already set. If you want to change it, please set it to null first")
+                        } else {
+                            field = value
+                        }
+                    }
 
                 private var _teamMode: TeamMode? = null
 
@@ -162,7 +176,7 @@ class GameImpl : Game {
                 override fun getPlayers(): List<Player> {
                     return (asField.get(B.bX.ay) as Array<com.corrodinggames.rts.game.n?>).mapNotNull {
                         if(it == null) return@mapNotNull null
-                        playerCacheMap.getOrPut(it) { PlayerImpl(it).also { p -> PlayerJoinEvent(p).broadcastIn() } }
+                        playerCacheMap.getOrPut(it) { PlayerImpl(it).also { p -> if (it != B.bX.z) PlayerJoinEvent(p).broadcastIn() } }
                     }
                 }
 
@@ -183,8 +197,8 @@ class GameImpl : Game {
                 }
 
                 override fun sendMessageToPlayer(player: Player?, title: String?, message: String, color: Int) {
-                    if (player?.client != null) {
-                        player.client!!.sendPacketToClient(GamePacket.getChatPacket(title, message, color))
+                    if (player != null && player != localPlayer) {
+                        player.client?.sendPacketToClient(GamePacket.getChatPacket(title, message, color))
                     } else {
                         // New Message:
                         Reflect.call(
@@ -196,6 +210,29 @@ class GameImpl : Game {
                             ), listOf(null, color, title, message)
                         )
                     }
+                }
+
+                override fun sendSurrender(player: Player) {
+                    if (player == localPlayer) {
+                        sendChatMessage("-surrender")
+                    } else if (player.client != null) {
+                        GameEngine.B().bX.b(
+                            (player.client as ClientImpl).client, (player as PlayerImpl).player, player.name, "-surrender"
+                        )
+                    }
+
+                }
+
+                override fun syncAllPlayer() {
+                    if (isHost) GameEngine.B().bX.a(false, false, true)
+                }
+
+                override fun addCommandPacket(packet: Packet) {
+                    val p = GameEngine.B().cf.b()
+                    p.a(com.corrodinggames.rts.gameFramework.j.k(
+                        DataInputStream(ByteArrayInputStream(packet.toBytes())))
+                    )
+                    GameEngine.B().cf.b.add(p)
                 }
 
                 override fun addAI(count: Int) {
@@ -281,6 +318,10 @@ class GameImpl : Game {
                     }
                 }
 
+                override fun remainingPlayersCount(): Int {
+                    return com.corrodinggames.rts.game.n.g()
+                }
+
                 override fun kickPlayer(player: Player) {
                     val p = (player as PlayerImpl).player
                     B.bX.e(p)
@@ -295,6 +336,7 @@ class GameImpl : Game {
                     bannedUnitList = listOf()
                     roomMods = arrayOf()
                     _teamMode = null
+                    gameOver = false
 
                     if(isConnecting) B.bX.b(reason)
                     B.bX.ay.a = GameMapType.a
@@ -312,9 +354,22 @@ class GameImpl : Game {
                     rwppVisibleSetter(false)
                     gameCanvas.isVisible = true
                     gameCanvas.requestFocus()
+                    gameOver = false
                     isGaming = true
 
                     if(isHost || isSandboxGame) {
+                        if (!isSandboxGame && gameMapTransformer != null) {
+                            val xmlMap = XMLMap(selectedMap)
+                            gameMapTransformer!!.invoke(xmlMap)
+                            val path = "mods/maps/generated_${selectedMap.mapName + selectedMap.getMapSuffix()}"
+                            val file = xmlMap.saveToFile(path)
+                            B.bX.az = path
+                            GlobalEventChannel.filter(DisconnectEvent::class).subscribeOnce {
+                                file.delete()
+                            }
+                            B.bX.ay.a = com.corrodinggames.rts.gameFramework.j.ai.entries[1]
+                            updateUI()
+                        }
                         B.bX.ae()
                     }
                 }
@@ -339,6 +394,7 @@ class GameImpl : Game {
         gameCanvas.requestFocus()
         isGaming = true
 
+        gameOver = false
         container.post {
             val root = ScriptEngine.getInstance().root
             val libRocket = ScriptContext::class.java.getDeclaredField("libRocket").run {
@@ -527,6 +583,7 @@ class GameImpl : Game {
             B.bX.ay.a = GameMapType.a
             B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
             B.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
+            MapChangedEvent(gameRoom.selectedMap.displayName()).broadcastIn()
         }
     }
 
@@ -598,6 +655,11 @@ class GameImpl : Game {
     }
 
     override suspend fun directJoinServer(address: String, uuid: String?, context: LoadingContext): Result<String> {
+        val B = GameEngine.B()
+        B.bX.ay.a = GameMapType.a
+        B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
+        B.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
+
         context.message("Connecting...")
 
         val trim = restrictedString(address.trim())
@@ -675,6 +737,10 @@ class GameImpl : Game {
                         }
                         override val mapType: MapType
                             get() = MapType.SkirmishMap
+
+                        override fun openInputStream(): InputStream {
+                            throw RuntimeException("not supported")
+                        }
                     })
                 }
         }
@@ -710,6 +776,10 @@ class GameImpl : Game {
                                     get() = f.nameWithoutExtension
                                 override val mapType: MapType
                                     get() = type
+
+                                override fun openInputStream(): InputStream {
+                                    return f.inputStream()
+                                }
                             })
                         }
                 } else if (folder is Array<*>) {
@@ -729,6 +799,10 @@ class GameImpl : Game {
                                 get() = name.removeSuffix(".tmx").removeSuffix(".rwsave")
                             override val mapType: MapType
                                 get() = type
+
+                            override fun openInputStream(): InputStream {
+                                return com.corrodinggames.rts.game.b.b.b("/SD/rusted_warfare_maps/$name")
+                            }
 
                             override fun displayName(): String {
                                 return ScriptEngine.getInstance().root.convertMapName(name)
@@ -824,6 +898,7 @@ class GameImpl : Game {
         gameCanvas.isVisible = true
 
         gameCanvas.requestFocus()
+        gameOver = false
 
         isGaming = true
 
@@ -833,7 +908,7 @@ class GameImpl : Game {
     }
 
     override fun isGameCouldContinue(): Boolean {
-        return ScriptEngine.getInstance().root.canResume()
+        return kotlin.runCatching { ScriptEngine.getInstance().root.canResume() }.getOrDefault(false)
     }
 
     override fun continueGame() {
@@ -843,6 +918,7 @@ class GameImpl : Game {
         gameCanvas.requestFocus()
 
         isGaming = true
+        gameOver = false
 
         container.post {
             ScriptEngine.getInstance().root.resumeNonMenu()

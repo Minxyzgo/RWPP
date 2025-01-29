@@ -46,6 +46,7 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                                 .forEachIndexed { _, fi ->
                                     var config: ExtensionConfig? = null
 
+                                    logger.info("File: ${fi.absolutePath}")
                                     if (fi.absolutePath == extensionPath) return@forEachIndexed
 
                                     if (fi.isDirectory) {
@@ -62,6 +63,9 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                                         }
                                     }
 
+
+                                    logger.info("Config: $config")
+
                                     config
                                         ?: return Result.failure(FileNotFoundException("No info.toml found in extension: ${fi.absolutePath}"))
 
@@ -69,6 +73,7 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                                         IllegalStateException("Duplicate extension id found: ${config.id}")
                                     )
 
+                                    logger.info("add extension")
                                     add(
                                         newExtension(
                                             enabledExtension.contains(config.id),
@@ -99,7 +104,7 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
 
     override fun init() {
         logger.info("Init extensions...")
-        getAllExtensions().getOrNull()?.forEach { extension ->
+        getAllExtensions().getOrThrow().forEach { extension ->
             if (extension.isEnabled) {
                 try {
                     logger.info("Init for ${extension.config.id}")

@@ -55,25 +55,10 @@ fun ModsView(onExit: () -> Unit) {
         permissionHelper.requestExternalStoragePermission()
     }
 
-    fun updateMods() {
-        loadingAction = {
-            modManager.modUpdate()
-            mods = modManager.getAllMods()
-            updated = true
-        }
-
-        isLoading = true
-    }
-
     Scaffold(
         containerColor = Color.Transparent,
         bottomBar = {
             Row(modifier = Modifier.fillMaxWidth().padding(10.dp), horizontalArrangement = Arrangement.Center) {
-                RWTextButton(
-                    readI18n("mod.update"),
-                    modifier = Modifier.padding(5.dp),
-                )  { updateMods() }
-
                 RWTextButton(
                     readI18n("mod.reload"),
                     modifier = Modifier.padding(5.dp),

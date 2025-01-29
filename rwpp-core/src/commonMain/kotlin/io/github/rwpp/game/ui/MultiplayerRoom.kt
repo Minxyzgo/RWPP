@@ -36,6 +36,7 @@ import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.core.UI.chatMessages
 import io.github.rwpp.event.GlobalEventChannel
+import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.*
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.*
@@ -70,6 +71,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     var update by remember { mutableStateOf(false) }
     var lastSelectedIndex by remember { mutableStateOf(0) }
     var selectedMap by remember(update) { mutableStateOf(room.selectedMap) }
+    val displayMapName = remember(update) { room.displayMapName }
 
     var optionVisible by remember { mutableStateOf(false) }
     var banUnitVisible by remember { mutableStateOf(false) }
@@ -272,7 +274,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             )
 
                             Text(
-                                selectedMap.displayName(),
+                                displayMapName,
                                 modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
                                 style = MaterialTheme.typography.headlineMedium,
                                 maxLines = 1,

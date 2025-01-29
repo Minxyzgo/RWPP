@@ -26,6 +26,7 @@ import io.github.rwpp.android.isReturnToBattleRoom
 import io.github.rwpp.core.UI
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.ChatMessageEvent
+import io.github.rwpp.event.events.SystemMessageEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.units.GameCommandActions
@@ -37,6 +38,8 @@ import io.github.rwpp.net.InternalPacketType
 import io.github.rwpp.net.Net
 import io.github.rwpp.utils.Reflect
 import net.peanuuutz.tomlkt.Toml
+import java.io.ByteArrayInputStream
+import java.io.DataInputStream
 import java.util.*
 
 @InjectClass(ae::class)
@@ -152,7 +155,7 @@ object NetInject {
 
     @Inject("a", InjectMode.InsertBefore)
     fun onProcessPacket(packet: com.corrodinggames.rts.gameFramework.j.bi): Any {
-        return when(val type = packet.b) {
+        return when (val type = packet.b) {
             InternalPacketType.PREREGISTER_INFO.type -> {
                 val r0 = com.corrodinggames.rts.gameFramework.j.j(packet);     // Catch: java.lang.Throwable -> L603
                 val r1 = packet.a
@@ -198,12 +201,12 @@ object NetInject {
                 j.b.readUTF()
                 val i = j.b.readInt()
                 j.b.readInt()
-                if(i >= 1) j.b.readUTF()
-                if(i >= 2) j.a()?.let {
+                if (i >= 1) j.b.readUTF()
+                if (i >= 2) j.a()?.let {
                     c.p = it
                 }
 
-                if(i >= 4) GameEngine.ab()
+                if (i >= 4) GameEngine.ab()
 
                 val t = GameEngine.t()
                 val gameRoom = appKoin.get<Game>().gameRoom
@@ -213,7 +216,7 @@ object NetInject {
                 a.c(t.bU.e)
                 a.c(t.a(true))
                 a.b(t.h())
-                if(t.bN.networkServerId == null) {
+                if (t.bN.networkServerId == null) {
                     t.bN.networkServerId = UUID.randomUUID().toString()
                     t.bN.save()
                 }
@@ -233,22 +236,14 @@ object NetInject {
 
 
             else -> {
-                if(type in 500..1000) {
-                    val net = appKoin.get<Net>()
-                    val packetType = InternalPacketType.from(type)
-                    if (packetType != null) {
-                        val listener = net.listeners[packetType]
-                        if (listener != null) {
-                            listener.invoke(
-                                ClientImpl(packet.a),
-                                net.packetDecoders[packetType]!!.invoke(
-                                    com.corrodinggames.rts.gameFramework.j.j(packet).b
-                                )
-                            )
-                            return InterruptResult.Unit
-                        }
-                    }
-
+                net.listeners[type]?.forEach { listener ->
+                    listener.invoke(
+                        ClientImpl(packet.a),
+                        net.packetDecoders[type]!!.invoke(
+                            com.corrodinggames.rts.gameFramework.j.j(packet).b
+                        )
+                    )
+                    return InterruptResult.Unit
                 }
                 Unit
             }
@@ -298,6 +293,14 @@ object NetInject {
         }
     }
 
+    @Inject("k", injectMode = InjectMode.InsertBefore)
+    fun onSendChatMessage(message: String): Any{
+        return if (gameRoom.isHost && message.startsWith(commands.prefix)) {
+            commands.handleCommandMessage(message, gameRoom.localPlayer) { gameRoom.sendMessageToPlayer(gameRoom.localPlayer, "RWPP", it) }
+            InterruptResult.Unit
+        } else Unit
+    }
+
     @Inject("a", injectMode = InjectMode.InsertBefore)
     fun onShowChat(
         c: com.corrodinggames.rts.gameFramework.j.c?,
@@ -316,7 +319,9 @@ object NetInject {
             return InterruptResult.Unit
 
         if (player == null) {
-            UI.onReceiveChatMessage(str ?: "",str2 ?: "", i)
+            SystemMessageEvent(str2 ?: "").broadcastIn(onFinished = {
+                UI.onReceiveChatMessage(str ?: "",str2 ?: "", i)
+            })
         } else {
             logger.info("Received chat message from ${player.name}")
             ChatMessageEvent(
@@ -329,4 +334,5 @@ object NetInject {
     }
 
     private val gameRoom by lazy { appKoin.get<Game>().gameRoom }
+    private val net by lazy { appKoin.get<Net>() }
 }

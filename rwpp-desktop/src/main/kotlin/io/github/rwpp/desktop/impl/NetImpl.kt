@@ -11,19 +11,17 @@ import io.github.rwpp.core.Initialization
 import io.github.rwpp.net.Client
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
-import io.github.rwpp.net.PacketType
 import okhttp3.OkHttpClient
 import org.koin.core.annotation.Single
 import java.awt.Desktop
 import java.io.DataInputStream
 import java.net.URI
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.timer
 
 @Single(binds = [Net::class, Initialization::class])
 class NetImpl : Net {
-    override val packetDecoders: MutableMap<PacketType, (DataInputStream) -> Packet> = mutableMapOf()
-    override val listeners: MutableMap<PacketType, (Client, Packet) -> Unit> = mutableMapOf()
+    override val packetDecoders: MutableMap<Int, (DataInputStream) -> Packet> = mutableMapOf()
+    override val listeners: MutableMap<Int, MutableList<(Client, Packet) -> Unit>> = mutableMapOf()
     override val client: OkHttpClient = OkHttpClient.Builder()
         .readTimeout(5000L, TimeUnit.MILLISECONDS).build()
 

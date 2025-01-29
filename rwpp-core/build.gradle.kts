@@ -18,116 +18,6 @@ plugins {
 }
 
 
-//
-//injectionMultiplatform {
-//    enable = true
-//    com.github.minxyzgo.rwij.Libs.Companion.includes.add(com.github.minxyzgo.rwij.Libs.`android-game-lib`)
-//    com.github.minxyzgo.rwij.Builder.releaseLibActions[com.github.minxyzgo.rwij.Libs.`android-game-lib`] = { _, fi, _ ->
-//        if(!fi.exists()) {
-//            File(com.github.minxyzgo.rwij.Builder.libDir).mkdirs()
-//            fi.createNewFile()
-//        }
-//        fi.writeBytes(File(projectDir.absolutePath + "/android-game-lib-template.jar").readBytes())
-//    }
-//    android {
-//        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity"
-//            .with("updateUI", "askPasswordInternal", "refreshChatLog", "addMessageToChatLog", "startGame"))
-//        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.k".with(
-//            "g(Ljava/lang/String;)",
-//            "d(Ljava/lang/String;)",
-//            "b(Ljava/lang/String;Ljava/lang/String;)",
-//            "c(Ljava/lang/String;)"
-//        ))
-//        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.appFramework.d".with("b(Landroid/app/Activity;)"))
-//        //setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.game.i".with("n")) version
-//        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`, "com.corrodinggames.rts.gameFramework.j.ae".with(
-//            "X",
-//            "d(Ljava/lang/String;Ljava/lang/String;)",
-//            "x()",
-//            "a(Lcom/corrodinggames/rts/gameFramework/e;)",
-//            "a(Lcom/corrodinggames/rts/gameFramework/j/bi;)"
-//        ))
-//        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`,
-//            "com.corrodinggames.rts.game.units.custom.l".with(
-//                "a(Lcom/corrodinggames/rts/game/units/custom/ab;Ljava/util/HashMap;)"
-//            )
-//        )
-//        setProxy(com.github.minxyzgo.rwij.Libs.`android-game-lib`,
-//            "com.corrodinggames.rts.gameFramework.e.c".with(
-//                //"f(Ljava/lang/String;)", 实测无用
-//                "h(Ljava/lang/String;)"
-//            ), // proxy convertAbstractPath
-//            "com.corrodinggames.rts.gameFramework.m.fh".with(
-//                "a(IZ)"
-//            ), // proxy res/drawable
-//            "com.corrodinggames.rts.gameFramework.a.a".with(
-//                "a(I)"
-//            ), // proxy res/raw
-//            "com.corrodinggames.rts.gameFramework.bc".with(
-//                "a(Z)"
-//            ), // music
-//            "com.corrodinggames.rts.gameFramework.e".with(
-//                "a(Lcom/corrodinggames/rts/gameFramework/j/bg;)"
-//            ) // game command packet
-//        )
-//        action {
-//            Libs.`android-game-lib`.classTree.defPool["com.corrodinggames.rts.gameFramework.j.ae"].apply {
-//                //make accessible
-//                getDeclaredMethod("f", arrayOf(CtClass.intType)).let {
-//                    it.modifiers = javassist.Modifier.setPublic(it.modifiers)
-//                }
-//
-//                declaredMethods.filter { it.name == "a" }.forEach {
-//                    it.modifiers = javassist.Modifier.setPublic(it.modifiers)
-//                }
-//
-//                getDeclaredField("bD").let {
-//                    it.modifiers = javassist.Modifier.setPublic(it.modifiers)
-//                }
-//            }
-//
-//            val tag = listOf("anim", "array", "attr", "color", "drawable", "id", "layout", "raw", "string", "style", "styleable", "xml")
-//            val classMap = ClassMap().apply {
-//                put("com.corrodinggames.rts.R", "io.github.rwpp.R")
-//                tag.forEach {
-//                    put("com.corrodinggames.rts.R\$$it", "io.github.rwpp.R\$$it")
-//                }
-//            }
-//            com.github.minxyzgo.rwij.Libs.`android-game-lib`.classTree.allClasses.forEach {
-//                it.replaceClassName(classMap)
-//            }
-//        }
-//    }
-//    jvm {
-//        target = "desktopMain"
-//        setProxy(Libs.`game-lib`,
-//            "com.corrodinggames.librocket.scripts.Root".with(
-//                "showMainMenu", "showBattleroom", "receiveChatMessage", "makeSendMessagePopup", "makeSendTeamMessagePopupWithDefaultText"
-//            ),
-//            "com.corrodinggames.librocket.b".with("a(Ljava/lang/String;)"),
-//            "com.corrodinggames.rts.java.Main".with("c", "b()"),
-//            "com.corrodinggames.rts.java.b.a".with("p"),
-//            "com.corrodinggames.rts.game.units.custom.l".with(
-//                "a(Lcom/corrodinggames/rts/game/units/custom/ab;Ljava/util/HashMap;)"
-//            ),
-//
-//            "com.corrodinggames.rts.gameFramework.j.ad".with(
-//                "a(Lcom/corrodinggames/rts/gameFramework/e;)",
-//                "c(Lcom/corrodinggames/rts/gameFramework/j/au;)",
-//                "g(Lcom/corrodinggames/rts/gameFramework/j/c;)"
-//            ),
-//            "com.corrodinggames.rts.gameFramework.f".with("f(I)"),
-//            "com.corrodinggames.rts.gameFramework.e.c".with(
-//                "f(Ljava/lang/String;)",
-//                "i(Ljava/lang/String;)"
-//            ),
-//            "com.corrodinggames.rts.gameFramework.e".with(
-//                "a(Lcom/corrodinggames/rts/gameFramework/j/as;)"
-//            ),
-//            "com.corrodinggames.rts.game.n".with(
-//                "I()"
-//            )
-//        )
 //        action {
 //
 //            // set all members of Main to public
@@ -181,7 +71,7 @@ kotlin {
                 api("com.mikepenz:multiplatform-markdown-renderer-m3:$markdownVersion")
                 api("party.iroiro.luajava:luajava:4.0.2")
                 api("party.iroiro.luajava:lua54:4.0.2")
-                api("org.slf4j:slf4j-simple:2.0.16")
+                api("org.slf4j:slf4j-api:2.0.16")
             }
         }
 
@@ -189,7 +79,7 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
-                api("androidx.activity:activity-compose:1.9.3")
+                api("androidx.activity:activity-compose:1.10.0")
                 api("androidx.appcompat:appcompat:1.7.0")
                 api("androidx.core:core-ktx:1.15.0")
             }

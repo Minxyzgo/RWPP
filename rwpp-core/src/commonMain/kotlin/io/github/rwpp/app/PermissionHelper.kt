@@ -19,7 +19,7 @@ interface PermissionHelper : KoinComponent {
     /**
      * Request manage file permission. (Only Android 11+)
      */
-    fun requestManageFilePermission(callback: () -> Unit = {})
+    fun requestManageFilePermission(callback: (Boolean) -> Unit = {})
 
     /**
      * Check if the app has manage file permission. (Only Android 11+)

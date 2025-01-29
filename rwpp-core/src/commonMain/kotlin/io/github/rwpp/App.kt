@@ -91,7 +91,6 @@ import io.github.rwpp.core.UI.showSettingsView
 import io.github.rwpp.core.UI.showModsView
 import io.github.rwpp.core.UI.showExtensionView
 import io.github.rwpp.core.UI.showContributorList
-import io.github.rwpp.core.UI.updateExtensionWhenVisible
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.ui.ContributorList
 import io.github.rwpp.game.ui.ExtensionView
@@ -344,9 +343,8 @@ fun App(
                 AnimatedVisibility(
                     showExtensionView
                 ) {
-                    ExtensionView(updateExtensionWhenVisible) {
+                    ExtensionView {
                         showExtensionView = false
-                        updateExtensionWhenVisible = false
                     }
                 }
 

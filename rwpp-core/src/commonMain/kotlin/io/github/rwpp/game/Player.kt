@@ -10,6 +10,7 @@ package io.github.rwpp.game
 import androidx.compose.ui.graphics.Color
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
+import io.github.rwpp.game.data.PlayerStatisticsData
 import io.github.rwpp.net.Client
 
 interface Player {
@@ -44,6 +45,24 @@ interface Player {
      * The player extra data.
      */
     val data: PlayerData
+
+    /**
+     * The player's credits.
+     */
+    var credits: Int
+
+    /**
+     * The player's statistics data.
+     */
+    val statisticsData: PlayerStatisticsData
+
+    /**
+     * The player's income.
+     */
+    val income: Int
+
+    val isDefeated: Boolean
+    val isWipedOut: Boolean
 
     val client: Client?
 

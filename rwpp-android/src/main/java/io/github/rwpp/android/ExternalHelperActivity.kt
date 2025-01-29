@@ -17,6 +17,8 @@ import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
 import io.github.rwpp.core.UI
 import io.github.rwpp.extensionPath
+import io.github.rwpp.i18n.I18nType
+import io.github.rwpp.i18n.readI18n
 import java.io.File
 
 class ExternalHelperActivity : AppCompatActivity() {
@@ -25,22 +27,68 @@ class ExternalHelperActivity : AppCompatActivity() {
 
         val dataString = intent.dataString
 
-        if (dataString != null && (dataString.endsWith(".rwres") || dataString.endsWith(".rwext"))) {
-            appKoin.get<PermissionHelper>().requestManageFilePermission {
-                contentResolver.openInputStream(intent.data!!).use {
-                    val file = File(extensionPath, getFileName(intent.data!!)!!)
-                    if (!file.exists()) {
-                        file.parentFile?.mkdirs()
-                        file.createNewFile()
-                    }
+        lateinit var endsAction: () -> Unit
 
-                    file.writeBytes(it!!.readBytes())
+        if (dataString != null) {
+            val fileName = getFileName(intent.data!!)!!
+
+            val path = if (dataString.endsWith(".rwres") || dataString.endsWith(".rwext")) {
+                endsAction = {
+                    UI.showExtensionView = true
+                    UI.showWarning(
+                        readI18n("android.importExtension", I18nType.RWPP, fileName)
+                    )
                 }
+                extensionPath
+            } else if (dataString.endsWith(".rwmod")) {
+                endsAction = {
+                    UI.showModsView = true
+                    UI.showWarning(
+                        readI18n("android.importMod", I18nType.RWPP, fileName)
+                    )
+                }
+                "/storage/emulated/0/rustedWarfare/units/"
+            } else if (dataString.endsWith(".rwsave")) {
+                endsAction = {
+                    UI.showWarning(
+                        readI18n("android.importSave", I18nType.RWPP, fileName)
+                    )
+                }
+                "/storage/emulated/0/rustedWarfare/saves/"
+            } else if (dataString.endsWith(".reply")) {
+                endsAction = {
+                    UI.showWarning(
+                        readI18n("android.importReply", I18nType.RWPP, fileName)
+                    )
+                }
+                "/storage/emulated/0/rustedWarfare/replays/"
+            } else if (dataString.endsWith(".tmx")) {
+                endsAction = {
+                    UI.showWarning(
+                        readI18n("android.importMap", I18nType.RWPP, fileName)
+                    )
+                }
+                "/storage/emulated/0/rustedWarfare/maps/"
+            } else {
+                null
+            }
+
+            if (path != null) {
+                appKoin.get<PermissionHelper>().requestManageFilePermission {
+                    contentResolver.openInputStream(intent.data!!).use {
+                        val file = File(path, fileName)
+                        if (!file.exists()) {
+                            file.parentFile?.mkdirs()
+                            file.createNewFile()
+                        }
+
+                        file.writeBytes(it!!.readBytes())
+                    }
+                }
+
+                endsAction()
             }
         }
-
-        UI.showExtensionView = true
-        UI.updateExtensionWhenVisible = true
 
         if (gameLoaded) {
             finish()

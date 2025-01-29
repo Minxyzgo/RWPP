@@ -14,6 +14,10 @@ import java.io.File
 interface ExternalHandler : KoinComponent, Initialization {
     fun getAllExtensions(update: Boolean = false): Result<List<Extension>>
 
+    fun getExtensionById(id: String): Extension {
+        return getAllExtensions().getOrThrow().first { ext -> ext.config.id == id }
+    }
+
     fun enableResource(resource: Extension?)
 
     fun getUsingResource(): Extension?

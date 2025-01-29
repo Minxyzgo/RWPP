@@ -22,13 +22,13 @@ class PermissionHelperImpl : PermissionHelper {
         d.c(get<Context>() as Activity)
     }
 
-    override fun requestManageFilePermission(callback: () -> Unit) {
+    override fun requestManageFilePermission(callback: (Boolean) -> Unit) {
         if (hasManageFilePermission()) {
-            callback()
+            callback(true)
         } else {
             XXPermissions.with(get<Context>())
                 .permission(Permission.MANAGE_EXTERNAL_STORAGE)
-                .request { _, allGranted ->  if (allGranted) callback() }
+                .request { _, allGranted -> callback(allGranted) }
         }
     }
 

@@ -13,17 +13,9 @@ import com.corrodinggames.librocket.scripts.Root
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
 import io.github.rwpp.appKoin
-import io.github.rwpp.commands
-import io.github.rwpp.core.UI
-import io.github.rwpp.desktop.gameCanvas
-import io.github.rwpp.desktop.impl.ClientImpl
+import io.github.rwpp.desktop.*
 import io.github.rwpp.desktop.impl.GameEngine
-import io.github.rwpp.desktop.isGaming
-import io.github.rwpp.desktop.isSandboxGame
-import io.github.rwpp.desktop.rwppVisibleSetter
-import io.github.rwpp.desktop.showSendMessageDialog
 import io.github.rwpp.event.broadcastIn
-import io.github.rwpp.event.events.ChatMessageEvent
 import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.events.ReturnMainMenuEvent
 import io.github.rwpp.game.Game
@@ -42,6 +34,7 @@ object RootInject {
             gameCanvas.isVisible = false
             rwppVisibleSetter(true)
             isGaming = false
+            gameOver = false
             com.corrodinggames.librocket.a.a().b()
             val libRocket = ScriptContext::class.java.getDeclaredField("libRocket").run {
                 isAccessible = true
@@ -62,6 +55,7 @@ object RootInject {
             gameCanvas.isVisible = false
             rwppVisibleSetter(true)
             isGaming = false
+            gameOver = false
             val libRocket = ScriptContext::class.java.getDeclaredField("libRocket").run {
                 isAccessible = true
                 get(ScriptEngine.getInstance().root)

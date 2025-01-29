@@ -10,6 +10,7 @@ package io.github.rwpp.event
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -33,8 +34,8 @@ open class EventChannel <T : Event>(val coroutineScope: CoroutineScope): Corouti
         }.launchIn(this@EventChannel)
     }
 
-    private val _listeners = buildMap<EventPriority, MutableSet<Listener<T>>>
-    { EventPriority.all.forEach { this[it] = mutableSetOf() } }
+    private val _listeners = buildMap<EventPriority, CopyOnWriteArraySet<Listener<T>>>
+    { EventPriority.all.forEach { this[it] = CopyOnWriteArraySet() } }
 
 
     var errorHandler: (Throwable) -> Unit = { it.printStackTrace() }

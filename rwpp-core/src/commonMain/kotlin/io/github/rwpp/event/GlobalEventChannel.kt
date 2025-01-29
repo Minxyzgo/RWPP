@@ -37,6 +37,9 @@ sealed class GlobalEventChannel(coroutineScope: CoroutineScope)
     override val _events: MutableSharedFlow<Event> = MutableSharedFlow<Event>().apply {
         onEach { event ->
             launch { runListener(event) }
+//            channels.forEach { (_, channel) ->
+//                channel._events.emit(event)
+//            }
             channels[event::class.java]?._events?.emit(event)
         }.catch {
             errorHandler(it)
@@ -109,6 +112,17 @@ sealed class GlobalEventChannel(coroutineScope: CoroutineScope)
         if(T::class.java.isAssignableFrom(it::class.java)) handler(it as T)
     }
 
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Event> subscribeGlobalAlways(
+        clazz: Class<T>,
+        coroutineContext: CoroutineContext = EmptyCoroutineContext,
+        priority: EventPriority = EventPriority.NORMAL,
+        handler: suspend (T) -> Unit,
+    ): Listener<T> = registerListener(coroutineContext, priority, ListeningStatus.LISTENING) {
+        if(clazz.isAssignableFrom(it::class.java)) handler(it as T)
+    }
+
+
     /**
      * 创建一个事件监听器, 监听事件通道中所有 [T] 及其子类事件, 只监听一次.
      * 当 [事件广播][Event.broadcast] 时, [handler] 会被执行.
@@ -126,6 +140,16 @@ sealed class GlobalEventChannel(coroutineScope: CoroutineScope)
         crossinline handler: suspend (T) -> Unit,
     ): Listener<T> = registerListener(coroutineContext, priority, ListeningStatus.STOPPED) {
         if(T::class.java.isAssignableFrom(it::class.java)) handler(it as T)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Event> subscribeGlobalOnce(
+        clazz: Class<T>,
+        coroutineContext: CoroutineContext = EmptyCoroutineContext,
+        priority: EventPriority = EventPriority.NORMAL,
+        handler: suspend (T) -> Unit,
+    ): Listener<T> = registerListener(coroutineContext, priority, ListeningStatus.STOPPED) {
+        if(clazz.isAssignableFrom(it::class.java)) handler(it as T)
     }
 
     companion object : GlobalEventChannel(CoroutineScope(SupervisorJob()))

@@ -22,6 +22,7 @@ import io.github.rwpp.android.gameLauncher
 import io.github.rwpp.android.isSinglePlayerGame
 import io.github.rwpp.android.questionOption
 import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.MapChangedEvent
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
@@ -37,8 +38,8 @@ import kotlinx.coroutines.*
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import java.io.IOException
+import java.io.InputStream
 import kotlin.coroutines.CoroutineContext
-
 
 @Single
 class GameImpl : Game, CoroutineScope {
@@ -81,6 +82,7 @@ class GameImpl : Game, CoroutineScope {
             GameEngine.t().bU.aA.a = at.a
             GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
             GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
+            MapChangedEvent(gameRoom.selectedMap.displayName()).broadcastIn()
             delay(100)
             RefreshUIEvent().broadcastIn()
         }
@@ -167,6 +169,10 @@ class GameImpl : Game, CoroutineScope {
                             get() = f.removeSuffix(".tmx")
                         override val mapType: MapType
                             get() = MapType.SkirmishMap
+
+                        override fun openInputStream(): InputStream {
+                            throw RuntimeException("Not implemented")
+                        }
                     })
                 }
         }
@@ -200,6 +206,10 @@ class GameImpl : Game, CoroutineScope {
                             get() = f.removeSuffix(".tmx")
                         override val mapType: MapType
                             get() = MapType.SkirmishMap
+
+                        override fun openInputStream(): InputStream {
+                            return com.corrodinggames.rts.game.b.b.a("maps/skirmish/$f")
+                        }
                     })
                 }
             _maps[MapType.SkirmishMap]= assetMaps
@@ -219,6 +229,10 @@ class GameImpl : Game, CoroutineScope {
                                 get() = name.removeSuffix(".tmx").removeSuffix(".rwsave")
                             override val mapType: MapType
                                 get() = type
+
+                            override fun openInputStream(): InputStream {
+                                return com.corrodinggames.rts.game.b.b.a("/SD/rusted_warfare_maps/$name")
+                            }
 
                             override fun displayName(): String = LevelSelectActivity.convertLevelFileNameForDisplay(mapName)
                         })
@@ -308,8 +322,6 @@ class GameImpl : Game, CoroutineScope {
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
         gameLauncher.launch(intent)
     }
-
-
 
 
     override val coroutineContext: CoroutineContext = Job()

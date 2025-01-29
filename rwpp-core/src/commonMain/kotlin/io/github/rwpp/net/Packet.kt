@@ -13,7 +13,7 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 
 abstract class Packet(
-    val type: PacketType,
+    val type: Int?,
 ) {
     abstract fun readPacket(input: GameInputStream)
 

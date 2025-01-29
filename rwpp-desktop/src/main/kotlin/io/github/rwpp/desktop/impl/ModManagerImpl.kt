@@ -34,12 +34,6 @@ class ModManagerImpl : ModManager {
 
     }
 
-    override fun modUpdate() {
-        GameEngine.B().bZ.k()
-        mods = null
-        mods = getAllMods()
-    }
-
     override suspend fun modSaveChange() {
         val b = GameEngine.B()
         b.bZ.e()

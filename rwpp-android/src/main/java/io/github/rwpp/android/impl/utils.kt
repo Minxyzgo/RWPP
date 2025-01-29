@@ -24,7 +24,7 @@ fun Packet.asGamePacket(): com.corrodinggames.rts.gameFramework.j.bi {
     gameOutput.use { writePacket(it) }
     val bytes = byteArrayOutput.toByteArray()
     byteArrayOutput.close()
-    return com.corrodinggames.rts.gameFramework.j.bi(type.type).apply {
+    return com.corrodinggames.rts.gameFramework.j.bi(type!!).apply {
         c = bytes
     }
 }
