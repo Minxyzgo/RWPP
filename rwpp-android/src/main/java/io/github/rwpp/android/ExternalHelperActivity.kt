@@ -8,6 +8,7 @@
 package io.github.rwpp.android
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -19,11 +20,16 @@ import io.github.rwpp.core.UI
 import io.github.rwpp.extensionPath
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
+import org.koin.core.error.DefinitionOverrideException
 import java.io.File
 
 class ExternalHelperActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        try {
+            appKoin.declare(this, secondaryTypes = listOf(Context::class), allowOverride = false)
+        } catch (_: DefinitionOverrideException) {}
 
         val dataString = intent.dataString
 

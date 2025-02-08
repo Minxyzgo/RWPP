@@ -72,6 +72,7 @@ kotlin {
                 api("party.iroiro.luajava:luajava:4.0.2")
                 api("party.iroiro.luajava:lua54:4.0.2")
                 api("org.slf4j:slf4j-api:2.0.16")
+                api("sh.calvin.reorderable:reorderable:2.4.3")
             }
         }
 

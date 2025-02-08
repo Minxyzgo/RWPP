@@ -561,17 +561,20 @@ private fun MultiplayerOption(
     enabled: Boolean = true,
     onValueChange: (Boolean) -> Unit,
 ) {
-    RWCheckbox(
-        value,
-        onCheckedChange = { onValueChange(!value) },
-        modifier = Modifier.padding(5.dp),
-        enabled
-    )
-    Text(label,
-        modifier = Modifier.padding(top = 10.dp),
-        style = MaterialTheme.typography.headlineMedium,
-        color = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.inversePrimary
-    )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        RWCheckbox(
+            value,
+            onCheckedChange = { onValueChange(!value) },
+            modifier = Modifier.padding(5.dp),
+            enabled
+        )
+        Text(
+            label,
+            modifier = Modifier.padding(top = 5.dp),
+            style = MaterialTheme.typography.headlineMedium,
+            color = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.inversePrimary
+        )
+    }
 }
 
 @Composable

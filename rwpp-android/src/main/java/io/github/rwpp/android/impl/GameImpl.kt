@@ -33,17 +33,20 @@ import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.game.world.World
+import io.github.rwpp.logger
 import io.github.rwpp.ui.LoadingContext
 import kotlinx.coroutines.*
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import java.io.IOException
 import java.io.InputStream
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
 
 @Single
 class GameImpl : Game, CoroutineScope {
 
+    private var isCancellingJob = AtomicBoolean(false)
     private var connectingJob: Deferred<String?>? = null
     private var _missions: List<Mission>? = null
     private var _allMaps: List<GameMap>? = null
@@ -107,25 +110,36 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override suspend fun directJoinServer(address: String, uuid: String?, context: LoadingContext): Result<String> {
+        isCancellingJob.set(false)
+
         GameEngine.t().bU.by = uuid
         connectingJob = withContext(Dispatchers.IO) {
             async { GameEngine.t().bU.c(address, false) }
         }
 
-        val result = connectingJob?.await()
+        val result = runCatching {
+            connectingJob?.await()
+        }
 
         return when {
-            result == null -> {
+            result.isSuccess && !isCancellingJob.get() -> {
 //                val t = GameEngine.t()
 //                t.bu = 0
                 Result.success("")
             }
-            ae.u() -> Result.failure(IOException("Connection failed: Target server may not be open to the internet."))
-            else -> Result.failure(IOException("Connection failed."))
+            ae.u() -> {
+                isCancellingJob.set(false)
+                Result.failure(IOException("Connection failed: Target server may not be open to the internet."))
+            }
+            else -> {
+                isCancellingJob.set(false)
+                Result.failure(IOException("Connection failed."))
+            }
         }
     }
 
     override fun cancelJoinServer() {
+        isCancellingJob.set(true)
         connectingJob?.cancel()
         connectingJob = null
     }

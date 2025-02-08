@@ -8,23 +8,15 @@
 package io.github.rwpp.desktop.impl
 
 import io.github.rwpp.core.Initialization
-import io.github.rwpp.net.Client
+import io.github.rwpp.impl.BaseNetImpl
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
-import okhttp3.OkHttpClient
 import org.koin.core.annotation.Single
 import java.awt.Desktop
-import java.io.DataInputStream
 import java.net.URI
-import java.util.concurrent.TimeUnit
 
 @Single(binds = [Net::class, Initialization::class])
-class NetImpl : Net {
-    override val packetDecoders: MutableMap<Int, (DataInputStream) -> Packet> = mutableMapOf()
-    override val listeners: MutableMap<Int, MutableList<(Client, Packet) -> Unit>> = mutableMapOf()
-    override val client: OkHttpClient = OkHttpClient.Builder()
-        .readTimeout(5000L, TimeUnit.MILLISECONDS).build()
-
+class NetImpl : BaseNetImpl() {
     override fun sendPacketToServer(packet: Packet) {
         GameEngine.B().bX.f(packet.asGamePacket())
     }

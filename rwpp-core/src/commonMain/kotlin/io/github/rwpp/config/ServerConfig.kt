@@ -28,11 +28,12 @@ import java.net.Socket
  * When it is set to true, then this list will be opened first every time you enter a multiplayer game
  */
 @Serializable
-data class ServerConfig(
+data class ServerConfig @JvmOverloads constructor(
     var ip: String,
     var name: String,
     var type: ServerType,
     var useAsDefaultList: Boolean = false,
+    var editable: Boolean = true,
 ) {
 
     /**

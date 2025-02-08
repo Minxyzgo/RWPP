@@ -27,19 +27,19 @@ interface GameRoom {
     val mapType: MapType
     var selectedMap: GameMap
     var displayMapName: String
-    val startingCredits: Int
-    val startingUnits: Int
-    val fogMode: FogMode
-    val revealedMap: Boolean
-    val aiDifficulty: Difficulty
-    val incomeMultiplier: Float
-    val noNukes: Boolean
-    val allowSpectators: Boolean
+    var startingCredits: Int
+    var startingUnits: Int
+    var fogMode: FogMode
+    var revealedMap: Boolean
+    var aiDifficulty: Difficulty
+    var incomeMultiplier: Float
+    var noNukes: Boolean
+    var allowSpectators: Boolean
     var lockedRoom: Boolean
-    val teamLock: Boolean
+    var teamLock: Boolean
     val mods: Array<String>
     val isStartGame: Boolean
-    val teamMode: TeamMode?
+    var teamMode: TeamMode?
 
     /**
      * Transform the map before loading. (if host)

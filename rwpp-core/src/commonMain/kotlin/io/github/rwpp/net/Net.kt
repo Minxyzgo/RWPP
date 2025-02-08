@@ -10,31 +10,43 @@ package io.github.rwpp.net
 import com.eclipsesource.json.Json
 import io.github.rwpp.core.Initialization
 import io.github.rwpp.game.Game
+import io.github.rwpp.game.GameRoom
 import io.github.rwpp.io.GameInputStream
 import io.github.rwpp.net.packets.ServerPacket
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.selects.onTimeout
-import kotlinx.coroutines.selects.select
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
+import okhttp3.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import java.io.DataInputStream
+import java.io.IOException
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.full.createInstance
 
 interface Net : KoinComponent, Initialization {
+    /**
+     * The map of packet decoders, key is the packet type, value is a lambda that takes a DataInputStream and returns a Packet.
+     */
     val packetDecoders: MutableMap<Int, (DataInputStream) -> Packet>
 
-    val listeners: MutableMap<Int, MutableList<(Client, Packet) -> Unit>>
+    /**
+     * listeners for each packet type, key is the packet type, value is a list of lambdas that take a Client and a Packet and return a Boolean.
+     *
+     * If the lambda returns true, then the packet would not be resolved by the game.
+     */
+    val listeners: MutableMap<Int, MutableList<(Client, Packet) -> Boolean>>
 
     val client: OkHttpClient
 
+    /**
+     * Send a packet to the server.
+     */
     fun sendPacketToServer(packet: Packet)
 
+    /**
+     * Send a packet to all clients. (if host)
+     * @see [GameRoom.isHost]
+     */
     fun sendPacketToClients(packet: Packet)
 
     fun openUriInBrowser(uri: String)
@@ -74,15 +86,17 @@ interface Net : KoinComponent, Initialization {
                         .addHeader("Language", "zh")
                         .get()
                         .build()
-                    launch(Dispatchers.IO) {
-                        val response = runCatching {
-                            client.newCall(request).execute()
-                        }.getOrNull()
 
-                        if (response != null && response.isSuccessful && channel.isEmpty) {
-                            channel.send(response)
-                        } else response?.close()
-                    }
+                    client.newCall(request).enqueue(object : Callback {
+                        override fun onFailure(call: Call, e: IOException) {
+                        }
+
+                        override fun onResponse(call: Call, response: Response) {
+                            if (response.isSuccessful && channel.isEmpty) {
+                                channel.trySend(response)
+                            } else response.close()
+                        }
+                    })
                 }
 
                 val result = channel.receive()
@@ -138,7 +152,7 @@ interface Net : KoinComponent, Initialization {
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T : Packet> Net.registerPacketListener(
     packetType: Int,
-    noinline listener: (Client, T) -> Unit
+    noinline listener: (Client, T) -> Boolean
 ) {
     val method = T::class.java.getDeclaredMethod("readPacket", GameInputStream::class.java)
     packetDecoders[packetType] =
@@ -147,7 +161,7 @@ inline fun <reified T : Packet> Net.registerPacketListener(
             method.invoke(p, GameInputStream(it))
             p
         }
-    listeners.getOrPut(packetType) { mutableListOf() }.add(listener as (Client, Packet) -> Unit)
+    listeners.getOrPut(packetType) { mutableListOf() }.add(listener as (Client, Packet) -> Boolean)
 }
 
 fun Net.registerListeners() {
@@ -168,5 +182,7 @@ fun Net.registerListeners() {
                 if (room.isStartGame) ServerStatus.InGame else ServerStatus.BattleRoom
             )
         )
+
+        true
     }
 }

@@ -11,20 +11,14 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import io.github.rwpp.core.Initialization
-import io.github.rwpp.net.Client
+import io.github.rwpp.impl.BaseNetImpl
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
-import okhttp3.OkHttpClient
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
-import java.io.DataInputStream
 
 @Single(binds = [Net::class, Initialization::class])
-class NetImpl : Net {
-    override val packetDecoders: MutableMap<Int, (DataInputStream) -> Packet> = mutableMapOf()
-    override val listeners: MutableMap<Int, MutableList<(Client, Packet) -> Unit>> = mutableMapOf()
-    override val client: OkHttpClient = OkHttpClient()
-
+class NetImpl : BaseNetImpl() {
     override fun sendPacketToServer(packet: Packet) {
         GameEngine.t().bU.b(packet.asGamePacket())
     }

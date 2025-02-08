@@ -31,3 +31,4 @@ var playerCacheMap = mutableMapOf<PlayerInternal, Player>()
 lateinit var koinApplication: KoinApplication
 val pickFileActions = mutableListOf<(File) -> Unit>()
 var gameLoaded = false
+

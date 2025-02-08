@@ -333,7 +333,7 @@ fun RowScope.TableCell(
             color = color,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(0.dp, 2.dp, 0.dp, 2.dp),
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }

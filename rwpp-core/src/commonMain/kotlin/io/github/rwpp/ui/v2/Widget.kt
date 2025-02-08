@@ -54,6 +54,7 @@ fun RWIconButton(
     vector: ImageVector,
     modifier: Modifier = Modifier,
     size: Dp = 50.dp,
+    tint: Color = MaterialTheme.colorScheme.surfaceTint,
     onClick: () -> Unit,
 ) {
     Card(
@@ -66,7 +67,7 @@ fun RWIconButton(
         Icon(
             vector,
             null,
-            tint = MaterialTheme.colorScheme.surfaceTint,
+            tint = tint,
             modifier = Modifier.size(size).align(Alignment.CenterHorizontally).padding(10.dp)
         )
     }

@@ -15,6 +15,7 @@ import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
 import io.github.rwpp.game.data.PlayerStatisticsData
+import io.github.rwpp.logger
 import io.github.rwpp.net.Client
 import kotlin.math.roundToInt
 
@@ -127,7 +128,7 @@ class PlayerImpl(
             try {
                 i = team - 1
             } catch(e: NumberFormatException) {
-                e.printStackTrace()
+                logger.error(e.stackTraceToString())
             }
             player.u = true
         }
@@ -158,7 +159,7 @@ class PlayerImpl(
                 }
             }
         } catch(e2: NumberFormatException) {
-            e2.printStackTrace()
+            logger.error(e2.stackTraceToString())
         }
         if(player.w) {
             val intValue2: Int = (aiDifficulty?.ordinal?.minus(2)) ?: -99

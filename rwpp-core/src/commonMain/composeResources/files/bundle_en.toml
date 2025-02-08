@@ -99,6 +99,10 @@ setBackgroundImagePath = "Set Background Image Path"
 backgroundTransparency = "Background Transparency"
 backgroundImageTransparency = "Background Image Transparency"
 
+[extension]
+extension = "Extension"
+resource = "Resource"
+
 [ingame]
 sendMessage = "Send Message"
 sendTeamMessage = "Send Team Message"

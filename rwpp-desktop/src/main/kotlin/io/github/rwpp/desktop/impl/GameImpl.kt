@@ -41,6 +41,7 @@ import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.game.world.World
+import io.github.rwpp.logger
 import io.github.rwpp.net.Packet
 import io.github.rwpp.net.packets.GamePacket
 import io.github.rwpp.ui.LoadingContext
@@ -90,8 +91,9 @@ class GameImpl : Game {
                 override val mapType: MapType
                     get() = MapType.entries[a.ordinal]
                 override var selectedMap: GameMap
-                    get() = getAllMaps().firstOrNull { B.bX.az.endsWith((it.mapName + it.getMapSuffix()).replace("\\", "/")) }
-                        ?: NetworkMap(mapNameFormatMethod.invoke(null, B.bX.ay.b) as String)
+                    get() = getAllMaps().firstOrNull {
+                        B.bX.az?.endsWith((it.mapName + it.getMapSuffix()).replace("\\", "/")) ?: false
+                    } ?: NetworkMap(mapNameFormatMethod.invoke(null, B.bX.ay.b) as String)
                     set(value) {
                         if(isHostServer) {
                             B.bX.a(
@@ -126,8 +128,9 @@ class GameImpl : Game {
                 override var fogMode: FogMode
                     get() = FogMode.entries[d]
                     set(value) { d = value.ordinal }
-                override val revealedMap: Boolean
+                override var revealedMap: Boolean
                     get() = e
+                    set(value) { e = value }
                 override var aiDifficulty: Difficulty
                     get() = Difficulty.entries[f + 2]
                     set(value) { f = value.ordinal - 2 }
@@ -157,8 +160,8 @@ class GameImpl : Game {
                     get() = GameEngine.B().bX.B
                 override val isStartGame: Boolean
                     get() = isGaming
-                override val teamMode: TeamMode?
-                    get() = _teamMode
+                override var teamMode: TeamMode? = null
+
                 override var gameMapTransformer: ((XMLMap) -> Unit)? = null
                     set(value) {
                         if (field != null) {
@@ -167,8 +170,6 @@ class GameImpl : Game {
                             field = value
                         }
                     }
-
-                private var _teamMode: TeamMode? = null
 
                 private val mapNameFormatMethod = com.corrodinggames.rts.appFramework.i::class.java.getDeclaredMethod("e", String::class.java)
 
@@ -298,8 +299,8 @@ class GameImpl : Game {
                         GameEngine.B().bX.a(e)
                     }
 
-                    if (_teamMode != teamMode) {
-                        _teamMode = teamMode
+                    if (this.teamMode != teamMode) {
+                        this.teamMode = teamMode
                         when (teamMode?.name) {
                             "2t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.a)
                             "3t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.b)
@@ -335,7 +336,7 @@ class GameImpl : Game {
                     option = RoomOption()
                     bannedUnitList = listOf()
                     roomMods = arrayOf()
-                    _teamMode = null
+                    teamMode = null
                     gameOver = false
 
                     if(isConnecting) B.bX.b(reason)
@@ -682,7 +683,7 @@ class GameImpl : Game {
                 l.B().bX.b("staring new")
                 l.B().bX.a(threadConnector!!.g)
             } catch(e: IOException) {
-                e.printStackTrace()
+                logger.error(e.stackTraceToString())
                 result = Result.failure(IOException("Connection failed"))
             }
         }
@@ -950,7 +951,7 @@ class GameImpl : Game {
             try {
                 fileInputStream = FileInputStream("mods/maps/$path")
             } catch (e: IOException) {
-                e.printStackTrace()
+                logger.error(e.stackTraceToString())
                 return null
             }
         }
@@ -958,7 +959,7 @@ class GameImpl : Game {
         try {
             bufferedInputStream = BufferedInputStream(fileInputStream)
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.error(e.stackTraceToString())
             return null
         }
 

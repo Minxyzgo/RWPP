@@ -7,9 +7,7 @@
 
 package io.github.rwpp.scripts
 
-import io.github.rwpp.AppContext
-import io.github.rwpp.appKoin
-import io.github.rwpp.commands
+import io.github.rwpp.*
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.core.Initialization
 import io.github.rwpp.event.Event
@@ -23,7 +21,6 @@ import io.github.rwpp.net.Client
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
 import io.github.rwpp.platform.Platform
-import io.github.rwpp.projectVersion
 import io.github.rwpp.ui.parseColorToArgb
 import party.iroiro.luajava.ClassPathLoader.BufferOutputStream
 import party.iroiro.luajava.lua54.Lua54
@@ -72,7 +69,7 @@ object Scripts : Initialization {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.error(e.stackTraceToString())
         }
 
         lua["scripts"] = lua
@@ -127,7 +124,11 @@ object Scripts : Initialization {
                 args[0].toJavaObject() as String,
                 args[1].toJavaObject() as String,
                 args[2].toJavaObject() as String?,
-            ) { a, p -> if (p != null) args[3].call(a, p) }
+            ) { a, p -> if (p != null) {
+                synchronized(lua.mainState) {
+                    args[3].call(a, p)
+                }
+            } }
 
             arrayOf()
         }
@@ -144,12 +145,10 @@ object Scripts : Initialization {
         lua.register("registerPacketListener") { _, args ->
             val packetType = args[0].toInteger().toInt()
             appKoin.get<Net>().listeners.getOrPut(packetType) { mutableListOf() }.add(
-                args[1].toProxy(Function2::class.java) as (Client, Packet) -> Unit
+                args[1].toProxy(Function2::class.java) as (Client, Packet) -> Boolean
             )
             arrayOf()
         }
-
-
 
         //UI
         lua.register("color") { l, args ->
@@ -184,7 +183,11 @@ object Scripts : Initialization {
             l.pushJavaObject(LuaWidget.LuaDropdown(
                 (args[0].toJavaObject() as HashMap<*, String>).values.toTypedArray(), args[1].toJavaObject() as String,
                 { args[2].call().first().toJavaObject() as String },
-                { index, value -> args[3].call(index, value) }
+                { index, value ->
+                    synchronized(lua.mainState) {
+                        args[3].call(index, value)
+                    }
+                }
             ))
             arrayOf(l.get())
         }
@@ -192,7 +195,11 @@ object Scripts : Initialization {
         lua.register("textButton") { l, args ->
             l.pushJavaObject(LuaWidget.LuaTextButton(
                 args[0].toJavaObject() as String
-            ) { args[1].call() })
+            ) {
+                synchronized(lua.mainState) {
+                    args[1].call()
+                }
+            })
             arrayOf(l.get())
         }
     }
@@ -225,7 +232,7 @@ object Scripts : Initialization {
             """.trimIndent().replace("\n", " ")
             lua.run("$body $src")
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.error(e.stackTraceToString())
         }
     }
 }

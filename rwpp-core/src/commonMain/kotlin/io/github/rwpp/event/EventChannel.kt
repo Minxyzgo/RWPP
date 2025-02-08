@@ -7,6 +7,7 @@
 
 package io.github.rwpp.event
 
+import io.github.rwpp.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -38,7 +39,7 @@ open class EventChannel <T : Event>(val coroutineScope: CoroutineScope): Corouti
     { EventPriority.all.forEach { this[it] = CopyOnWriteArraySet() } }
 
 
-    var errorHandler: (Throwable) -> Unit = { it.printStackTrace() }
+    var errorHandler: (Throwable) -> Unit = { logger.error(it.stackTraceToString()) }
 
 
     /**

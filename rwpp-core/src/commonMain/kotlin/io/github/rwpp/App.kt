@@ -10,6 +10,7 @@
 package io.github.rwpp
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -65,6 +66,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.LinkAnnotation
@@ -499,7 +501,6 @@ fun App(
                     questionDialogVisible = UI.question != null
                 }
 
-
                 AnimatedAlertDialog(questionDialogVisible,
                     onDismissRequest = {
                         questionDialogVisible = false
@@ -508,6 +509,8 @@ fun App(
                             showRoomView = false
                             showMultiplayerView = true
                         }
+
+                        UI.question = null
                     }
                 ) { _ ->
                     BorderCard(
@@ -716,7 +719,7 @@ fun MainMenu(
 
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            RWIconButton(Icons.Filled.Favorite, modifier = Modifier.padding(10.dp), onClick = contributor)
+            RWIconButton(Icons.Filled.Favorite, modifier = Modifier.padding(10.dp), tint = Color.Red, onClick = contributor)
 
             val net = koinInject<Net>()
 

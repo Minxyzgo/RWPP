@@ -9,6 +9,7 @@ package io.github.rwpp.impl
 
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.EnabledExtensions
+import io.github.rwpp.core.UI
 import io.github.rwpp.extensionPath
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExtensionConfig
@@ -67,11 +68,17 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                                     logger.info("Config: $config")
 
                                     config
-                                        ?: return Result.failure(FileNotFoundException("No info.toml found in extension: ${fi.absolutePath}"))
+                                        ?: run {
+                                            extensions = listOf()
+                                            return Result.failure(FileNotFoundException("No info.toml found in extension: ${fi.absolutePath}"))
+                                        }
 
-                                    if (extensions!!.any { it.config.id == config.id }) return Result.failure(
-                                        IllegalStateException("Duplicate extension id found: ${config.id}")
-                                    )
+                                    if (extensions!!.any { it.config.id == config.id }) {
+                                        extensions = listOf()
+                                        return Result.failure(
+                                            IllegalStateException("Duplicate extension id found: ${config.id}")
+                                        )
+                                    }
 
                                     logger.info("add extension")
                                     add(
@@ -104,7 +111,9 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
 
     override fun init() {
         logger.info("Init extensions...")
-        getAllExtensions().getOrThrow().forEach { extension ->
+        getAllExtensions().onFailure {
+            UI.showWarning(it.message ?: "Load extensions failed.")
+        }.getOrNull()?.forEach { extension ->
             if (extension.isEnabled) {
                 try {
                     logger.info("Init for ${extension.config.id}")
@@ -116,7 +125,7 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                             zip.getInputStream(entry).reader().readText()
                         } ?: File(extension.file, "scripts/main.lua").readText()
                     )
-                } catch (e: Exception) { e.printStackTrace() }
+                } catch (e: Exception) { logger.error(e.stackTraceToString()) }
             }
         }
     }

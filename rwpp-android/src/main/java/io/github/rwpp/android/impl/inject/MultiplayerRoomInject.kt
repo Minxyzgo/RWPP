@@ -52,6 +52,8 @@ object MultiplayerRoomInject {
             message ?: "This server requires a password to join"
         ) {
             if (it == null) {
+                val game = appKoin.get<Game>()
+                game.cancelJoinServer()
                 ao.a()
             } else {
                 ao.a(it)

@@ -66,9 +66,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override val mapType: MapType
         get() = MapType.entries[GameEngine.t().bU.aA.a.ordinal]
     override var selectedMap: GameMap
-        get() = game.getAllMaps().firstOrNull { GameEngine.t().bU.aB?.contains(getMapRealPath(it)).also { _ ->
-           // logger.info("map Name: ${GameEngine.t().bU.aB} getMapName: ${(it.mapName + it.getMapSuffix()).replace("\\", "/")}")
-        } == true }
+        get() = game.getAllMaps().firstOrNull { GameEngine.t().bU.aB?.contains(getMapRealPath(it)) == true }
             ?: NetworkMap(LevelSelectActivity.convertLevelFileNameForDisplay(GameEngine.t().bU.aA.b))
         set(value) {
             if (isHostServer) {
@@ -93,8 +91,9 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override var fogMode: FogMode
         get() = FogMode.entries[GameEngine.t().bU.aA.d.coerceAtLeast(0)]
         set(value) { GameEngine.t().bU.aA.d = value.ordinal }
-    override val revealedMap: Boolean
+    override var revealedMap: Boolean
         get() = GameEngine.t().bU.aA.e
+        set(value) { GameEngine.t().bU.aA.e = value }
     override var aiDifficulty: Difficulty
         get() = Difficulty.entries[GameEngine.t().bU.aA.f + 2]
         set(value) {  GameEngine.t().bU.aA.f = value.ordinal - 2}
@@ -120,8 +119,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         get() = roomMods
     override val isStartGame: Boolean
         get() = isGaming
-    override val teamMode: TeamMode?
-        get() = _teamMode
+    override var teamMode: TeamMode? = null
     override var gameMapTransformer: ((XMLMap) -> Unit)? = null
         set(value) {
             if (field != null) {
@@ -134,8 +132,6 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override var option: RoomOption = RoomOption()
     override val isConnecting: Boolean
         get() = GameEngine.t().bU.C
-
-    private var _teamMode: TeamMode? = null
 
     override fun getPlayers(): List<Player> {
         return PlayerInternal.j.mapNotNull {
@@ -495,8 +491,8 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             }
         }
 
-        if (_teamMode != teamMode) {
-            _teamMode = teamMode
+        if (this.teamMode != teamMode) {
+            this.teamMode = teamMode
             if (teamMode != null) {
                 when(teamMode.name) {
                     "2t" -> GameEngine.t().bU.a(com.corrodinggames.rts.gameFramework.j.ba.a)
@@ -532,7 +528,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         isRWPPRoom = false
         option = RoomOption()
         roomMods = arrayOf()
-        _teamMode = null
+        teamMode = null
         defeatedPlayerSet.clear()
         gameOver = false
         // 刷新地图

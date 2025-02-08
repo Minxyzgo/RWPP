@@ -7,7 +7,6 @@
 
 package io.github.rwpp.net.packets
 
-import io.github.rwpp.game.Player
 import io.github.rwpp.io.GameInputStream
 import io.github.rwpp.io.GameOutputStream
 import io.github.rwpp.net.InternalPacketType

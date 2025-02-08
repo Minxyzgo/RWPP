@@ -8,17 +8,13 @@
 
 package io.github.rwpp.game.ui
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -40,13 +36,14 @@ import io.github.rwpp.core.UI
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.i18n.readI18n
-import io.github.rwpp.logger
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.rwpp_core.generated.resources.Res
 import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
 import io.github.rwpp.scripts.Render
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
@@ -57,10 +54,18 @@ fun ExtensionView(
     BackHandler(true, onExit)
     val appContext = koinInject<AppContext>()
     val externalHandler = koinInject<ExternalHandler>()
-    var extensions by remember {
-        mutableStateOf(externalHandler.getAllExtensions().onFailure {
+    var updateExtensions by remember { mutableStateOf(false) }
+
+    val extensions = remember(updateExtensions) {
+        externalHandler.getAllExtensions().onFailure {
             UI.showWarning(it.message ?: "Unexpected error")
-        }.getOrDefault(listOf()))
+        }.getOrDefault(listOf()).filter { !it.config.hasResource }
+    }
+
+    val resources = remember(updateExtensions) {
+        externalHandler.getAllExtensions().onFailure {
+            UI.showWarning(it.message ?: "Unexpected error")
+        }.getOrDefault(listOf()).filter { it.config.hasResource }
     }
 
     val permissionHelper = koinInject<PermissionHelper>()
@@ -86,6 +91,8 @@ fun ExtensionView(
         }
     }
 
+    var selectedResource by remember { mutableStateOf(externalHandler.getUsingResource()) }
+
     var showResultView by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf("") }
@@ -96,10 +103,9 @@ fun ExtensionView(
         message("Loading")
         result = kotlin.runCatching {
             appKoin.get<EnabledExtensions>().values = extensions.filter { it.isEnabled }.map { it.config.id }
-            logger.info("Enabled extensions: ${appKoin.get<EnabledExtensions>().values.joinToString(",")}")
-//            withContext(Dispatchers.IO) {
-//                extensions.filter { it. }.forEach(externalHandler::enableResource)
-//            }
+            withContext(Dispatchers.IO) {
+                externalHandler.enableResource(selectedResource)
+            }
         }.exceptionOrNull()?.stackTraceToString() ?: "Loading successfully. You should restart RWPP to enable changes."
         true
     }
@@ -154,7 +160,7 @@ fun ExtensionView(
                 RWTextButton(
                     readI18n("mod.update"),
                     modifier = Modifier.padding(5.dp),
-                )  { extensions = externalHandler.getAllExtensions(true).getOrDefault(listOf()) }
+                )  { updateExtensions = !updateExtensions }
 
                 RWTextButton(
                     readI18n("mod.apply"),
@@ -182,100 +188,172 @@ fun ExtensionView(
                     modifier = Modifier.fillMaxWidth(),
                     state = state
                 ) {
+                    item {
+                        Column {
+                            Text(
+                                readI18n("extension.extension"),
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 5.dp)
+                            )
+
+                            HorizontalDivider(thickness = 3.dp,
+                                modifier = Modifier.padding(top = 2.dp, bottom = 5.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
                     items(
                         key = { extensions[it].config.id },
                         count = extensions.size
                     ) { index ->
                         val extension = extensions[index]
-                        BorderCard(
-                            backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.6f),
-                            modifier = Modifier.animateItem()
-                                .fillMaxWidth()
-                                .wrapContentHeight()
-                                .padding(5.dp)
-                        ) {
-                            if (extension.settingPanel.isNotEmpty()) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End
-                                ) {
-                                    Icon(
-                                        Icons.Default.Settings,
-                                        null,
-                                        modifier = Modifier.padding(5.dp, 5.dp, 20.dp, 5.dp).clickable {
-                                            selectedExtension = extension
-                                            showExtensionSetting = true
-                                        }, tint = MaterialTheme.colorScheme.surfaceTint
-                                    )
-                                }
+                        ExtensionCard(
+                            extension,
+                            onClickSettings = {
+                                selectedExtension = extension
+                                showExtensionSetting = true
                             }
+                        )
+                    }
 
-                            Column {
-                                var checked by remember {
-                                    mutableStateOf(extension.isEnabled)
-                                }
+                    item {
+                        Column {
+                            Text(
+                                readI18n("extension.resource"),
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 5.dp)
+                            )
 
-                                Row {
-                                    Image(
-                                        extension.iconPainter ?: painterResource(Res.drawable.error_missingmap),
-                                        null,
-                                        modifier = Modifier.size(120.dp).padding(5.dp)
-                                    )
-                                    Column(modifier = Modifier.padding(5.dp)) {
-                                        Row {
-                                            RWCheckbox(checked, onCheckedChange = {
-                                                checked = !checked
-                                                extension.isEnabled = checked
-                                            }, modifier = Modifier.padding(5.dp))
-                                            Text(
-                                                extension.config.displayName,
-                                                modifier = Modifier.padding(5.dp),
-                                                style = MaterialTheme.typography.headlineLarge,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-
-                                        Text(
-                                            "Author: ${extension.config.author}",
-                                            modifier = Modifier.padding(2.dp),
-                                            style = MaterialTheme.typography.headlineSmall,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-
-                                        Text(
-                                            "Version: ${extension.config.version}",
-                                            modifier = Modifier.padding(top = 0.dp, bottom = 2.dp),
-                                            style = MaterialTheme.typography.headlineSmall,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                }
-
-                                val expandedStyle = remember {
-                                    SpanStyle(
-                                        fontWeight = FontWeight.W500,
-                                        color = Color(173, 216, 230),
-                                        fontStyle = FontStyle.Italic,
-                                        textDecoration = TextDecoration.Underline
-                                    )
-                                }
-
-                                SelectionContainer {
-                                    ExpandableText(
-                                        text = extension.config.description,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        textModifier = Modifier.padding(top = 5.dp, start = 5.dp),
-                                        showMoreStyle = expandedStyle,
-                                        showLessStyle = expandedStyle
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.size(10.dp))
-                            }
+                            HorizontalDivider(thickness = 3.dp,
+                                modifier = Modifier.padding(top = 2.dp, bottom = 5.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
+                    }
+
+                    items(
+                        key = { resources[it].config.id },
+                        count = resources.size
+                    ) { index ->
+                        val resource = resources[index]
+                        ExtensionCard(
+                            resource,
+                            onClickSettings = {
+                                // Resource cannot be enabled.
+                            },
+                            selectedResource,
+                            onCheckedChange = {
+                                selectedResource = resource
+                            }
+                        )
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun LazyItemScope.ExtensionCard(
+    extension: Extension,
+    onClickSettings: () -> Unit,
+    selectedResource: Extension? = null,
+    onCheckedChange: ((Boolean) -> Unit)? = null
+) {
+    BorderCard(
+        backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.6f),
+        modifier = Modifier.animateItem()
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(5.dp)
+    ) {
+        if (extension.settingPanel.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Icon(
+                    Icons.Default.Settings,
+                    null,
+                    modifier = Modifier.padding(5.dp, 5.dp, 20.dp, 5.dp).clickable {
+                        onClickSettings()
+                    }, tint = MaterialTheme.colorScheme.surfaceTint
+                )
+            }
+        }
+
+        Column {
+            var checked by remember(selectedResource) {
+                mutableStateOf(
+                    if (extension.config.hasResource)
+                        selectedResource == extension
+                    else extension.isEnabled)
+            }
+
+            Row {
+                Image(
+                    extension.iconPainter ?: painterResource(Res.drawable.error_missingmap),
+                    null,
+                    modifier = Modifier.size(120.dp).padding(5.dp)
+                )
+                Column(modifier = Modifier.padding(5.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RWCheckbox(checked, onCheckedChange = {
+                            checked = !checked
+
+                            if (!extension.config.hasResource) {
+                                extension.isEnabled = checked
+                            }
+
+                            onCheckedChange?.invoke(checked)
+                        }, modifier = Modifier.padding(5.dp))
+                        Text(
+                            extension.config.displayName,
+                            modifier = Modifier.padding(5.dp),
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Text(
+                        "Author: ${extension.config.author}",
+                        modifier = Modifier.padding(2.dp),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        "Version: ${extension.config.version}",
+                        modifier = Modifier.padding(top = 0.dp, bottom = 2.dp),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            val expandedStyle = remember {
+                SpanStyle(
+                    fontWeight = FontWeight.W500,
+                    color = Color(173, 216, 230),
+                    fontStyle = FontStyle.Italic,
+                    textDecoration = TextDecoration.Underline
+                )
+            }
+
+            SelectionContainer {
+                ExpandableText(
+                    text = extension.config.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textModifier = Modifier.padding(top = 5.dp, start = 5.dp),
+                    showMoreStyle = expandedStyle,
+                    showLessStyle = expandedStyle
+                )
+            }
+
+            Spacer(modifier = Modifier.size(10.dp))
         }
     }
 }

@@ -97,7 +97,7 @@ object NetworkInject {
 
             else -> {
                 net.listeners[type]?.forEach { listener ->
-                    listener.invoke(
+                    val result = listener.invoke(
                         ClientImpl(auVar.a),
                         net.packetDecoders[type]!!.invoke(
                             DataInputStream(
@@ -105,7 +105,7 @@ object NetworkInject {
                             )
                         )
                     )
-                    return InterruptResult.Unit
+                    if (result) return InterruptResult.Unit
                 }
 
                 Unit

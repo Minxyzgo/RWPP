@@ -14,7 +14,7 @@ import androidx.compose.runtime.setValue
 import io.github.rwpp.net.packets.ServerPacket
 
 @Stable
-data class ServerData(private val _config: ServerConfig) {
+class ServerData(_config: ServerConfig) {
     val config by mutableStateOf(_config)
     var isLoading by mutableStateOf(false)
     var infoPacket by mutableStateOf<ServerPacket.ServerInfoReceivePacket?>(null)

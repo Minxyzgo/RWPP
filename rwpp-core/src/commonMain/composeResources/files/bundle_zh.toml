@@ -93,6 +93,11 @@ setBackgroundImagePath = "设置背景图片路径"
 backgroundTransparency = "背景透明度"
 backgroundImageTransparency = "背景图片透明度"
 
+[extension]
+extension = "扩展"
+resource = "资源"
+
+
 [ingame]
 sendMessage = "发送消息"
 sendTeamMessage = "发送团队消息"

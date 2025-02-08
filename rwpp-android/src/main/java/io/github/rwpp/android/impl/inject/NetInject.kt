@@ -237,13 +237,15 @@ object NetInject {
 
             else -> {
                 net.listeners[type]?.forEach { listener ->
-                    listener.invoke(
+                    val result = listener.invoke(
                         ClientImpl(packet.a),
                         net.packetDecoders[type]!!.invoke(
-                            com.corrodinggames.rts.gameFramework.j.j(packet).b
+                            DataInputStream(
+                                ByteArrayInputStream(packet.c)
+                            )
                         )
                     )
-                    return InterruptResult.Unit
+                    if (result) return InterruptResult.Unit
                 }
                 Unit
             }

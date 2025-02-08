@@ -26,7 +26,8 @@ data class MultiplayerPreferences(
         ServerConfig(
             "http://gs1.corrodinggames.com/masterserver/1.4/interface?action=list&game_version=176&game_version_beta=false;http://gs4.corrodinggames.net/masterserver/1.4/interface?action=list&game_version=176&game_version_beta=false",
             "Official Room List",
-            ServerType.RoomList
+            ServerType.RoomList,
+            editable = false,
         )
     ),
 ) : Config
