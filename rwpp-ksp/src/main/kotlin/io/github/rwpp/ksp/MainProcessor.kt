@@ -116,7 +116,14 @@ class MainProcessor(
                                 injectClassName,
                                 receiver != null,
                                 annotation.arguments.first().value as String,
-                                declaration.parameters.map { it.type.resolve().declaration.qualifiedName!!.asString() },
+                                declaration.parameters.map {
+                                    val type = it.type.resolve()
+                                    val paramDeclaration = type.declaration
+                                    val qualifiedName = paramDeclaration.qualifiedName!!.asString()
+                                    if (qualifiedName == "kotlin.Array") {
+                                        type.arguments.first().type!!.resolve().declaration.qualifiedName!!.asString() + "[]"
+                                    } else qualifiedName
+                                },
                                 InjectMode.valueOf((annotation.arguments[1].value as KSType).declaration.simpleName.asString()),
                                 declaration.returnType!!.resolve().declaration.qualifiedName!!.asString() == Unit::class.qualifiedName!!,
                                 "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}",

@@ -12,6 +12,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -34,11 +35,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.core.UI
 import io.github.rwpp.core.UI.chatMessages
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.*
 import io.github.rwpp.event.onDispose
+import io.github.rwpp.external.Extension
+import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.*
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
@@ -49,7 +53,6 @@ import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.rwpp_core.generated.resources.Res
 import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
-import io.github.rwpp.scripts.ExtraScriptApi
 import io.github.rwpp.scripts.Render
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.LazyColumnScrollbar
@@ -64,13 +67,14 @@ import kotlin.math.roundToInt
 fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     BackHandler(true, onExit)
 
-    val configIO = koinInject<ConfigIO>()
+    val externalHandler = koinInject<ExternalHandler>()
     val game = koinInject<Game>()
     val room = game.gameRoom
 
     var update by remember { mutableStateOf(false) }
     var lastSelectedIndex by remember { mutableStateOf(0) }
     var selectedMap by remember(update) { mutableStateOf(room.selectedMap) }
+    var mapImage by remember(update) { mutableStateOf(selectedMap.image) }
     val displayMapName = remember(update) { room.displayMapName }
 
     var optionVisible by remember { mutableStateOf(false) }
@@ -88,6 +92,12 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     var selectedPlayer by remember { mutableStateOf(players.firstOrNull() ?: ConnectingPlayer) }
 
     val scope = rememberCoroutineScope()
+
+    val extensions = remember {
+        externalHandler.getAllExtensions().onFailure {
+            UI.showWarning(it.message ?: "Unexpected error")
+        }.getOrDefault(listOf()).filter { !it.config.hasResource }
+    }
 //
 //    GlobalEventChannel.filter(CallReloadModEvent::class).onDispose {
 //        subscribeAlways {
@@ -138,6 +148,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         { optionVisible = false },
         updateAction,
         room,
+        extensions,
         { banUnitVisible = true; optionVisible = false },
         players
     )
@@ -147,7 +158,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         game.onBanUnits(it)
     }
 
-    PlayerOverrideDialog(playerOverrideVisible, { playerOverrideVisible = false }, updateAction, room, selectedPlayer)
+    PlayerOverrideDialog(playerOverrideVisible, { playerOverrideVisible = false }, updateAction, room, extensions, selectedPlayer)
 
     @Composable
     fun ContentView() {
@@ -234,7 +245,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                             @Composable
                             fun MapImage(modifier: Modifier = Modifier) {
                                 Image(
-                                    selectedMap.image ?: painterResource(Res.drawable.error_missingmap),
+                                    mapImage ?: painterResource(Res.drawable.error_missingmap),
                                     null,
                                     contentScale = ContentScale.Fit,
                                     modifier = Modifier.then(modifier).padding(10.dp)
@@ -583,7 +594,8 @@ private fun PlayerOverrideDialog(
     onDismissRequest: () -> Unit,
     update: () -> Unit,
     room: GameRoom,
-    player: Player
+    extensions: List<Extension>,
+    player: Player,
 ) {
     val game = koinInject<Game>()
     val items = remember {
@@ -744,11 +756,29 @@ private fun PlayerOverrideDialog(
             Row(modifier = Modifier.fillMaxWidth().padding(end = 10.dp),
                  horizontalArrangement = Arrangement.Center) {
 
-                for (widget in ExtraScriptApi.extraPlayerOptionBottomButtons) {
-                    widget.Render()
+                for (extension in extensions) {
+                    if (extension.isEnabled && extension.extraPlayerOptions.isNotEmpty()) {
+                        Column {
+                            Text(
+                                extension.config.displayName,
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 5.dp)
+                            )
+
+                            HorizontalDivider(thickness = 3.dp,
+                                modifier = Modifier.padding(top = 2.dp, bottom = 5.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            for (widget in extension.extraPlayerOptions) {
+                                widget.Render()
+                            }
+                        }
+                    }
                 }
 
-                if(player != room.localPlayer && room.isHost)
+                if(player != room.localPlayer && (room.isHost || room.isHostServer))
                     RWTextButton(readI18n("multiplayer.room.kick"), Modifier.padding(5.dp)) {
                         room.kickPlayer(player)
                         dismiss()
@@ -777,6 +807,7 @@ private fun MultiplayerOption(
     onDismissRequest: () -> Unit,
     update: () -> Unit,
     room: GameRoom,
+    extensions: List<Extension>,
     onShowBanUnitDialog: () -> Unit,
     players: List<Player>
 ) = AnimatedAlertDialog(
@@ -800,7 +831,7 @@ private fun MultiplayerOption(
 
     val koin = getKoin()
     val teamModes = remember {
-        koin.getAll<TeamMode>().toMutableList().apply { addAll(ExtraScriptApi.extraTeamModes) }
+        koin.getAll<TeamMode>()
     }
 
     BorderCard(
@@ -1040,6 +1071,29 @@ private fun MultiplayerOption(
                         modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
                     ) {
                         onShowBanUnitDialog()
+                    }
+                }
+            }
+
+            items(extensions, key = { it.config.id }) { extension ->
+                if (extension.isEnabled && extension.extraRoomOptions.isNotEmpty()) {
+                    Column {
+                        Text(
+                            extension.config.displayName,
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 5.dp)
+                        )
+
+                        HorizontalDivider(
+                            thickness = 3.dp,
+                            modifier = Modifier.padding(top = 2.dp, bottom = 5.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        for (widget in extension.extraRoomOptions) {
+                            widget.Render()
+                        }
                     }
                 }
             }

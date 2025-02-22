@@ -7,14 +7,18 @@
 
 package io.github.rwpp.scripts
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.rwpp.ui.LargeDropdownMenu
+import io.github.rwpp.ui.RWCheckbox
+import io.github.rwpp.ui.RWSingleOutlinedTextField
 import io.github.rwpp.ui.RWTextButton
 
 @Composable
@@ -33,7 +37,26 @@ fun LuaWidget.Render() {
             RWTextButton(text, onClick = onClick)
         }
 
-        is LuaWidget.LuaCheckbox -> TODO()
+        is LuaWidget.LuaCheckbox -> {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                var checked by remember { mutableStateOf(checked()) }
+                RWCheckbox(
+                    checked,
+                    onCheckedChange = {
+                        checked = it
+                        onCheckedChange(checked)
+                    },
+                    modifier = Modifier.padding(5.dp),
+                    true
+                )
+                Text(
+                    text,
+                    modifier = Modifier.padding(top = 5.dp),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+        }
         is LuaWidget.LuaDropdown -> {
             var selectedIndex by remember { mutableStateOf(options.indexOf(defaultValue())) }
             LargeDropdownMenu(
@@ -45,7 +68,14 @@ fun LuaWidget.Render() {
             )
         }
         is LuaWidget.LuaImage -> TODO()
-        is LuaWidget.LuaInput -> TODO()
+        is LuaWidget.LuaTextField -> {
+            var value by remember { mutableStateOf(defaultText()) }
+            RWSingleOutlinedTextField(
+                label,
+                value,
+                onValueChange = { value = it; onTextChanged(value) },
+            )
+        }
         is LuaWidget.LuaSlider -> TODO()
     }
 }

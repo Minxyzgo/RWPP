@@ -92,6 +92,7 @@ fun ExtensionView(
     }
 
     var selectedResource by remember { mutableStateOf(externalHandler.getUsingResource()) }
+    val defaultResource = remember { selectedResource }
 
     var showResultView by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
@@ -103,8 +104,10 @@ fun ExtensionView(
         message("Loading")
         result = kotlin.runCatching {
             appKoin.get<EnabledExtensions>().values = extensions.filter { it.isEnabled }.map { it.config.id }
-            withContext(Dispatchers.IO) {
-                externalHandler.enableResource(selectedResource)
+            if (defaultResource != selectedResource) {
+                withContext(Dispatchers.IO) {
+                    externalHandler.enableResource(selectedResource)
+                }
             }
         }.exceptionOrNull()?.stackTraceToString() ?: "Loading successfully. You should restart RWPP to enable changes."
         true

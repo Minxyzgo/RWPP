@@ -69,10 +69,7 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override suspend fun load(context: LoadingContext) {
-        // init map
-        GameEngine.t().bU.aA.a = at.a
-        GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
-        GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
+        initMap()
     }
 
     override fun hostStartWithPasswordAndMods(isPublic: Boolean, password: String?, useMods: Boolean) {
@@ -82,9 +79,7 @@ class GameImpl : Game, CoroutineScope {
         t.bU.q = isPublic
         launch(Dispatchers.IO) {
             t.bU.t()
-            GameEngine.t().bU.aA.a = at.a
-            GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
-            GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
+            initMap()
             MapChangedEvent(gameRoom.selectedMap.displayName()).broadcastIn()
             delay(100)
             RefreshUIEvent().broadcastIn()
@@ -99,9 +94,7 @@ class GameImpl : Game, CoroutineScope {
         t.bU.o = true
         if (sandbox) t.bU.r() else t.bU.s()
         isSinglePlayerGame = true
-        GameEngine.t().bU.aA.a = at.a
-        GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
-        GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
+        initMap(true)
         RefreshUIEvent().broadcastIn()
     }
 
@@ -111,6 +104,8 @@ class GameImpl : Game, CoroutineScope {
 
     override suspend fun directJoinServer(address: String, uuid: String?, context: LoadingContext): Result<String> {
         isCancellingJob.set(false)
+
+        initMap()
 
         GameEngine.t().bU.by = uuid
         connectingJob = withContext(Dispatchers.IO) {

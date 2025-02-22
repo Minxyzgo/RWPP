@@ -68,7 +68,8 @@ interface Net : KoinComponent, Initialization {
             response.body?.string()?.let { str ->
                 val version = Json.parse(str).asObject().getString("tag_name", "null")
                 val body = Json.parse(str).asObject().getString("body", "null")
-                LatestVersionProfile(version, body)
+                val prerelease = Json.parse(str).asObject().getBoolean("prerelease", false)
+                LatestVersionProfile(version, body, prerelease)
             }
         }.getOrNull()
     }

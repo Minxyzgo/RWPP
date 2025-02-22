@@ -85,6 +85,7 @@ import com.mikepenz.markdown.m3.markdownTypography
 import io.github.rwpp.config.CoreData
 import io.github.rwpp.config.Settings
 import io.github.rwpp.core.UI
+import io.github.rwpp.core.UI.selectedColorSchemeName
 import io.github.rwpp.core.UI.showRoomView
 import io.github.rwpp.core.UI.showMultiplayerView
 import io.github.rwpp.core.UI.showMissionView
@@ -104,23 +105,10 @@ import io.github.rwpp.game.ui.ReplaysViewDialog
 import io.github.rwpp.game.ui.SettingsView
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.net.LatestVersionProfile
 import io.github.rwpp.net.Net
 import io.github.rwpp.platform.loadSvg
-import io.github.rwpp.ui.AnimatedAlertDialog
-import io.github.rwpp.ui.BorderCard
-import io.github.rwpp.ui.ConstraintWindowManager
-import io.github.rwpp.ui.ExitButton
-import io.github.rwpp.ui.GeneralProportion
-import io.github.rwpp.ui.JostFonts
-import io.github.rwpp.ui.LargeDividingLine
-import io.github.rwpp.ui.MenuButton
-import io.github.rwpp.ui.RWSelectionColors
-import io.github.rwpp.ui.RWSingleOutlinedTextField
-import io.github.rwpp.ui.RWTextButton
-import io.github.rwpp.ui.ValoraxFont
-import io.github.rwpp.ui.WindowManager
-import io.github.rwpp.ui.autoClearFocus
-import io.github.rwpp.ui.themes
+import io.github.rwpp.ui.*
 import io.github.rwpp.ui.v2.RWIconButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -138,57 +126,11 @@ fun App(
     val settings = koinInject<Settings>()
     val net = koinInject<Net>()
 
-    val jostFonts = JostFonts()
-    val valoraxFont = ValoraxFont()
-
-    var selectedColorSchemeName by remember { mutableStateOf(settings.selectedTheme ?: "RWPP") }
-    val selectedColorScheme = remember(selectedColorSchemeName) { if (isPremium) themes[selectedColorSchemeName]!! else themes["RWPP"]!! }
-
-    val typography = Typography(
-        displayLarge = TextStyle(
-            color = selectedColorScheme.onSurface,
-            fontFamily = valoraxFont,
-            fontWeight = FontWeight.Normal,
-            fontSize = 32.sp
-        ),
-        headlineLarge = TextStyle(
-            color = selectedColorScheme.onSurface,
-            fontFamily = jostFonts,
-            fontWeight = FontWeight.Bold,
-            fontSize = 21.sp
-        ),
-        headlineMedium = TextStyle(
-            color = selectedColorScheme.onSurface,
-            fontFamily = jostFonts,
-            fontWeight = FontWeight.Normal,
-            fontSize = 19.sp
-        ),
-        headlineSmall = TextStyle(
-            color = selectedColorScheme.onSurface,
-            fontFamily = jostFonts,
-            fontWeight = FontWeight.Normal,
-            fontSize = 17.sp
-        ),
-        bodyLarge = TextStyle(
-            color = selectedColorScheme.onSurface,
-            fontFamily = jostFonts,
-            fontWeight = FontWeight.Bold,
-            fontSize = 15.sp,
-        ),
-        bodyMedium = TextStyle(
-            color = selectedColorScheme.onSurface,
-            fontFamily = jostFonts,
-            fontWeight = FontWeight.Normal,
-            fontSize = 13.sp
-        )
-    )
 
     var isSinglePlayerGame by remember { mutableStateOf(false) }
 
     var checkUpdateDialogVisible by remember { mutableStateOf(false) }
-    var latestVersion by remember { mutableStateOf<String?>(null) }
-    var latestVersionBody by remember { mutableStateOf("null") }
-
+    var profile by remember { mutableStateOf<LatestVersionProfile?>(null) }
 
     LaunchedEffect(Unit) {
         val now = System.currentTimeMillis()
@@ -197,13 +139,13 @@ fun App(
         if ((now - (coreData.lastAutoCheckUpdateTime + 1000 * 60 * 60 * 24) > 0) || coreData.debug) {
             withContext(Dispatchers.IO) {
                 if (settings.autoCheckUpdate) {
-                    val profile = net.getLatestVersionProfile()
+                    val _profile = net.getLatestVersionProfile()
 
-                    if (profile != null) {
+                    if (_profile != null) {
                         coreData.lastAutoCheckUpdateTime = now
-                        latestVersion = profile.version
-                        latestVersionBody = profile.body
-                        if (latestVersion != projectVersion && settings.ignoreVersion != latestVersion || coreData.debug) {
+
+                        if (_profile.version != projectVersion && settings.ignoreVersion != _profile.version || coreData.debug) {
+                            profile = _profile
                             checkUpdateDialogVisible = true
                         }
                     }
@@ -224,10 +166,7 @@ fun App(
 
     val game = koinInject<Game>()
 
-    MaterialTheme(
-        typography = typography,
-        colorScheme = selectedColorScheme
-    ) {
+    RWPPTheme {
 
         BoxWithConstraints(
             modifier = Modifier
@@ -323,8 +262,7 @@ fun App(
                     SettingsView(
                         {
                             if (it.version == projectVersion || settings.ignoreVersion == it.version) return@SettingsView
-                            latestVersion = it.version
-                            latestVersionBody = it.body
+                            profile = it
                             checkUpdateDialogVisible = true
                         },
                         selectedColorSchemeName,
@@ -439,45 +377,86 @@ fun App(
                         Row(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
                             HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
                             Box {
-                                Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(50.dp).offset(5.dp, 5.dp).blur(2.dp))
-                                Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(50.dp))
+                                Icon(
+                                    Icons.Default.Warning,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.size(50.dp).offset(5.dp, 5.dp).blur(2.dp)
+                                )
+                                Icon(
+                                    Icons.Default.Warning,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(50.dp)
+                                )
                             }
                             HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
                         }
 
-                        Text(readI18n("settings.newVersion", I18nType.RWPP, latestVersion!!),
+                        Text(
+                            readI18n("settings.newVersion", I18nType.RWPP, (if (profile!!.prerelease) "Prerelease " else "") + profile!!.version),
                             modifier = Modifier.align(Alignment.CenterHorizontally).padding(5.dp),
                             style = MaterialTheme.typography.headlineMedium
                         )
 
                         val annotatedString = buildAnnotatedString {
-                            withLink(
-                                link = LinkAnnotation
-                                    .Clickable(
-                                        tag = "github",
-                                        linkInteractionListener = { net.openUriInBrowser("https://github.com/Minxyzgo/RWPP/releases") },
-                                        styles = TextLinkStyles(style = SpanStyle(color = Color(0, 0, 238), textDecoration = TextDecoration.Underline))
-                                    )
-                            ) {
-                                append(readI18n("settings.goToDownload", I18nType.RWPP, "github"))
-                            }
+                            if (!profile!!.prerelease) {
+                                withLink(
+                                    link = LinkAnnotation
+                                        .Clickable(
+                                            tag = "github",
+                                            linkInteractionListener = { net.openUriInBrowser("https://github.com/Minxyzgo/RWPP/releases") },
+                                            styles = TextLinkStyles(
+                                                style = SpanStyle(
+                                                    color = Color(0, 0, 238),
+                                                    textDecoration = TextDecoration.Underline
+                                                )
+                                            )
+                                        )
+                                ) {
+                                    append(readI18n("settings.goToDownload", I18nType.RWPP, "github"))
+                                }
 
-                            append("\n")
+                                append("\n")
 
-                            withLink(
-                                link = LinkAnnotation
-                                    .Clickable(
-                                        tag = "123pan",
-                                        linkInteractionListener = { net.openUriInBrowser("https://www.123684.com/s/6Rijjv-79Fi?提取码:VtDG") },
-                                        styles = TextLinkStyles(style = SpanStyle(color = Color(0, 0, 238), textDecoration = TextDecoration.Underline))
-                                    )
-                            ) {
-                                append(readI18n("settings.goToDownload", I18nType.RWPP, "123pan"))
+                                withLink(
+                                    link = LinkAnnotation
+                                        .Clickable(
+                                            tag = "123pan",
+                                            linkInteractionListener = { net.openUriInBrowser("https://www.123684.com/s/6Rijjv-79Fi?提取码:VtDG") },
+                                            styles = TextLinkStyles(
+                                                style = SpanStyle(
+                                                    color = Color(0, 0, 238),
+                                                    textDecoration = TextDecoration.Underline
+                                                )
+                                            )
+                                        )
+                                ) {
+                                    append(readI18n("settings.goToDownload", I18nType.RWPP, "123pan"))
+                                }
+                            } else {
+                                append(readI18n("settings.prereleaseNote\n"))
+
+                                withLink(
+                                    link = LinkAnnotation
+                                        .Clickable(
+                                            tag = "afdian",
+                                            linkInteractionListener = { net.openUriInBrowser("https://afdian.com/a/minxyzgo") },
+                                            styles = TextLinkStyles(
+                                                style = SpanStyle(
+                                                    color = Color(0, 0, 238),
+                                                    textDecoration = TextDecoration.Underline
+                                                )
+                                            )
+                                        )
+                                ) {
+                                    append(readI18n("settings.goToDownload", I18nType.RWPP, "爱发电"))
+                                }
                             }
                         }
 
-
-                        Text(annotatedString,
+                        Text(
+                            annotatedString,
                             modifier = Modifier.align(Alignment.CenterHorizontally).padding(2.dp),
                             style = MaterialTheme.typography.bodyLarge
                         )
@@ -486,12 +465,17 @@ fun App(
                             readI18n("settings.ignoreVersion"),
                             modifier = Modifier.align(Alignment.CenterHorizontally).padding(5.dp)
                         ) {
-                            settings.ignoreVersion = latestVersion
+                            settings.ignoreVersion = profile!!.version
                             dismiss()
                         }
 
                         BorderCard(backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f)) {
-                            Markdown(latestVersionBody, modifier = Modifier.padding(5.dp), colors = markdownColor(), typography = markdownTypography())
+                            Markdown(
+                                profile!!.body,
+                                modifier = Modifier.padding(5.dp),
+                                colors = markdownColor(),
+                                typography = markdownTypography()
+                            )
                         }
                     }
                 }

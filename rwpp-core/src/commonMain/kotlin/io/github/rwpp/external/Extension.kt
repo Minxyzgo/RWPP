@@ -27,7 +27,13 @@ abstract class Extension(
     abstract val iconPainter: Painter?
 
     @JvmField
-    var settingPanel = mutableListOf<LuaWidget>()
+    val settingPanel = mutableListOf<LuaWidget>()
+
+    @JvmField
+    val extraPlayerOptions = mutableListOf<LuaWidget>()
+
+    @JvmField
+    val extraRoomOptions = mutableListOf<LuaWidget>()
 
     @Suppress("unused")
     fun openInputStream(entryName: String): InputStream {

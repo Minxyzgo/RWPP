@@ -10,7 +10,12 @@ package io.github.rwpp.ui
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import io.github.rwpp.core.UI
 
 val RWOutlinedTextColors
     @Composable get() =
@@ -61,6 +66,7 @@ val RWTextFieldColors
 val RWCheckBoxColors
     @Composable get() = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondaryContainer)
 
+
 val defaultRWPPColorScheme = darkColorScheme(
         surface = Color(27, 18, 18),
         surfaceContainer = Color.DarkGray,
@@ -78,6 +84,57 @@ val defaultRWPPColorScheme = darkColorScheme(
         onPrimary = Color(0xFF000000),
     )
 
+@Composable
+fun RWPPTheme(content: @Composable () -> Unit) {
+    val jostFonts = JostFonts()
+    val valoraxFont = ValoraxFont()
+    val selectedColorScheme = remember(UI.selectedColorSchemeName) { themes[UI.selectedColorSchemeName]!! }
+
+    val typography = Typography(
+        displayLarge = TextStyle(
+            color = selectedColorScheme.onSurface,
+            fontFamily = valoraxFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = 32.sp
+        ),
+        headlineLarge = TextStyle(
+            color = selectedColorScheme.onSurface,
+            fontFamily = jostFonts,
+            fontWeight = FontWeight.Bold,
+            fontSize = 21.sp
+        ),
+        headlineMedium = TextStyle(
+            color = selectedColorScheme.onSurface,
+            fontFamily = jostFonts,
+            fontWeight = FontWeight.Normal,
+            fontSize = 19.sp
+        ),
+        headlineSmall = TextStyle(
+            color = selectedColorScheme.onSurface,
+            fontFamily = jostFonts,
+            fontWeight = FontWeight.Normal,
+            fontSize = 17.sp
+        ),
+        bodyLarge = TextStyle(
+            color = selectedColorScheme.onSurface,
+            fontFamily = jostFonts,
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+        ),
+        bodyMedium = TextStyle(
+            color = selectedColorScheme.onSurface,
+            fontFamily = jostFonts,
+            fontWeight = FontWeight.Normal,
+            fontSize = 13.sp
+        )
+    )
+
+    MaterialTheme(
+        typography = typography,
+        colorScheme = selectedColorScheme,
+        content = content
+    )
+}
 
 val themes = mapOf(
     "RWPP" to defaultRWPPColorScheme,

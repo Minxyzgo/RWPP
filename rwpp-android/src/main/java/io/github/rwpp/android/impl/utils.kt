@@ -10,11 +10,18 @@ package io.github.rwpp.android.impl
 import android.content.Context
 import android.content.res.Resources
 import android.util.TypedValue
+import com.corrodinggames.rts.gameFramework.j.at
 import io.github.rwpp.net.Packet
 import io.github.rwpp.io.GameOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.File
+
+fun initMap(force: Boolean = false) {
+    if(GameEngine.t().bU.aB == null || GameEngine.t().bU.aA.b == null || force) GameEngine.t().bU.aA.a = at.a
+    if (GameEngine.t().bU.aB == null || force) GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
+    if (GameEngine.t().bU.aA.b == null || force) GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
+}
 
 fun Packet.asGamePacket(): com.corrodinggames.rts.gameFramework.j.bi {
     val byteArrayOutput = ByteArrayOutputStream()

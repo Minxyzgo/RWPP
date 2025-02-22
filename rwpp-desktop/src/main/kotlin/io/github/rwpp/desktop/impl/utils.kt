@@ -14,6 +14,13 @@ import io.github.rwpp.io.GameOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 
+fun initMap(force: Boolean = false) {
+    val B = GameEngine.B()
+    if (B.bX.ay.b == null || B.bX.az == null || force) B.bX.ay.a = GameMapType.a
+    if (B.bX.az == null || force) B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
+    if (B.bX.ay.b == null || force) B.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
+}
+
 fun Packet.asGamePacket(): au = au(type!!).also { pack ->
     val byteArrayOutput = ByteArrayOutputStream()
     val gameOutput = GameOutputStream(

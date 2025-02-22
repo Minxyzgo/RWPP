@@ -14,7 +14,6 @@ import com.corrodinggames.rts.appFramework.LevelSelectActivity
 import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
 import com.corrodinggames.rts.game.a.a
 import com.corrodinggames.rts.gameFramework.j.ae
-import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.j.bg
 import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
@@ -66,7 +65,8 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override val mapType: MapType
         get() = MapType.entries[GameEngine.t().bU.aA.a.ordinal]
     override var selectedMap: GameMap
-        get() = game.getAllMaps().firstOrNull { GameEngine.t().bU.aB?.contains(getMapRealPath(it)) == true }
+        get() = game.getAllMaps().firstOrNull {
+            (if (isHost) GameEngine.t().bU.aB else GameEngine.t().bU.aA.b)?.endsWith((it.mapName + it.getMapSuffix()).replace("\\", "/")) == true }
             ?: NetworkMap(LevelSelectActivity.convertLevelFileNameForDisplay(GameEngine.t().bU.aA.b))
         set(value) {
             if (isHostServer) {
@@ -385,12 +385,16 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override fun syncAllPlayer() {
         //gamesave
         if (isHost) {
-            Reflect.call<ae, Any>(
-                GameEngine.t().bU,
-                "a",
-                listOf(Boolean::class, Boolean::class, Boolean::class),
-                listOf(false, false, true)
-            )
+            mainThreadChannel.trySend {
+                Reflect.call<ae, Any>(
+                    GameEngine.t().bU,
+                    "a",
+                    listOf(Boolean::class, Boolean::class, Boolean::class),
+                    listOf(false, false, true)
+                )
+            }
+            //Reflect.set(GameEngine.t().bU, "br", 3601)
+            //GameEngine.t().bU.br
         }
     }
 
@@ -505,10 +509,6 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         }
 
         if (isHost) {
-            val ae = GameEngine.t().bU
-            ae.b()
-            ae.p()
-            ae.n()
             updateUI()
         }
     }
@@ -531,16 +531,17 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         teamMode = null
         defeatedPlayerSet.clear()
         gameOver = false
-        // 刷新地图
-        GameEngine.t().bU.aA.a = at.a
-        GameEngine.t().bU.aB = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
-        GameEngine.t().bU.aA.b = "[z;p10]Crossing Large (10p).tmx"
+
         MainActivity.activityResume()
 
         DisconnectEvent(reason).broadcastIn()
     }
 
     override fun updateUI() {
+        val ae = GameEngine.t().bU
+        ae.b()
+        ae.p()
+        ae.n()
         MultiplayerBattleroomActivity.updateUI()
     }
 

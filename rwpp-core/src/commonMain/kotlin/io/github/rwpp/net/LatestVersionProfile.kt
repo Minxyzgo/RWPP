@@ -9,5 +9,6 @@ package io.github.rwpp.net
 
 data class LatestVersionProfile(
     val version: String,
-    val body: String
+    val body: String,
+    val prerelease: Boolean,
 )

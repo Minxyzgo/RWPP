@@ -92,7 +92,7 @@ class GameImpl : Game {
                     get() = MapType.entries[a.ordinal]
                 override var selectedMap: GameMap
                     get() = getAllMaps().firstOrNull {
-                        B.bX.az?.endsWith((it.mapName + it.getMapSuffix()).replace("\\", "/")) ?: false
+                        (if (isHost) B.bX.az else B.bX.ay.b)?.endsWith((it.mapName + it.getMapSuffix()).replace("\\", "/")) ?: false
                     } ?: NetworkMap(mapNameFormatMethod.invoke(null, B.bX.ay.b) as String)
                     set(value) {
                         if(isHostServer) {
@@ -225,7 +225,11 @@ class GameImpl : Game {
                 }
 
                 override fun syncAllPlayer() {
-                    if (isHost) GameEngine.B().bX.a(false, false, true)
+                    if (isHost) {
+                        container.post {
+                            GameEngine.B().bX.a(false, false, true)
+                        }
+                    }
                 }
 
                 override fun addCommandPacket(packet: Packet) {
@@ -312,9 +316,6 @@ class GameImpl : Game {
                     }
 
                     if (isHost) {
-                        GameEngine.B().bX.f()
-                        GameEngine.B().bX.P()
-                        GameEngine.B().bX.L()
                         updateUI()
                     }
                 }
@@ -340,14 +341,13 @@ class GameImpl : Game {
                     gameOver = false
 
                     if(isConnecting) B.bX.b(reason)
-                    B.bX.ay.a = GameMapType.a
-                    B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
-                    B.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
-
                     DisconnectEvent(reason).broadcastIn()
                 }
 
                 override fun updateUI() {
+                    GameEngine.B().bX.f()
+                    GameEngine.B().bX.P()
+                    GameEngine.B().bX.L()
                     com.corrodinggames.rts.appFramework.n::class.java.getDeclaredMethod("o").invoke(null)
                 }
 
@@ -473,6 +473,15 @@ class GameImpl : Game {
 
             // copy from Main.h
             // ignore noresources
+
+            if (native) {
+//                l.aH = true
+//                com.corrodinggames.rts.java.c.b().b()
+//                println("Early steam init")
+//                com.corrodinggames.rts.gameFramework.o.a.a().b()
+//                println("Early steam init done.")
+            }
+
             l.aU = true
             l.bb = true
             l.aX = true
@@ -581,9 +590,7 @@ class GameImpl : Game {
         gameRoom.isRWPPRoom = true
 
         if(B.bX.b(false)) {
-            B.bX.ay.a = GameMapType.a
-            B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
-            B.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
+            initMap(true)
             MapChangedEvent(gameRoom.selectedMap.displayName()).broadcastIn()
         }
     }
@@ -619,9 +626,7 @@ class GameImpl : Game {
             )
             met.invoke(null, "maps/skirmish/[z;p10]Crossing Large (10p).tmx", false, 0, 0, true, false)
 
-            game.bX.ay.a = GameMapType.a
-            game.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
-            game.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
+            initMap(true)
 
             if (sandbox) {
                 game.bL.E = false
@@ -657,9 +662,7 @@ class GameImpl : Game {
 
     override suspend fun directJoinServer(address: String, uuid: String?, context: LoadingContext): Result<String> {
         val B = GameEngine.B()
-        B.bX.ay.a = GameMapType.a
-        B.bX.az = "maps/skirmish/[z;p10]Crossing Large (10p).tmx"
-        B.bX.ay.b = "[z;p10]Crossing Large (10p).tmx"
+        initMap()
 
         context.message("Connecting...")
 

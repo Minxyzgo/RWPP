@@ -47,7 +47,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
-import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
@@ -64,6 +63,7 @@ import javax.swing.WindowConstants
 
 typealias ColorCompose = androidx.compose.ui.graphics.Color
 
+var native: Boolean = false
 lateinit var mainJFrame: JFrame
 lateinit var gameCanvas: Canvas
 lateinit var displaySize: Dimension
@@ -84,6 +84,8 @@ fun main(array: Array<String>) {
             .defaultScreenDevice
             .displayMode
             .run { Dimension(width, height) }
+
+    native = array.contains("-native")
 
     swingApplication()
 }
@@ -235,72 +237,75 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
     panel2.setContent {
         val game = koinInject<Game>()
-        BorderCard(
-            modifier = Modifier
-            .height(180.dp)
-            .width(550.dp).onKeyEvent {
-                if (it.key == Key.Escape && it.type == KeyDown) {
-                    sendMessageDialog.isVisible = false
-                }
-                true
-            },
-
-            shape = RectangleShape
-        ) {
-            var chatMessage by remember { mutableStateOf("") }
-            ExitButton {
-                sendMessageDialog.isVisible = false
-            }
-
-            GlobalEventChannel.filter(QuitGameEvent::class).onDispose {
-                subscribeAlways { sendMessageDialog.isVisible = false }
-            }
-
-            RWSingleOutlinedTextField(
-                label = readI18n("ingame.sendMessage"),
-                value = chatMessage,
-                requestFocus = true,
-                modifier = Modifier.fillMaxWidth().padding(10.dp)
-                    .onKeyEvent {
-                        if(it.key == Key.Enter && chatMessage.isNotEmpty()) {
-                            game.gameRoom.sendChatMessageOrCommand(chatMessage)
-                            chatMessage = ""
+        RWPPTheme {
+            BorderCard(
+                modifier = Modifier
+                    .height(180.dp)
+                    .width(550.dp).onKeyEvent {
+                        if (it.key == Key.Escape && it.type == KeyDown) {
                             sendMessageDialog.isVisible = false
                         }
-
                         true
                     },
-                trailingIcon = {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowForward,
-                        null,
-                        modifier = Modifier.clickable {
-                            game.gameRoom.sendChatMessageOrCommand(chatMessage)
-                            chatMessage = ""
-                            sendMessageDialog.isVisible = false
-                        }
-                    )
-                },
-                onValueChange =
-                {
-                    chatMessage = it
-                },
-            )
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                RWTextButton(readI18n("ingame.sendMessage")) {
-                    game.gameRoom.sendChatMessageOrCommand(chatMessage)
-                    chatMessage = ""
+                shape = RectangleShape
+            ) {
+                var chatMessage by remember { mutableStateOf("") }
+                ExitButton {
                     sendMessageDialog.isVisible = false
                 }
 
-                RWTextButton(readI18n("ingame.sendTeamMessage")) {
-                    game.gameRoom.sendChatMessage("-t $chatMessage")
-                    chatMessage = ""
-                    sendMessageDialog.isVisible = false
+                GlobalEventChannel.filter(QuitGameEvent::class).onDispose {
+                    subscribeAlways { sendMessageDialog.isVisible = false }
+                }
+
+                RWSingleOutlinedTextField(
+                    label = readI18n("ingame.sendMessage"),
+                    value = chatMessage,
+                    requestFocus = true,
+                    modifier = Modifier.fillMaxWidth().padding(10.dp)
+                        .onKeyEvent {
+                            if(it.key == Key.Enter && chatMessage.isNotEmpty()) {
+                                game.gameRoom.sendChatMessageOrCommand(chatMessage)
+                                chatMessage = ""
+                                sendMessageDialog.isVisible = false
+                            }
+
+                            true
+                        },
+                    trailingIcon = {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowForward,
+                            null,
+                            modifier = Modifier.clickable {
+                                game.gameRoom.sendChatMessageOrCommand(chatMessage)
+                                chatMessage = ""
+                                sendMessageDialog.isVisible = false
+                            }
+                        )
+                    },
+                    onValueChange =
+                        {
+                            chatMessage = it
+                        },
+                )
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    RWTextButton(readI18n("ingame.sendMessage"), modifier = Modifier.padding(5.dp)) {
+                        game.gameRoom.sendChatMessageOrCommand(chatMessage)
+                        chatMessage = ""
+                        sendMessageDialog.isVisible = false
+                    }
+
+                    RWTextButton(readI18n("ingame.sendTeamMessage"), modifier = Modifier.padding(5.dp)) {
+                        game.gameRoom.sendChatMessage("-t $chatMessage")
+                        chatMessage = ""
+                        sendMessageDialog.isVisible = false
+                    }
                 }
             }
         }
+
     }
     sendMessageDialog = Dialog(window)
     sendMessageDialog.isUndecorated = true

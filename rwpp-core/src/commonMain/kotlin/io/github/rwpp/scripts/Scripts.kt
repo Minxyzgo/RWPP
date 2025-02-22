@@ -83,7 +83,6 @@ object Scripts : Initialization {
         lua["isAndroid"] = Platform.isAndroid()
         lua["isDesktop"] = Platform.isDesktop()
         lua["version"] = projectVersion
-        lua["extraScriptApi"] = ExtraScriptApi
 
         @Suppress("UNCHECKED_CAST")
         lua.register("filterEvents") { _, args ->
@@ -186,6 +185,40 @@ object Scripts : Initialization {
                 { index, value ->
                     synchronized(lua.mainState) {
                         args[3].call(index, value)
+                    }
+                }
+            ))
+            arrayOf(l.get())
+        }
+
+        lua.register("textField") { l, args ->
+            l.pushJavaObject(LuaWidget.LuaTextField(
+                args[0].toJavaObject() as String,
+                {
+                    synchronized(lua.mainState) {
+                        args[1].call().first().toJavaObject() as String
+                    }
+                },
+                { str ->
+                    synchronized(lua.mainState) {
+                        args[2].call(str)
+                    }
+                }
+            ))
+            arrayOf(l.get())
+        }
+
+        lua.register("checkbox") { l, args ->
+            l.pushJavaObject(LuaWidget.LuaCheckbox(
+                args[0].toJavaObject() as String,
+                {
+                    synchronized(lua.mainState) {
+                        args[1].call().first().toJavaObject() as Boolean
+                    }
+                },
+                { bool ->
+                    synchronized(lua.mainState) {
+                        args[2].call(bool)
                     }
                 }
             ))

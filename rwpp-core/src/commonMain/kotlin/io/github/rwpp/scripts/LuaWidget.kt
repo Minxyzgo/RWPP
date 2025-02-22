@@ -15,7 +15,11 @@ sealed class LuaWidget {
     ) : LuaWidget()
     class LuaImage(val imageUrl: String) : LuaWidget()
     class LuaTextButton(val text: String, val onClick: () -> Unit) : LuaWidget()
-    class LuaCheckbox(val text: String, val checked: Boolean, val onClick: String) : LuaWidget()
+    class LuaCheckbox(
+        val text: String,
+        val checked: () -> Boolean,
+        val onCheckedChange: (Boolean) -> Unit
+    ) : LuaWidget()
     class LuaSlider(val min: Int, val max: Int, val value: Int, val onChange: String) : LuaWidget()
     class LuaDropdown(
         val options: Array<String>,
@@ -23,5 +27,9 @@ sealed class LuaWidget {
         val defaultValue: () -> String,
         val onChange: (Int, String) -> Unit
     ) : LuaWidget()
-    class LuaInput(val placeholder: String, val value: String, val onChange: String) : LuaWidget()
+    class LuaTextField(
+        val label: String,
+        val defaultText: () -> String,
+        val onTextChanged: (String) -> Unit,
+    ) : LuaWidget()
 }

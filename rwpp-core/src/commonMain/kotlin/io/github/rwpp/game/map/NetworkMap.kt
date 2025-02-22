@@ -8,7 +8,6 @@
 package io.github.rwpp.game.map
 
 import androidx.compose.ui.graphics.painter.Painter
-import java.io.File
 import java.io.InputStream
 
 class NetworkMap(private val _mapName: String) : GameMap {
