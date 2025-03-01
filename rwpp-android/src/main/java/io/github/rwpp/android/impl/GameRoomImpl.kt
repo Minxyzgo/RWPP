@@ -121,13 +121,6 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         get() = isGaming
     override var teamMode: TeamMode? = null
     override var gameMapTransformer: ((XMLMap) -> Unit)? = null
-        set(value) {
-            if (field != null) {
-                throw IllegalStateException("GameMapTransformer is already set. If you want to change it, please set it to null first")
-            } else {
-                field = value
-            }
-        }
     override var isRWPPRoom: Boolean = false
     override var option: RoomOption = RoomOption()
     override val isConnecting: Boolean

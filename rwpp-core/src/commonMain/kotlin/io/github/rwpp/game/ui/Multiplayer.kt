@@ -302,10 +302,10 @@ fun MultiplayerView(
                             serverAddress = rcnAddress
                             isConnecting = true
                         } else {
+                            onHost()
                             game.hostStartWithPasswordAndMods(
                                 false, password.ifBlank { null }, enableMods,
                             )
-                            onHost()
                         }
                     }
                     RWTextButton(readI18n("multiplayer.hostPublic"), modifier = Modifier.padding(5.dp)) {
@@ -316,10 +316,10 @@ fun MultiplayerView(
                             serverAddress = rcnAddress
                             isConnecting = true
                         } else {
+                            onHost()
                             game.hostStartWithPasswordAndMods(
                                 true, password.ifBlank { null }, enableMods,
                             )
-                            onHost()
                         }
                     }
                 }
@@ -519,6 +519,7 @@ fun MultiplayerView(
                         } else if (serverData.config.type == ServerType.RoomList) {
                             selectedServerConfig = serverData.config
                             isShowingRoomList = true
+                            currentViewList = listOf()
                             refresh.trySend(Unit)
                         }
                     },
