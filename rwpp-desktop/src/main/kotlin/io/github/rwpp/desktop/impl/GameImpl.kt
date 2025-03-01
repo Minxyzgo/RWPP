@@ -163,14 +163,6 @@ class GameImpl : Game {
                 override var teamMode: TeamMode? = null
 
                 override var gameMapTransformer: ((XMLMap) -> Unit)? = null
-                    set(value) {
-                        if (field != null) {
-                            throw IllegalStateException("GameMapTransformer is already set. If you want to change it, please set it to null first")
-                        } else {
-                            field = value
-                        }
-                    }
-
                 private val mapNameFormatMethod = com.corrodinggames.rts.appFramework.i::class.java.getDeclaredMethod("e", String::class.java)
 
                 @Suppress("unchecked_cast")

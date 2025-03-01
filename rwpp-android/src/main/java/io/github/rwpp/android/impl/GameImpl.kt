@@ -17,10 +17,12 @@ import com.corrodinggames.rts.appFramework.*
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.k
+import io.github.rwpp.android.MainActivity.Companion.gameView
 import io.github.rwpp.android.bannedUnitList
 import io.github.rwpp.android.gameLauncher
 import io.github.rwpp.android.isSinglePlayerGame
 import io.github.rwpp.android.questionOption
+import io.github.rwpp.appKoin
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.MapChangedEvent
 import io.github.rwpp.event.events.RefreshUIEvent
@@ -103,6 +105,8 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override suspend fun directJoinServer(address: String, uuid: String?, context: LoadingContext): Result<String> {
+        GameEngine.t().a(appKoin.get(), gameView)
+
         isCancellingJob.set(false)
 
         initMap()
