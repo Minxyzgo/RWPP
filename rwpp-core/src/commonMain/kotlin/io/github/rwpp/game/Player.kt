@@ -42,11 +42,6 @@ interface Player {
     var difficulty: Difficulty?
 
     /**
-     * The player extra data.
-     */
-    val data: PlayerData
-
-    /**
      * The player's credits.
      */
     var credits: Int
@@ -65,12 +60,6 @@ interface Player {
     val isWipedOut: Boolean
 
     val client: Client?
-
-    fun teamAlias() = when {
-        team == -3 -> "S"
-        team <= 10 -> Char('A'.code + team).toString()
-        else -> team.toString()
-    }
 
     fun applyConfigChange(
         spawnPoint: Int = this.spawnPoint,
@@ -98,4 +87,10 @@ interface Player {
 
         fun getTeamColor(team: Int): Color = teamColors.getOrNull(team) ?: Color.Gray
     }
+}
+
+fun Player.teamAlias() = when {
+    team == -3 -> "S"
+    team <= 10 -> Char('A'.code + team).toString()
+    else -> team.toString()
 }

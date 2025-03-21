@@ -99,6 +99,10 @@ colorScheme = "Color Scheme"
 setBackgroundImagePath = "Set Background Image Path"
 backgroundTransparency = "Background Transparency"
 backgroundImageTransparency = "Background Image Transparency"
+buildings = "Buildings"
+showAttackRange = "Show Attack Range"
+units = "Units"
+enableAnimations = "Enable Animations"
 
 [extension]
 extension = "Extension"

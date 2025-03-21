@@ -41,7 +41,7 @@ fun ModsView(onExit: () -> Unit) {
     val modManager = koinInject<ModManager>()
     val game = koinInject<Game>()
 
-    var mods by remember { mutableStateOf(modManager.getAllMods().sortedBy { it.isEnabled }) }
+    var mods by remember { mutableStateOf(modManager.getAllMods().sortedBy { if (it.isEnabled) 0 else 1 }) }
     var updated by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var loadingAction by remember { mutableStateOf<suspend () -> Unit>({}) }

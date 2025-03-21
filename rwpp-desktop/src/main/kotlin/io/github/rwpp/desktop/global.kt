@@ -25,5 +25,4 @@ internal var roomMods: Array<String> = arrayOf()
 internal var rcnOption: String? = null
 internal var isSandboxGame: Boolean = false
 internal var bannedUnitList: List<String> = listOf()
-internal var playerCacheMap = mutableMapOf<com.corrodinggames.rts.game.n, Player>()
 internal val defeatedPlayerSet = CopyOnWriteArraySet<PlayerInternal>()

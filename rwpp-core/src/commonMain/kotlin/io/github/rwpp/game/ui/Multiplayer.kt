@@ -9,7 +9,7 @@
 
 package io.github.rwpp.game.ui
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -1238,57 +1238,64 @@ private fun AnimatedBlackList(
     onDeleteSource: (Int) -> Unit,
     onTapInfoButton: (Int) -> Unit,
     onTapAddButton: () -> Unit,
-) = AnimatedVisibility(visible) {
-    CompositionLocalProvider(
-        LocalContentColor provides MaterialTheme.colorScheme.onSurface,
+) {
+    val enableAnimations = koinInject<Settings>().enableAnimations
+    AnimatedVisibility(
+        visible,
+        enter = if (enableAnimations) fadeIn() + expandIn() else EnterTransition.None,
+        exit = if (enableAnimations) shrinkOut() + fadeOut() else ExitTransition.None,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(readI18n("multiplayer.blacklist"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(15.dp))
-            LargeDividingLine { 0.dp }
+        CompositionLocalProvider(
+            LocalContentColor provides MaterialTheme.colorScheme.onSurface,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(readI18n("multiplayer.blacklist"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(15.dp))
+                LargeDividingLine { 0.dp }
 
-            LazyColumn(
-                modifier = Modifier.selectableGroup().weight(1f),
-            ) {
-                items(count = blacklists.size) { index ->
-                    val blacklist = blacklists[index]
-                    Modifier
-                        .wrapContentSize()
-                    Row(modifier = Modifier.animateItem()) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                blacklist.name,
-                                modifier = Modifier.padding(3.dp),
-                                style = MaterialTheme.typography.headlineMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                blacklist.uuid,
-                                modifier = Modifier.padding(3.dp),
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                                textDecoration = TextDecoration.Underline,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                LazyColumn(
+                    modifier = Modifier.selectableGroup().weight(1f),
+                ) {
+                    items(count = blacklists.size) { index ->
+                        val blacklist = blacklists[index]
+                        Modifier
+                            .wrapContentSize()
+                        Row(modifier = Modifier.animateItem()) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    blacklist.name,
+                                    modifier = Modifier.padding(3.dp),
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    blacklist.uuid,
+                                    modifier = Modifier.padding(3.dp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1,
+                                    textDecoration = TextDecoration.Underline,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
 
-                        Row(horizontalArrangement = Arrangement.End) {
-                            Icon(Icons.Default.Delete, null, modifier = Modifier.padding(5.dp).clickable {
-                                onDeleteSource(index)
-                            })
+                            Row(horizontalArrangement = Arrangement.End) {
+                                Icon(Icons.Default.Delete, null, modifier = Modifier.padding(5.dp).clickable {
+                                    onDeleteSource(index)
+                                })
 
-                            Icon(
-                                Icons.Default.Info,
-                                null,
-                                modifier = Modifier.padding(5.dp, 5.dp, 20.dp, 5.dp).clickable { onTapInfoButton(index) },)
+                                Icon(
+                                    Icons.Default.Info,
+                                    null,
+                                    modifier = Modifier.padding(5.dp, 5.dp, 20.dp, 5.dp).clickable { onTapInfoButton(index) },)
+                            }
                         }
                     }
                 }
-            }
 
-            Box(modifier = Modifier.weight(0.2f).fillMaxWidth()) {
-                IconButton(onClick = onTapAddButton, modifier = Modifier.align(Alignment.BottomEnd)) {
-                    Icon(Icons.Default.AddCircle, null)
+                Box(modifier = Modifier.weight(0.2f).fillMaxWidth()) {
+                    IconButton(onClick = onTapAddButton, modifier = Modifier.align(Alignment.BottomEnd)) {
+                        Icon(Icons.Default.AddCircle, null)
+                    }
                 }
             }
         }

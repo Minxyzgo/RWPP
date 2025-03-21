@@ -5,10 +5,12 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.world
+package io.github.rwpp.game.units
 
-import io.github.rwpp.game.units.UnitType
+import io.github.rwpp.game.Player
 
-interface Unit {
-    val unitType: UnitType
+interface GameUnit {
+    val player: Player
+    val isDead: Boolean
+    val type: UnitType
 }

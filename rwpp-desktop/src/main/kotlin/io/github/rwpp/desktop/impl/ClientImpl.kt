@@ -7,13 +7,15 @@
 
 package io.github.rwpp.desktop.impl
 
+import io.github.rwpp.inject.SetInterfaceOn
 import io.github.rwpp.net.Client
 import io.github.rwpp.net.Packet
 
-class ClientImpl(
-    internal val client: com.corrodinggames.rts.gameFramework.j.c
-) : Client {
+@SetInterfaceOn([com.corrodinggames.rts.gameFramework.j.c::class])
+interface ClientImpl : Client {
+    val self: com.corrodinggames.rts.gameFramework.j.c
+
     override fun sendPacketToClient(packet: Packet) {
-        GameEngine.B().bX.a(client, packet.asGamePacket())
+        GameEngine.B().bX.a(self, packet.asGamePacket())
     }
 }

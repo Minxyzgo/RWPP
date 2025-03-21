@@ -8,7 +8,7 @@
 package io.github.rwpp.desktop.impl.inject
 
 import com.corrodinggames.librocket.b
-import io.github.rwpp.desktop.impl.FClass
+import io.github.rwpp.desktop.impl.Graphics
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
@@ -21,7 +21,7 @@ object DrawableInject {
 
     @Inject("a", injectMode = InjectMode.InsertBefore)
     fun redirectDrawableRes(str: String): Any {
-        val o = FClass.o(str)
+        val o = Graphics.o(str)
         val resFileExist = File(resOutputDir).exists()
         return if(o.startsWith("drawable:") && resFileExist) {
             InterruptResult(b.b + resOutputDir + "drawable/" + o.removePrefix("drawable:"))

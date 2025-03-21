@@ -52,6 +52,8 @@ import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
 import org.slf4j.LoggerFactory
 import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.io.File
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -136,6 +138,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
     window.iconImage = ImageIO.read(ClassLoader.getSystemResource("composeResources/io.github.rwpp.rwpp_core.generated.resources/drawable/logo.png"))
     //window.extendedState = JFrame.MAXIMIZED_BOTH
 
+
     val canvas = Canvas()
 
     gameCanvas = canvas
@@ -147,6 +150,28 @@ fun swingApplication() = SwingUtilities.invokeLater {
     window.layout = BorderLayout()
     window.add(canvas, BorderLayout.CENTER)
     window.add(panel, BorderLayout.CENTER)
+
+    window.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent) {
+            val scale = getDPIScale()
+
+            // 计算逻辑像素尺寸（抵消 HiDPI 缩放）
+            val logicalWidth = (window.contentPane.width * scale).toInt()
+            val logicalHeight = (window.contentPane.height * scale).toInt()
+
+            // 设置 Canvas 物理像素尺寸
+            canvas.setSize(
+                logicalWidth,
+                logicalHeight
+            )
+
+            resetSendMessageDialogLocation()
+        }
+
+        override fun componentMoved(e: ComponentEvent) {
+            resetSendMessageDialogLocation()
+        }
+    })
 
     panel.setContent {
 
@@ -229,8 +254,6 @@ fun swingApplication() = SwingUtilities.invokeLater {
     panel.requestFocus()
 
     val panel2 = ComposePanel()
-
-
     panel2.isOpaque = false
     panel2.isFocusable = true
     panel2.size = Dimension(550, 180)
@@ -248,6 +271,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                         true
                     },
 
+                backgroundColor = androidx.compose.ui.graphics.Color(53, 57, 53),
                 shape = RectangleShape
             ) {
                 var chatMessage by remember { mutableStateOf("") }
@@ -305,8 +329,8 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 }
             }
         }
-
     }
+
     sendMessageDialog = Dialog(window)
     sendMessageDialog.isUndecorated = true
     sendMessageDialog.isFocusable = true
@@ -322,8 +346,22 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
 fun showSendMessageDialog() {
     sendMessageDialog.isVisible = true
-    val window = mainJFrame
     sendMessageDialog.requestFocus()
+    resetSendMessageDialogLocation()
+}
+
+private fun resetSendMessageDialogLocation() {
+    val window = mainJFrame
     sendMessageDialog.setLocation(window.x + window.width / 2 - sendMessageDialog.width / 2, window.y + window.height / 2 - sendMessageDialog.height / 2)
 }
 
+private fun getDPIScale(): Double {
+    // 获取原生系统缩放比例（需考虑多显示器场景）
+    val env = GraphicsEnvironment.getLocalGraphicsEnvironment()
+    val device = env.defaultScreenDevice
+    val config = device.defaultConfiguration
+
+    // 获取系统推荐缩放倍数（Windows 的 % 缩放比例）
+    val transform = config.defaultTransform
+    return transform.scaleX // 通常 X/Y 缩放一致
+}

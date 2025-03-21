@@ -13,11 +13,11 @@ import io.github.rwpp.desktop.gameOver
 import io.github.rwpp.desktop.impl.GameEngine
 import io.github.rwpp.desktop.impl.PlayerInternal
 import io.github.rwpp.desktop.isGaming
-import io.github.rwpp.desktop.playerCacheMap
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.GameOverEvent
 import io.github.rwpp.event.events.PlayerDefeatedEvent
 import io.github.rwpp.game.Game
+import io.github.rwpp.game.Player
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
@@ -29,9 +29,12 @@ object PlayerInject {
     fun PlayerInternal.onUpdate(deltaTime: Float): Any {
         if (!isGaming || defeatedPlayerSet.contains(this)) return Unit
 
-        if (F || G) {
+        this as Player
+
+        //当玩家失败时，将其加入到已失败玩家集合中，并广播玩家失败事件
+        if (isDefeated) {
             defeatedPlayerSet.add(this)
-            playerCacheMap[this]?.let { PlayerDefeatedEvent(it).broadcastIn() }
+            PlayerDefeatedEvent(this).broadcastIn()
 
             var lastTeam: Int? = null
 
@@ -46,6 +49,7 @@ object PlayerInject {
                 }
             }
 
+            //当不存在其它队伍时，游戏结束
             if (lastTeam != null) {
                 logger.info("Game Over! Team $lastTeam wins!")
                 GameOverEvent(GameEngine.B().by, lastTeam).broadcastIn()

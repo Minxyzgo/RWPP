@@ -9,12 +9,8 @@
 
 package io.github.rwpp
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +27,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -179,6 +176,8 @@ fun App(
                 LocalWindowManager provides ConstraintWindowManager(maxWidth, maxHeight)
             ) {
 
+                val enableAnimations = settings.enableAnimations
+
                 Scaffold(
                     containerColor = Color.Transparent,
                     floatingActionButton = {
@@ -197,8 +196,8 @@ fun App(
                 ) {
                     AnimatedVisibility(
                         showMainMenu,
-                        enter = fadeIn(),
-                        exit = fadeOut()
+                        enter = if(enableAnimations) fadeIn() else EnterTransition.None,
+                        exit = if(enableAnimations) fadeOut() else ExitTransition.None,
                     ) {
                         MainMenu(
                             multiplayer = {
@@ -237,7 +236,9 @@ fun App(
                     }
 
                     AnimatedVisibility(
-                        showMissionView
+                        showMissionView,
+                        enter = if (enableAnimations) fadeIn() + expandIn() else EnterTransition.None,
+                        exit = if (enableAnimations) shrinkOut() + fadeOut() else ExitTransition.None,
                     ) {
                         MissionView { showMissionView = false }
                     }
@@ -245,8 +246,8 @@ fun App(
 
                 AnimatedVisibility(
                     showMultiplayerView,
-                    enter = fadeIn() + slideInVertically(),
-                    exit = fadeOut() + slideOutVertically()
+                    enter = if(enableAnimations) fadeIn() + slideInVertically() else EnterTransition.None,
+                    exit = if(enableAnimations) fadeOut() + slideOutVertically() else ExitTransition.None,
                 ) {
                     MultiplayerView(
                         { showMultiplayerView = false },
@@ -256,8 +257,8 @@ fun App(
 
                 AnimatedVisibility(
                     showSettingsView,
-                    enter = fadeIn() + slideInVertically(),
-                    exit = fadeOut() + slideOutVertically()
+                    enter = if (enableAnimations) fadeIn() + slideInVertically() else EnterTransition.None,
+                    exit = if (enableAnimations) fadeOut() + slideOutVertically() else ExitTransition.None,
                 ) {
                     SettingsView(
                         {
@@ -275,13 +276,17 @@ fun App(
                 }
 
                 AnimatedVisibility(
-                    showModsView
+                    showModsView,
+                    enter = if (enableAnimations) fadeIn() + expandIn() else EnterTransition.None,
+                    exit = if (enableAnimations) shrinkOut() + fadeOut() else ExitTransition.None,
                 ) {
                     ModsView { showModsView = false }
                 }
 
                 AnimatedVisibility(
-                    showExtensionView
+                    showExtensionView,
+                    enter = if (enableAnimations) fadeIn() + expandIn() else EnterTransition.None,
+                    exit = if (enableAnimations) shrinkOut() + fadeOut() else ExitTransition.None,
                 ) {
                     ExtensionView {
                         showExtensionView = false
@@ -289,7 +294,9 @@ fun App(
                 }
 
                 AnimatedVisibility(
-                    showReplayView
+                    showReplayView,
+                    enter = if (enableAnimations) fadeIn() + expandIn() else EnterTransition.None,
+                    exit = if (enableAnimations) shrinkOut() + fadeOut() else ExitTransition.None,
                 ) {
                     ReplaysViewDialog {
                         showReplayView = false
@@ -297,7 +304,9 @@ fun App(
                 }
 
                 AnimatedVisibility(
-                    showRoomView
+                    showRoomView,
+                    enter = if (enableAnimations) fadeIn() + expandIn() else EnterTransition.None,
+                    exit = if (enableAnimations) shrinkOut() + fadeOut() else ExitTransition.None,
                 ) {
                     MultiplayerRoomView(isSinglePlayerGame) {
                         if(!isSinglePlayerGame) {
@@ -619,8 +628,10 @@ fun MainMenu(
             border = BorderStroke(4.dp, MaterialTheme.colorScheme.surfaceContainer),
             shape = RectangleShape
         ) {
+            val state = rememberLazyListState()
             LazyRow(
-                modifier = Modifier.fillMaxWidth(),
+                state = state,
+                modifier = Modifier.fillMaxWidth().lazyRowDesktopScrollable(state),
                 horizontalArrangement = Arrangement.Center
             ) {
                 item {

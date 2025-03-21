@@ -27,11 +27,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
+import io.github.rwpp.config.Settings
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.ui.*
 import org.koin.compose.koinInject
+import org.koin.core.Koin
 
 @Composable
 fun BanUnitViewDialog(
@@ -151,7 +153,9 @@ private fun BanUnitItem(
 
     BorderCard(
         modifier = Modifier
-            .graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+            .then(if (koinInject<Settings>().enableAnimations)
+                Modifier.graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+            else Modifier)
             .fillMaxWidth()
             .padding(10.dp)
             .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp),

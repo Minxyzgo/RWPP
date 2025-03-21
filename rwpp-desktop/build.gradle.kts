@@ -29,7 +29,7 @@ dependencies {
     compileOnly(fileTree(
         "dir" to rootDir.absolutePath + "/lib",
         "include" to "*.jar",
-        "exclude" to "android-game-lib.jar"
+        "exclude" to listOf("android-game-lib.jar", "android.jar")
     ))
     runtimeOnly(fileTree(
         "dir" to buildDir.absolutePath + "/generated/libs",
@@ -48,6 +48,12 @@ sourceSets.main {
 }
 
 val guid = "abc38343-cdb8-4e3f-aa7f-0ead99385de1"
+
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xjvm-default=all")
+    }
+}
 
 compose.desktop {
     application {

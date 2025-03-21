@@ -154,41 +154,63 @@ fun SettingsView(
                                 }
                             }
 
-                            "gameplay" -> SettingsGroup("gameplay") {
-                                SettingsSwitchComp("showSelectedUnitsList")
-                                SettingsSwitchComp("useMinimapAllyColors")
-                                SettingsSwitchComp("showWarLogOnScreen")
-                                SettingsSwitchComp("smartSelection_v2", "smartSelection") //v2 ???
-                                SettingsSwitchComp("forceEnglish")
+                            "gameplay" -> {
+                                SettingsGroup("gameplay") {
+                                    SettingsSwitchComp("showUnitGroups", "unitGroupInterface")
+                                    SettingsSwitchComp("showSelectedUnitsList")
+                                    SettingsSwitchComp("useMinimapAllyColors")
+                                    SettingsSwitchComp("showWarLogOnScreen")
+                                    SettingsSwitchComp("smartSelection_v2", "smartSelection") //v2 ???
+                                    SettingsSwitchComp("forceEnglish")
 
-                                SettingsSwitchComp(
-                                    "",
-                                    "Enhance Reinforce Troops",
-                                    settings.enhancedReinforceTroops
-                                ) {
-                                    settings.enhancedReinforceTroops = it
+                                    SettingsSwitchComp(
+                                        "",
+                                        "Enhance Reinforce Troops",
+                                        settings.enhancedReinforceTroops
+                                    ) {
+                                        settings.enhancedReinforceTroops = it
+                                    }
+                                    var teamUnitCapSinglePlayer by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapSinglePlayer")) }
+                                    SettingsTextField(
+                                        "teamUnitCapSinglePlayer",
+                                        teamUnitCapSinglePlayer?.toString() ?: "",
+                                        lengthLimitCount = 6,
+                                        typeInNumberOnly = true,
+                                        typeInOnlyInteger = true
+                                    ) {
+                                        teamUnitCapSinglePlayer = it.toIntOrNull()
+                                        configIO.setGameConfig("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer ?: 100)
+                                    }
+                                    var teamUnitCapHostedGame by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapHostedGame")) }
+                                    SettingsTextField(
+                                        "teamUnitCapHostedGame",
+                                        teamUnitCapHostedGame?.toString() ?: "",
+                                        lengthLimitCount = 6,
+                                        typeInNumberOnly = true,
+                                        typeInOnlyInteger = true
+                                    ) {
+                                        teamUnitCapHostedGame = it.toIntOrNull()
+                                        configIO.setGameConfig("teamUnitCapHostedGame", teamUnitCapHostedGame ?: 100)
+                                    }
                                 }
-                                var teamUnitCapSinglePlayer by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapSinglePlayer")) }
-                                SettingsTextField(
-                                    "teamUnitCapSinglePlayer",
-                                    teamUnitCapSinglePlayer?.toString() ?: "",
-                                    lengthLimitCount = 6,
-                                    typeInNumberOnly = true,
-                                    typeInOnlyInteger = true
-                                ) {
-                                    teamUnitCapSinglePlayer = it.toIntOrNull()
-                                    configIO.setGameConfig("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer ?: 100)
+
+                                SettingsGroup("", readI18n("settings.buildings")) {
+                                    SettingsSwitchComp(
+                                        "",
+                                        readI18n("settings.showAttackRange"),
+                                        settings.showBuildingAttackRange
+                                    ) {
+                                        settings.showBuildingAttackRange = it
+                                    }
                                 }
-                                var teamUnitCapHostedGame by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapHostedGame")) }
-                                SettingsTextField(
-                                    "teamUnitCapHostedGame",
-                                    teamUnitCapHostedGame?.toString() ?: "",
-                                    lengthLimitCount = 6,
-                                    typeInNumberOnly = true,
-                                    typeInOnlyInteger = true
-                                ) {
-                                    teamUnitCapHostedGame = it.toIntOrNull()
-                                    configIO.setGameConfig("teamUnitCapHostedGame", teamUnitCapHostedGame ?: 100)
+
+                                SettingsGroup("", readI18n("settings.units")) {
+                                    val list = listOf("Never", "Land", "Air", "All")
+                                    var selectedIndex by remember { mutableStateOf(list.indexOf(settings.showAttackRangeUnit)) }
+                                    SettingsDropDown("showAttackRange", list, selectedIndex) { index, type ->
+                                        selectedIndex = index
+                                        settings.showAttackRangeUnit = type
+                                    }
                                 }
                             }
 
@@ -209,6 +231,7 @@ fun SettingsView(
 
                             "networking" -> SettingsGroup("networking") {
                                 SettingsSwitchComp("udpInMultiplayer")
+                                SettingsSwitchComp("saveMultiplayerReplays", "saveReplays")
                                 SettingsSwitchComp("showChatAndPingShortcuts")
                                 SettingsSwitchComp("showMapPingsOnBattlefield")
                                 SettingsSwitchComp("showMapPingsOnMinimap")
@@ -247,6 +270,14 @@ fun SettingsView(
                                 val list = themes.keys.toList()
                                 var selectedIndex by remember { mutableStateOf(list.indexOf(defaultTheme)) }
                                 SettingsGroup("", readI18n("settings.theme")) {
+                                    SettingsSwitchComp(
+                                        "",
+                                        readI18n("settings.enableAnimations"),
+                                        settings.enableAnimations
+                                    ) {
+                                        settings.enableAnimations = it
+                                    }
+
                                     SettingsDropDown("colorScheme", list, selectedIndex,
                                         selectedItemColor = { theme, _ -> themes[theme]!!.primary }
                                     ) { index, theme ->

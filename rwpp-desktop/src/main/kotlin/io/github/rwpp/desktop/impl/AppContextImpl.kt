@@ -26,6 +26,7 @@ class AppContextImpl : AppContext {
 
 
     override fun exit() {
+        GameEngine.B().bO
         val configIO: ConfigIO = get()
         GameEngine.B().bQ.apply {
             numLoadsSinceRunningGameOrNormalExit = 0

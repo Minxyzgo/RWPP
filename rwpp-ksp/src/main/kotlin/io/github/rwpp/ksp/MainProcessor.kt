@@ -19,6 +19,7 @@ class MainProcessor(
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
+        MainProcessor.logger = logger
         //only run once
         if (finished) return emptyList()
 
@@ -58,6 +59,29 @@ class MainProcessor(
             }
         }
 
+        for (clazz in resolver.getSymbolsWithAnnotation(SetInterfaceOn::class.qualifiedName!!)) {
+            clazz as KSClassDeclaration
+            require(clazz.classKind == ClassKind.INTERFACE) {  "Only interfaces can be annotated with @SetInterfaceOn" }
+            val annotation = clazz.annotations.first {  it.shortName.asString() == SetInterfaceOn::class.simpleName }
+            val classes = (annotation.arguments.first().value as ArrayList<KSType>).map { it.declaration.qualifiedName!!.asString() }
+            classes.forEach { className ->
+                val hasSelfProperty = clazz.declarations.any {
+                    it is KSPropertyDeclaration && it.simpleName.asString() == "self"
+                }
+                InjectApi.injectInterface(
+                    clazz.qualifiedName!!.asString(),
+                    className,
+                    clazz.declarations.filter {
+                        it is KSPropertyDeclaration && it.annotations.any { it.shortName.asString() == NewField::class.simpleName }
+                    }.map {
+                        it as KSPropertyDeclaration
+                        it.simpleName.asString() to  it.type.resolve().declaration.qualifiedName!!.asString()
+                    }.toList(),
+                    hasSelfProperty
+                )
+            }
+        }
+
         finished = true
 
         return emptyList()
@@ -91,31 +115,58 @@ class MainProcessor(
 
         clazz.declarations.forEach { declaration ->
             if (declaration is KSFunctionDeclaration) {
-                declaration.annotations.forEach { annotation ->
+                declaration.annotations.filter {
+                    it.shortName.asString() in listOf(Inject::class.simpleName, RedirectMethod::class.simpleName)
+                }.sortedBy {
+                    if (it.shortName.asString() == RedirectMethod::class.simpleName) 0 else 1
+                }.forEach { annotation ->
+                    var receiver = declaration
+                        .extensionReceiver?.
+                        resolve()
+
+                    if (receiver != null) {
+                        if (receiver.declaration is KSTypeAlias) receiver = (receiver.declaration as KSTypeAlias).type.resolve()
+                    }
+
+
+                    val receiverType = receiver?.declaration?.qualifiedName?.asString() ?: ""
+                    if (receiver != null && receiverType != injectClassName && receiverType != "kotlin.Any")
+                        throw IllegalArgumentException(
+                            "Receiver (${receiver.declaration.qualifiedName!!.asString()})" +
+                                    " of ${declaration.simpleName.asString()} must be of type $injectClassName"
+                        )
+
+                    val methodName = annotation.arguments.first().value as String
+
+                    val injectFunctionPath = "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}"
+
                     when (annotation.shortName.asString()) {
+                        RedirectMethod::class.simpleName -> {
+                            InjectApi.redirect(
+                                injectClassName,
+                                receiver != null,
+                                methodName,
+                                annotation.arguments[1].value as String,
+                                annotation.arguments[2].value as String,
+                                annotation.arguments[3].value as String,
+                                declaration.parameters.map { param ->
+                                    val type = param.type.resolve()
+                                    val paramDeclaration = type.declaration
+                                    val qualifiedName = paramDeclaration.qualifiedName!!.asString()
+                                    if (qualifiedName == "kotlin.Array") {
+                                        type.arguments.first().type!!.resolve().declaration.qualifiedName!!.asString() + "[]"
+                                    } else qualifiedName
+                                },
+                                declaration.returnType!!.resolve().declaration.qualifiedName!!.asString(),
+                                injectFunctionPath,
+                            )
+                        }
+
                         Inject::class.simpleName -> {
-                            var receiver = declaration
-                                .extensionReceiver?.
-                                resolve()
-
-                            if (receiver != null) {
-                                if (receiver.declaration is KSTypeAlias) receiver = (receiver.declaration as KSTypeAlias).type.resolve()
-                            }
-
-
-                            val receiverType = receiver?.declaration?.qualifiedName?.asString() ?: ""
-                            if (receiver != null && receiverType != injectClassName && receiverType != "kotlin.Any")
-                                throw IllegalArgumentException(
-                                    "Receiver (${receiver.declaration.qualifiedName!!.asString()})" +
-                                            " of ${declaration.simpleName.asString()} must be of type $injectClassName"
-                                )
-
-
-                            //if (injectClass.declaration.parentDeclaration != null) MainProcessorProvider.logger.warn(injectClass.declaration.parentDeclaration!!::class.qualifiedName!!)
                             InjectApi.injectMethod(
                                 injectClassName,
                                 receiver != null,
-                                annotation.arguments.first().value as String,
+                                methodName,
                                 declaration.parameters.map {
                                     val type = it.type.resolve()
                                     val paramDeclaration = type.declaration
@@ -126,7 +177,7 @@ class MainProcessor(
                                 },
                                 InjectMode.valueOf((annotation.arguments[1].value as KSType).declaration.simpleName.asString()),
                                 declaration.returnType!!.resolve().declaration.qualifiedName!!.asString() == Unit::class.qualifiedName!!,
-                                "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}",
+                                injectFunctionPath,
                                 (annotation.arguments.getOrNull(2)?.value as? String) ?: "",
                             )
                         }
@@ -139,4 +190,8 @@ class MainProcessor(
     private var init = false
     private var finished = false
     private val injectClasses = mutableSetOf<String>()
+
+    companion object {
+        lateinit var logger: KSPLogger
+    }
 }

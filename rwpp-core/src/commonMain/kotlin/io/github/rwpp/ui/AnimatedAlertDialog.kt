@@ -14,12 +14,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import io.github.rwpp.appKoin
+import io.github.rwpp.config.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 internal const val ANIMATION_TIME = 500L
 internal const val DIALOG_BUILD_TIME = 300L
@@ -31,16 +34,18 @@ internal fun AnimatedModalBottomSheetTransition(
     visible: Boolean,
     content: @Composable AnimatedVisibilityScope.() -> Unit
 ) {
+    val enableAnimations = koinInject<Settings>().enableAnimations
+
     AnimatedVisibility(
         visible = visible,
-        enter = slideInVertically(
+        enter = if (enableAnimations) slideInVertically(
             animationSpec = tween(ANIMATION_TIME.toInt()),
             initialOffsetY = { fullHeight -> fullHeight }
-        ),
-        exit = slideOutVertically(
+        ) else EnterTransition.None,
+        exit = if (enableAnimations) slideOutVertically(
             animationSpec = tween(ANIMATION_TIME.toInt()),
             targetOffsetY = { fullHeight -> fullHeight }
-        ),
+        ) else ExitTransition.None,
         content = content
     )
 }
@@ -50,14 +55,16 @@ internal fun AnimatedScaleInTransition(
     visible: Boolean,
     content: @Composable AnimatedVisibilityScope.() -> Unit
 ) {
+    val enableAnimations = koinInject<Settings>().enableAnimations
+
     AnimatedVisibility(
         visible = visible,
-        enter = scaleIn(
+        enter = if (enableAnimations) scaleIn(
             animationSpec = tween(ANIMATION_TIME.toInt())
-        ),
-        exit = scaleOut(
+        ) else EnterTransition.None,
+        exit = if (enableAnimations) scaleOut(
             animationSpec = tween(ANIMATION_TIME.toInt())
-        ),
+        ) else ExitTransition.None,
         content = content
     )
 }
@@ -72,10 +79,11 @@ fun AnimatedTransitionDialog(
     val onDismissSharedFlow: MutableSharedFlow<Any> = remember { MutableSharedFlow() }
     val coroutineScope: CoroutineScope = rememberCoroutineScope()
     val animateTrigger = remember { mutableStateOf(false) }
+    val enableAnimations = koinInject<Settings>().enableAnimations
 
     LaunchedEffect(key1 = Unit) {
         launch {
-            delay(DIALOG_BUILD_TIME)
+            delay(if (enableAnimations) DIALOG_BUILD_TIME else 0)
             animateTrigger.value = true
         }
         launch {
@@ -143,8 +151,10 @@ suspend fun startDismissWithExitAnimation(
     animateTrigger: MutableState<Boolean>,
     onDismissRequest: () -> Unit
 ) {
+    val enableAnimations = appKoin.get<Settings>().enableAnimations
+
     animateTrigger.value = false
-    delay(ANIMATION_TIME)
+    delay(if(enableAnimations) ANIMATION_TIME else 50)
     onDismissRequest()
 }
 

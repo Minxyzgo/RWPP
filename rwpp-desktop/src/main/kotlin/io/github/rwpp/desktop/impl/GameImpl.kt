@@ -35,11 +35,8 @@ import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
-import io.github.rwpp.game.mod.Mod
-import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.UnitType
-import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.game.world.World
 import io.github.rwpp.logger
 import io.github.rwpp.net.Packet
@@ -48,11 +45,9 @@ import io.github.rwpp.ui.LoadingContext
 import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.channels.Channel
 import org.koin.core.annotation.Single
-import org.koin.core.component.get
 import org.lwjgl.opengl.Display
 import java.awt.image.BufferedImage
 import java.io.*
-import java.util.TimerTask
 import javax.imageio.ImageIO
 
 @Single
@@ -60,8 +55,6 @@ class GameImpl : Game {
     private var _missions: List<Mission>? = null
     private var _allMaps: List<GameMap>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
-    private var _units: List<UnitType>? = null
-    private var lastAllUnits: java.util.ArrayList<*>? = null
     private val asField = PlayerInternal::class.java.getDeclaredField("as")
         .apply { isAccessible = true }
     private var threadConnector: com.corrodinggames.rts.gameFramework.j.an? = null
@@ -79,9 +72,7 @@ class GameImpl : Game {
                     get() = B.bX.H
                 override val localPlayer: Player
                     get() {
-                        val p = playerCacheMap[B.bX.z]
-                        if(p == null) getPlayers()
-                        return playerCacheMap[B.bX.z] ?: PlayerImpl(B.bs)
+                        return (B.bX.z ?: B.bs) as Player
                     }
                 override var sharedControl: Boolean
                     get() = l
@@ -147,7 +138,7 @@ class GameImpl : Game {
                     get() = p
                     set(value) {
                         p = value
-                        if(isHost && value) sendSystemMessage("Room has been locked. Now player can't join the room")
+                        if(isHost && value) sendSystemMessage("Room has been locked. Now self can't join the room")
                     }
                 override var teamLock: Boolean
                     get() = m
@@ -167,10 +158,7 @@ class GameImpl : Game {
 
                 @Suppress("unchecked_cast")
                 override fun getPlayers(): List<Player> {
-                    return (asField.get(B.bX.ay) as Array<com.corrodinggames.rts.game.n?>).mapNotNull {
-                        if(it == null) return@mapNotNull null
-                        playerCacheMap.getOrPut(it) { PlayerImpl(it).also { p -> if (it != B.bX.z) PlayerJoinEvent(p).broadcastIn() } }
-                    }
+                    return (asField.get(B.bX.ay) as Array<Player?>).mapNotNull { it }.toList()
                 }
 
                 override suspend fun roomDetails(): String {
@@ -210,7 +198,7 @@ class GameImpl : Game {
                         sendChatMessage("-surrender")
                     } else if (player.client != null) {
                         GameEngine.B().bX.b(
-                            (player.client as ClientImpl).client, (player as PlayerImpl).player, player.name, "-surrender"
+                            player.client as c, (player as PlayerImpl).self, player.name, "-surrender"
                         )
                     }
 
@@ -317,13 +305,12 @@ class GameImpl : Game {
                 }
 
                 override fun kickPlayer(player: Player) {
-                    val p = (player as PlayerImpl).player
+                    val p = (player as PlayerImpl).self
                     B.bX.e(p)
                     // playerCacheMap.remove(p) maybe kick didn't work out
                 }
 
                 override fun disconnect(reason: String) {
-                    playerCacheMap.clear()
                     isSandboxGame = false
                     isRWPPRoom = false
                     option = RoomOption()
@@ -532,7 +519,7 @@ class GameImpl : Game {
                 h = a3.bX
                 a3.bQ.slick2dFullScreen = false
                 a3.bQ.showZoomButton = false
-                a3.bQ.showUnitGroups = false
+                //a3.bQ.showUnitGroups = false
                 j = game
                 com.corrodinggames.rts.java.u::class.java.getDeclaredField("c").apply {
                     isAccessible = true
@@ -836,37 +823,7 @@ class GameImpl : Game {
     }
     @Suppress("UNCHECKED_CAST")
     override fun getAllUnits(): List<UnitType> {
-        val gameUnits = (com.corrodinggames.rts.game.units.ar.ae as ArrayList<com.corrodinggames.rts.game.units.`as`>)
-        if(_units == null || lastAllUnits != gameUnits) {
-            _units = gameUnits.map {
-                object : UnitType {
-                    override val name: String
-                        get() = it.v()
-                    override val displayName: String
-                        get() = it.e()
-                    override val description: String
-                        get() = it.f()
-                    // Nevertheless, we can change it soon
-//                    override val painter: Painter? = (it as? com.corrodinggames.rts.game.units.custom.l)?.ad?.let {
-//                            runCatching {
-//                                ImageIO.read(File(it.a().replace("/", "\\"))).toPainter()
-//                            }.getOrElse { e ->
-//                                println("error on reading path:${it.a()}")
-//                                e.printStackTrace()
-//                                null
-//                            }
-//                        }
-                    override val movementType: MovementType
-                        get() = MovementType.valueOf(it.o().name)
-                    override val mod: Mod?
-                        get() = (it as? com.corrodinggames.rts.game.units.custom.l)?.J?.s?.let(get<ModManager>()::getModByName)
-                }
-            }
-
-            lastAllUnits = gameUnits
-        }
-
-        return _units!!
+        return (com.corrodinggames.rts.game.units.ar.ae as ArrayList<UnitType>)
     }
 
     override fun onBanUnits(units: List<UnitType>) {

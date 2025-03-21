@@ -12,6 +12,18 @@ package io.github.rwpp.inject
 import kotlin.reflect.KClass
 
 /**
+ * 该注解用于将一个类重定向到另一个类.
+ */
+@Repeatable
+@Target(AnnotationTarget.FILE)
+@Retention(AnnotationRetention.SOURCE)
+annotation class RedirectTo(
+    val from: String,
+    val to: String,
+)
+
+
+/**
  * 该注解用于标记一个顶层对象，用于其它 inject 注解识别注入类.
  *
  * @see InjectClassByString
@@ -33,7 +45,6 @@ annotation class InjectClass(
 annotation class InjectClassByString(
     val className: String,
 )
-
 
 /**
  * 该注解用于标记一个函数, 该函数将以指定方式[injectMode]注入到目标类的方法中.
@@ -70,10 +81,34 @@ annotation class Inject(
     val desc: String = "",
 )
 
-@Repeatable
-@Target(AnnotationTarget.FILE)
+/**
+ * 该注解用于标记一个函数, 该函数内所有指定的函数都会重定向为当前函数.
+ */
+@Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
-annotation class RedirectTo(
-    val from: String,
-    val to: String,
+annotation class RedirectMethod(
+    val method: String,
+    val methodDesc: String = "",
+    val targetClass: String,
+    val targetMethod: String,
 )
+
+/**
+ * 该注解指定多个类实现该接口.
+ *
+ * 可以添加一个特殊属性`self`，该属性会自动在指定类中实现返回该类的实例.
+ *
+ * 可以使用[NewField]标记一个属性，该属性会自动添加到所有实现该接口的类中.
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.SOURCE)
+annotation class SetInterfaceOn(
+    val classes: Array<KClass<*>>,
+)
+
+/**
+ * 在[SetInterfaceOn]中使用，用于标记一个属性为新的字段
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.SOURCE)
+annotation class NewField

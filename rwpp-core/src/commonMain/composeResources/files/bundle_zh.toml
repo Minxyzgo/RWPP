@@ -93,6 +93,10 @@ colorScheme = "配色方案"
 setBackgroundImagePath = "设置背景图片路径"
 backgroundTransparency = "背景透明度"
 backgroundImageTransparency = "背景图片透明度"
+buildings = "建筑物"
+showAttackRange = "显示攻击范围"
+units = "单位"
+enableAnimations = "启用动画"
 
 [extension]
 extension = "扩展"

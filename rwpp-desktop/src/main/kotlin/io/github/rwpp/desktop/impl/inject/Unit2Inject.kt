@@ -5,12 +5,14 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.world
+package io.github.rwpp.desktop.impl.inject
 
-import io.github.rwpp.game.base.GamePaint
+import io.github.rwpp.inject.InjectClass
 
-interface World {
-    fun getAllUnits(): List<Unit>
+@InjectClass(com.corrodinggames.rts.game.units.custom.j::class)
+object Unit2Inject {
 
-    fun drawText(text: String, x: Float, y: Float, paint: GamePaint)
+    fun onDrawUnit() {
+
+    }
 }

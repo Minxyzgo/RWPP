@@ -10,7 +10,7 @@ package io.github.rwpp.desktop.impl
 
 typealias NetPacket = com.corrodinggames.rts.gameFramework.e
 typealias UnitEngine =    com.corrodinggames.rts.game.units.custom.l
-typealias FClass = com.corrodinggames.rts.gameFramework.f
+typealias Graphics = com.corrodinggames.rts.gameFramework.f
 typealias DClass = com.corrodinggames.rts.java.d
 typealias AClass = com.corrodinggames.rts.java.d.a
 typealias GameEngine = com.corrodinggames.rts.gameFramework.l
@@ -24,4 +24,6 @@ typealias AMClass = com.corrodinggames.rts.gameFramework.am
 typealias VClass = com.corrodinggames.rts.java.v
 typealias RwOutputStream = com.corrodinggames.rts.gameFramework.j.`as`
 typealias JClass = com.corrodinggames.rts.gameFramework.j
+typealias GameView = com.corrodinggames.rts.gameFramework.f.a
 typealias Client = com.corrodinggames.rts.gameFramework.j.c
+//typealias Graphics = com.corrodinggames.rts.gameFramework.f

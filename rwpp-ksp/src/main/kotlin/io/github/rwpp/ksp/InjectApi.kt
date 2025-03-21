@@ -10,21 +10,43 @@
 package io.github.rwpp.ksp
 
 import io.github.rwpp.inject.InjectMode
-import javassist.ClassMap
-import javassist.CtClass
-import javassist.CtMethod
-import javassist.CtNewMethod
-import javassist.Modifier
-import javassist.bytecode.Bytecode
-import javassist.bytecode.ConstPool
-import javassist.bytecode.Descriptor
-import javassist.bytecode.LocalVariableAttribute
+import javassist.*
+import javassist.bytecode.*
+import javassist.expr.ExprEditor
+import javassist.expr.MethodCall
 
 internal object InjectApi {
 
     fun redirectClassName(classMap: ClassMap) {
         GameLibraries.includes.first().classTree.allClasses.forEach {
             it.replaceClassName(classMap)
+        }
+    }
+
+    fun injectInterface(
+        interfaceName: String,
+        targetClassName: String,
+        newFields: List<Pair<String, String>>, // Pair<fieldName, fieldType>
+        hasSelfField: Boolean = false,
+    ) {
+        val classPool = GameLibraries.includes.first().classTree.defPool
+        val targetClass = classPool.get(targetClassName)
+
+        targetClass.classFile.addInterface(interfaceName)
+
+        newFields.forEach { (name, type) ->
+            val field = CtField.make("${transformClass(type)} $name;", targetClass)
+            targetClass.addField(field)
+            targetClass.addMethod(CtNewMethod.getter("get${name.replaceFirstChar { it.uppercase() }}", field))
+            targetClass.addMethod(CtNewMethod.setter("set${name.replaceFirstChar { it.uppercase() }}", field))
+        }
+
+        if (hasSelfField) {
+            targetClass.addMethod(CtNewMethod.make("""
+                public $targetClassName getSelf() {
+                    return this;
+                }
+            """.trimIndent(), targetClass))
         }
     }
 
@@ -38,39 +60,8 @@ internal object InjectApi {
         injectFunctionPath: String,
         desc: String
     ) {
-
         @Suppress("NAME_SHADOWING")
-        val methodArgs = methodArgs.toMutableList()
-
-        for ((i, v) in methodArgs.withIndex()) {
-            when (v) {
-                "kotlin.Int" -> methodArgs[i] = "int"
-                "kotlin.Long" -> methodArgs[i] = "long"
-                "kotlin.Float" -> methodArgs[i] = "float"
-                "kotlin.Double" -> methodArgs[i] = "double"
-                "kotlin.Boolean" -> methodArgs[i] = "boolean"
-                "kotlin.Byte" -> methodArgs[i] = "byte"
-                "kotlin.Char" -> methodArgs[i] = "char"
-                "kotlin.Short" -> methodArgs[i] = "short"
-                "kotlin.String" -> methodArgs[i] = "java.lang.String"
-                "kotlin.Array" -> methodArgs[i] = "java.lang.Object[]"
-                "kotlin.IntArray" -> methodArgs[i] = "int[]"
-                "kotlin.LongArray" -> methodArgs[i] = "long[]"
-                "kotlin.FloatArray" -> methodArgs[i] = "float[]"
-                "kotlin.DoubleArray" -> methodArgs[i] = "double[]"
-                "kotlin.BooleanArray" -> methodArgs[i] = "boolean[]"
-                "kotlin.ByteArray" -> methodArgs[i] = "byte[]"
-                "kotlin.CharArray" -> methodArgs[i] = "char[]"
-                "kotlin.ShortArray" -> methodArgs[i] = "short[]"
-                "kotlin.collections.List" -> methodArgs[i] = "java.util.List"
-                "kotlin.collections.Map" -> methodArgs[i] = "java.util.Map"
-                "kotlin.collections.Set" -> methodArgs[i] = "java.util.Set"
-                "kotlin.collections.MutableList" -> methodArgs[i] = "java.util.List"
-                "kotlin.collections.MutableMap" -> methodArgs[i] = "java.util.Map"
-                "kotlin.collections.MutableSet" -> methodArgs[i] = "java.util.Set"
-                "kotlin.Unit" -> methodArgs[i] = "void"
-            }
-        }
+        val methodArgs = transformClasses(methodArgs)
 
         val classPool = GameLibraries.includes.first().classTree.defPool
         val clazz = classPool.get(className)
@@ -134,6 +125,7 @@ internal object InjectApi {
             //bytecode.add(Bytecode.POP)
         }
 
+        //此处并非真实返回值，只是给javassist标记为此处方法已经结束
         if (method.returnType != CtClass.voidType) {
             when (method.returnType) {
                 CtClass.booleanType -> bytecode.addIconst(0)
@@ -239,4 +231,142 @@ internal object InjectApi {
             }
         }
     }
+
+    fun redirect(
+        className: String,
+        hasReceiver: Boolean,
+        methodName: String,
+        methodDesc: String,
+        targetClassName: String,
+        targetMethodName: String,
+        targetMethodArgs: List<String>,
+        returnType: String,
+        injectFunctionPath: String,
+    ) {
+
+        val classPool = GameLibraries.includes.first().classTree.defPool
+        val clazz = classPool.get(className)
+        val methodArgs = Descriptor.getParameterTypes(methodDesc, classPool)
+
+        @Suppress("NAME_SHADOWING")
+        val targetMethodArgs = transformClasses(targetMethodArgs).map { classPool.get(it) }.toTypedArray()
+        val targetMethodReturnType = classPool[transformClasses(listOf(returnType)).first()]
+
+        MainProcessor.logger.warn("targetMethodArgs: ${targetMethodArgs.joinToString(",")}")
+        val method = clazz.getDeclaredMethod(methodName, methodArgs)
+        val targetMethod = classPool.get(targetClassName).getDeclaredMethod(targetMethodName, targetMethodArgs)
+
+        val newMethodName = "__redirect__${methodName}__$targetMethodName"
+
+        val newMethod = CtNewMethod.make(targetMethodReturnType,
+            newMethodName,
+            targetMethodArgs,
+            arrayOf(),
+            "{ }",
+            clazz
+        )
+
+        val injectClass = injectFunctionPath.substringBeforeLast(".")
+        val bytecode = Bytecode(clazz.classFile.constPool)
+        bytecode.addGetstatic(injectClass, "INSTANCE", Descriptor.of(injectClass))
+
+        var i = 0
+        if (!Modifier.isStatic(method.modifiers)) {
+            if (hasReceiver) bytecode.addAload(0)
+            i++
+        } else if (hasReceiver) {
+            bytecode.add(Bytecode.ACONST_NULL)
+        }
+
+        for (param in newMethod.parameterTypes) {
+            when (param) {
+                CtClass.booleanType -> bytecode.addIload(i)
+                CtClass.byteType -> bytecode.addIload(i)
+                CtClass.charType -> bytecode.addIload(i)
+                CtClass.shortType -> bytecode.addIload(i)
+                CtClass.intType -> bytecode.addIload(i)
+                CtClass.longType -> bytecode.addLload(i)
+                CtClass.floatType -> bytecode.addFload(i)
+                CtClass.doubleType -> bytecode.addDload(i)
+                else -> bytecode.addAload(i)
+            }
+
+            i++
+        }
+
+        MainProcessor.logger.warn(newMethod.parameterTypes.joinToString("") { it.name })
+        MainProcessor.logger.warn("i: $i")
+
+        bytecode.addInvokevirtual(
+            injectClass,
+            injectFunctionPath.substringAfterLast("."),
+            "(" +
+                    (if (hasReceiver) Descriptor.of(clazz) else "") +
+                    targetMethodArgs.joinToString("") { Descriptor.of(it) } +
+                    ")" +
+                    Descriptor.of(targetMethodReturnType)
+        )
+
+        bytecode.addReturn(targetMethodReturnType)
+
+        newMethod.methodInfo.codeAttribute = bytecode.toCodeAttribute()
+        newMethod.methodInfo.codeAttribute.maxLocals = i
+        newMethod.methodInfo.rebuildStackMapIf6(clazz.classPool, clazz.classFile2)
+
+        clazz.addMethod(newMethod)
+
+        method.instrument(object : ExprEditor() {
+            override fun edit(m: MethodCall) {
+                if(m.signature == targetMethod.signature
+                    && m.methodName == targetMethodName
+                    && m.className == targetClassName) {
+                    MainProcessor.logger.warn("redirect $className.$methodName")
+                    m.replace("{  $newMethodName($$); }")
+                }
+                super.edit(m)
+            }
+        })
+    }
+
+    private fun transformClasses(methodArgs: List<String>): List<String> {
+        @Suppress("NAME_SHADOWING")
+        val methodArgs = methodArgs.toMutableList()
+
+        for ((i, v) in methodArgs.withIndex()) {
+            methodArgs[i] = transformClass(v)
+        }
+
+        return methodArgs
+    }
+    
+    private fun transformClass(className: String): String = when (className) {
+        "kotlin.Any" -> "java.lang.Object"
+        "kotlin.Int" -> "int"
+        "kotlin.Long" -> "long"
+        "kotlin.Float" -> "float"
+        "kotlin.Double" -> "double"
+        "kotlin.Boolean" -> "boolean"
+        "kotlin.Byte" -> "byte"
+        "kotlin.Char" -> "char"
+        "kotlin.Short" -> "short"
+        "kotlin.String" -> "java.lang.String"
+        "kotlin.Array" -> "java.lang.Object[]"
+        "kotlin.IntArray" -> "int[]"
+        "kotlin.LongArray" -> "long[]"
+        "kotlin.FloatArray" -> "float[]"
+        "kotlin.DoubleArray" -> "double[]"
+        "kotlin.BooleanArray" -> "boolean[]"
+        "kotlin.ByteArray" -> "byte[]"
+        "kotlin.CharArray" -> "char[]"
+        "kotlin.ShortArray" -> "short[]"
+        "kotlin.collections.List" -> "java.util.List"
+        "kotlin.collections.Map" -> "java.util.Map"
+        "kotlin.collections.Set" -> "java.util.Set"
+        "kotlin.collections.MutableList" -> "java.util.List"
+        "kotlin.collections.MutableMap" -> "java.util.Map"
+        "kotlin.collections.MutableSet" -> "java.util.Set"
+        "kotlin.Unit" -> "void"
+        else -> className
+    }
 }
+

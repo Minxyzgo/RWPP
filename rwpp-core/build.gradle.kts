@@ -48,6 +48,11 @@ kotlin {
 
     jvm("desktop")
 
+    compilerOptions {
+        freeCompilerArgs.add("-Xjvm-default=all")
+    }
+
+
     sourceSets {
         val commonMain by getting {
 

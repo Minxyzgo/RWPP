@@ -39,7 +39,6 @@ object ConnectingPlayer : Player {
     override var difficulty: Difficulty?
         get() = null
         set(_) {}
-    override val data: PlayerData = PlayerData()
     override var credits: Int
         get() = 0
         set(_) {}

@@ -8,9 +8,9 @@
 package io.github.rwpp.desktop.impl.inject
 
 import io.github.rwpp.desktop.impl.Client
-import io.github.rwpp.desktop.playerCacheMap
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.PlayerLeaveEvent
+import io.github.rwpp.game.Player
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
@@ -24,9 +24,10 @@ object ClientInject {
         str: String?
     ) {
         if (this.z != null) {
-            playerCacheMap[this.z]?.let { PlayerLeaveEvent(it, com.corrodinggames.rts.gameFramework.j.ad
-                .i(str ?: "")).broadcastIn() }
-            playerCacheMap.remove(this.z)
+            PlayerLeaveEvent(
+                this.z as Player, com.corrodinggames.rts.gameFramework.j.ad
+                    .i(str ?: "")
+            ).broadcastIn()
         }
     }
 }

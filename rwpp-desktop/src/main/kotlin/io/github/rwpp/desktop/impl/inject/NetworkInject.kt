@@ -26,6 +26,7 @@ import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
 import io.github.rwpp.inject.InterruptResult
 import io.github.rwpp.logger
+import io.github.rwpp.net.Client
 import io.github.rwpp.net.InternalPacketType
 import io.github.rwpp.net.Net
 import io.github.rwpp.packageName
@@ -98,7 +99,7 @@ object NetworkInject {
             else -> {
                 net.listeners[type]?.forEach { listener ->
                     val result = listener.invoke(
-                        ClientImpl(auVar.a),
+                        auVar.a as Client,
                         net.packetDecoders[type]!!.invoke(
                             DataInputStream(
                                 ByteArrayInputStream(auVar.c)
@@ -143,7 +144,7 @@ object NetworkInject {
     ): Any {
         val room = appKoin.get<Game>().gameRoom
         val player = room.getPlayers()
-            .firstOrNull { nVar != null && (it as PlayerImpl?)?.player == nVar }
+            .firstOrNull { nVar != null && (it as PlayerImpl?)?.self == nVar }
 
         if ((str2 ?: "").startsWith(commands.prefix)
             && player != null
@@ -167,7 +168,7 @@ object NetworkInject {
         val player = room.getPlayers()
             .firstOrNull {
                 if (gameRoom.isHost)
-                    c != null && (it.client as ClientImpl?)?.client == c
+                    c != null && it.client == c
                 else it.name == str
             }
 

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.config.Settings
 import io.github.rwpp.core.UI
 import io.github.rwpp.core.UI.chatMessages
 import io.github.rwpp.event.GlobalEventChannel
@@ -317,11 +318,12 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     readI18n("multiplayer.room.start"),
                                     modifier = Modifier.padding(5.dp)
                                 ) {
-                                    val unpreparedPlayers = game.gameRoom.getPlayers().filter { !it.data.ready }
-                                    if(unpreparedPlayers.isNotEmpty()) {
-                                        game.gameRoom.sendSystemMessage(
-                                            "Cannot start game. Because players: ${unpreparedPlayers.joinToString(", ") { it.name }} aren't ready.")
-                                    } else if(room.isHostServer) room.sendQuickGameCommand("-start")  else room.startGame()
+                                   // val unpreparedPlayers = game.gameRoom.getPlayers().filter { !it.data.ready }
+                                   // if(unpreparedPlayers.isNotEmpty()) {
+                                   //     game.gameRoom.sendSystemMessage(
+                                   //         "Cannot start game. Because players: ${unpreparedPlayers.joinToString(", ") { it.name }} aren't ready.")
+                                    //} else
+                                    if(room.isHostServer) room.sendQuickGameCommand("-start") else room.startGame()
                                 }
                             }
 
@@ -347,8 +349,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
                         Column(
                             modifier = Modifier.weight(.7f).padding(10.dp).then(
-                                if(LocalWindowManager.current != WindowManager.Large) Modifier.verticalScroll(rememberScrollState())
-                                else Modifier
+                                /*if(LocalWindowManager.current != WindowManager.Large) Modifier.verticalScroll(rememberScrollState())
+                                else*/ Modifier
                             ),
                         ) {
                             BorderCard(
@@ -380,28 +382,6 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
                                     Row(
                                         modifier = Modifier
-                                            .apply {
-                                                if (LocalWindowManager.current == WindowManager.Middle) {
-                                                    var (delay, easing) = state.calculateDelayAndEasing(index, 1)
-                                                    if (LocalWindowManager.current != WindowManager.Large) delay = 0
-                                                    val animation = tween<Float>(
-                                                        durationMillis = 500,
-                                                        delayMillis = delay,
-                                                        easing = easing
-                                                    )
-                                                    val args = ScaleAndAlphaArgs(
-                                                        fromScale = 2f,
-                                                        toScale = 1f,
-                                                        fromAlpha = 0f,
-                                                        toAlpha = 1f
-                                                    )
-                                                    val (scale, alpha) = scaleAndAlpha(
-                                                        args = args,
-                                                        animation = animation
-                                                    )
-                                                    graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
-                                                }
-                                            }
                                             .then(modifier)
                                             .height(IntrinsicSize.Max)
                                             .padding(5.dp)
@@ -439,11 +419,11 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     }
                                 }
 
-                                if(LocalWindowManager.current != WindowManager.Large) {
-                                    for(i in players.indices) {
-                                        PlayerTable(i)
-                                    }
-                                } else {
+//                                if(LocalWindowManager.current != WindowManager.Large) {
+//                                    for(i in players.indices) {
+//                                        PlayerTable(i)
+//                                    }
+//                                } else {
                                     LazyColumnScrollbar(
                                         listState = state,
                                         modifier = Modifier.fillMaxWidth()
@@ -458,32 +438,34 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                             ) { index ->
                                                 PlayerTable(index, Modifier.animateItem())
                                             }
-                                        }
-                                    }
-                                }
-                            }
 
-                            if(LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
-                                BorderCard(
-                                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 200.dp).padding(5.dp),
-                                    backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
-                                ) {
-                                    Row(modifier = Modifier.fillMaxWidth()) {
-                                        RWTextButton(
-                                            readI18n("multiplayer.room.changeSite"),
-                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
-                                        ) {
-                                            if(players.isNotEmpty()) {
-                                                selectedPlayer = room.localPlayer
-                                                playerOverrideVisible = true
+                                            item {
+                                                if(LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
+                                                    BorderCard(
+                                                        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 200.dp).padding(5.dp),
+                                                        backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
+                                                    ) {
+                                                        Row(modifier = Modifier.fillMaxWidth()) {
+                                                            RWTextButton(
+                                                                readI18n("multiplayer.room.changeSite"),
+                                                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
+                                                            ) {
+                                                                if(players.isNotEmpty()) {
+                                                                    selectedPlayer = room.localPlayer
+                                                                    playerOverrideVisible = true
+                                                                }
+                                                            }
+
+                                                            MessageTextField()
+                                                        }
+
+                                                        MessageView()
+                                                    }
+                                                }
                                             }
                                         }
-
-                                        MessageTextField()
                                     }
-
-                                    MessageView()
-                                }
+                                //}
                             }
                         }
                     }

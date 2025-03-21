@@ -28,6 +28,13 @@ ksp {
     arg("lib", "android-game-lib")
 }
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xjvm-default=all")
+    }
+}
+
+
 
 dependencies {
     implementation(project(":rwpp-core"))
