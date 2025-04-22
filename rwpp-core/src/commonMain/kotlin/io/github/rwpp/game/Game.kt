@@ -9,9 +9,10 @@ package io.github.rwpp.game
 
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
+import io.github.rwpp.game.ui.GUI
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.world.World
-import io.github.rwpp.ui.LoadingContext
+import io.github.rwpp.widget.LoadingContext
 import org.koin.core.component.KoinComponent
 
 interface Game : KoinComponent {
@@ -20,10 +21,16 @@ interface Game : KoinComponent {
      */
     val gameRoom: GameRoom
 
+    val gui: GUI
+
 
     //TODO Not Implemented
     val world: World
 
+    /**
+     * Post an action to the main thread.
+     */
+    fun post(action: () -> Unit)
 
     /**
      * Start a mission game with specific difficulty.

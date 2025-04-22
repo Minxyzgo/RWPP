@@ -15,8 +15,6 @@ import org.koin.core.annotation.Single
 data class Settings(
     /**
      * Decide whether to allow game in full screen (Only PC)
-     *
-     * Since windowing support is incomplete and extremely expensive, it defaults to true
      */
     var isFullscreen: Boolean = true,
     var showWelcomeMessage: Boolean? = null,
@@ -30,4 +28,8 @@ data class Settings(
     var showBuildingAttackRange: Boolean = false,
     var showAttackRangeUnit: String = "Never",
     var enableAnimations: Boolean = true,
+    var maxDisplayUnitGroupCount: Int = 7,
+    var changeGameTheme: Boolean = false,
+    var showUnitTargetLine: Boolean = false,
+    var improvedHealthBar: Boolean = false,
 ) : Config

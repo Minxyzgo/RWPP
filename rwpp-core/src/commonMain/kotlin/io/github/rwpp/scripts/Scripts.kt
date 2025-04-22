@@ -21,7 +21,7 @@ import io.github.rwpp.net.Client
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
 import io.github.rwpp.platform.Platform
-import io.github.rwpp.ui.parseColorToArgb
+import io.github.rwpp.widget.parseColorToArgb
 import party.iroiro.luajava.ClassPathLoader.BufferOutputStream
 import party.iroiro.luajava.lua54.Lua54
 import party.iroiro.luajava.value.RefLuaValue

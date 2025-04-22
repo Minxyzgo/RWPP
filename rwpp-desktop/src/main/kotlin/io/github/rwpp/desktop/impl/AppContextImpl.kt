@@ -10,6 +10,7 @@ package io.github.rwpp.desktop.impl
 import com.corrodinggames.librocket.scripts.ScriptEngine
 import io.github.rwpp.AppContext
 import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.impl.GameEngine
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import kotlin.system.exitProcess

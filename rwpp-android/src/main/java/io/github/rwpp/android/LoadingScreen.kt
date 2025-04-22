@@ -30,10 +30,10 @@ import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.GameLoadedEvent
-import io.github.rwpp.ui.ConstraintWindowManager
-import io.github.rwpp.ui.MenuLoadingView
-import io.github.rwpp.ui.RWSelectionColors
-import io.github.rwpp.ui.v2.TitleBrush
+import io.github.rwpp.widget.ConstraintWindowManager
+import io.github.rwpp.widget.MenuLoadingView
+import io.github.rwpp.widget.RWSelectionColors
+import io.github.rwpp.widget.v2.TitleBrush
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch

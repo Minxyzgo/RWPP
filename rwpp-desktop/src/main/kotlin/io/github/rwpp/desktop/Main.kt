@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.toPainter
 import androidx.compose.ui.input.key.Key
@@ -38,11 +39,14 @@ import io.github.rwpp.event.events.GameLoadedEvent
 import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.Game
+import io.github.rwpp.game.comp.CompModule
 import io.github.rwpp.game.sendChatMessageOrCommand
 import io.github.rwpp.game.team.TeamModeModule
 import io.github.rwpp.i18n.parseI18n
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.impl.CommonImplModule
 import io.github.rwpp.ui.*
+import io.github.rwpp.widget.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -59,6 +63,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import javax.imageio.ImageIO
 import javax.swing.JFrame
+import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import javax.swing.WindowConstants
 
@@ -79,14 +84,12 @@ fun main(array: Array<String>) {
     }
 
     logger = LoggerFactory.getLogger(packageName)
-
     displaySize =
         GraphicsEnvironment
             .getLocalGraphicsEnvironment()
             .defaultScreenDevice
             .displayMode
             .run { Dimension(width, height) }
-
     native = array.contains("-native")
 
     swingApplication()
@@ -97,34 +100,19 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
     appKoin = startKoin {
         logger(org.koin.core.logger.PrintLogger(org.koin.core.logger.Level.ERROR))
-        modules(ConfigModule().module, DesktopModule().module, TeamModeModule().module)
+        modules(ConfigModule().module, DesktopModule().module, TeamModeModule().module, CommonImplModule().module, CompModule().module)
     }.koin
 
     val app = appKoin.get<AppContext>()
-
     runBlocking { parseI18n() }
-
     app.init()
-
     Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
-
     File("mods/maps/")
         .walk()
         .filter { it.name.startsWith("generated_") }
         .forEach {
             it.delete()
         }
-//    File("mods/units")
-//        .walk()
-//        .forEach {
-//            if (it.displayName.contains(".network")) {
-//                it.delete()
-//            } else if (it.displayName.endsWith(".netbak")) {
-//                it.renameTo(File(it.absolutePath.removeSuffix(".netbak")))
-//            }
-//        }
-
-    //UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 
     val panel = ComposePanel()
     panel.isVisible = true
@@ -136,15 +124,12 @@ fun swingApplication() = SwingUtilities.invokeLater {
     window.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     window.title = "Rusted Warfare Plus Plus"
     window.iconImage = ImageIO.read(ClassLoader.getSystemResource("composeResources/io.github.rwpp.rwpp_core.generated.resources/drawable/logo.png"))
-    //window.extendedState = JFrame.MAXIMIZED_BOTH
-
 
     val canvas = Canvas()
-
     gameCanvas = canvas
     canvas.size = displaySize.size
     canvas.isVisible = false
-    canvas.background = Color.BLACK
+    canvas.background = java.awt.Color.BLACK
     canvas.isFocusable = true
 
     window.layout = BorderLayout()
@@ -190,7 +175,6 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 isLoading = false
             }
         }
-
         val settings = koinInject<Settings>()
         val isPremium = true
         var backgroundImagePath by remember { mutableStateOf(settings.backgroundImagePath ?: "") }
@@ -240,7 +224,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
     }
 
 
-    window.background = Color.BLACK
+    window.background = java.awt.Color.BLACK
     window.extendedState = JFrame.MAXIMIZED_BOTH
 
     if (appKoin.get<Settings>().isFullscreen) {
@@ -271,7 +255,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                         true
                     },
 
-                backgroundColor = androidx.compose.ui.graphics.Color(53, 57, 53),
+                backgroundColor = Color(53, 57, 53),
                 shape = RectangleShape
             ) {
                 var chatMessage by remember { mutableStateOf("") }

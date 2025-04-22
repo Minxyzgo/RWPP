@@ -86,10 +86,7 @@ val commands = CommandHandler("/").apply {
         val result = StringBuilder()
         result.append("--- Commands Page ${(page + 1)}/${pages} ---\n",)
 
-        for (i in commandsPerPage * page..<Math.min(
-            commandsPerPage * (page + 1),
-            commandList.size
-        )) {
+        for (i in commandsPerPage * page..<(commandsPerPage * (page + 1)).coerceAtMost(commandList.size)) {
             val command: Command = commandList[i]
             result.append("- /").append(command.text).append(" ").append(command.paramText)
                 .append(" - ").append(command.description).append("\n")
@@ -110,3 +107,7 @@ val resourceOutputDir = if(Platform.isAndroid()) {
 val resOutputDir = if(Platform.isAndroid()) {
     "/storage/emulated/0/rustedWarfare/resource_generated/res/"
 } else System.getProperty("user.dir") + "/resource_generated/res/"
+
+val mapDir = if(Platform.isAndroid()) {
+    "/storage/emulated/0/rustedWarfare/maps"
+} else System.getProperty("user.dir") + "mods/maps"

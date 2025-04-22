@@ -40,6 +40,7 @@ interface GameRoom {
     val mods: Array<String>
     val isStartGame: Boolean
     var teamMode: TeamMode?
+    val isSinglePlayerGame: Boolean
 
     /**
      * Transform the map before loading. (if host)

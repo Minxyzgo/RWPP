@@ -14,11 +14,11 @@ import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
 import io.github.rwpp.appKoin
 import io.github.rwpp.desktop.*
-import io.github.rwpp.desktop.impl.GameEngine
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.events.ReturnMainMenuEvent
 import io.github.rwpp.game.Game
+import io.github.rwpp.impl.*
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
@@ -29,7 +29,7 @@ object RootInject {
     @Inject("showMainMenu", InjectMode.Override)
     fun onShowMainMenu() {
         if(isGaming) {
-            if(isSandboxGame) appKoin.get<Game>().gameRoom.disconnect()
+            if(singlePlayer) appKoin.get<Game>().gameRoom.disconnect()
             GameEngine.B().bS.u = false
             gameCanvas.isVisible = false
             rwppVisibleSetter(true)

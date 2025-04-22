@@ -103,6 +103,11 @@ buildings = "Buildings"
 showAttackRange = "Show Attack Range"
 units = "Units"
 enableAnimations = "Enable Animations"
+maxDisplayUnitGroupCount = "Max Display Unit Group Count"
+changeGameTheme = "Change Game Theme"
+enhancedReinforceTroops = "Enhanced Reinforce Troops"
+improvedHealthBar = "Improved Health Bar"
+showUnitTargetLine = "Show Unit Target Line (limited in multiplayer)"
 
 [extension]
 extension = "Extension"

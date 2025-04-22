@@ -37,7 +37,7 @@ kotlin {
 
 
 dependencies {
-    implementation(project(":rwpp-core"))
+    api(project(":rwpp-game-impl"))
     implementation("com.github.getActivity:XXPermissions:20.0")
     implementation("com.github.tony19:logback-android:3.0.0")
     compileOnly(fileTree(

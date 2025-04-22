@@ -16,10 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.rwpp.ui.LargeDropdownMenu
-import io.github.rwpp.ui.RWCheckbox
-import io.github.rwpp.ui.RWSingleOutlinedTextField
-import io.github.rwpp.ui.RWTextButton
+import io.github.rwpp.widget.LargeDropdownMenu
+import io.github.rwpp.widget.RWCheckbox
+import io.github.rwpp.widget.RWSingleOutlinedTextField
+import io.github.rwpp.widget.RWTextButton
 
 @Composable
 fun LuaWidget.Render() {

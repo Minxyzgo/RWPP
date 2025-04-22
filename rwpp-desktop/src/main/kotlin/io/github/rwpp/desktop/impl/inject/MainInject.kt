@@ -14,12 +14,11 @@ import com.corrodinggames.rts.gameFramework.l
 import com.corrodinggames.rts.java.Main
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.Settings
-import io.github.rwpp.desktop.impl.GameEngine
 import io.github.rwpp.desktop.impl.RwOutputStream
-import io.github.rwpp.desktop.main
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.event.events.StartGameEvent
+import io.github.rwpp.impl.GameEngine
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode

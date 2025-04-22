@@ -7,23 +7,20 @@
 
 package io.github.rwpp.desktop.impl
 
-import com.corrodinggames.rts.gameFramework.SettingsEngine
 import io.github.rwpp.config.Config
 import io.github.rwpp.config.ConfigIO
-import io.github.rwpp.core.Initialization
+import io.github.rwpp.impl.AbstractConfigIO
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 import net.peanuuutz.tomlkt.Toml
 import org.koin.core.annotation.Single
 import java.io.File
-import java.lang.reflect.Field
-import java.util.Properties
+import java.util.*
 import kotlin.reflect.KClass
 
 @Single(binds = [ConfigIO::class])
-class ConfigIOImpl : ConfigIO {
-    private val fieldCache = mutableMapOf<String, Field>()
+class ConfigIOImpl : AbstractConfigIO() {
     private val propertiesCache = mutableMapOf<String, Properties>()
 
     @OptIn(InternalSerializationApi::class)
@@ -71,21 +68,5 @@ class ConfigIOImpl : ConfigIO {
         }
 
         return properties.getProperty(key)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T> getGameConfig(name: String): T {
-        val field = fieldCache.getOrPut(name) { SettingsEngine::class.java.getDeclaredField(name) }
-        return field.get(GameEngine.B().bQ) as T
-    }
-
-    override fun setGameConfig(name: String, value: Any?) {
-        val field = fieldCache.getOrPut(name) { SettingsEngine::class.java.getDeclaredField(name) }
-        field.set(GameEngine.B().bQ, value)
-    }
-
-    override fun saveAllConfig() {
-        super.saveAllConfig()
-        GameEngine.B().bQ.save()
     }
 }

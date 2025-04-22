@@ -30,9 +30,11 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         _usingResource = resource
         resource ?: run {
             File(resourceOutputDir).let {
+                it.setWritable(true)
                 if (it.exists()) it.deleteRecursively()
             }
             File(resOutputDir).let {
+                it.setWritable(true)
                 if (it.exists()) it.deleteRecursively()
             }
             return

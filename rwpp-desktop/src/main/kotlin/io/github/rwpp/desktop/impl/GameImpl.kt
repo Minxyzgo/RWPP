@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
 import com.corrodinggames.rts.gameFramework.ac
-import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.l
 import com.corrodinggames.rts.gameFramework.n
 import com.corrodinggames.rts.gameFramework.utility.ae
@@ -23,26 +22,23 @@ import com.corrodinggames.rts.java.audio.lwjgl.OpenALAudio
 import com.corrodinggames.rts.java.b
 import com.corrodinggames.rts.java.b.a
 import com.corrodinggames.rts.java.u
-import io.github.rwpp.core.Logic
 import io.github.rwpp.core.UI
-import io.github.rwpp.desktop.*
+import io.github.rwpp.desktop.displaySize
+import io.github.rwpp.desktop.gameCanvas
+import io.github.rwpp.desktop.native
+import io.github.rwpp.desktop.rwppVisibleSetter
 import io.github.rwpp.event.GlobalEventChannel
-import io.github.rwpp.event.broadcastIn
-import io.github.rwpp.event.events.*
+import io.github.rwpp.event.events.StartGameEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
-import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.Difficulty
-import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
-import io.github.rwpp.game.team.TeamMode
-import io.github.rwpp.game.units.UnitType
+import io.github.rwpp.game.ui.GUI
 import io.github.rwpp.game.world.World
+import io.github.rwpp.impl.*
 import io.github.rwpp.logger
-import io.github.rwpp.net.Packet
-import io.github.rwpp.net.packets.GamePacket
-import io.github.rwpp.ui.LoadingContext
 import io.github.rwpp.utils.Reflect
+import io.github.rwpp.widget.LoadingContext
 import kotlinx.coroutines.channels.Channel
 import org.koin.core.annotation.Single
 import org.lwjgl.opengl.Display
@@ -50,314 +46,28 @@ import java.awt.image.BufferedImage
 import java.io.*
 import javax.imageio.ImageIO
 
-@Single
-class GameImpl : Game {
+@Single(binds = [Game::class])
+class GameImpl : AbstractGame() {
     private var _missions: List<Mission>? = null
     private var _allMaps: List<GameMap>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
-    private val asField = PlayerInternal::class.java.getDeclaredField("as")
-        .apply { isAccessible = true }
-    private var threadConnector: com.corrodinggames.rts.gameFramework.j.an? = null
-
-    override val gameRoom: GameRoom by lazy {
-        val B = l.B()
-        with(B.bX.ay) {
-            object : GameRoom {
-                override var maxPlayerCount: Int
-                    get() = PlayerInternal.c
-                    set(value) { if(maxPlayerCount != value) PlayerInternal.b(value, true) }
-                override val isHost: Boolean
-                    get() =  B.bX.C || isSandboxGame
-                override val isHostServer: Boolean
-                    get() = B.bX.H
-                override val localPlayer: Player
-                    get() {
-                        return (B.bX.z ?: B.bs) as Player
-                    }
-                override var sharedControl: Boolean
-                    get() = l
-                    set(value) { l = value }
-                override val randomSeed: Int
-                    get() = q
-                override val mapType: MapType
-                    get() = MapType.entries[a.ordinal]
-                override var selectedMap: GameMap
-                    get() = getAllMaps().firstOrNull {
-                        (if (isHost) B.bX.az else B.bX.ay.b)?.endsWith((it.mapName + it.getMapSuffix()).replace("\\", "/")) ?: false
-                    } ?: NetworkMap(mapNameFormatMethod.invoke(null, B.bX.ay.b) as String)
-                    set(value) {
-                        if(isHostServer) {
-                            B.bX.a(
-                                B.bX.e().apply {
-                                    b = (value.mapName + value.getMapSuffix())
-                                }
-                            )
-                        } else {
-                            val realPath = (
-                                    when(value.mapType) {
-                                        MapType.SkirmishMap -> "maps/skirmish/"
-                                        MapType.CustomMap -> "mods/maps/"
-                                        MapType.SavedGame -> "saves/"
-                                        else -> ""
-                                    }) +  (value.mapName + value.getMapSuffix()).replace("\\", "/")
-                            B.bX.az = realPath
-                            B.bX.ay.a = com.corrodinggames.rts.gameFramework.j.ai.entries[value.mapType.ordinal]
-                            b = (value.mapName + value.getMapSuffix())
-                            MapChangedEvent(value.displayName()).broadcastIn()
-                            updateUI()
-                        }
-                    }
-                override var displayMapName: String
-                    get() = mapNameFormatMethod.invoke(null, B.bX.ay.b) as String
-                    set(value) { B.bX.ay.b = value }
-                override var startingCredits: Int
-                    get() = c
-                    set(value) { c = value }
-                override var startingUnits: Int
-                    get() = g
-                    set(value) { g = value }
-                override var fogMode: FogMode
-                    get() = FogMode.entries[d]
-                    set(value) { d = value.ordinal }
-                override var revealedMap: Boolean
-                    get() = e
-                    set(value) { e = value }
-                override var aiDifficulty: Difficulty
-                    get() = Difficulty.entries[f + 2]
-                    set(value) { f = value.ordinal - 2 }
-                override var incomeMultiplier: Float
-                    get() = h
-                    set(value) { h = value }
-                override var noNukes: Boolean
-                    get() = i
-                    set(value) { i = value }
-                override var allowSpectators: Boolean
-                    get() = o
-                    set(value) { o = value }
-                override var lockedRoom: Boolean
-                    get() = p
-                    set(value) {
-                        p = value
-                        if(isHost && value) sendSystemMessage("Room has been locked. Now self can't join the room")
-                    }
-                override var teamLock: Boolean
-                    get() = m
-                    set(value) { m = value }
-                override val mods: Array<String>
-                    get() = roomMods
-                override var isRWPPRoom: Boolean = false
-                override var option: RoomOption = RoomOption()
-                override val isConnecting: Boolean
-                    get() = GameEngine.B().bX.B
-                override val isStartGame: Boolean
-                    get() = isGaming
-                override var teamMode: TeamMode? = null
-
-                override var gameMapTransformer: ((XMLMap) -> Unit)? = null
-                private val mapNameFormatMethod = com.corrodinggames.rts.appFramework.i::class.java.getDeclaredMethod("e", String::class.java)
-
-                @Suppress("unchecked_cast")
-                override fun getPlayers(): List<Player> {
-                    return (asField.get(B.bX.ay) as Array<Player?>).mapNotNull { it }.toList()
-                }
-
-                override suspend fun roomDetails(): String {
-                    return B.bX.at()
-                }
-
-                override fun sendChatMessage(message: String) {
-                    B.bX.m(message)
-                }
-
-                override fun sendSystemMessage(message: String) {
-                    B.bX.j(message)
-                }
-
-                override fun sendQuickGameCommand(command: String) {
-                    B.bX.k(command)
-                }
-
-                override fun sendMessageToPlayer(player: Player?, title: String?, message: String, color: Int) {
-                    if (player != null && player != localPlayer) {
-                        player.client?.sendPacketToClient(GamePacket.getChatPacket(title, message, color))
-                    } else {
-                        // New Message:
-                        Reflect.call(
-                            GameEngine.B().bX, "b", listOf(
-                                com.corrodinggames.rts.gameFramework.j.c::class,
-                                Int::class,
-                                String::class,
-                                String::class,
-                            ), listOf(null, color, title, message)
-                        )
-                    }
-                }
-
-                override fun sendSurrender(player: Player) {
-                    if (player == localPlayer) {
-                        sendChatMessage("-surrender")
-                    } else if (player.client != null) {
-                        GameEngine.B().bX.b(
-                            player.client as c, (player as PlayerImpl).self, player.name, "-surrender"
-                        )
-                    }
-
-                }
-
-                override fun syncAllPlayer() {
-                    if (isHost) {
-                        container.post {
-                            GameEngine.B().bX.a(false, false, true)
-                        }
-                    }
-                }
-
-                override fun addCommandPacket(packet: Packet) {
-                    val p = GameEngine.B().cf.b()
-                    p.a(com.corrodinggames.rts.gameFramework.j.k(
-                        DataInputStream(ByteArrayInputStream(packet.toBytes())))
-                    )
-                    GameEngine.B().cf.b.add(p)
-                }
-
-                override fun addAI(count: Int) {
-                    repeat(count) {
-                        if (isHost) {
-                            val var2 = com.corrodinggames.rts.game.n.G()
-                            if (var2 == -1) {
-                                return@repeat
-                            }
-
-                            val var3 = com.corrodinggames.rts.game.a.a(var2)
-                            var3.v = "AI"
-                            var3.r = var2 % 2
-                            var3.x = B.bX.ay.f
-                            B.bX.aq()
-                            B.bX.d.a(var3)
-                            B.bX.e(null as c?)
-                        } else if (isHostServer) {
-                            sendQuickGameCommand("-addai")
-                        }
-                    }
-
-                    if (isHost) {
-                        updateUI()
-                    }
-                }
-
-
-                override fun applyRoomConfig(
-                    maxPlayerCount: Int,
-                    sharedControl: Boolean,
-                    startingCredits: Int,
-                    startingUnits: Int,
-                    fogMode: FogMode,
-                    aiDifficulty: Difficulty,
-                    incomeMultiplier: Float,
-                    noNukes: Boolean,
-                    allowSpectators: Boolean,
-                    teamLock: Boolean,
-                    teamMode: TeamMode?
-                ) {
-                    if (isHost) {
-                        this.maxPlayerCount = maxPlayerCount
-                        this.sharedControl = sharedControl
-                        this.startingCredits = startingCredits
-                        this.startingUnits = startingUnits
-                        this.fogMode = fogMode
-                        this.aiDifficulty = aiDifficulty
-                        this.incomeMultiplier = incomeMultiplier
-                        this.noNukes = noNukes
-                        this.teamLock = teamLock
-                        this.allowSpectators = allowSpectators
-                    }
-
-                    if (isHostServer) {
-                        val e = GameEngine.B().bX.e()
-                        e.l = sharedControl
-                        e.c = startingCredits
-                        e.g = startingUnits
-                        e.f = aiDifficulty.ordinal - 2
-                        e.h = incomeMultiplier
-                        e.i = noNukes
-                        GameEngine.B().bX.a(e)
-                    }
-
-                    if (this.teamMode != teamMode) {
-                        this.teamMode = teamMode
-                        when (teamMode?.name) {
-                            "2t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.a)
-                            "3t" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.b)
-                            "FFA" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.c)
-                            "spectators" -> B.bX.a(com.corrodinggames.rts.gameFramework.j.am.d)
-                            null -> {}
-                            else -> synchronized(Logic) { teamMode.onInit(this) }
-                        }
-                    }
-
-                    if (isHost) {
-                        updateUI()
-                    }
-                }
-
-                override fun remainingPlayersCount(): Int {
-                    return com.corrodinggames.rts.game.n.g()
-                }
-
-                override fun kickPlayer(player: Player) {
-                    val p = (player as PlayerImpl).self
-                    B.bX.e(p)
-                    // playerCacheMap.remove(p) maybe kick didn't work out
-                }
-
-                override fun disconnect(reason: String) {
-                    isSandboxGame = false
-                    isRWPPRoom = false
-                    option = RoomOption()
-                    bannedUnitList = listOf()
-                    roomMods = arrayOf()
-                    teamMode = null
-                    gameOver = false
-
-                    if(isConnecting) B.bX.b(reason)
-                    DisconnectEvent(reason).broadcastIn()
-                }
-
-                override fun updateUI() {
-                    GameEngine.B().bX.f()
-                    GameEngine.B().bX.P()
-                    GameEngine.B().bX.L()
-                    com.corrodinggames.rts.appFramework.n::class.java.getDeclaredMethod("o").invoke(null)
-                }
-
-                override fun startGame() {
-                    rwppVisibleSetter(false)
-                    gameCanvas.isVisible = true
-                    gameCanvas.requestFocus()
-                    gameOver = false
-                    isGaming = true
-
-                    if(isHost || isSandboxGame) {
-                        if (!isSandboxGame && gameMapTransformer != null) {
-                            val xmlMap = XMLMap(selectedMap)
-                            gameMapTransformer!!.invoke(xmlMap)
-                            val path = "mods/maps/generated_${selectedMap.mapName + selectedMap.getMapSuffix()}"
-                            val file = xmlMap.saveToFile(path)
-                            B.bX.az = path
-                            GlobalEventChannel.filter(DisconnectEvent::class).subscribeOnce {
-                                file.delete()
-                            }
-                            B.bX.ay.a = com.corrodinggames.rts.gameFramework.j.ai.entries[1]
-                            updateUI()
-                        }
-                        B.bX.ae()
-                    }
-                }
+    override val gameRoom: GameRoom
+        get() = object : AbstractGameRoom() {
+            override fun startGame() {
+                rwppVisibleSetter(false)
+                gameCanvas.isVisible = true
+                gameCanvas.requestFocus()
+                super.startGame()
             }
         }
+
+    override val gui: GUI
+        get() = GameEngine.B().bS as GUI
+    override val world: World = WorldImpl()
+
+    override fun post(action: () -> Unit) {
+        container.post(action)
     }
-    override val world: World
-        get() = TODO("Not yet implemented")
 
     init {
         GlobalEventChannel.filter(StartGameEvent::class).subscribeAlways {
@@ -556,144 +266,6 @@ class GameImpl : Game {
         receivedChannel.receive()
     }
 
-    override fun hostStartWithPasswordAndMods(
-        isPublic: Boolean,
-        password: String?,
-        useMods: Boolean,
-    ) {
-        val B = l.B()
-        B.bX.n = password
-        B.bX.q = isPublic
-        B.bX.o = useMods
-
-        gameRoom.isRWPPRoom = true
-
-        if(B.bX.b(false)) {
-            initMap(true)
-            MapChangedEvent(gameRoom.selectedMap.displayName()).broadcastIn()
-        }
-    }
-
-    override fun hostNewSinglePlayer(sandbox: Boolean) {
-        container.post {
-            com.corrodinggames.rts.game.n.F()
-
-            val root = ScriptEngine.getInstance().root
-            val libRocket = ScriptContext::class.java.getDeclaredField("libRocket").run {
-                isAccessible = true
-                get(root)
-            } as com.corrodinggames.librocket.b
-            val guiEngine = ScriptContext::class.java.getDeclaredField("guiEngine").run {
-                isAccessible = true
-                get(root)
-            } as a
-
-            val game = l.B()
-            game.bQ.aiDifficulty = Difficulty.Hard.ordinal - 2 // fuck code
-
-            guiEngine.b(true)
-            guiEngine.c(false)
-
-            val met = IClass::class.java.getDeclaredMethod(
-                "a",
-                String::class.java,
-                Boolean::class.java,
-                Int::class.java,
-                Int::class.java,
-                Boolean::class.java,
-                Boolean::class.java
-            )
-            met.invoke(null, "maps/skirmish/[z;p10]Crossing Large (10p).tmx", false, 0, 0, true, false)
-
-            initMap(true)
-
-            if (sandbox) {
-                game.bL.E = false
-                game.bS.y()
-                game.bv = true
-            } else {
-                game.bv = false
-            }
-
-
-            game.bX.y = "You"
-            game.bX.o = true
-            val S: Boolean = if (sandbox) game.bX.R() else game.bX.S()
-
-            if(S) {
-                val e = game.bX.e()
-                if(e != null) {
-                    e.f = game.bQ.aiDifficulty
-                    game.bX.a(e)
-                }
-
-                isSandboxGame = true
-            }
-
-
-            RefreshUIEvent().broadcastIn()
-        }
-    }
-
-    override fun setUserName(name: String) {
-        l.B().bX.a(name)
-    }
-
-    override suspend fun directJoinServer(address: String, uuid: String?, context: LoadingContext): Result<String> {
-        val B = GameEngine.B()
-        initMap()
-
-        context.message("Connecting...")
-
-        val trim = restrictedString(address.trim())
-        if(uuid == null) l.B().bQ.lastNetworkIP = trim
-        l.B().bX.bw = uuid
-        var result: Result<String>? = null
-        val resultChannel = Channel<Unit>(1)
-        threadConnector = l.B().bX.a(trim, true) {
-            result = if(threadConnector!!.e != null) {
-                rcnOption = null
-                Result.failure(IOException("Connection failed: ${threadConnector!!.e}."))
-            } else Result.success("")
-            resultChannel.trySend(Unit)
-        }
-
-        resultChannel.receive()
-
-        if(result!!.isSuccess) {
-            try {
-                l.B().bX.b("staring new")
-                l.B().bX.a(threadConnector!!.g)
-            } catch(e: IOException) {
-                logger.error(e.stackTraceToString())
-                result = Result.failure(IOException("Connection failed"))
-            }
-        }
-
-        threadConnector = null
-
-        return result!!
-    }
-
-    override fun cancelJoinServer() {
-        threadConnector?.a()
-        rcnOption = null
-    }
-
-    override fun onQuestionCallback(option: String) {
-        rcnOption = option
-    }
-
-    override fun setTeamUnitCapHostGame(cap: Int) {
-        l.B().bX.ax = cap
-        l.B().bX.aw = cap
-        l.B().bC = cap
-    }
-
-    override fun getAllMissionTypes(): List<MissionType> {
-        return listOf(MissionType.Normal, MissionType.Challenge, MissionType.Survival)
-    }
-
     override fun getAllMissions(): List<Mission> {
         if(_missions != null) return _missions!!
         val missions = mutableListOf<Mission>()
@@ -811,26 +383,7 @@ class GameImpl : Game {
     override fun getMissionsByType(type: MissionType): List<Mission> =
         getAllMissions().filter { it.type == type }
 
-    override fun getStartingUnitOptions(): List<Pair<Int, String>> {
-        val B: l = GameEngine.B()
-        val list = mutableListOf<Pair<Int, String>>()
-        val it: Iterator<*> = B.bX.i().iterator()
-        while(it.hasNext()) {
-            val num = it.next() as Int
-            list.add(num to B.bX.d(num))
-        }
-        return list
-    }
-    @Suppress("UNCHECKED_CAST")
-    override fun getAllUnits(): List<UnitType> {
-        return (com.corrodinggames.rts.game.units.ar.ae as ArrayList<UnitType>)
-    }
 
-    override fun onBanUnits(units: List<UnitType>) {
-        bannedUnitList = units.map(UnitType::name)
-        if(units.isNotEmpty())
-            gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.map(UnitType::displayName).joinToString(", ")}")
-    }
 
     override fun getAllReplays(): List<Replay> {
         return Reflect.call<com.corrodinggames.rts.appFramework.q, Array<String>>(
@@ -879,15 +432,7 @@ class GameImpl : Game {
     }
 
 
-    private fun restrictedString(str: String?): String? {
-        return str?.replace("'", ".")?.replace("\"", ".")?.replace("(", ".")?.replace(")", ".")?.replace(",", ".")
-            ?.replace("<", ".")?.replace(">", ".")
-    }
 
-    private fun escapedString(str: String): String {
-        return "'" + str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&apos;")
-            .replace("\"", "&quot;").replace("\${", "$ {") + "'"
-    }
 
     private fun loadImage(path: String): BufferedImage? {
         val fileInputStream: InputStream?

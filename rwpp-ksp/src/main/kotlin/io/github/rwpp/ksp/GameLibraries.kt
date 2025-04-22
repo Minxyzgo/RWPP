@@ -25,6 +25,7 @@ enum class GameLibraries {
     `game-lib`,
     `android`,
     `android-game-lib`,
+    `common-game-lib`,
     `android-platform-lib`,
     `commons-codec` { init {
         realName = "$name-1.6"

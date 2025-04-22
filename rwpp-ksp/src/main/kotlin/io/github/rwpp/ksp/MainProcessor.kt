@@ -23,14 +23,14 @@ class MainProcessor(
         //only run once
         if (finished) return emptyList()
 
+        if (!init) {
+            init = true
+            Builder.loadLib()
+        }
+
         val classMap = ClassMap()
 
         for (file in resolver.getSymbolsWithAnnotation(RedirectTo::class.qualifiedName!!)) {
-            if (!init) {
-                init = true
-                Builder.loadLib()
-            }
-
             file.annotations.forEach { annotation ->
                 if (annotation.shortName.asString() == RedirectTo::class.simpleName) {
                     val from = annotation.arguments.first().value as String
@@ -71,11 +71,17 @@ class MainProcessor(
                 InjectApi.injectInterface(
                     clazz.qualifiedName!!.asString(),
                     className,
-                    clazz.declarations.filter {
-                        it is KSPropertyDeclaration && it.annotations.any { it.shortName.asString() == NewField::class.simpleName }
+                    clazz.declarations.filter { anno ->
+                        anno is KSPropertyDeclaration && anno.annotations.any { it.shortName.asString() == NewField::class.simpleName }
                     }.map {
                         it as KSPropertyDeclaration
                         it.simpleName.asString() to  it.type.resolve().declaration.qualifiedName!!.asString()
+                    }.toList(),
+                    clazz.declarations.filter { anno ->
+                        anno is KSPropertyDeclaration && anno.annotations.any { it.shortName.asString() == Accessor::class.simpleName }
+                    }.map {
+                        it as KSPropertyDeclaration
+                        it.simpleName.asString() to  it.annotations.first { it.shortName.asString() == Accessor::class.simpleName }.arguments.first().value as String
                     }.toList(),
                     hasSelfProperty
                 )
@@ -163,6 +169,7 @@ class MainProcessor(
                         }
 
                         Inject::class.simpleName -> {
+                            logger.warn("processing method $methodName of $injectClassName with mode ${annotation.arguments[1].value} and desc ${annotation.arguments.getOrNull(2)?.value} and injectFunctionPath $injectFunctionPath and desc ${annotation.arguments.getOrNull(2)?.value}")
                             InjectApi.injectMethod(
                                 injectClassName,
                                 receiver != null,

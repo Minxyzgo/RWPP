@@ -15,8 +15,8 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import com.corrodinggames.rts.appFramework.*
 import com.corrodinggames.rts.gameFramework.j.ae
-import com.corrodinggames.rts.gameFramework.j.at
 import com.corrodinggames.rts.gameFramework.k
+import io.github.rwpp.android.InGameActivity
 import io.github.rwpp.android.MainActivity.Companion.gameView
 import io.github.rwpp.android.bannedUnitList
 import io.github.rwpp.android.gameLauncher
@@ -32,11 +32,11 @@ import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.game.ui.GUI
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.game.world.World
-import io.github.rwpp.logger
-import io.github.rwpp.ui.LoadingContext
+import io.github.rwpp.widget.LoadingContext
 import kotlinx.coroutines.*
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
@@ -57,6 +57,8 @@ class GameImpl : Game, CoroutineScope {
     private var cacheUnits: ArrayList<*>? = null
 
     override val gameRoom: GameRoom = GameRoomImpl(this)
+    override val gui: GUI
+        get() = TODO("Not yet implemented")
     override val world: World
         get() = TODO("Not yet implemented")
 

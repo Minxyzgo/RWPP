@@ -17,6 +17,7 @@ class MainProcessorProvider : SymbolProcessorProvider {
         Builder.libDir = BuildConfig.DEFAULT_LIB_DIR
         Builder.outputDir = environment.options["outputDir"].toString()
         GameLibraries.includes.add(GameLibraries.valueOf(environment.options["lib"].toString()))
+        environment.logger.warn("RWPP-KSP: libs: ${GameLibraries.includes.joinToString(",")}")
         return MainProcessor(environment.logger)
     }
 }

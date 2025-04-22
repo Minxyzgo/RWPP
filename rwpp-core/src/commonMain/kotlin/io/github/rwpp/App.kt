@@ -10,7 +10,6 @@
 package io.github.rwpp
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,7 +47,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -63,7 +61,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.LinkAnnotation
@@ -71,7 +69,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
@@ -92,21 +89,21 @@ import io.github.rwpp.core.UI.showModsView
 import io.github.rwpp.core.UI.showExtensionView
 import io.github.rwpp.core.UI.showContributorList
 import io.github.rwpp.game.Game
-import io.github.rwpp.game.ui.ContributorList
-import io.github.rwpp.game.ui.ExtensionView
-import io.github.rwpp.game.ui.MissionView
-import io.github.rwpp.game.ui.ModsView
-import io.github.rwpp.game.ui.MultiplayerRoomView
-import io.github.rwpp.game.ui.MultiplayerView
-import io.github.rwpp.game.ui.ReplaysViewDialog
-import io.github.rwpp.game.ui.SettingsView
+import io.github.rwpp.ui.ContributorList
+import io.github.rwpp.ui.ExtensionView
+import io.github.rwpp.ui.MissionView
+import io.github.rwpp.ui.ModsView
+import io.github.rwpp.ui.MultiplayerRoomView
+import io.github.rwpp.ui.MultiplayerView
+import io.github.rwpp.ui.ReplaysViewDialog
+import io.github.rwpp.ui.SettingsView
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.LatestVersionProfile
 import io.github.rwpp.net.Net
 import io.github.rwpp.platform.loadSvg
-import io.github.rwpp.ui.*
-import io.github.rwpp.ui.v2.RWIconButton
+import io.github.rwpp.widget.*
+import io.github.rwpp.widget.v2.RWIconButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
@@ -554,7 +551,7 @@ fun App(
                                 value = message,
                                 modifier = Modifier.fillMaxWidth().padding(10.dp)
                                     .onKeyEvent {
-                                        if(it.key == androidx.compose.ui.input.key.Key.Enter && message.isNotEmpty()) {
+                                        if(it.key == Key.Enter && message.isNotEmpty()) {
                                             UI.question?.callback?.invoke(message)
                                             message = ""
                                             questionDialogVisible = false

@@ -7,33 +7,11 @@
 
 package io.github.rwpp.game.base
 
-import io.github.rwpp.ui.parseColorToArgb
+interface GamePaint {
+    var argb: Int
+    val style: Style
 
-data class GamePaint(
-    val r: Int,
-    val g: Int,
-    val b: Int,
-    val a: Int = 255,
-    val style: Style = Style.FILL
-) {
     enum class Style {
-        FILL,
-        STROKE,
-        FILL_AND_STROKE
-    }
-
-    companion object {
-        @JvmStatic
-        @JvmOverloads
-        fun newColor(
-            color: String,
-            style: Style = Style.FILL
-        ): GamePaint {
-            val argb = parseColorToArgb(color)
-            val r = (argb shr 16) and 0xFF
-            val g = (argb shr 8) and 0xFF
-            val b = argb and 0xFF
-            return GamePaint(r, g, b, style = style)
-        }
+        FILL, STROKE, FILL_AND_STROKE
     }
 }

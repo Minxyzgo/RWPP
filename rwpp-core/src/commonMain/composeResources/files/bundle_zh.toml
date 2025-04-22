@@ -97,6 +97,11 @@ buildings = "建筑物"
 showAttackRange = "显示攻击范围"
 units = "单位"
 enableAnimations = "启用动画"
+maxDisplayUnitGroupCount = "最大显示编队数量"
+changeGameTheme = "更换游戏主题"
+enhancedReinforceTroops = "增强出兵"
+improvedHealthBar = "改进血量条"
+showUnitTargetLine = "显示单位目标线 (多人模式受限)"
 
 [extension]
 extension = "扩展"

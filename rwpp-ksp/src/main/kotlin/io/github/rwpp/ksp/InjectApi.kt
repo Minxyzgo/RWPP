@@ -27,6 +27,7 @@ internal object InjectApi {
         interfaceName: String,
         targetClassName: String,
         newFields: List<Pair<String, String>>, // Pair<fieldName, fieldType>
+        accessors: List<Pair<String, String>>, // Pair<propertyName, fieldName>
         hasSelfField: Boolean = false,
     ) {
         val classPool = GameLibraries.includes.first().classTree.defPool
@@ -39,6 +40,12 @@ internal object InjectApi {
             targetClass.addField(field)
             targetClass.addMethod(CtNewMethod.getter("get${name.replaceFirstChar { it.uppercase() }}", field))
             targetClass.addMethod(CtNewMethod.setter("set${name.replaceFirstChar { it.uppercase() }}", field))
+        }
+
+        accessors.forEach { (propertyName, fieldName) ->
+            val field = targetClass.getField(fieldName)
+            targetClass.addMethod(CtNewMethod.getter("get${propertyName.replaceFirstChar { it.uppercase() }}", field))
+            targetClass.addMethod(CtNewMethod.setter("set${propertyName.replaceFirstChar { it.uppercase() }}", field))
         }
 
         if (hasSelfField) {
@@ -117,16 +124,19 @@ internal object InjectApi {
                     (if (hasReceiver) Descriptor.of(clazz) else "") +
                     methodArgs.joinToString("") { Descriptor.of(it) } +
                     ")" +
-                    if (returnClassIsVoid) "V" else "Ljava/lang/Object;"
+                    if (returnClassIsVoid) "V"
+                    else if (injectMode == InjectMode.Override) Descriptor.of(method.returnType)
+                    else "Ljava/lang/Object;"
         )
 
-        if (!returnClassIsVoid) {
+        if (!returnClassIsVoid && injectMode != InjectMode.Override) {
             bytecode.addAstore(codeAttribute.maxLocals)
             //bytecode.add(Bytecode.POP)
         }
 
         //此处并非真实返回值，只是给javassist标记为此处方法已经结束
-        if (method.returnType != CtClass.voidType) {
+        //若在Override模式下，则应直接返回结果
+        if (method.returnType != CtClass.voidType && injectMode != InjectMode.Override) {
             when (method.returnType) {
                 CtClass.booleanType -> bytecode.addIconst(0)
                 CtClass.byteType -> bytecode.addIconst(0)
@@ -149,7 +159,7 @@ internal object InjectApi {
         codeAttribute = method.methodInfo.codeAttribute
         //codeAttribute.maxStack = i + 1
 
-        if (!returnClassIsVoid) {
+        if (!returnClassIsVoid && injectMode != InjectMode.Override) {
             val maxLocals = codeAttribute.maxLocals
             val cp: ConstPool = method.methodInfo.constPool
 
@@ -201,12 +211,12 @@ internal object InjectApi {
             }
 
             InjectMode.Override -> {
-                if (returnClassIsVoid) return
-                method.insertAfter(
-                    """
-                        $returnCode result;
-                    """.trimIndent()
-                )
+//                if (returnClassIsVoid) return
+//                method.insertAfter(
+//                    """
+//                        $returnCode result;
+//                    """.trimIndent()
+//                )
             }
 
             InjectMode.InsertAfter -> {

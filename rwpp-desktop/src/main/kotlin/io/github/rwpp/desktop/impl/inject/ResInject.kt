@@ -16,21 +16,21 @@ import io.github.rwpp.inject.InjectMode
 import io.github.rwpp.resOutputDir
 import java.io.File
 
-@InjectClass(Graphics::class)
-object ResInject {
-    @Inject("f", InjectMode.Override)
-    fun redirectRes(i: Int): Any? {
-        val a2: String? = Graphics.a(`R$drawable`::class.java, i)
-        val resFileExist = File(resOutputDir).exists()
-        if (a2 != null) {
-            return com.corrodinggames.rts.gameFramework.e.a.a("${if(resFileExist) resOutputDir else "res/"}drawable", a2)
-
-        }
-        val a3: String? = Graphics.a(`R$raw`::class.java, i)
-        if (a3 != null) {
-            return com.corrodinggames.rts.gameFramework.e.a.a("${if(resFileExist) resOutputDir else "res/"}raw", a3)
-
-        }
-        return null
-    }
-}
+//@InjectClass(Graphics::class)
+//object ResInject {
+//    @Inject("f", InjectMode.Override)
+//    fun redirectRes(i: Int): String? {
+//        val a2: String? = Graphics.a(`R$drawable`::class.java, i)
+//        val resFileExist = File(resOutputDir).exists()
+//        if (a2 != null) {
+//            return com.corrodinggames.rts.gameFramework.e.a.a("${if(resFileExist) resOutputDir else "res/"}drawable", a2)
+//
+//        }
+//        val a3: String? = Graphics.a(`R$raw`::class.java, i)
+//        if (a3 != null) {
+//            return com.corrodinggames.rts.gameFramework.e.a.a("${if(resFileExist) resOutputDir else "res/"}raw", a3)
+//
+//        }
+//        return null
+//    }
+//}

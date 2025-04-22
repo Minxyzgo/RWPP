@@ -24,7 +24,7 @@ sourceSets.main.get().resources.srcDir(rootDir.absolutePath + "/rwpp-core/src/co
 
 dependencies {
     implementation(compose.desktop.currentOs)
-    implementation(project(":rwpp-core"))
+    api(project(":rwpp-game-impl"))
     implementation("org.slf4j:slf4j-simple:2.0.16")
     compileOnly(fileTree(
         "dir" to rootDir.absolutePath + "/lib",

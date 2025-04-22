@@ -98,7 +98,8 @@ annotation class RedirectMethod(
  *
  * 可以添加一个特殊属性`self`，该属性会自动在指定类中实现返回该类的实例.
  *
- * 可以使用[NewField]标记一个属性，该属性会自动添加到所有实现该接口的类中.
+ * @see NewField
+ * @see Accessor
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)
@@ -112,3 +113,10 @@ annotation class SetInterfaceOn(
 @Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.SOURCE)
 annotation class NewField
+
+/**
+ * 在[SetInterfaceOn]中使用，指定一个属性为指定字段实现getter/setter方法
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.SOURCE)
+annotation class Accessor(val field: String)

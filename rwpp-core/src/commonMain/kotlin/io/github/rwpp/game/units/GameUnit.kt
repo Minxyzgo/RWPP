@@ -8,9 +8,18 @@
 package io.github.rwpp.game.units
 
 import io.github.rwpp.game.Player
+import io.github.rwpp.game.comp.UnitComp
 
 interface GameUnit {
     val player: Player
     val isDead: Boolean
     val type: UnitType
+    val x: Float
+    val y: Float
+    val health: Float
+    val maxHealth: Float
+    val maxAttackRange: Float
+    val target: GameUnit?
+
+    var comp: UnitComp
 }

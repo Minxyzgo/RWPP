@@ -33,13 +33,13 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.corrodinggames.rts.appFramework.d
 import io.github.rwpp.*
-import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.Settings
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.events.ReturnMainMenuEvent
+import io.github.rwpp.impl.GameEngine
 import org.koin.compose.KoinContext
 import java.io.File
 
@@ -158,6 +158,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
+        GameEngine.B().a(gameView)
         if(gameView != null) GameEngine.t()?.b(gameView)
     }
 

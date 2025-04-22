@@ -11,8 +11,8 @@ import android.app.Activity
 import com.corrodinggames.rts.gameFramework.h.a
 import com.corrodinggames.rts.gameFramework.j.ae
 import io.github.rwpp.core.UI
-import io.github.rwpp.desktop.impl.GameEngine
-import io.github.rwpp.desktop.rcnOption
+import io.github.rwpp.impl.GameEngine
+import io.github.rwpp.impl.rcnOption
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
