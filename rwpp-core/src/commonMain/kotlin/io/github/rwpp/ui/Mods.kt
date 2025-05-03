@@ -442,7 +442,7 @@ fun ModsView(onExit: () -> Unit) {
                     val state = rememberLazyListState()
                     LazyColumnScrollbar(
                         listState = state,
-                        modifier = Modifier.padding(start = 5.dp, bottom = 5.dp)
+                        modifier = Modifier.padding(start = 5.dp, bottom = 5.dp, top = 30.dp)
                     ) {
                         LazyColumn(
                             modifier = Modifier.fillMaxWidth(),

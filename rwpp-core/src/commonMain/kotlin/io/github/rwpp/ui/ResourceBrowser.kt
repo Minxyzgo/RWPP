@@ -92,8 +92,6 @@ fun ResourceBrowser(
         ) {
             BorderCard(Modifier.fillMaxSize().autoClearFocus()) {
                 Box {
-                    ExitButton(onDismiss)
-                    Spacer(Modifier.height(30.dp))
                     Column {
                         LaunchedEffect(keyword, page, selectedTypeIndex) {
                             isLoading = true
@@ -123,7 +121,10 @@ fun ResourceBrowser(
                                 label = readI18n("mod.resourceType"),
                                 items = list,
                                 selectedIndex = selectedTypeIndex,
-                                onItemSelected = { index, _ -> selectedTypeIndex = index }
+                                onItemSelected = { index, _ ->
+                                    allInfo.clear()
+                                    selectedTypeIndex = index
+                                }
                             )
 
                             LargeDropdownMenu(

@@ -39,6 +39,7 @@ object Scripts : Initialization {
 
     override fun init() {
         try {
+            lua.openLibraries()
             lua.setExternalLoader { module, _ ->
                 val extension = appKoin.get<ExternalHandler>()
                     .getAllExtensions()
@@ -47,7 +48,7 @@ object Scripts : Initialization {
                     ?: throw IllegalArgumentException("Extension not found: $module")
 
 
-                val path = module.removePrefix(extension.config.id + "scripts/")
+                val path = "scripts/" + module.removePrefix(extension.config.id + "/")
 
                 val inputStream = extension.zipFile?.let { zip ->
                     val entry = zip.getEntry(path)
