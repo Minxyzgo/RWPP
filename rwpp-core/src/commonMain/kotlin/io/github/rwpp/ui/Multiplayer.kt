@@ -57,10 +57,8 @@ import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.sorted
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.Platform
-import io.github.rwpp.platform.loadSvg
 import io.github.rwpp.platform.readPainterByBytes
-import io.github.rwpp.rwpp_core.generated.resources.Res
-import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
+import io.github.rwpp.rwpp_core.generated.resources.*
 import io.github.rwpp.widget.*
 import io.github.rwpp.widget.v2.ExpandedCard
 import io.github.rwpp.widget.v2.LazyColumnScrollbar
@@ -74,6 +72,7 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import kotlin.math.roundToInt
 
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun MultiplayerView(
     onExit: () -> Unit,
@@ -438,60 +437,62 @@ fun MultiplayerView(
                     .verticalScroll(rememberScrollState())
                     .autoClearFocus()
             ) {
-                ExitButton(dismiss)
-                var type by remember { mutableStateOf(serverConfig?.type ?: ServerType.Server) }
-                var url by remember { mutableStateOf(serverConfig?.ip ?: "") }
-                var name by remember { mutableStateOf(serverConfig?.name ?: "") }
+                Box {
+                    ExitButton(dismiss)
+                    var type by remember { mutableStateOf(serverConfig?.type ?: ServerType.Server) }
+                    var url by remember { mutableStateOf(serverConfig?.ip ?: "") }
+                    var name by remember { mutableStateOf(serverConfig?.name ?: "") }
 
-                Column(modifier = Modifier.padding(10.dp)) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        if (serverConfig == null) {
+                            LargeDropdownMenu(
+                                modifier = Modifier.padding(20.dp),
+                                label = "Server Type",
+                                items = ServerType.entries,
+                                selectedIndex = type.ordinal,
+                                onItemSelected = { _, t -> type = t }
+                            )
+                        }
 
-                    if (serverConfig == null) {
-                        LargeDropdownMenu(
-                            modifier = Modifier.padding(20.dp),
-                            label = "Server Type",
-                            items = ServerType.entries,
-                            selectedIndex = type.ordinal,
-                            onItemSelected = { _, t -> type = t }
-                        )
-                    }
+                        RWSingleOutlinedTextField(
+                            "Name",
+                            name,
+                            modifier = Modifier.fillMaxWidth().padding(10.dp)
+                        ) { name = it }
 
-                    RWSingleOutlinedTextField(
-                        "Name",
-                        name,
-                        modifier = Modifier.fillMaxWidth().padding(10.dp)
-                    ) { name = it }
+                        RWSingleOutlinedTextField(
+                            "Url/Ip",
+                            url,
+                            modifier = Modifier.fillMaxWidth().padding(10.dp)
+                        ) { url = it }
 
-                    RWSingleOutlinedTextField(
-                        "Url/Ip",
-                        url,
-                        modifier = Modifier.fillMaxWidth().padding(10.dp)
-                    ) { url = it }
-
-                    Box(modifier = Modifier
-                        .fillMaxWidth()
-                    ) {
-                        TextButton(
-                            onClick =
-                            {
-                                if(serverConfig != null) {
-                                    serverConfig.ip = url
-                                    serverConfig.name = name
-                                } else {
-                                    val config = ServerConfig(url, name, type)
-                                    instance.allServerConfig.add(config)
-                                    allServerData.add(
-                                        ServerData(
-                                            config
-                                        )
-                                    )
-                                }
-
-                                updateServerConfig = !updateServerConfig
-                                onDismissRequest()
-                            },
+                        Box(
                             modifier = Modifier
-                                .align(Alignment.BottomEnd),
-                        ) { Text("Apply", style = MaterialTheme.typography.bodyLarge) }
+                                .fillMaxWidth()
+                        ) {
+                            TextButton(
+                                onClick =
+                                {
+                                    if (serverConfig != null) {
+                                        serverConfig.ip = url
+                                        serverConfig.name = name
+                                    } else {
+                                        val config = ServerConfig(url, name, type)
+                                        instance.allServerConfig.add(config)
+                                        allServerData.add(
+                                            ServerData(
+                                                config
+                                            )
+                                        )
+                                    }
+
+                                    updateServerConfig = !updateServerConfig
+                                    onDismissRequest()
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd),
+                            ) { Text("Apply", style = MaterialTheme.typography.bodyLarge) }
+                        }
                     }
                 }
             }
@@ -579,7 +580,7 @@ fun MultiplayerView(
                                 ),
                                 onClick = {},
                             ) {
-                                Icon(loadSvg("drag"), contentDescription = "Reorder")
+                                Icon(painter = painterResource(Res.drawable.drag_30), contentDescription = "Reorder")
                             }
                         }
 
@@ -792,7 +793,6 @@ fun MultiplayerView(
                     .padding(10.dp)
                     .autoClearFocus(),
             ) {
-                ExitButton(dismiss)
                 Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                     Row(
                         horizontalArrangement = Arrangement.Center,
@@ -986,7 +986,7 @@ fun MultiplayerView(
 
                     RWTextButton(
                         label = readI18n("multiplayer.joinLastGame"),
-                        leadingIcon = { Icon(loadSvg("replay"), null, modifier = Modifier.size(30.dp)) },
+                        leadingIcon = { Icon(painter = painterResource(Res.drawable.replay_30), null, modifier = Modifier.size(30.dp)) },
                         modifier = Modifier.padding(10.dp)
                     ) {
                         val lastIp = configIO.getGameConfig<String?>("lastNetworkIP")
@@ -1050,138 +1050,108 @@ fun MultiplayerView(
         },
     ) {
         ExpandedCard {
-            ExitButton(onExit)
-
-            val realList = remember(
-                currentViewList,
-                enableModFilter,
-                playerLimitRange,
-                mapNameFilter,
-                creatorNameFilter,
-                blacklists.size,
-                battleroom
-            ) {
-                currentViewList.filter { room ->
-                    if (blacklists.any { it.uuid == room.uuid }) return@filter false
-
-                    if (battleroom && room.status == "ingame") return@filter false
-                    if (enableModFilter) {
-                        if (!room.version.contains("mod", true) && room.mods.isBlank()) {
-                            return@filter false
-                        }
-                    }
-
-                    if (mapNameFilter.isNotBlank()) {
-                        return@filter room.mapName.contains(mapNameFilter, true)
-                    }
-
-                    if (creatorNameFilter.isNotBlank()) {
-                        return@filter room.creator.contains(creatorNameFilter, true)
-                    }
-
-                    if (room.playerMaxCount != null) {
-                        return@filter room.playerMaxCount in playerLimitRange || room.playerMaxCount > 100
-                    }
-
-                    true
-                }.sorted
-            }
-
-//            val realServerData = remember(
-//                allServerData.size, updateServerConfig, enableModFilter, playerLimitRange, mapNameFilter, creatorNameFilter, battleroom
-//            ) {
-//                allServerData.filter { data ->
-//                    val info = data.infoPacket
-//
-//                    if (battleroom && info?.status == ServerStatus.InGame) {
-//                        return@filter false
-//                    }
-//
-//                    if (enableModFilter) {
-//                        if (info?.mods.isNullOrBlank()) {
-//                            return@filter false
-//                        }
-//                    }
-//
-//                    if (mapNameFilter.isNotBlank()) {
-//                        return@filter info?.mapName?.contains(mapNameFilter, true) == true
-//                    }
-//
-//                    if (creatorNameFilter.isNotBlank()) {
-//                        return@filter (info?.name ?: data.config.name).contains(creatorNameFilter, true)
-//                    }
-//
-//                    if (info?.maxPlayerSize != null) {
-//                        return@filter info.maxPlayerSize in playerLimitRange || info.maxPlayerSize > 100
-//                    }
-//
-//                    true
-//                }
-//            }
-
-            AnimatedServerConfigInfo(
-                showServerInfoConfig,
-                selectedServerConfig,
-            ) { showServerInfoConfig = false }
-
-            CompositionLocalProvider(
-                LocalContentColor provides MaterialTheme.colorScheme.onSurface
-            ) {
-                LazyColumnScrollbar(
-                    listState = lazyListState,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        state = lazyListState
+            Box {
+                ExitButton(onExit)
+                Column {
+                    Spacer(modifier = Modifier.height(30.dp))
+                    val realList = remember(
+                        currentViewList,
+                        enableModFilter,
+                        playerLimitRange,
+                        mapNameFilter,
+                        creatorNameFilter,
+                        blacklists.size,
+                        battleroom
                     ) {
-                        item {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                OutlinedTextField(
-                                    label = {
-                                        Text(
-                                            readI18n("multiplayer.userName"),
-                                            fontFamily = MaterialTheme.typography.headlineMedium.fontFamily
-                                        )
-                                    },
-                                    textStyle = MaterialTheme.typography.headlineLarge,
-                                    colors = RWOutlinedTextColors,
-                                    value = userName,
-                                    enabled = true,
-                                    singleLine = true,
-                                    leadingIcon = { Icon(Icons.Default.Person, null, modifier = Modifier.size(30.dp)) },
-                                    modifier = Modifier.width(200.dp).padding(10.dp),
-                                    onValueChange =
-                                    {
-                                        userName = it
-                                    },
-                                )
+                        currentViewList.filter { room ->
+                            if (blacklists.any { it.uuid == room.uuid }) return@filter false
 
-                                JoinServerField()
-
-                                RWIconButton(loadSvg("tune"), modifier = Modifier.padding(5.dp), size = 50.dp) { filterSurfaceDialogVisible = true }
-                            }
-                        }
-
-                        if (throwable != null && isShowingRoomList) {
-                            item {
-                                SelectionContainer {
-                                    Text(throwable?.stackTraceToString() ?: "", color = Color.Red)
+                            if (battleroom && room.status == "ingame") return@filter false
+                            if (enableModFilter) {
+                                if (!room.version.contains("mod", true) && room.mods.isBlank()) {
+                                    return@filter false
                                 }
                             }
-                        } else {
-                            if (isShowingRoomList) {
-                                RoomListAnimated(realList)
-                            } else {
-                                ServerList(/*realServerData*/ allServerData)
+
+                            if (mapNameFilter.isNotBlank()) {
+                                return@filter room.mapName.contains(mapNameFilter, true)
+                            }
+
+                            if (creatorNameFilter.isNotBlank()) {
+                                return@filter room.creator.contains(creatorNameFilter, true)
+                            }
+
+                            if (room.playerMaxCount != null) {
+                                return@filter room.playerMaxCount in playerLimitRange || room.playerMaxCount > 100
+                            }
+
+                            true
+                        }.sorted
+                    }
+
+                    AnimatedServerConfigInfo(
+                        showServerInfoConfig,
+                        selectedServerConfig,
+                    ) { showServerInfoConfig = false }
+
+                    CompositionLocalProvider(
+                        LocalContentColor provides MaterialTheme.colorScheme.onSurface
+                    ) {
+                        LazyColumnScrollbar(
+                            listState = lazyListState,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                state = lazyListState
+                            ) {
+                                item {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        OutlinedTextField(
+                                            label = {
+                                                Text(
+                                                    readI18n("multiplayer.userName"),
+                                                    fontFamily = MaterialTheme.typography.headlineMedium.fontFamily
+                                                )
+                                            },
+                                            textStyle = MaterialTheme.typography.headlineLarge,
+                                            colors = RWOutlinedTextColors,
+                                            value = userName,
+                                            enabled = true,
+                                            singleLine = true,
+                                            leadingIcon = { Icon(Icons.Default.Person, null, modifier = Modifier.size(30.dp)) },
+                                            modifier = Modifier.width(200.dp).padding(10.dp),
+                                            onValueChange =
+                                            {
+                                                userName = it
+                                            },
+                                        )
+
+                                        JoinServerField()
+
+                                        RWIconButton(painterResource(Res.drawable.tune_30), modifier = Modifier.padding(5.dp), size = 50.dp) { filterSurfaceDialogVisible = true }
+                                    }
+                                }
+
+                                if (throwable != null && isShowingRoomList) {
+                                    item {
+                                        SelectionContainer {
+                                            Text(throwable?.stackTraceToString() ?: "", color = Color.Red)
+                                        }
+                                    }
+                                } else {
+                                    if (isShowingRoomList) {
+                                        RoomListAnimated(realList)
+                                    } else {
+                                        ServerList(/*realServerData*/ allServerData)
+                                    }
+                                }
                             }
                         }
-                    }
-                }
 
 //                var list by remember { mutableStateOf(List(100) { "Item $it" }) }
 //                val lazyListState = rememberLazyListState()
@@ -1227,6 +1197,8 @@ fun MultiplayerView(
 //                    }
 //                }
 
+                    }
+                }
             }
         }
     }

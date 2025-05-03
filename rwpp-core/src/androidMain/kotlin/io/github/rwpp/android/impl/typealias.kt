@@ -5,15 +5,9 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.platform
+package io.github.rwpp.android.impl
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.painter.Painter
-
-@Composable
-expect fun loadSvgPlatform(path: String): Painter
-
-private val svg = mutableMapOf<String, Painter>()
-
-@Composable
-fun loadSvg(path: String): Painter = svg.getOrPut(path) { loadSvgPlatform(path) }
+typealias GameEngine = com.corrodinggames.rts.gameFramework.k
+typealias PlayerInternal = com.corrodinggames.rts.game.p
+typealias FClass = com.corrodinggames.rts.gameFramework.f
+typealias NetPacket = com.corrodinggames.rts.gameFramework.e

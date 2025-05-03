@@ -40,6 +40,12 @@ import io.github.rwpp.logger
 import io.github.rwpp.utils.Reflect
 import io.github.rwpp.widget.LoadingContext
 import kotlinx.coroutines.channels.Channel
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Headers
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import org.koin.core.annotation.Single
 import org.lwjgl.opengl.Display
 import java.awt.image.BufferedImage
@@ -162,7 +168,6 @@ class GameImpl : AbstractGame() {
 
             // copy from Main.h
             // ignore noresources
-
             if (native) {
 //                l.aH = true
 //                com.corrodinggames.rts.java.c.b().b()

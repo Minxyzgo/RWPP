@@ -292,6 +292,7 @@ fun LazyColumnScrollbar(
     }
 }
 
+@Suppress("UnusedBoxWithConstraintsScope")
 @Composable
 private fun InternalLazyColumnScrollbar(
     listState: LazyListState,

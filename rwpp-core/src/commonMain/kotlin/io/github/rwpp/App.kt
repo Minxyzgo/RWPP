@@ -10,51 +10,17 @@
 package io.github.rwpp
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -64,13 +30,8 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.markdown.compose.Markdown
@@ -80,36 +41,31 @@ import io.github.rwpp.config.CoreData
 import io.github.rwpp.config.Settings
 import io.github.rwpp.core.UI
 import io.github.rwpp.core.UI.selectedColorSchemeName
-import io.github.rwpp.core.UI.showRoomView
-import io.github.rwpp.core.UI.showMultiplayerView
-import io.github.rwpp.core.UI.showMissionView
-import io.github.rwpp.core.UI.showReplayView
-import io.github.rwpp.core.UI.showSettingsView
-import io.github.rwpp.core.UI.showModsView
-import io.github.rwpp.core.UI.showExtensionView
 import io.github.rwpp.core.UI.showContributorList
+import io.github.rwpp.core.UI.showExtensionView
+import io.github.rwpp.core.UI.showMissionView
+import io.github.rwpp.core.UI.showModsView
+import io.github.rwpp.core.UI.showMultiplayerView
+import io.github.rwpp.core.UI.showReplayView
+import io.github.rwpp.core.UI.showRoomView
+import io.github.rwpp.core.UI.showSettingsView
 import io.github.rwpp.game.Game
-import io.github.rwpp.ui.ContributorList
-import io.github.rwpp.ui.ExtensionView
-import io.github.rwpp.ui.MissionView
-import io.github.rwpp.ui.ModsView
-import io.github.rwpp.ui.MultiplayerRoomView
-import io.github.rwpp.ui.MultiplayerView
-import io.github.rwpp.ui.ReplaysViewDialog
-import io.github.rwpp.ui.SettingsView
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.LatestVersionProfile
 import io.github.rwpp.net.Net
-import io.github.rwpp.platform.loadSvg
+import io.github.rwpp.rwpp_core.generated.resources.*
+import io.github.rwpp.ui.*
 import io.github.rwpp.widget.*
 import io.github.rwpp.widget.v2.RWIconButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }
 
+@Suppress("UnusedBoxWithConstraintsScope", "UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun App(
     sizeModifier: Modifier = Modifier.fillMaxSize(),
@@ -346,15 +302,10 @@ fun App(
                     BorderCard(
                        modifier = Modifier.size(500.dp).autoClearFocus(),
                     ) {
-                        ExitButton(dismiss)
-
-                        Row(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
-                            HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = Color.DarkGray)
+                        Row(modifier = Modifier.fillMaxWidth().padding(5.dp), horizontalArrangement = Arrangement.Center) {
                             Box {
-                                Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(50.dp).offset(5.dp, 5.dp).blur(2.dp))
                                 Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(50.dp))
                             }
-                            HorizontalDivider(Modifier.weight(1f), thickness = 2.dp, color = MaterialTheme.colorScheme.surfaceContainer)
                         }
 
                         LargeDividingLine { 0.dp }
@@ -634,7 +585,7 @@ fun MainMenu(
                 item {
                     MenuButton(
                         readI18n("menu.mission"),
-                        loadSvg("destruction"),
+                        painterResource(Res.drawable.destruction_30),
                         onClick = mission
                     )
                 }
@@ -642,7 +593,7 @@ fun MainMenu(
                 item {
                     MenuButton(
                         readI18n("menus.singlePlayer.skirmish", I18nType.RW),
-                        loadSvg("swords"),
+                        painterResource(Res.drawable.swords_30),
                         onClick = skirmish
                     )
                 }
@@ -650,7 +601,7 @@ fun MainMenu(
                 item {
                     MenuButton(
                         readI18n("menu.multiplayer"),
-                        loadSvg("group"),
+                        painterResource(Res.drawable.group_30),
                         onClick = multiplayer
                     )
                 }
@@ -658,7 +609,7 @@ fun MainMenu(
                 item {
                     MenuButton(
                         readI18n("menu.mods"),
-                        loadSvg("dns"),
+                        painterResource(Res.drawable.dns_30),
                         onClick = mods
                     )
                 }
@@ -666,7 +617,7 @@ fun MainMenu(
                 item {
                     MenuButton(
                         readI18n("menu.sandbox"),
-                        loadSvg("edit_square"),
+                        painterResource(Res.drawable.edit_square_30),
                         onClick = sandbox
                     )
                 }
@@ -682,7 +633,7 @@ fun MainMenu(
                 item {
                     MenuButton(
                         readI18n("menu.extension"),
-                        loadSvg("extension"),
+                        painterResource(Res.drawable.extension_30),
                         onClick = extension
                     )
                 }
@@ -700,26 +651,23 @@ fun MainMenu(
                     with(koinInject<AppContext>()) {
                         MenuButton(
                             readI18n("menu.exit"),
-                            loadSvg("exit"),
+                            painterResource(Res.drawable.exit_30)
                         ) { exit() }
                     }
                 }
             }
         }
 
-
-
-
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             RWIconButton(Icons.Filled.Favorite, modifier = Modifier.padding(10.dp), tint = Color.Red, onClick = contributor)
 
             val net = koinInject<Net>()
 
-            RWIconButton(loadSvg("library"), modifier = Modifier.padding(10.dp)) {
+            RWIconButton(painterResource(Res.drawable.library_30), modifier = Modifier.padding(10.dp)) {
                 net.openUriInBrowser("https://rwpp.netlify.app/")
             }
 
-            RWIconButton(loadSvg("octocat"), modifier = Modifier.padding(10.dp)) {
+            RWIconButton(painterResource(Res.drawable.octocat_30), modifier = Modifier.padding(10.dp)) {
                 net.openUriInBrowser("https://github.com/Minxyzgo/RWPP")
             }
         }

@@ -11,4 +11,6 @@ import io.github.rwpp.game.base.GamePaint
 
 interface GUI {
     var textPaint: GamePaint
+
+    fun showChatMessage(sender: String, message: String)
 }

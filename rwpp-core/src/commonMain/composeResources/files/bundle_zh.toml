@@ -47,6 +47,8 @@ maxPlayer = "最大玩家数"
 incomeMultiplier = "资金倍率"
 teamUnitCapHostedGame = "团队最大单位数量"
 banUnits = "禁用单位"
+mapView = "地图视图"
+mapType = "地图类型"
 
 [mod]
 update = "刷新"
@@ -55,10 +57,14 @@ disableAll = "禁用全部"
 apply = "应用"
 cancel = "取消"
 delete = "删除"
-networkModInfo = """
-警告：这是一个从多人游戏中下载的模组，之后它就会被删除
-如果你不想这么做，请点击下方的'取消'按钮。
-"""
+enabled = "已启用"
+disabled = "已禁用"
+inputFile = "导入文件"
+resourceBrowser = "资源浏览器"
+resourceType = "资源类型"
+loadMore = "加载更多"
+loadInfo = "请导入.rwmod文件"
+removeInfo = "删除模组失败，请禁用后并重启重试"
 
 [menu]
 mission = "战役"
@@ -75,6 +81,8 @@ difficulty = "难度"
 spawnPoint = "出生点"
 team = "队伍"
 fog = "迷雾"
+mod = "模组"
+map = "地图"
 
 [settings]
 setExternalFolder = "设置外部文件权限"
@@ -102,6 +110,7 @@ changeGameTheme = "更换游戏主题"
 enhancedReinforceTroops = "增强出兵"
 improvedHealthBar = "改进血量条"
 showUnitTargetLine = "显示单位目标线 (多人模式受限)"
+boldText = "列表粗体文字"
 
 [extension]
 extension = "扩展"

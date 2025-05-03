@@ -37,23 +37,38 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.config.Settings
 import io.github.rwpp.core.UI
 import io.github.rwpp.widget.v2.bounceClick
+import org.koin.compose.koinInject
 
 @Composable
 fun BorderCard(
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     backgroundColor: Color = MaterialTheme.colorScheme.background.copy(UI.backgroundTransparency),
     shape: Shape = RoundedCornerShape(20.dp),
     content: @Composable ColumnScope.() -> Unit
-) = Card(
-    shape = shape,
-    border = BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceContainer),
-    elevation =  CardDefaults.cardElevation(defaultElevation = 10.dp),
-    colors = CardDefaults.cardColors(containerColor = backgroundColor),
-    modifier = modifier,
-    content = content
-)
+) {
+    if (onClick != null) {
+        Card(
+            onClick = onClick,
+            shape = shape,
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceContainer),
+            colors = CardDefaults.cardColors(containerColor = backgroundColor),
+            modifier = modifier,
+            content = content
+        )
+    } else {
+        Card(
+            shape = shape,
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceContainer),
+            colors = CardDefaults.cardColors(containerColor = backgroundColor),
+            modifier = modifier,
+            content = content
+        )
+    }
+}
 
 @Composable
 fun <T> BasicDropdownMenu(
@@ -98,22 +113,27 @@ fun <T> LargeDropdownMenu(
             .height(IntrinsicSize.Min)
             .width(IntrinsicSize.Max)
     ) {
-
-            OutlinedTextField(
-                label = { Text(label, fontFamily = MaterialTheme.typography.headlineLarge.fontFamily) },
-                textStyle = MaterialTheme.typography.headlineMedium.copy(color = selectedItemColor(items.getOrNull(selectedIndex), selectedIndex)),
-                colors = RWOutlinedTextColors,
-                value = if(hasValue) items.getOrNull(selectedIndex)?.let { selectedItemToString(it) } ?: "" else "",
-                enabled = enabled,
-                modifier = Modifier.fillMaxWidth().focusRequester(focusRequest),
-                trailingIcon = {
-                    val icon = if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
-                    Icon(icon, "", tint = MaterialTheme.colorScheme.surfaceTint)
-                },
-                onValueChange = { },
-                shape = RoundedCornerShape(10.dp),
-                readOnly = true,
-            )
+        OutlinedTextField(
+            label = { Text(label, fontFamily = MaterialTheme.typography.headlineLarge.fontFamily) },
+            textStyle = MaterialTheme.typography.headlineMedium.copy(
+                color = selectedItemColor(
+                    items.getOrNull(
+                        selectedIndex
+                    ), selectedIndex
+                )
+            ),
+            colors = RWOutlinedTextColors,
+            value = if (hasValue) items.getOrNull(selectedIndex)?.let { selectedItemToString(it) } ?: "" else "",
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().focusRequester(focusRequest),
+            trailingIcon = {
+                val icon = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                Icon(icon, "", tint = MaterialTheme.colorScheme.surfaceTint)
+            },
+            onValueChange = { },
+            shape = RoundedCornerShape(10.dp),
+            readOnly = true,
+        )
 
 
         // Transparent clickable surface on top of OutlinedTextField
@@ -121,9 +141,9 @@ fun <T> LargeDropdownMenu(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 8.dp)
-                .clip(MaterialTheme.shapes.extraSmall)
+                .clip(RoundedCornerShape(10.dp))
                 .clickable(enabled = enabled && !expanded) { expanded = true; focusRequest.requestFocus() },
-            color = Color.Transparent,
+            color = Color.Transparent
         ) {}
 
         DropdownMenu(
@@ -135,7 +155,13 @@ fun <T> LargeDropdownMenu(
         ) {
             items.forEachIndexed { index, t ->
                 DropdownMenuItem(
-                    text = { Text(selectedItemToString(t), style = MaterialTheme.typography.headlineSmall, color = selectedItemColor(t, index)) },
+                    text = {
+                        Text(
+                            selectedItemToString(t),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = selectedItemColor(t, index)
+                        )
+                    },
                     onClick = {
                         onItemSelected(index, t)
                         expanded = false
@@ -317,6 +343,7 @@ fun RowScope.TableCell(
     iconLeader: (@Composable () -> Unit)? = null,
 ) {
     val border = if(drawStroke) Modifier.border(0.5f.dp, strokeColor) else Modifier
+    val settings = koinInject<Settings>()
     Row(
         horizontalArrangement = Arrangement.Center,
         modifier = Modifier
@@ -333,7 +360,7 @@ fun RowScope.TableCell(
             color = color,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(0.dp, 2.dp, 0.dp, 2.dp),
-            style = MaterialTheme.typography.bodyMedium
+            style = if (settings.boldText) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium
         )
     }
 }

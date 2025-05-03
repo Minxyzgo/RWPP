@@ -5,15 +5,21 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.impl
+package io.github.rwpp.android.impl
 
 import com.corrodinggames.rts.game.units.custom.ag
+import com.corrodinggames.rts.gameFramework.e.a
+import com.corrodinggames.rts.gameFramework.i.b
+import com.corrodinggames.rts.gameFramework.k
+import com.corrodinggames.rts.gameFramework.k.d
+import io.github.rwpp.android.MainActivity
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.io.calculateSize
 import io.github.rwpp.io.zipFolderToByte
-import io.github.rwpp.logger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import java.io.File
@@ -23,31 +29,38 @@ class ModManagerImpl : ModManager {
     private val game: Game = get()
     private var mods: List<Mod>? = null
 
-    override suspend fun modReload() {
-        game.post {
-            val B = GameEngine.B()
-            B.bZ.e()
-            B.bQ.save()
-            try {
-                B.br = true
-                B.e()
-                B.bZ.a(false, false)
-                B.x()
-            } finally {
-                B.br = false
-            }
-        }
-
+    override suspend fun modReload() = withContext(Dispatchers.IO) {
+        val t = GameEngine.t()
+        modSaveChange()
+        val aVar = t.bW
+        t.bo = true
+        t.f()
+        aVar.a(false, false)
+        t.bo = false
+        t.q()
     }
+//
+//    override fun modUpdate() {
+//        //LClass.B().bZ.k()
+//        GameEngine.t().bW.j()
+//        mods = null
+//        mods = getAllMods()
+//    }
 
     override suspend fun modSaveChange() {
-        val b = GameEngine.B()
-        b.bZ.e()
-        b.bQ.save()
-        val a2: Int = b.bZ.a(false)
-        if(b.bX.B)
-            return
-        ag.c(true)
+        val t = GameEngine.t()
+        t.bW.d()
+        t.bN.save()
+        val a2: Int = t.bW.a()
+        if(t.bU.C) {
+
+        } else if(!ag.b(true)) {
+
+        } else if(a2 == 0) {
+            t.bW.b()
+        }
+
+        MainActivity.activityResume()
     }
 
     override fun getModByName(name: String): Mod? {
@@ -58,10 +71,7 @@ class ModManagerImpl : ModManager {
     @Suppress("unchecked_cast")
     override fun getAllMods(): List<Mod> {
         if(mods != null) return mods!!
-        val mods = IAClass::class.java.getDeclaredField("e").run {
-            isAccessible = true
-            get(GameEngine.B().bZ)
-        } as ArrayList<com.corrodinggames.rts.gameFramework.i.b>
+        val mods = GameEngine.t().bW.e as ArrayList<com.corrodinggames.rts.gameFramework.i.b>
 
         return buildList {
             mods.forEach {
@@ -69,48 +79,53 @@ class ModManagerImpl : ModManager {
                     override val id: Int
                         get() = it.a
                     override val name: String
-                        get() = it.s ?: ""
+                        get() = it.q ?: ""
                     override val description: String
-                        get() = it.u ?: ""
+                        get() = it.s ?: ""
                     override val minVersion: String
-                        get() = it.v ?: ""
+                        get() = it.t ?: ""
                     override val errorMessage: String?
-                        get() = it.R
+                        get() = it.P
                     override var isEnabled: Boolean
                         get() = !it.f
                         set(value) { it.f = !value }
                     override val path: String
-                        get() = com.corrodinggames.rts.gameFramework.e.a.e(it.q)
+                        get() = it.d()
 
-//                    override var isNetworkMod: Boolean
-//                        get() = it.c.contains(".network")
-//                        set(value) {
-//                            if (!value) {
-//                                val newName = it.c.replace(".network", "")
-//                                File("mods/units/${it.c}").copyTo(File("mods/units/$newName.netbak"))
-//                                it.c = newName
-//                            } else {
-//                                throw RuntimeException("Cannot set a mod to network mod.")
-//                            }
-//                        }
+
+                    override fun tryDelete(): Boolean {
+                        val e = it.e()
+                        return if (!it.l()) {
+                            false
+                        } else {
+                            val file = File(e)
+                            if (!a.i(file.absolutePath)) {
+                                false
+                            } else {
+                                a.b(file)
+                            }
+                        }
+                    }
 
                     override fun getRamUsed(): String {
-                        return it.s()
+                        return it.k()
                     }
 
                     override fun getSize(): Long {
                         return kotlin.runCatching {
-                            File(it.g()).calculateSize()
+                            File(modPath()).calculateSize()
                         }.getOrNull() ?: 0L
                     }
 
                     override fun getBytes(): ByteArray {
-                        val file = File(it.g())
+                        val file = File(modPath())
                         return if(file.isDirectory)
                             file.zipFolderToByte()
                         else file.readBytes()
                     }
 
+                    private fun modPath(): String =
+                        ("/storage/emulated/0/" + com.corrodinggames.rts.gameFramework.e.a.q(it.g()).removePrefix("/SD/"))
                 })
             }
         }

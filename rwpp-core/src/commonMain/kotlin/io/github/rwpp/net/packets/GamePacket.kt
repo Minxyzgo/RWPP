@@ -15,7 +15,8 @@ import io.github.rwpp.net.Packet
 @Suppress("MemberVisibilityCanBePrivate")
 object GamePacket {
     fun getPacket(packetType: Int?, action: (GameOutputStream) -> Unit): Packet {
-        return object : Packet(packetType) {
+        return object : Packet {
+            override val type: Int? = packetType
             override fun readPacket(input: GameInputStream) {}
 
             override fun writePacket(output: GameOutputStream) {

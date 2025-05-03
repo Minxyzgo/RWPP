@@ -12,6 +12,7 @@ import io.github.rwpp.core.Initialization
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.io.GameInputStream
+import io.github.rwpp.logger
 import io.github.rwpp.net.packets.ServerPacket
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -19,7 +20,10 @@ import okhttp3.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import java.io.DataInputStream
+import java.io.File
 import java.io.IOException
+import java.io.InputStream
+import java.io.RandomAccessFile
 import java.util.*
 import kotlin.reflect.full.createInstance
 
@@ -34,8 +38,16 @@ interface Net : KoinComponent, Initialization {
      *
      * If the lambda returns true, then the packet would not be resolved by the game.
      */
-    val listeners: MutableMap<Int, MutableList<(Client, Packet) -> Boolean>>
+    val listeners: MutableMap<Int, MutableList<(Client?, Packet) -> Boolean>>
 
+    /**
+     * Protocols for search mods.
+     */
+    val bbsProtocols: MutableList<BBSProtocol>
+
+    /**
+     * Default Okhttp3 client.
+     */
     val client: OkHttpClient
 
     /**
@@ -59,9 +71,7 @@ interface Net : KoinComponent, Initialization {
         return runCatching {
             val locale = Locale.getDefault()
             val request = Request.Builder().url(
-                if (locale.country == "CN")
-                    "https://gitee.com/api/v5/repos/minxyzgo/RWPP/releases/latest"
-                else "https://api.github.com/repos/Minxyzgo/RWPP/releases/latest"
+                "https://api.github.com/repos/Minxyzgo/RWPP/releases/latest"
             ).build()
             val response = client.newCall(request).execute()
 
@@ -73,6 +83,90 @@ interface Net : KoinComponent, Initialization {
             }
         }.getOrNull()
     }
+
+    fun searchBBS(
+        protocol: BBSProtocol,
+        page: Int,
+        keyword: String,
+        type: ResourceType,
+        callback: (Result<Array<NetResourceInfo>>) -> Unit
+    ) {
+        // 构建请求对象
+        val request = Request.Builder()
+            .url(protocol.url)
+            .post(protocol.requestBodyProvider(page, keyword, type))
+            .build()
+
+        // 异步执行请求
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                callback(Result.failure(e))
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val result = if (response.isSuccessful) {
+                    protocol.resultParser(response)?.let {
+                        Result.success(it)
+                    } ?: Result.failure(IOException("Unknown response body"))
+                } else {
+                    Result.failure(IOException("HTTP error code: ${response.code}"))
+                }
+                callback(result)
+            }
+        })
+    }
+
+    fun downloadFile(
+        url: String,
+        outputFile: File,
+        progressCallback: (progress: Float) -> Unit
+    ) {
+        val request = Request.Builder()
+            .url(url)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+
+            override fun onFailure(call: Call, e: IOException) {
+                // 处理失败情况
+                e.printStackTrace()
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (!response.isSuccessful) {
+                    throw IOException("Unexpected code $response")
+                }
+
+                var downloadedBytes: Long = 0
+                val body = response.body ?: return
+                val contentLength = body.contentLength()
+                var inputStream: InputStream? = null
+                var outputStream: RandomAccessFile? = null
+
+                try {
+                    inputStream = body.byteStream()
+                    outputStream = RandomAccessFile(outputFile, "rw")
+
+                    val buffer = ByteArray(4096)
+                    var read: Int
+
+                    while (inputStream.read(buffer).also { read = it } != -1) {
+                        outputStream.write(buffer, 0, read)
+                        downloadedBytes += read.toLong()
+                        progressCallback((downloadedBytes.toFloat() / contentLength.toFloat()).apply {
+                            logger.info("downloading: $this")
+                        })
+                    }
+
+                    logger.info("Download completed: ${outputFile.absoluteFile}")
+                } finally {
+                    inputStream?.close()
+                    outputStream?.close()
+                }
+            }
+        })
+    }
+
 
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun CoroutineScope.getRoomListFromSourceUrl(url: List<String>): List<RoomDescription> =
@@ -153,7 +247,7 @@ interface Net : KoinComponent, Initialization {
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T : Packet> Net.registerPacketListener(
     packetType: Int,
-    noinline listener: (Client, T) -> Boolean
+    noinline listener: (Client?, T) -> Boolean
 ) {
     val method = T::class.java.getDeclaredMethod("readPacket", GameInputStream::class.java)
     packetDecoders[packetType] =
@@ -162,7 +256,7 @@ inline fun <reified T : Packet> Net.registerPacketListener(
             method.invoke(p, GameInputStream(it))
             p
         }
-    listeners.getOrPut(packetType) { mutableListOf() }.add(listener as (Client, Packet) -> Boolean)
+    listeners.getOrPut(packetType) { mutableListOf() }.add(listener as (Client?, Packet) -> Boolean)
 }
 
 fun Net.registerListeners() {
@@ -171,7 +265,7 @@ fun Net.registerListeners() {
         InternalPacketType.PRE_GET_SERVER_INFO_FROM_LIST.type
     ) { client, _ ->
         val room = game.gameRoom
-        client.sendPacketToClient(
+        client?.sendPacketToClient(
             ServerPacket.ServerInfoReceivePacket(
                 room.localPlayer.name + "'s game",
                 room.getPlayers().size,

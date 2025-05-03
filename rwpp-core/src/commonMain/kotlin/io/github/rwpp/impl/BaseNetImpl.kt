@@ -7,9 +7,11 @@
 
 package io.github.rwpp.impl
 
+import io.github.rwpp.net.BBSProtocol
 import io.github.rwpp.net.Client
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
+import io.github.rwpp.net.RTSBoxProtocol
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import java.io.DataInputStream
@@ -17,7 +19,7 @@ import java.util.concurrent.TimeUnit
 
 abstract class BaseNetImpl : Net {
     override val packetDecoders: MutableMap<Int, (DataInputStream) -> Packet> = mutableMapOf()
-    override val listeners: MutableMap<Int, MutableList<(Client, Packet) -> Boolean>> = mutableMapOf()
+    override val listeners: MutableMap<Int, MutableList<(Client?, Packet) -> Boolean>> = mutableMapOf()
     override val client: OkHttpClient = OkHttpClient.Builder()
         .addNetworkInterceptor(Interceptor { chain ->
             val request = chain.request()
@@ -28,4 +30,6 @@ abstract class BaseNetImpl : Net {
         })
         .readTimeout(5000L, TimeUnit.MILLISECONDS)
         .build()
+
+    override val bbsProtocols: MutableList<BBSProtocol> = mutableListOf(RTSBoxProtocol)
 }

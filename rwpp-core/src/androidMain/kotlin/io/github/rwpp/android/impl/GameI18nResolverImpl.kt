@@ -5,16 +5,14 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.mod
+package io.github.rwpp.android.impl
 
-import org.koin.core.component.KoinComponent
+import io.github.rwpp.i18n.GameI18nResolver
+import org.koin.core.annotation.Single
 
-interface ModManager : KoinComponent {
-    suspend fun modReload()
-
-    suspend fun modSaveChange()
-
-    fun getModByName(name: String): Mod?
-
-    fun getAllMods(): List<Mod>
+@Single
+class GameI18nResolverImpl : GameI18nResolver {
+    override fun i18n(str: String, vararg args: Any?): String {
+        return com.corrodinggames.rts.gameFramework.h.a.a(str, args)
+    }
 }

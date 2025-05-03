@@ -36,6 +36,7 @@ import io.github.rwpp.config.Settings
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.GameLoadedEvent
+import io.github.rwpp.event.events.KeyboardEvent
 import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.Game
@@ -58,12 +59,13 @@ import org.slf4j.LoggerFactory
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.WindowEvent
+import java.awt.event.WindowListener
 import java.io.File
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.imageio.ImageIO
 import javax.swing.JFrame
-import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import javax.swing.WindowConstants
 
@@ -113,6 +115,34 @@ fun swingApplication() = SwingUtilities.invokeLater {
         .forEach {
             it.delete()
         }
+
+    KeyboardFocusManager.getCurrentKeyboardFocusManager()
+        .addKeyEventDispatcher { dispatcher ->
+            KeyboardEvent(dispatcher.keyCode).broadcastIn()
+            false
+        }
+
+    window.addWindowListener(object : WindowListener {
+        override fun windowOpened(e: WindowEvent?) {
+        }
+
+        override fun windowClosing(e: WindowEvent?) {
+        }
+
+        override fun windowClosed(e: WindowEvent?) {
+            appKoin.get<AppContext>().exit()
+        }
+        override fun windowIconified(e: WindowEvent?) {}
+
+        override fun windowDeiconified(e: WindowEvent?) {
+        }
+
+        override fun windowActivated(e: WindowEvent?) {
+        }
+
+        override fun windowDeactivated(e: WindowEvent?) {
+        }
+    })
 
     val panel = ComposePanel()
     panel.isVisible = true
@@ -259,56 +289,69 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 shape = RectangleShape
             ) {
                 var chatMessage by remember { mutableStateOf("") }
-                ExitButton {
-                    sendMessageDialog.isVisible = false
-                }
-
-                GlobalEventChannel.filter(QuitGameEvent::class).onDispose {
-                    subscribeAlways { sendMessageDialog.isVisible = false }
-                }
-
-                RWSingleOutlinedTextField(
-                    label = readI18n("ingame.sendMessage"),
-                    value = chatMessage,
-                    requestFocus = true,
-                    modifier = Modifier.fillMaxWidth().padding(10.dp)
-                        .onKeyEvent {
-                            if(it.key == Key.Enter && chatMessage.isNotEmpty()) {
-                                game.gameRoom.sendChatMessageOrCommand(chatMessage)
-                                chatMessage = ""
-                                sendMessageDialog.isVisible = false
-                            }
-
-                            true
-                        },
-                    trailingIcon = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowForward,
-                            null,
-                            modifier = Modifier.clickable {
-                                game.gameRoom.sendChatMessageOrCommand(chatMessage)
-                                chatMessage = ""
-                                sendMessageDialog.isVisible = false
-                            }
-                        )
-                    },
-                    onValueChange =
-                        {
-                            chatMessage = it
-                        },
-                )
-
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    RWTextButton(readI18n("ingame.sendMessage"), modifier = Modifier.padding(5.dp)) {
-                        game.gameRoom.sendChatMessageOrCommand(chatMessage)
-                        chatMessage = ""
+                Box {
+                    ExitButton {
                         sendMessageDialog.isVisible = false
                     }
 
-                    RWTextButton(readI18n("ingame.sendTeamMessage"), modifier = Modifier.padding(5.dp)) {
-                        game.gameRoom.sendChatMessage("-t $chatMessage")
-                        chatMessage = ""
-                        sendMessageDialog.isVisible = false
+                    GlobalEventChannel.filter(QuitGameEvent::class).onDispose {
+                        subscribeAlways { sendMessageDialog.isVisible = false }
+                    }
+                    Column {
+                        Spacer(modifier = Modifier.height(30.dp))
+                        RWSingleOutlinedTextField(
+                            label = readI18n("ingame.sendMessage"),
+                            value = chatMessage,
+                            requestFocus = true,
+                            modifier = Modifier.fillMaxWidth().padding(10.dp)
+                                .onKeyEvent {
+                                    if (it.key == Key.Enter && chatMessage.isNotEmpty()) {
+                                        game.gameRoom.sendChatMessageOrCommand(chatMessage)
+                                        chatMessage = ""
+                                        sendMessageDialog.isVisible = false
+                                    }
+
+                                    true
+                                },
+                            trailingIcon = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    null,
+                                    modifier = Modifier.clickable {
+                                        game.gameRoom.sendChatMessageOrCommand(chatMessage)
+                                        chatMessage = ""
+                                        sendMessageDialog.isVisible = false
+                                    }
+                                )
+                            },
+                            onValueChange =
+                            {
+                                chatMessage = it
+                            },
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            RWTextButton(
+                                readI18n("ingame.sendMessage"),
+                                modifier = Modifier.padding(5.dp)
+                            ) {
+                                game.gameRoom.sendChatMessageOrCommand(chatMessage)
+                                chatMessage = ""
+                                sendMessageDialog.isVisible = false
+                            }
+
+                            RWTextButton(
+                                readI18n("ingame.sendTeamMessage"),
+                                modifier = Modifier.padding(5.dp)
+                            ) {
+                                game.gameRoom.sendChatMessage("-t $chatMessage")
+                                chatMessage = ""
+                                sendMessageDialog.isVisible = false
+                            }
+                        }
                     }
                 }
             }

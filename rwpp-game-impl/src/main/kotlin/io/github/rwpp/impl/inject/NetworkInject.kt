@@ -95,7 +95,7 @@ object NetworkInject {
             else -> {
                 net.listeners[type]?.forEach { listener ->
                     val result = listener.invoke(
-                        auVar.a as Client,
+                        auVar.a as? Client,
                         net.packetDecoders[type]!!.invoke(
                             DataInputStream(
                                 ByteArrayInputStream(auVar.c)

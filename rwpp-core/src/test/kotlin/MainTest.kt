@@ -1,0 +1,45 @@
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import org.jetbrains.annotations.TestOnly
+import org.junit.Test
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+
+/*
+ * Copyright 2023-2025 RWPP contributors
+ * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
+ */
+
+
+class MainTest {
+   // @Test
+//    fun test() {
+//        searchBBS(
+//            bbsId = "4",
+//            keyword = "红警",
+//            page = "1"
+//        ) { result ->
+//            result.onSuccess { responseBody ->
+//                println("请求成功：\n$responseBody")
+//                // 这里可以添加 JSON 解析逻辑
+//            }.onFailure { exception ->
+//                println("请求失败：${exception.message}")
+//            }
+//        }
+////    }
+    val okHttpClient = OkHttpClient().newBuilder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
+
+    // 封装 API 请求方法
+
+
+}

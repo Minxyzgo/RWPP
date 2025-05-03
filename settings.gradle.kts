@@ -7,11 +7,11 @@
 
 rootProject.name = "RWPP"
 
-include(":rwpp-android")
 include(":rwpp-desktop")
 include(":rwpp-core")
 include(":rwpp-ksp")
 include(":rwpp-core-utils")
+include(":rwpp-game-impl")
 
 pluginManagement {
     repositories {
@@ -29,7 +29,7 @@ pluginManagement {
 
         kotlin("jvm").version(kotlinVersion)
         kotlin("multiplatform").version(kotlinVersion)
-        kotlin("android").version(kotlinVersion)
+      //  kotlin("android").version(kotlinVersion)
         kotlin("plugin.serialization").version(kotlinVersion)
 
         id("org.jetbrains.kotlin.plugin.compose").version(kotlinVersion)
@@ -51,4 +51,4 @@ dependencyResolutionManagement {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 }
-include("rwpp-game-impl")
+

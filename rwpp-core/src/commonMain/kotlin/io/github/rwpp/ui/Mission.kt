@@ -37,66 +37,75 @@ fun MissionView(onExit: () -> Unit) {
             .fillMaxSize()
             .padding(10.dp)
     ) {
-        ExitButton(onExit)
 
+        Box {
+            ExitButton(onExit)
+            Column {
 
-        Row(
-            modifier = Modifier.fillMaxWidth().scaleFit(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(readI18n("mission.title"), style = MaterialTheme.typography.headlineLarge)
-        }
-
-        var selectedIndex0 by remember { mutableStateOf(0) }
-        var selectedIndex1 by remember { mutableStateOf(configIO.getGameConfig<Int>("aiDifficulty") + 2) }
-
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(top = 5.dp)
-                .scaleFit()
-        ) {
-            with(game) {
-                LargeDropdownMenu(
-                    modifier = Modifier.wrapContentSize().padding(5.dp),
-                    label = readI18n("mission.type"),
-                    items = getAllMissionTypes(),
-                    selectedIndex = selectedIndex0,
-                    onItemSelected = { index, _ -> selectedIndex0 = index }
-                )
-            }
-
-            LargeDropdownMenu(
-                modifier = Modifier.wrapContentSize().padding(5.dp),
-                label = readI18n("common.difficulty"),
-                items = Difficulty.entries,
-                selectedIndex = selectedIndex1,
-                onItemSelected = { index, _ -> selectedIndex1 = index }
-            )
-        }
-
-        LargeDividingLine { 0.dp }
-
-        with(game) {
-            var missions by remember { mutableStateOf(listOf<Mission>()) }
-            LaunchedEffect(selectedIndex0) {
-                missions = getMissionsByType(getAllMissionTypes()[selectedIndex0])
-            }
-
-            val state = rememberLazyListState()
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(5),
-            ) {
-                items(
-                    count = missions.size,
-                    key = { missions[it].id }
+                Row(
+                    modifier = Modifier.fillMaxWidth().scaleFit(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    val mission = missions[it]
-                    val difficulty = Difficulty.entries[selectedIndex1]
-                    MapItem(it, state, mission.name, mission.image) { startNewMissionGame(difficulty, mission) }
+                    Text(readI18n("mission.title"), style = MaterialTheme.typography.headlineLarge)
+                }
+
+                var selectedIndex0 by remember { mutableStateOf(0) }
+                var selectedIndex1 by remember { mutableStateOf(configIO.getGameConfig<Int>("aiDifficulty") + 2) }
+
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(top = 5.dp)
+                        .scaleFit()
+                ) {
+                    with(game) {
+                        LargeDropdownMenu(
+                            modifier = Modifier.wrapContentSize().padding(5.dp),
+                            label = readI18n("mission.type"),
+                            items = getAllMissionTypes(),
+                            selectedIndex = selectedIndex0,
+                            onItemSelected = { index, _ -> selectedIndex0 = index }
+                        )
+                    }
+
+                    LargeDropdownMenu(
+                        modifier = Modifier.wrapContentSize().padding(5.dp),
+                        label = readI18n("common.difficulty"),
+                        items = Difficulty.entries,
+                        selectedIndex = selectedIndex1,
+                        onItemSelected = { index, _ -> selectedIndex1 = index }
+                    )
+                }
+
+                LargeDividingLine { 0.dp }
+
+                with(game) {
+                    var missions by remember { mutableStateOf(listOf<Mission>()) }
+                    LaunchedEffect(selectedIndex0) {
+                        missions = getMissionsByType(getAllMissionTypes()[selectedIndex0])
+                    }
+
+                    val state = rememberLazyListState()
+
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(5),
+                    ) {
+                        items(
+                            count = missions.size,
+                            key = { missions[it].id }
+                        ) {
+                            val mission = missions[it]
+                            val difficulty = Difficulty.entries[selectedIndex1]
+                            MapItem(mission.name, mission.image) {
+                                startNewMissionGame(
+                                    difficulty,
+                                    mission
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

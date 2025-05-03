@@ -12,12 +12,12 @@ import io.github.rwpp.io.GameOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 
-abstract class Packet(
-    val type: Int?,
-) {
-    abstract fun readPacket(input: GameInputStream)
+interface Packet {
+    val type: Int?
 
-    abstract fun writePacket(output: GameOutputStream)
+    fun readPacket(input: GameInputStream)
+
+    fun writePacket(output: GameOutputStream)
 
     fun toBytes(): ByteArray {
         val byteArrayOutput = ByteArrayOutputStream()

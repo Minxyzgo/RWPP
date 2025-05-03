@@ -5,16 +5,15 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.mod
+package io.github.rwpp.android.impl
 
-import org.koin.core.component.KoinComponent
+import io.github.rwpp.net.Client
+import io.github.rwpp.net.Packet
 
-interface ModManager : KoinComponent {
-    suspend fun modReload()
-
-    suspend fun modSaveChange()
-
-    fun getModByName(name: String): Mod?
-
-    fun getAllMods(): List<Mod>
+class ClientImpl(
+    internal val client: com.corrodinggames.rts.gameFramework.j.c?
+) : Client {
+    override fun sendPacketToClient(packet: Packet) {
+        client?.a(packet.asGamePacket())
+    }
 }

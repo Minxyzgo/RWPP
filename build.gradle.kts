@@ -11,7 +11,7 @@ plugins {
     kotlin("plugin.serialization").apply(false)
     kotlin("multiplatform").apply(false)
     id("com.android.application").apply(false)
-    id("com.android.library").apply(false)
+   // id("com.android.library").apply(false)
     id("org.jetbrains.compose").apply(false)
     id("org.jetbrains.kotlin.plugin.compose").apply(false)
     id("com.google.devtools.ksp").apply(false)
@@ -27,5 +27,5 @@ allprojects {
     }
 }
 
-version = "1.5.0"
+version = "1.5.1"
 

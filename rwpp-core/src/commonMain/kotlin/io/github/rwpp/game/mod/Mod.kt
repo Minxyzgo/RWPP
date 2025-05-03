@@ -7,6 +7,8 @@
 
 package io.github.rwpp.game.mod
 
+import java.io.File
+
 interface Mod {
     val id: Int
     val name: String
@@ -14,8 +16,14 @@ interface Mod {
     val minVersion: String
     val errorMessage: String?
     var isEnabled: Boolean
+    val path: String
     //var isNetworkMod: Boolean
 
+    fun tryDelete(): Boolean {
+        return runCatching {
+            File(path).delete()
+        }.getOrNull() == true
+    }
 
     fun getRamUsed(): String
 

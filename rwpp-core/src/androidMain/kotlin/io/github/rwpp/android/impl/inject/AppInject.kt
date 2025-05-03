@@ -13,6 +13,7 @@ import android.view.ViewGroup
 import com.corrodinggames.rts.appFramework.GameView
 import com.corrodinggames.rts.appFramework.GameViewOpenGL
 import com.corrodinggames.rts.appFramework.GameViewThreaded
+import com.corrodinggames.rts.appFramework.ab
 import io.github.rwpp.android.impl.RWPPGameViewNonSurface
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
@@ -21,7 +22,7 @@ import io.github.rwpp.inject.InjectMode
 @InjectClass(com.corrodinggames.rts.appFramework.d::class)
 object AppInject {
     @Inject("b", InjectMode.Override, "(Landroid/app/Activity;)Lcom/corrodinggames/rts/appFramework/ab;")
-    fun redirectSurfaceView(activity: Activity): com.corrodinggames.rts.appFramework.ab {
+    fun redirectSurfaceView(activity: Activity): ab {
         val viewGroup = activity.window.decorView.rootView as ViewGroup
         val i = com.corrodinggames.rts.appFramework.d.d;
         var i2 = i;

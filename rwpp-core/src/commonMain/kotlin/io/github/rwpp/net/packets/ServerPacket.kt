@@ -13,7 +13,8 @@ import io.github.rwpp.io.GameInputStream
 import io.github.rwpp.io.GameOutputStream
 import io.github.rwpp.net.InternalPacketType
 
-sealed class ServerPacket(type: Int) : Packet(type) {
+sealed class ServerPacket(type: Int) : Packet {
+    override val type: Int = type
 
     class ServerInfoGetPacket : ServerPacket(InternalPacketType.PRE_GET_SERVER_INFO_FROM_LIST.type) {
         override fun readPacket(input: GameInputStream) {

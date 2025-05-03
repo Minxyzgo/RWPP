@@ -5,16 +5,13 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.game.mod
+package io.github.rwpp.event.events
 
-import org.koin.core.component.KoinComponent
+import io.github.rwpp.event.AbstractEvent
 
-interface ModManager : KoinComponent {
-    suspend fun modReload()
+sealed class DesktopEvent : AbstractEvent()
 
-    suspend fun modSaveChange()
-
-    fun getModByName(name: String): Mod?
-
-    fun getAllMods(): List<Mod>
-}
+/**
+ * @see [java.awt.event.KeyEvent]
+ */
+class KeyboardEvent(val keyCode: Int) :DesktopEvent()

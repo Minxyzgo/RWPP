@@ -38,32 +38,32 @@ fun ReplaysViewDialog(
             .fillMaxSize()
             .padding(10.dp)
     ) {
-        ExitButton(onExit)
-
-        Row(
-            modifier = Modifier.fillMaxWidth().scaleFit(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text("Replay", style = MaterialTheme.typography.headlineLarge)
-        }
-
-        LargeDividingLine { 0.dp }
-
-        with(koinInject<Game>()) {
-            val replays by remember { mutableStateOf(getAllReplays()) }
-
-            val state = rememberLazyListState()
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(5),
-            ) {
-                items(
-                    count = replays.size,
-                    key = { replays[it].id }
+        Box {
+            ExitButton(onExit)
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth().scaleFit(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    val replay = replays[it]
-                    MapItem(it, state, replay.displayName(), null, false) {
-                        watchReplay(replay)
+                    Text("Replay", style = MaterialTheme.typography.headlineLarge)
+                }
+
+                LargeDividingLine { 0.dp }
+
+                with(koinInject<Game>()) {
+                    val replays by remember { mutableStateOf(getAllReplays()) }
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(5),
+                    ) {
+                        items(
+                            count = replays.size,
+                            key = { replays[it].id }
+                        ) {
+                            val replay = replays[it]
+                            MapItem(replay.displayName(), null, false) {
+                                watchReplay(replay)
+                            }
+                        }
                     }
                 }
             }

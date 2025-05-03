@@ -32,4 +32,5 @@ data class Settings(
     var changeGameTheme: Boolean = false,
     var showUnitTargetLine: Boolean = false,
     var improvedHealthBar: Boolean = false,
+    var boldText: Boolean = false
 ) : Config

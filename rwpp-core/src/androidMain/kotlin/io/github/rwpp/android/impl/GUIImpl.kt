@@ -5,23 +5,23 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.impl
+package io.github.rwpp.android.impl
 
-import android.graphics.Paint
-import com.corrodinggames.rts.gameFramework.j.ad
+import com.corrodinggames.rts.gameFramework.j.ae
 import io.github.rwpp.game.base.GamePaint
 import io.github.rwpp.game.ui.GUI
-import io.github.rwpp.inject.SetInterfaceOn
 
-@SetInterfaceOn([com.corrodinggames.rts.gameFramework.f.g::class])
-interface GUIImpl : GUI {
-    val self: com.corrodinggames.rts.gameFramework.f.g
+
+class GUIImpl : GUI {
+    private val self = GameEngine.t().bP
 
     override var textPaint: GamePaint
-        get() = self.aC as GamePaint
-        set(value) { self.aC = value as Paint }
+        get() = GamePaintImpl(self.aC)
+        set(value) {
+            self.aC = (value as GamePaintImpl).paint
+        }
 
     override fun showChatMessage(sender: String, message: String) {
-        ad.a(sender, message)
+        ae.a(sender, message)
     }
 }

@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SettingsView(
     onCheckUpdate: (LatestVersionProfile) -> Unit,
@@ -83,268 +84,280 @@ fun SettingsView(
         floatingActionButtonPosition = FabPosition.End
     ) {
         ExpandedCard(Modifier.autoClearFocus()) {
-            ExitButton(onExit)
-
-
-            var selectedItem by remember { mutableIntStateOf(0) }
-            val items = listOf(
-                "graphics",
-                "gameplay",
-                "audio",
-                "developer",
-                "networking",
-                "rwpp-client",
-                "rwpp-theme"
-            )
-
-            NavigationBar(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                containerColor = Color.Transparent,
-            ) {
-                items.forEachIndexed { index, s ->
-                    NavigationBarItem(
-                        icon = {},
-                        label = {
-                            Text(
-                                if (s.startsWith("rwpp-"))
-                                    readI18n("settings.${s.removePrefix("rwpp-")}", I18nType.RWPP)
-                                else readI18n("menus.settings.heading.$s", I18nType.RW),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        },
-                        selected = selectedItem == index,
-                        onClick = { selectedItem = index },
+            Box {
+                ExitButton(onExit)
+                Column {
+                    Spacer(Modifier.height(30.dp))
+                    var selectedItem by remember { mutableIntStateOf(0) }
+                    val items = listOf(
+                        "graphics",
+                        "gameplay",
+                        "audio",
+                        "developer",
+                        "networking",
+                        "rwpp-client",
+                        "rwpp-theme"
                     )
 
-                    if (index != items.lastIndex) {
-                        VerticalDivider(modifier = Modifier.padding(2.dp).height(40.dp), thickness = 2.dp)
+                    NavigationBar(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        containerColor = Color.Transparent,
+                    ) {
+                        items.forEachIndexed { index, s ->
+                            NavigationBarItem(
+                                icon = {},
+                                label = {
+                                    Text(
+                                        if (s.startsWith("rwpp-"))
+                                            readI18n("settings.${s.removePrefix("rwpp-")}", I18nType.RWPP)
+                                        else readI18n("menus.settings.heading.$s", I18nType.RW),
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                },
+                                selected = selectedItem == index,
+                                onClick = { selectedItem = index },
+                            )
+
+                            if (index != items.lastIndex) {
+                                VerticalDivider(modifier = Modifier.padding(2.dp).height(40.dp), thickness = 2.dp)
+                            }
+                        }
                     }
-                }
-            }
 
-            LargeDividingLine { 0.dp }
+                    LargeDividingLine { 0.dp }
 
-            val state = rememberLazyListState()
+                    val state = rememberLazyListState()
 
-            LazyColumnScrollbar(listState = state) {
-                LazyColumn(state = state) {
-                    item(selectedItem) {
-                        val str = items[selectedItem]
+                    LazyColumnScrollbar(listState = state) {
+                        LazyColumn(state = state) {
+                            item(selectedItem) {
+                                val str = items[selectedItem]
 
-                        when (str) {
-                            "graphics" -> SettingsGroup("graphics") {
-                                SettingsSwitchComp("showUnitWaypoints")
-                                SettingsSwitchComp("showHp", "alwayUnitHealth") // I don't why they are different
-                                SettingsSwitchComp("showUnitIcons", "unitIcons")
-                                SettingsSwitchComp("renderVsync")
-                                SettingsSwitchComp("renderClouds")
-                                SettingsSwitchComp("shaderEffects")
-                                SettingsSwitchComp("enableMouseCapture")
-                                SettingsSwitchComp("quickRally")
-                                SettingsSwitchComp("doubleClickToAttackMove")
+                                when (str) {
+                                    "graphics" -> SettingsGroup("graphics") {
+                                        SettingsSwitchComp("showUnitWaypoints")
+                                        SettingsSwitchComp("showHp", "alwayUnitHealth") // I don't why they are different
+                                        SettingsSwitchComp("showUnitIcons", "unitIcons")
+                                        SettingsSwitchComp("renderVsync")
+                                        SettingsSwitchComp("renderClouds")
+                                        SettingsSwitchComp("shaderEffects")
+                                        SettingsSwitchComp("enableMouseCapture")
+                                        SettingsSwitchComp("quickRally")
+                                        SettingsSwitchComp("doubleClickToAttackMove")
 
-                                if (Platform.isDesktop()) {
-                                    SettingsSwitchComp(
-                                        readI18n("menus.settings.option.immersiveFullScreen", I18nType.RW),
-                                        defaultValue = settings.isFullscreen,
-                                        customConfigSettingAction = {
-                                            settings.isFullscreen = it
-                                        }
-                                    )
-                                }
-                            }
-
-                            "gameplay" -> {
-                                SettingsGroup("gameplay") {
-                                    SettingsSwitchComp("showSelectedUnitsList")
-                                    SettingsSwitchComp("useMinimapAllyColors")
-                                    SettingsSwitchComp("showWarLogOnScreen")
-                                    SettingsSwitchComp("smartSelection_v2", "smartSelection") //v2 ???
-                                    SettingsSwitchComp("forceEnglish")
-                                    SettingsSwitchComp("showUnitGroups", "unitGroupInterface")
-                                    SettingsSlider(
-                                        readI18n("settings.maxDisplayUnitGroupCount"),
-                                        settings.maxDisplayUnitGroupCount / 10f,
-                                        { settings.maxDisplayUnitGroupCount = (it * 10).roundToInt() },
-                                        valueFormat = { "${(it * 10).roundToInt()}" },
-                                    )
-
-                                    SettingsSwitchComp(
-                                        "",
-                                        readI18n("settings.enhancedReinforceTroops"),
-                                        settings.enhancedReinforceTroops
-                                    ) {
-                                        settings.enhancedReinforceTroops = it
-                                    }
-
-                                    SettingsSwitchComp(
-                                        "",
-                                        readI18n("settings.showUnitTargetLine"),
-                                        settings.showUnitTargetLine
-                                    ) {
-                                        settings.showUnitTargetLine = it
-                                    }
-
-                                    SettingsSwitchComp(
-                                        "",
-                                        readI18n("settings.improvedHealthBar"),
-                                        settings.improvedHealthBar
-                                    ) {
-                                        settings.improvedHealthBar = it
-                                    }
-
-                                    var teamUnitCapSinglePlayer by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapSinglePlayer")) }
-                                    SettingsTextField(
-                                        "teamUnitCapSinglePlayer",
-                                        teamUnitCapSinglePlayer?.toString() ?: "",
-                                        lengthLimitCount = 6,
-                                        typeInNumberOnly = true,
-                                        typeInOnlyInteger = true
-                                    ) {
-                                        teamUnitCapSinglePlayer = it.toIntOrNull()
-                                        configIO.setGameConfig("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer ?: 100)
-                                    }
-                                    var teamUnitCapHostedGame by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapHostedGame")) }
-                                    SettingsTextField(
-                                        "teamUnitCapHostedGame",
-                                        teamUnitCapHostedGame?.toString() ?: "",
-                                        lengthLimitCount = 6,
-                                        typeInNumberOnly = true,
-                                        typeInOnlyInteger = true
-                                    ) {
-                                        teamUnitCapHostedGame = it.toIntOrNull()
-                                        configIO.setGameConfig("teamUnitCapHostedGame", teamUnitCapHostedGame ?: 100)
-                                    }
-                                }
-
-                                SettingsGroup("", readI18n("settings.buildings")) {
-                                    SettingsSwitchComp(
-                                        "",
-                                        readI18n("settings.showAttackRange"),
-                                        settings.showBuildingAttackRange
-                                    ) {
-                                        settings.showBuildingAttackRange = it
-                                    }
-                                }
-
-                                SettingsGroup("", readI18n("settings.units")) {
-                                    val list = listOf("Never", "Land", "Air", "All")
-                                    var selectedIndex by remember { mutableStateOf(list.indexOf(settings.showAttackRangeUnit)) }
-                                    SettingsDropDown("showAttackRange", list, selectedIndex) { index, type ->
-                                        selectedIndex = index
-                                        settings.showAttackRangeUnit = type
-                                    }
-                                }
-                            }
-
-                            "audio" -> SettingsGroup("audio") {
-                                SettingsSliderRW("masterVolume")
-                                SettingsSliderRW("gameVolume")
-                                SettingsSliderRW("interfaceVolume")
-                                SettingsSliderRW("musicVolume")
-                            }
-
-                            "developer" -> SettingsGroup("developer") {
-                                SettingsSwitchComp("showFps")
-                                SettingsSwitchComp(
-                                    "Show Welcome Message",
-                                    defaultValue = settings.showWelcomeMessage ?: false
-                                ) { settings.showWelcomeMessage = it }
-                            }
-
-                            "networking" -> SettingsGroup("networking") {
-                                SettingsSwitchComp("udpInMultiplayer")
-                                SettingsSwitchComp("saveMultiplayerReplays", "saveReplays")
-                                SettingsSwitchComp("showChatAndPingShortcuts")
-                                SettingsSwitchComp("showMapPingsOnBattlefield")
-                                SettingsSwitchComp("showMapPingsOnMinimap")
-                                SettingsSwitchComp("showPlayerChatInGame")
-                            }
-
-                            "rwpp-client" -> {
-                                val net = koinInject<Net>()
-                                var checking by remember { mutableStateOf(false) }
-                                val scope = rememberCoroutineScope()
-
-                                SettingsGroup("", readI18n("settings.client")) {
-                                    Row {
-                                        RWTextButton(readI18n("settings.checkUpdate"), modifier = Modifier.padding(5.dp)) {
-                                            checking = true
-                                            scope.launch(Dispatchers.IO) {
-                                                net.getLatestVersionProfile()?.let(onCheckUpdate)
-                                                checking = false
-                                            }
-                                        }
-
-                                        if (checking) CircularProgressIndicator(color = MaterialTheme.colorScheme.onSecondaryContainer)
-                                    }
-
-                                    SettingsSwitchComp(
-                                        "",
-                                        readI18n("settings.autoCheckUpdate"),
-                                        settings.autoCheckUpdate
-                                    ) {
-                                        settings.autoCheckUpdate = it
-                                    }
-                                }
-                            }
-
-                            "rwpp-theme" -> {
-                                val list = themes.keys.toList()
-                                var selectedIndex by remember { mutableStateOf(list.indexOf(defaultTheme)) }
-                                SettingsGroup("", readI18n("settings.theme")) {
-                                    SettingsSwitchComp(
-                                        "",
-                                        readI18n("settings.enableAnimations"),
-                                        settings.enableAnimations
-                                    ) {
-                                        settings.enableAnimations = it
-                                    }
-
-                                    SettingsSwitchComp(
-                                        "",
-                                        readI18n("settings.changeGameTheme"),
-                                        settings.changeGameTheme
-                                    ) {
-                                        settings.changeGameTheme = it
-                                    }
-
-
-
-                                    SettingsDropDown("colorScheme", list, selectedIndex,
-                                        selectedItemColor = { theme, _ -> themes[theme]!!.primary }
-                                    ) { index, theme ->
-                                        onChangeTheme(theme)
-                                        selectedIndex = index
-                                    }
-
-                                    val externalHandler = koinInject<ExternalHandler>()
-
-                                    SettingsTextField(
-                                        "setBackgroundImagePath",
-                                        backgroundImagePath,
-                                        onValueChange = {
-                                            backgroundImagePath = it
-                                        },
-                                        trailingIcon = {
-                                            Icon(
-                                                Icons.AutoMirrored.Filled.List,
-                                                null,
-                                                modifier = Modifier.clickable {
-                                                    externalHandler.openFileChooser { backgroundImagePath = it.canonicalPath }
+                                        if (Platform.isDesktop()) {
+                                            SettingsSwitchComp(
+                                                readI18n("menus.settings.option.immersiveFullScreen", I18nType.RW),
+                                                defaultValue = settings.isFullscreen,
+                                                customConfigSettingAction = {
+                                                    settings.isFullscreen = it
                                                 }
                                             )
-                                        },
-                                    )
-
-                                    SettingsSlider(
-                                        readI18n("settings.backgroundTransparency"),
-                                        settings.backgroundTransparency,
-                                        {
-                                            settings.backgroundTransparency = it
-                                            UI.backgroundTransparency = it
                                         }
-                                    )
+                                    }
+
+                                    "gameplay" -> {
+                                        SettingsGroup("gameplay") {
+                                            SettingsSwitchComp("showSelectedUnitsList")
+                                            SettingsSwitchComp("useMinimapAllyColors")
+                                            SettingsSwitchComp("showWarLogOnScreen")
+                                            SettingsSwitchComp("smartSelection_v2", "smartSelection") //v2 ???
+                                            SettingsSwitchComp("forceEnglish")
+                                            SettingsSwitchComp("showUnitGroups", "unitGroupInterface")
+                                            if (Platform.isDesktop()) {
+                                                SettingsSlider(
+                                                    readI18n("settings.maxDisplayUnitGroupCount"),
+                                                    settings.maxDisplayUnitGroupCount / 10f,
+                                                    { settings.maxDisplayUnitGroupCount = (it * 10).roundToInt() },
+                                                    valueFormat = { "${(it * 10).roundToInt()}" },
+                                                )
+                                            }
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.enhancedReinforceTroops"),
+                                                settings.enhancedReinforceTroops
+                                            ) {
+                                                settings.enhancedReinforceTroops = it
+                                            }
+
+                                            if (Platform.isDesktop()) {
+                                                SettingsSwitchComp(
+                                                    "",
+                                                    readI18n("settings.showUnitTargetLine"),
+                                                    settings.showUnitTargetLine
+                                                ) {
+                                                    settings.showUnitTargetLine = it
+                                                }
+
+                                                SettingsSwitchComp(
+                                                    "",
+                                                    readI18n("settings.improvedHealthBar"),
+                                                    settings.improvedHealthBar
+                                                ) {
+                                                    settings.improvedHealthBar = it
+                                                }
+                                            }
+                                            var teamUnitCapSinglePlayer by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapSinglePlayer")) }
+                                            SettingsTextField(
+                                                "teamUnitCapSinglePlayer",
+                                                teamUnitCapSinglePlayer?.toString() ?: "",
+                                                lengthLimitCount = 6,
+                                                typeInNumberOnly = true,
+                                                typeInOnlyInteger = true
+                                            ) {
+                                                teamUnitCapSinglePlayer = it.toIntOrNull()
+                                                configIO.setGameConfig("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer ?: 100)
+                                            }
+                                            var teamUnitCapHostedGame by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapHostedGame")) }
+                                            SettingsTextField(
+                                                "teamUnitCapHostedGame",
+                                                teamUnitCapHostedGame?.toString() ?: "",
+                                                lengthLimitCount = 6,
+                                                typeInNumberOnly = true,
+                                                typeInOnlyInteger = true
+                                            ) {
+                                                teamUnitCapHostedGame = it.toIntOrNull()
+                                                configIO.setGameConfig("teamUnitCapHostedGame", teamUnitCapHostedGame ?: 100)
+                                            }
+                                        }
+                                        if (Platform.isDesktop()) {
+                                            SettingsGroup("", readI18n("settings.buildings")) {
+                                                SettingsSwitchComp(
+                                                    "",
+                                                    readI18n("settings.showAttackRange"),
+                                                    settings.showBuildingAttackRange
+                                                ) {
+                                                    settings.showBuildingAttackRange = it
+                                                }
+                                            }
+
+                                            SettingsGroup("", readI18n("settings.units")) {
+                                                val list = listOf("Never", "Land", "Air", "All")
+                                                var selectedIndex by remember { mutableStateOf(list.indexOf(settings.showAttackRangeUnit)) }
+                                                SettingsDropDown("showAttackRange", list, selectedIndex) { index, type ->
+                                                    selectedIndex = index
+                                                    settings.showAttackRangeUnit = type
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    "audio" -> SettingsGroup("audio") {
+                                        SettingsSliderRW("masterVolume")
+                                        SettingsSliderRW("gameVolume")
+                                        SettingsSliderRW("interfaceVolume")
+                                        SettingsSliderRW("musicVolume")
+                                    }
+
+                                    "developer" -> SettingsGroup("developer") {
+                                        SettingsSwitchComp("showFps")
+                                        SettingsSwitchComp(
+                                            "Show Welcome Message",
+                                            defaultValue = settings.showWelcomeMessage ?: false
+                                        ) { settings.showWelcomeMessage = it }
+                                    }
+
+                                    "networking" -> SettingsGroup("networking") {
+                                        SettingsSwitchComp("udpInMultiplayer")
+                                        SettingsSwitchComp("saveMultiplayerReplays", "saveReplays")
+                                        SettingsSwitchComp("showChatAndPingShortcuts")
+                                        SettingsSwitchComp("showMapPingsOnBattlefield")
+                                        SettingsSwitchComp("showMapPingsOnMinimap")
+                                        SettingsSwitchComp("showPlayerChatInGame")
+                                    }
+
+                                    "rwpp-client" -> {
+                                        val net = koinInject<Net>()
+                                        var checking by remember { mutableStateOf(false) }
+                                        val scope = rememberCoroutineScope()
+
+                                        SettingsGroup("", readI18n("settings.client")) {
+                                            Row {
+                                                RWTextButton(readI18n("settings.checkUpdate"), modifier = Modifier.padding(5.dp)) {
+                                                    checking = true
+                                                    scope.launch(Dispatchers.IO) {
+                                                        net.getLatestVersionProfile()?.let(onCheckUpdate)
+                                                        checking = false
+                                                    }
+                                                }
+
+                                                if (checking) CircularProgressIndicator(color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                            }
+
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.autoCheckUpdate"),
+                                                settings.autoCheckUpdate
+                                            ) {
+                                                settings.autoCheckUpdate = it
+                                            }
+                                        }
+                                    }
+
+                                    "rwpp-theme" -> {
+                                        val list = themes.keys.toList()
+                                        var selectedIndex by remember { mutableStateOf(list.indexOf(defaultTheme)) }
+                                        SettingsGroup("", readI18n("settings.theme")) {
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.enableAnimations"),
+                                                settings.enableAnimations
+                                            ) {
+                                                settings.enableAnimations = it
+                                            }
+
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.boldText"),
+                                                settings.boldText
+                                            ) {
+                                                settings.boldText = it
+                                            }
+
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.changeGameTheme"),
+                                                settings.changeGameTheme
+                                            ) {
+                                                settings.changeGameTheme = it
+                                            }
+
+                                            SettingsDropDown("colorScheme", list, selectedIndex,
+                                                selectedItemColor = { theme, _ -> themes[theme]!!.primary }
+                                            ) { index, theme ->
+                                                onChangeTheme(theme)
+                                                selectedIndex = index
+                                            }
+
+                                            val externalHandler = koinInject<ExternalHandler>()
+
+                                            SettingsTextField(
+                                                "setBackgroundImagePath",
+                                                backgroundImagePath,
+                                                onValueChange = {
+                                                    backgroundImagePath = it
+                                                },
+                                                trailingIcon = {
+                                                    Icon(
+                                                        Icons.AutoMirrored.Filled.List,
+                                                        null,
+                                                        modifier = Modifier.clickable {
+                                                            externalHandler.openFileChooser { backgroundImagePath = it.canonicalPath }
+                                                        }
+                                                    )
+                                                },
+                                            )
+
+                                            SettingsSlider(
+                                                readI18n("settings.backgroundTransparency"),
+                                                settings.backgroundTransparency,
+                                                {
+                                                    settings.backgroundTransparency = it
+                                                    UI.backgroundTransparency = it
+                                                }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

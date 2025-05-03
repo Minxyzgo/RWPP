@@ -10,6 +10,7 @@ package io.github.rwpp.scripts
 import io.github.rwpp.*
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.core.Initialization
+import io.github.rwpp.core.UI
 import io.github.rwpp.event.Event
 import io.github.rwpp.event.EventPriority
 import io.github.rwpp.event.GlobalEventChannel
@@ -26,6 +27,7 @@ import party.iroiro.luajava.ClassPathLoader.BufferOutputStream
 import party.iroiro.luajava.lua54.Lua54
 import party.iroiro.luajava.value.RefLuaValue
 import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
 import java.io.File
 import java.nio.ByteBuffer
 import kotlin.concurrent.timer
@@ -80,6 +82,7 @@ object Scripts : Initialization {
         lua["modManager"] = appKoin.get<ModManager>()
         lua["config"] = appKoin.get<ConfigIO>()
         lua["commands"] = commands
+        lua["ui"] = UI
         lua["isAndroid"] = Platform.isAndroid()
         lua["isDesktop"] = Platform.isDesktop()
         lua["version"] = projectVersion
@@ -140,22 +143,23 @@ object Scripts : Initialization {
             arrayOf()
         }
 
+
         @Suppress("UNCHECKED_CAST")
         lua.register("registerPacketListener") { _, args ->
             val packetType = args[0].toInteger().toInt()
             appKoin.get<Net>().listeners.getOrPut(packetType) { mutableListOf() }.add(
-                args[1].toProxy(Function2::class.java) as (Client, Packet) -> Boolean
+                args[1].toProxy(Function2::class.java) as (Client?, Packet) -> Boolean
             )
             arrayOf()
         }
 
-        //UI
-        lua.register("color") { l, args ->
-            l.pushJavaObject(LuaColor(
-                parseColorToArgb(args[0].toJavaObject() as String)
-            ))
-            arrayOf(l.get())
+        @Suppress("UNCHECKED_CAST")
+        lua.register("registerPacketDecoder") { _, args ->
+            val packetType = args[0].toInteger().toInt()
+            appKoin.get<Net>().packetDecoders[packetType] = args[1].toProxy(Function1::class.java) as (DataInputStream) -> Packet
+            arrayOf()
         }
+
 
         lua.register("timer")  { l, args ->
             l.pushJavaObject(timer(
@@ -168,15 +172,42 @@ object Scripts : Initialization {
             arrayOf(l.get())
         }
 
-        lua.register("text") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaText(
-                args[0].toJavaObject() as String,
-                args[1].toNumber().roundToInt(),
-                args[2].toJavaObject() as LuaColor,
-            ))
-            arrayOf(l.get())
-        }
+        initLuaUI()
+    }
 
+    fun loadScript(id: String, src: String) {
+        try {
+            val body = """
+                local id = '$id' 
+                local extension = externalHandler:getExtensionById(id)
+                local info = function(msg) 
+                    local logger = java.method(java.import('io.github.rwpp.GlobalKt'), 'getLogger')() 
+                    logger:info('[' .. id .. '] ' .. msg) 
+                end
+                local getConfig = function(key) 
+                    return config:readSingleConfig(id, key)
+                end
+                local setConfig = function(key, value) 
+                    config:saveSingleConfig(id, key, value)
+                end
+                local broadcast = function(eventClass, ...) 
+                    java.import('io.github.rwpp.event.EventKt'):broadcastIn(java.import('io.github.rwpp.event.events.' .. eventClass)(...))
+                end
+                local reply = function(player, message, title, color)
+                     local gameRoom = game:getGameRoom()
+                     gameRoom:sendMessageToPlayer(player, title or id, message, color or -1)
+                end
+                local functionN = function(count, func) 
+                    return java.proxy('kotlin.jvm.functions.Function' .. count, func)
+                end
+            """.trimIndent().replace("\n", " ")
+            lua.run("$body $src")
+        } catch (e: Exception) {
+            logger.error(e.stackTraceToString())
+        }
+    }
+
+    fun initLuaUI() {
         @Suppress("UNCHECKED_CAST")
         lua.register("dropdown") { l, args ->
             l.pushJavaObject(LuaWidget.LuaDropdown(
@@ -235,37 +266,21 @@ object Scripts : Initialization {
             })
             arrayOf(l.get())
         }
-    }
 
-    fun loadScript(id: String, src: String) {
-        try {
-            val body = """
-                local id = '$id' 
-                local extension = externalHandler:getExtensionById(id)
-                local info = function(msg) 
-                    local logger = java.method(java.import('io.github.rwpp.GlobalKt'), 'getLogger')() 
-                    logger:info('[' .. id .. '] ' .. msg) 
-                end
-                local getConfig = function(key) 
-                    return config:readSingleConfig(id, key)
-                end
-                local setConfig = function(key, value) 
-                    config:saveSingleConfig(id, key, value)
-                end
-                local broadcast = function(eventClass, ...) 
-                    java.import('io.github.rwpp.event.EventKt'):broadcastIn(java.import('io.github.rwpp.event.events.' .. eventClass)(...))
-                end
-                local reply = function(player, message, title, color)
-                     local gameRoom = game:getGameRoom()
-                     gameRoom:sendMessageToPlayer(player, title or id, message, color or -1)
-                end
-                local functionN = function(count, func) 
-                    return java.proxy('kotlin.jvm.functions.Function' .. count, func)
-                end
-            """.trimIndent().replace("\n", " ")
-            lua.run("$body $src")
-        } catch (e: Exception) {
-            logger.error(e.stackTraceToString())
+        lua.register("text") { l, args ->
+            l.pushJavaObject(LuaWidget.LuaText(
+                args[0].toJavaObject() as String,
+                args[1].toNumber().roundToInt(),
+                args[2].toJavaObject() as LuaColor,
+            ))
+            arrayOf(l.get())
+        }
+
+        lua.register("color") { l, args ->
+            l.pushJavaObject(LuaColor(
+                parseColorToArgb(args[0].toJavaObject() as String)
+            ))
+            arrayOf(l.get())
         }
     }
 }

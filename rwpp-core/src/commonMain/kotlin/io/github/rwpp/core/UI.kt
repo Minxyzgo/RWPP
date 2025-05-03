@@ -19,6 +19,7 @@ import androidx.compose.ui.text.withStyle
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.Settings
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.Player
 
 object UI : Initialization {
@@ -92,12 +93,12 @@ object UI : Initialization {
     /**
      * @see [showQuestion]
      */
-    data class Question(val title: String, val message: String, val callback: (String?) -> Unit)
+    class Question(val title: String, val message: String, val callback: (String?) -> Unit)
 
     /**
      * @see [showWarning]
      */
-    data class Warning(val reason: String, val isKicked: Boolean = false)
+    class Warning(val reason: String, val isKicked: Boolean = false)
 
     override fun init() {
 

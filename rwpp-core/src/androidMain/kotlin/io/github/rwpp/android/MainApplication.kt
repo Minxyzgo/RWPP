@@ -18,10 +18,8 @@ import io.github.rwpp.android.impl.GameSoundPoolImpl
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.game.audio.GameSoundPool
-import io.github.rwpp.game.comp.CompModule
 import io.github.rwpp.game.team.TeamModeModule
 import io.github.rwpp.i18n.parseI18n
-import io.github.rwpp.impl.CommonImplModule
 import io.github.rwpp.logger
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.koin.androidLogger
@@ -35,7 +33,7 @@ class MainApplication : Application() {
         super.onCreate()
         koinApplication = startKoin {
             androidLogger()
-            modules(ConfigModule().module, AndroidModule().module, TeamModeModule().module, CompModule().module, CommonImplModule().module)
+            modules(ConfigModule().module, AndroidModule().module, TeamModeModule().module)
         }
 
 

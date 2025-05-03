@@ -5,19 +5,21 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.impl
+package io.github.rwpp.android.impl
 
 import android.graphics.Paint
 import io.github.rwpp.game.base.GamePaint
-import io.github.rwpp.inject.SetInterfaceOn
 
-@SetInterfaceOn([Paint::class])
-interface PaintImpl : GamePaint {
-    val self: Paint
+class GamePaintImpl(internal val paint: Paint) : GamePaint {
     override var argb: Int
-        get() = self.e()
-        set(value) { self.b(value) }
-
+        get() = paint.color
+        set(value) {
+            paint.color = value
+        }
     override val style: GamePaint.Style
-        get() = GamePaint.Style.entries[(self.d() as Enum<*>).ordinal]
+        get() = when (paint.style) {
+            Paint.Style.FILL -> GamePaint.Style.FILL
+            Paint.Style.STROKE -> GamePaint.Style.STROKE
+            else -> GamePaint.Style.FILL
+        }
 }

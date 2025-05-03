@@ -7,6 +7,8 @@
 
 package io.github.rwpp.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -38,58 +40,62 @@ fun ContributorList(
 ) = ExpandedCard(modifier = Modifier
     .verticalScroll(rememberScrollState())
 ) {
-    ExitButton(onExit)
-    BackHandler(true, onExit)
+    Box {
+        ExitButton(onExit)
+        Column {
 
-    val net = koinInject<Net>()
+            BackHandler(true, onExit)
 
-    val header1 = buildAnnotatedString {
-        append("赞助者列表")
+            val net = koinInject<Net>()
 
-        withLink(
-            link = LinkAnnotation
-                .Clickable(
-                    tag = "contributor",
-                    linkInteractionListener = { net.openUriInBrowser("https://afdian.com/a/minxyzgo") },
-                    styles = TextLinkStyles(style = SpanStyle(color = Color.Red))
-                )
-        ) {
-            append(" (为RWPP赞助一下？)")
+            val header1 = buildAnnotatedString {
+                append("赞助者列表")
+
+                withLink(
+                    link = LinkAnnotation
+                        .Clickable(
+                            tag = "contributor",
+                            linkInteractionListener = { net.openUriInBrowser("https://afdian.com/a/minxyzgo") },
+                            styles = TextLinkStyles(style = SpanStyle(color = Color.Red))
+                        )
+                ) {
+                    append(" (为RWPP赞助一下？)")
+                }
+            }
+
+            Text(header1, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
+            LargeDividingLine { 5.dp }
+
+            val sponsors = "铁锈盒子 (ww.rtsbox.cn);亚托莉;AABBRST"
+            BorderCard(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
+                sponsors.split(";").forEach {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            Text("贡献者列表", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
+
+            LargeDividingLine { 5.dp }
+
+            val contributors = "Minxyzgo;Dr"
+            BorderCard(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
+                contributors.split(";").forEach {
+                    Text(it, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.align(Alignment.CenterHorizontally))
+                }
+            }
+
+            Text("特别鸣谢", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
+
+            LargeDividingLine { 5.dp }
+
+            BorderCard(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
+                Text("@Corroding Games @LukeHoschke Rusted Warfare", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.align(Alignment.CenterHorizontally))
+            }
         }
     }
-
-    Text(header1, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
-    LargeDividingLine { 5.dp }
-
-    val sponsors = "铁锈盒子 (ww.rtsbox.cn);亚托莉;AABBRST"
-    BorderCard(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
-        sponsors.split(";").forEach {
-            Text(
-                it,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-
-    Text("贡献者列表", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
-
-    LargeDividingLine { 5.dp }
-
-    val contributors = "Minxyzgo;Dr"
-    BorderCard(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
-        contributors.split(";").forEach {
-            Text(it, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.align(Alignment.CenterHorizontally))
-        }
-    }
-
-    Text("特别鸣谢", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
-
-    LargeDividingLine { 5.dp }
-
-    BorderCard(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
-        Text("@Corroding Games @LukeHoschke Rusted Warfare", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.align(Alignment.CenterHorizontally))
-    }
-
 }

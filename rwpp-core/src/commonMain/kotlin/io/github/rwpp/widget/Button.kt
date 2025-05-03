@@ -57,22 +57,23 @@ fun MenuButton(
 }
 
 @Composable
-fun ExitButton(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
-        horizontalArrangement = Arrangement.End
+fun BoxScope.ExitButton(onClick: () -> Unit) {
+    Button(
+        shape = CircleShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(
+                0.8f
+            )
+        ),
+        modifier = Modifier.size(30.dp).align(Alignment.TopEnd),
+        contentPadding = PaddingValues(0.dp),
+        onClick = { onClick() },
     ) {
-        Button(
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(0.8f)),
-            modifier = Modifier.size(30.dp),
-            contentPadding = PaddingValues(0.dp),
-            onClick = { onClick() },
-        ) {
-            Icon(Icons.Default.Close, tint = MaterialTheme.colorScheme.surfaceTint, contentDescription = null)
-        }
+        Icon(
+            Icons.Default.Close,
+            tint = MaterialTheme.colorScheme.surfaceTint,
+            contentDescription = null
+        )
     }
 }
 

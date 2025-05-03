@@ -16,11 +16,11 @@ import androidx.compose.ui.graphics.painter.Painter
 import com.corrodinggames.rts.appFramework.*
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.k
-import io.github.rwpp.android.InGameActivity
 import io.github.rwpp.android.MainActivity.Companion.gameView
 import io.github.rwpp.android.bannedUnitList
 import io.github.rwpp.android.gameLauncher
 import io.github.rwpp.android.isSinglePlayerGame
+import io.github.rwpp.android.mainThreadChannel
 import io.github.rwpp.android.questionOption
 import io.github.rwpp.appKoin
 import io.github.rwpp.event.broadcastIn
@@ -33,8 +33,8 @@ import io.github.rwpp.game.map.*
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.ui.GUI
-import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.MovementType
+import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.world.World
 import io.github.rwpp.widget.LoadingContext
 import kotlinx.coroutines.*
@@ -57,10 +57,15 @@ class GameImpl : Game, CoroutineScope {
     private var cacheUnits: ArrayList<*>? = null
 
     override val gameRoom: GameRoom = GameRoomImpl(this)
-    override val gui: GUI
-        get() = TODO("Not yet implemented")
+    override val gui: GUI by lazy {
+        GUIImpl()
+    }
     override val world: World
         get() = TODO("Not yet implemented")
+
+    override fun post(action: () -> Unit) {
+        mainThreadChannel.trySend(action)
+    }
 
     override fun startNewMissionGame(difficulty: Difficulty, mission: Mission) {
         val t = GameEngine.t()

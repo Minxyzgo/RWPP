@@ -33,7 +33,11 @@ fun LoadingView(
 
     val scope = rememberCoroutineScope()
 
-    AnimatedAlertDialog(visible, onDismissRequest = onLoaded, enableDismiss = cancellable) { dismiss ->
+    AnimatedAlertDialog(
+        visible,
+        onDismissRequest = onLoaded,
+        enableDismiss = cancellable
+    ) { dismiss ->
 
         val message by remember { loadingMessage }
         var cancel by remember { mutableStateOf(false) }
@@ -43,22 +47,29 @@ fun LoadingView(
         ) {
             LaunchedEffect(Unit) {
                 scope.launch {
-                    if(loadContent(LoadingContext { loadingMessage.value = it })) {
+                    if (loadContent(LoadingContext { loadingMessage.value = it })) {
                         loadingMessage.value = ""
                         dismiss()
                     } else cancel = true
                 }
             }
 
-            if(cancellable || cancel) ExitButton(dismiss)
+            Box {
 
-            Column(
-                modifier = Modifier.fillMaxSize().padding(10.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if(enableAnimation && !cancel) LineSpinFadeLoaderIndicator(MaterialTheme.colorScheme.onSecondaryContainer)
-                Text(message, modifier = Modifier.padding(20.dp).offset(y = 50.dp), color = MaterialTheme.colorScheme.onSurface)
+                if (cancellable || cancel) ExitButton(dismiss)
+
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(10.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (enableAnimation && !cancel) LineSpinFadeLoaderIndicator(MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(
+                        message,
+                        modifier = Modifier.padding(20.dp).offset(y = 50.dp),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         }
     }

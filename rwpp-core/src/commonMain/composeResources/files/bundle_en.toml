@@ -53,6 +53,8 @@ maxPlayer = "Max Player"
 incomeMultiplier = "Income Multiplier"
 teamUnitCapHostedGame = "Team Unit Cap Hosted Game"
 banUnits = "Ban Units"
+mapView = "Map View"
+mapType = "Map Type"
 
 [mod]
 update = "Update"
@@ -61,10 +63,14 @@ disableAll = "DisableAll"
 apply = "Apply"
 cancel = "Cancel"
 delete = "Delete"
-networkModInfo = """
-Warning: this is a mod downloaded from multiplayer game, and it will be deleted later,
-if you don't want to do so, please touch the button 'Cancel'.
-"""
+enabled = "Enabled"
+disabled = "Disabled"
+inputFile = "Input File"
+resourceBrowser = "Resource Browser"
+resourceType = "Resource Type"
+loadMore = "Load More"
+loadInfo = "Please load file with extension '.rwmod'"
+removeInfo = "The deletion of the mod has failed, please disable it and restart rwpp to try again"
 
 [menu]
 mission = "Mission"
@@ -81,6 +87,8 @@ difficulty = "Difficulty"
 spawnPoint = "Spawn Point"
 team = "Team"
 fog = "Fog"
+mod = "Mod"
+map = "Map"
 
 [settings]
 setExternalFolder = "Set External Folder"
@@ -108,6 +116,7 @@ changeGameTheme = "Change Game Theme"
 enhancedReinforceTroops = "Enhanced Reinforce Troops"
 improvedHealthBar = "Improved Health Bar"
 showUnitTargetLine = "Show Unit Target Line (limited in multiplayer)"
+boldText = "Bold text for list"
 
 [extension]
 extension = "Extension"

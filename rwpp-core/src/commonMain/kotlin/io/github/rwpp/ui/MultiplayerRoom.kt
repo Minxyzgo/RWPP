@@ -228,195 +228,281 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                 .padding(5.dp)
                 .autoClearFocus()
         ) {
-            Column {
+            Box {
                 ExitButton(onExit)
-                Column(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        BorderCard(
-                            modifier = Modifier
-                                .weight(.4f)
-                                .padding(10.dp)
-                                .then(if(LocalWindowManager.current == WindowManager.Small)
-                                        Modifier.verticalScroll(rememberScrollState()) else Modifier),
-                            backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
-                        ) {
-                            var details by remember { mutableStateOf("Getting details...") }
-
-                            @Composable
-                            fun MapImage(modifier: Modifier = Modifier) {
-                                Image(
-                                    mapImage ?: painterResource(Res.drawable.error_missingmap),
-                                    null,
-                                    contentScale = ContentScale.Fit,
-                                    modifier = Modifier.then(modifier).padding(10.dp)
-                                        .border(BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceContainer))
-                                        .clickable(isHost) { showMapSelectView = true }
-                                )
-                            }
-
-                            remember(update) {
-                                scope.launch { details = room.roomDetails().split("\n").filter { !it.startsWith("Map:") && it.isNotBlank() }.joinToString("\n") }
-                            }
-
-                            Row(modifier = Modifier.fillMaxWidth().then(
-                                if(LocalWindowManager.current == WindowManager.Small)
-                                    Modifier else Modifier.weight(1f)
-                            ), horizontalArrangement = Arrangement.Center) {
-                                Text(
-                                    details,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(10.dp)
-                                )
-                                if(LocalWindowManager.current == WindowManager.Large) MapImage(Modifier.weight(.8f))
-                            }
-
-                            if(LocalWindowManager.current == WindowManager.Middle) MapImage(Modifier.weight(1f).fillMaxWidth())
-                            if(LocalWindowManager.current == WindowManager.Small) MapImage(Modifier.defaultMinSize(minHeight = 200.dp).fillMaxWidth())
-                            val mapType = remember(update) { room.mapType }
-
-                            Text(
-                                mapType.name,
-                                modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
-                                style = MaterialTheme.typography.headlineLarge,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-
-                            Text(
-                                displayMapName,
-                                modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
-                                style = MaterialTheme.typography.headlineMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-
-                            @Composable
-                            fun OptionButtons() {
-                                if(LocalWindowManager.current == WindowManager.Large) RWTextButton(
-                                    readI18n("multiplayer.room.selectMap"),
-                                    modifier = Modifier.padding(5.dp)
-                                ) { showMapSelectView = true }
-                                if(LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
-                                    var isLocked by remember { mutableStateOf(false) }
-                                    IconButton(
-                                        { isLocked = !isLocked; room.lockedRoom = isLocked },
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp),
-                                        enabled = room.isHost,
-                                    ) {
-                                        Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else MaterialTheme.colorScheme.onSurface)
-                                    }
-                                }
-                                RWTextButton(
-                                    readI18n("multiplayer.room.option"),
-                                    modifier = Modifier.padding(5.dp)
-                                ) { optionVisible = true }
-                                RWTextButton(
-                                    readI18n("multiplayer.room.start"),
-                                    modifier = Modifier.padding(5.dp)
-                                ) {
-                                   // val unpreparedPlayers = game.gameRoom.getPlayers().filter { !it.data.ready }
-                                   // if(unpreparedPlayers.isNotEmpty()) {
-                                   //     game.gameRoom.sendSystemMessage(
-                                   //         "Cannot start game. Because players: ${unpreparedPlayers.joinToString(", ") { it.name }} aren't ready.")
-                                    //} else
-                                    if(room.isHostServer) room.sendQuickGameCommand("-start") else room.startGame()
-                                }
-                            }
-
-                            if(isHost) {
-                                if(LocalWindowManager.current == WindowManager.Small) {
-                                    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        OptionButtons()
-                                    }
-                                } else {
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                        OptionButtons()
-                                    }
-                                }
-                            }
-                        }
-
-                        val playerNameWeight = .6f
-                        val playerSpawnWeight = .1f
-                        val playerTeamWeight = .1f
-                        val playerPingWeight = .2f
-
-                        val state = rememberLazyListState()
-
-                        Column(
-                            modifier = Modifier.weight(.7f).padding(10.dp).then(
-                                /*if(LocalWindowManager.current != WindowManager.Large) Modifier.verticalScroll(rememberScrollState())
-                                else*/ Modifier
-                            ),
-                        ) {
+                Column {
+                    Column(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                        Row(modifier = Modifier.fillMaxWidth()) {
                             BorderCard(
-                                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 200.dp).padding(5.dp),
-                                backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
+                                modifier = Modifier
+                                    .weight(.4f)
+                                    .padding(10.dp)
+                                    .then(
+                                        if (LocalWindowManager.current == WindowManager.Small)
+                                            Modifier.verticalScroll(rememberScrollState()) else Modifier
+                                    ),
+                                backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                    .7f
+                                )
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .padding(5.dp)
-                                        .border(BorderStroke(2.dp, MaterialTheme.colorScheme.secondary), CircleShape)
-                                        .fillMaxWidth()
-                                ) {
-                                    TableCell("name", playerNameWeight, drawStroke = false, strokeColor = MaterialTheme.colorScheme.secondaryContainer)
-                                    TableCell("spawn", playerSpawnWeight, strokeColor = MaterialTheme.colorScheme.secondaryContainer)
-                                    TableCell("team", playerTeamWeight,  strokeColor = MaterialTheme.colorScheme.secondaryContainer)
-                                    TableCell("ping", playerPingWeight, drawStroke = false,  strokeColor = MaterialTheme.colorScheme.secondaryContainer)
-                                }
+                                var details by remember { mutableStateOf("Getting details...") }
 
                                 @Composable
-                                fun PlayerTable(
-                                    index: Int,
-                                    modifier: Modifier = Modifier
-                                    //animateItem: (Modifier.() -> Unit)? = null
-                                ) {
-                                    val options = remember {
-                                        game.getStartingUnitOptions()
-                                    }
-                                    val player = players[index]
+                                fun MapImage(modifier: Modifier = Modifier) {
+                                    Image(
+                                        mapImage ?: painterResource(Res.drawable.error_missingmap),
+                                        null,
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.then(modifier).padding(10.dp)
+                                            .border(
+                                                BorderStroke(
+                                                    2.dp,
+                                                    MaterialTheme.colorScheme.surfaceContainer
+                                                )
+                                            )
+                                            .clickable(isHost) { showMapSelectView = true }
+                                    )
+                                }
 
+                                remember(update) {
+                                    scope.launch {
+                                        details = room.roomDetails().split("\n")
+                                            .filter { !it.startsWith("Map:") && it.isNotBlank() }
+                                            .joinToString("\n")
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().then(
+                                        if (LocalWindowManager.current == WindowManager.Small)
+                                            Modifier else Modifier.weight(1f)
+                                    ), horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        details,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.padding(10.dp)
+                                    )
+                                    if (LocalWindowManager.current == WindowManager.Large) MapImage(
+                                        Modifier.weight(.8f)
+                                    )
+                                }
+
+                                if (LocalWindowManager.current == WindowManager.Middle) MapImage(
+                                    Modifier.weight(1f).fillMaxWidth()
+                                )
+                                if (LocalWindowManager.current == WindowManager.Small) MapImage(
+                                    Modifier.defaultMinSize(minHeight = 200.dp).fillMaxWidth()
+                                )
+                                val mapType = remember(update) { room.mapType }
+
+                                Text(
+                                    mapType.name,
+                                    modifier = Modifier.padding(5.dp)
+                                        .align(Alignment.CenterHorizontally),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+
+                                Text(
+                                    displayMapName,
+                                    modifier = Modifier.padding(5.dp)
+                                        .align(Alignment.CenterHorizontally),
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+
+                                @Composable
+                                fun OptionButtons() {
+                                    if (LocalWindowManager.current == WindowManager.Large) RWTextButton(
+                                        readI18n("multiplayer.room.selectMap"),
+                                        modifier = Modifier.padding(5.dp)
+                                    ) { showMapSelectView = true }
+                                    if (LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
+                                        var isLocked by remember { mutableStateOf(false) }
+                                        IconButton(
+                                            { isLocked = !isLocked; room.lockedRoom = isLocked },
+                                            modifier = Modifier.padding(
+                                                horizontal = 5.dp,
+                                                vertical = 5.dp
+                                            ),
+                                            enabled = room.isHost,
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Lock,
+                                                null,
+                                                tint = if (isLocked) Color(
+                                                    237,
+                                                    112,
+                                                    20
+                                                ) else MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                    }
+                                    RWTextButton(
+                                        readI18n("multiplayer.room.option"),
+                                        modifier = Modifier.padding(5.dp)
+                                    ) { optionVisible = true }
+                                    RWTextButton(
+                                        readI18n("multiplayer.room.start"),
+                                        modifier = Modifier.padding(5.dp)
+                                    ) {
+                                        // val unpreparedPlayers = game.gameRoom.getPlayers().filter { !it.data.ready }
+                                        // if(unpreparedPlayers.isNotEmpty()) {
+                                        //     game.gameRoom.sendSystemMessage(
+                                        //         "Cannot start game. Because players: ${unpreparedPlayers.joinToString(", ") { it.name }} aren't ready.")
+                                        //} else
+                                        if (room.isHostServer) room.sendQuickGameCommand("-start") else room.startGame()
+                                    }
+                                }
+
+                                if (isHost) {
+                                    if (LocalWindowManager.current == WindowManager.Small) {
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            OptionButtons()
+                                        }
+                                    } else {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            OptionButtons()
+                                        }
+                                    }
+                                }
+                            }
+
+                            val playerNameWeight = .6f
+                            val playerSpawnWeight = .1f
+                            val playerTeamWeight = .1f
+                            val playerPingWeight = .2f
+
+                            val state = rememberLazyListState()
+
+                            Column(
+                                modifier = Modifier.weight(.7f).padding(10.dp).then(
+                                    /*if(LocalWindowManager.current != WindowManager.Large) Modifier.verticalScroll(rememberScrollState())
+                                else*/ Modifier
+                                ),
+                            ) {
+                                BorderCard(
+                                    modifier = Modifier.fillMaxWidth()
+                                        .defaultMinSize(minHeight = 200.dp).padding(5.dp),
+                                    backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                        .7f
+                                    )
+                                ) {
                                     Row(
                                         modifier = Modifier
-                                            .then(modifier)
-                                            .height(IntrinsicSize.Max)
                                             .padding(5.dp)
-                                            .border(BorderStroke(2.dp, MaterialTheme.colorScheme.primary), CircleShape)
+                                            .border(
+                                                BorderStroke(
+                                                    2.dp,
+                                                    MaterialTheme.colorScheme.secondary
+                                                ), CircleShape
+                                            )
                                             .fillMaxWidth()
-                                            .clickable(room.isHost || room.isHostServer || room.localPlayer == player) {
-                                                selectedPlayer = player
-                                                playerOverrideVisible = true
-                                            }
                                     ) {
-                                        TableCell(player.name + if(player.startingUnit != -1) " - ${options.first { it.first == player.startingUnit }.second}" else "",
-                                            color = if(player.color != -1) Player.getTeamColor(player.color) else MaterialTheme.colorScheme.onSurface,
-                                            weight = playerNameWeight, drawStroke = false,
-                                            modifier = Modifier.fillMaxHeight()) {
+                                        TableCell(
+                                            "name",
+                                            playerNameWeight,
+                                            drawStroke = false,
+                                            strokeColor = MaterialTheme.colorScheme.secondaryContainer
+                                        )
+                                        TableCell(
+                                            "spawn",
+                                            playerSpawnWeight,
+                                            strokeColor = MaterialTheme.colorScheme.secondaryContainer
+                                        )
+                                        TableCell(
+                                            "team",
+                                            playerTeamWeight,
+                                            strokeColor = MaterialTheme.colorScheme.secondaryContainer
+                                        )
+                                        TableCell(
+                                            "ping",
+                                            playerPingWeight,
+                                            drawStroke = false,
+                                            strokeColor = MaterialTheme.colorScheme.secondaryContainer
+                                        )
+                                    }
+
+                                    @Composable
+                                    fun PlayerTable(
+                                        index: Int,
+                                        modifier: Modifier = Modifier
+                                        //animateItem: (Modifier.() -> Unit)? = null
+                                    ) {
+                                        val options = remember {
+                                            game.getStartingUnitOptions()
+                                        }
+                                        val player = players[index]
+
+                                        Row(
+                                            modifier = Modifier
+                                                .then(modifier)
+                                                .height(IntrinsicSize.Max)
+                                                .padding(5.dp)
+                                                .border(
+                                                    BorderStroke(
+                                                        2.dp,
+                                                        MaterialTheme.colorScheme.primary
+                                                    ), CircleShape
+                                                )
+                                                .fillMaxWidth()
+                                                .clickable(room.isHost || room.isHostServer || room.localPlayer == player) {
+                                                    selectedPlayer = player
+                                                    playerOverrideVisible = true
+                                                }
+                                        ) {
+                                            TableCell(
+                                                player.name + if (player.startingUnit != -1) " - ${options.first { it.first == player.startingUnit }.second}" else "",
+                                                color = if (player.color != -1) Player.getTeamColor(
+                                                    player.color
+                                                ) else MaterialTheme.colorScheme.onSurface,
+                                                weight = playerNameWeight, drawStroke = false,
+                                                modifier = Modifier.fillMaxHeight()
+                                            ) {
 //                                            if (!player.data.ready) {
 //                                                CircularProgressIndicator(
 //                                                    color = Color(199, 234, 70),
 //                                                    modifier = Modifier.size(15.dp).padding(0.dp, 2.dp, 0.dp, 2.dp)
 //                                                )
 //                                            }
+                                            }
+                                            TableCell(
+                                                if (player.isSpectator)
+                                                    "S"
+                                                else (player.spawnPoint + 1).toString(),
+                                                playerSpawnWeight,
+                                                color = if (player.isSpectator)
+                                                    Color.Black
+                                                else Player.getTeamColor(player.spawnPoint),
+                                                modifier = Modifier.fillMaxHeight()
+                                            )
+                                            TableCell(
+                                                player.teamAlias(),
+                                                playerTeamWeight,
+                                                color = Player.getTeamColor(player.team),
+                                                modifier = Modifier.fillMaxHeight()
+                                            )
+                                            val ping = remember(update) { player.ping }
+                                            TableCell(
+                                                ping,
+                                                playerPingWeight,
+                                                drawStroke = false,
+                                                modifier = Modifier.fillMaxHeight()
+                                            )
                                         }
-                                        TableCell(
-                                            if(player.isSpectator)
-                                                "S"
-                                            else (player.spawnPoint + 1).toString(),
-                                            playerSpawnWeight,
-                                            color = if(player.isSpectator)
-                                                Color.Black
-                                            else Player.getTeamColor(player.spawnPoint),
-                                            modifier = Modifier.fillMaxHeight()
-                                        )
-                                        TableCell(player.teamAlias(), playerTeamWeight, color = Player.getTeamColor(player.team), modifier = Modifier.fillMaxHeight())
-                                        val ping = remember(update) { player.ping }
-                                        TableCell(ping, playerPingWeight, drawStroke = false, modifier = Modifier.fillMaxHeight())
                                     }
-                                }
 
 //                                if(LocalWindowManager.current != WindowManager.Large) {
 //                                    for(i in players.indices) {
@@ -435,24 +521,35 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                                 count = players.size,
                                                 key = { players[it].connectHexId }
                                             ) { index ->
-                                                PlayerTable(index, if (koinInject<Settings>().enableAnimations)
-                                                    Modifier.animateItem()
-                                                else Modifier)
+                                                PlayerTable(
+                                                    index,
+                                                    if (koinInject<Settings>().enableAnimations)
+                                                        Modifier.animateItem()
+                                                    else Modifier
+                                                )
                                             }
 
                                             item {
-                                                if(LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
+                                                if (LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
                                                     BorderCard(
-                                                        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 200.dp).padding(5.dp),
-                                                        backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
+                                                        modifier = Modifier.fillMaxWidth()
+                                                            .defaultMinSize(minHeight = 200.dp)
+                                                            .padding(5.dp),
+                                                        backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                                            .7f
+                                                        )
                                                     ) {
                                                         Row(modifier = Modifier.fillMaxWidth()) {
                                                             RWTextButton(
                                                                 readI18n("multiplayer.room.changeSite"),
-                                                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
+                                                                modifier = Modifier.padding(
+                                                                    horizontal = 5.dp,
+                                                                    vertical = 30.dp
+                                                                )
                                                             ) {
-                                                                if(players.isNotEmpty()) {
-                                                                    selectedPlayer = room.localPlayer
+                                                                if (players.isNotEmpty()) {
+                                                                    selectedPlayer =
+                                                                        room.localPlayer
                                                                     playerOverrideVisible = true
                                                                 }
                                                             }
@@ -466,58 +563,78 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                             }
                                         }
                                     }
-                                //}
+                                    //}
+                                }
                             }
                         }
                     }
-                }
 
-                if(LocalWindowManager.current == WindowManager.Large) {
-                    BorderCard(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(10.dp),
-                        backgroundColor = MaterialTheme.colorScheme.surfaceContainer
-                    ) {
-                        Column {
-                            Row(modifier = Modifier.fillMaxWidth()
-                                .height(IntrinsicSize.Max)
-                                .padding(5.dp)) {
-                                RWTextButton(
-                                    readI18n("multiplayer.room.changeSite"),
-                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
+                    if (LocalWindowManager.current == WindowManager.Large) {
+                        BorderCard(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(10.dp),
+                            backgroundColor = MaterialTheme.colorScheme.surfaceContainer
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                        .height(IntrinsicSize.Max)
+                                        .padding(5.dp)
                                 ) {
-                                    if(players.isNotEmpty()) {
-                                        selectedPlayer = room.localPlayer
-                                        playerOverrideVisible = true
-                                    }
-                                }
-                                if(isHost) {
                                     RWTextButton(
-                                        readI18n("multiplayer.room.addAI"),
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp),
-                                        onLongClick = { room.addAI(10) }
-                                    ) { room.addAI() }
+                                        readI18n("multiplayer.room.changeSite"),
+                                        modifier = Modifier.padding(
+                                            horizontal = 5.dp,
+                                            vertical = 30.dp
+                                        )
+                                    ) {
+                                        if (players.isNotEmpty()) {
+                                            selectedPlayer = room.localPlayer
+                                            playerOverrideVisible = true
+                                        }
+                                    }
+                                    if (isHost) {
+                                        RWTextButton(
+                                            readI18n("multiplayer.room.addAI"),
+                                            modifier = Modifier.padding(
+                                                horizontal = 5.dp,
+                                                vertical = 30.dp
+                                            ),
+                                            onLongClick = { room.addAI(10) }
+                                        ) { room.addAI() }
+                                    }
+
+                                    var isLocked by remember(update) { mutableStateOf(room.lockedRoom) }
+                                    if (!isSandboxGame) IconButton(
+                                        { isLocked = !isLocked; room.lockedRoom = isLocked },
+                                        enabled = isHost,
+                                        modifier = Modifier.padding(
+                                            horizontal = 5.dp,
+                                            vertical = 30.dp
+                                        )
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Lock,
+                                            null,
+                                            tint = if (isLocked) Color(
+                                                237,
+                                                112,
+                                                20
+                                            ) else MaterialTheme.colorScheme.surfaceTint
+                                        )
+                                    }
+
+                                    if (!isSandboxGame) MessageTextField()
                                 }
 
-                                var isLocked by remember(update) { mutableStateOf(room.lockedRoom) }
-                                if(!isSandboxGame) IconButton(
-                                    { isLocked = !isLocked; room.lockedRoom = isLocked },
-                                    enabled = isHost,
-                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 30.dp)
+                                if (!isSandboxGame) BorderCard(
+                                    modifier = Modifier
+                                        .padding(5.dp),
+                                    backgroundColor = MaterialTheme.colorScheme.surface.copy(.7f)
                                 ) {
-                                    Icon(Icons.Default.Lock, null, tint = if(isLocked) Color(237, 112, 20) else MaterialTheme.colorScheme.surfaceTint)
+                                    MessageView()
                                 }
-
-                                if(!isSandboxGame) MessageTextField()
-                            }
-
-                            if(!isSandboxGame) BorderCard(
-                                modifier = Modifier
-                                    .padding(5.dp),
-                                backgroundColor = MaterialTheme.colorScheme.surface.copy(.7f)
-                            ) {
-                                MessageView()
                             }
                         }
                     }
@@ -602,7 +719,6 @@ private fun PlayerOverrideDialog(
             modifier = Modifier
                 .fillMaxSize(LargeProportion()),
         ) {
-            ExitButton(dismiss)
             Text(
                 readI18n("multiplayer.room.playerConfig"),
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp),
@@ -821,7 +937,6 @@ private fun MultiplayerOption(
         modifier = Modifier
             .fillMaxSize(LargeProportion()),
     ) {
-        ExitButton(dismiss)
         LazyColumn(modifier = Modifier.weight(1f).padding(10.dp)) {
             item {
                 LazyRow(horizontalArrangement = Arrangement.Center) {

@@ -54,7 +54,6 @@ fun BanUnitViewDialog(
                 .padding(10.dp)
                 .autoClearFocus()
         ) {
-            ExitButton(d)
             val state = rememberLazyListState()
             var filter by remember { mutableStateOf("") }
 

@@ -96,6 +96,7 @@ val commands = CommandHandler("/").apply {
     }
 }
 
+
 val extensionPath = if(Platform.isAndroid()) {
     "/storage/emulated/0/rustedWarfare/extension/"
 } else System.getProperty("user.dir") + "/extension/"
@@ -111,3 +112,7 @@ val resOutputDir = if(Platform.isAndroid()) {
 val mapDir = if(Platform.isAndroid()) {
     "/storage/emulated/0/rustedWarfare/maps"
 } else System.getProperty("user.dir") + "mods/maps"
+
+val modDir = if(Platform.isAndroid()) {
+    "/storage/emulated/0/rustedWarfare/units"
+} else System.getProperty("user.dir") + "/mods/units"

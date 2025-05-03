@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +49,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ExtensionView(
     onExit: () -> Unit
@@ -180,79 +182,80 @@ fun ExtensionView(
                 .fillMaxSize()
                 .padding(10.dp)
         ) {
-            ExitButton(onExit)
+            Box {
+                ExitButton(onExit)
+                val state = rememberLazyListState()
 
-            val state = rememberLazyListState()
-
-            LazyColumnScrollbar(
-                listState = state,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    state = state
+                LazyColumnScrollbar(
+                    listState = state,
+                    modifier = Modifier.fillMaxWidth().padding(top = 30.dp),
                 ) {
-                    item {
-                        Column {
-                            Text(
-                                readI18n("extension.extension"),
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(start = 5.dp)
-                            )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = state
+                    ) {
+                        item {
+                            Column {
+                                Text(
+                                    readI18n("extension.extension"),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(start = 5.dp)
+                                )
 
-                            HorizontalDivider(thickness = 3.dp,
-                                modifier = Modifier.padding(top = 2.dp, bottom = 5.dp),
-                                color = MaterialTheme.colorScheme.primary
+                                HorizontalDivider(thickness = 3.dp,
+                                    modifier = Modifier.padding(top = 2.dp, bottom = 5.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
+                        items(
+                            key = { extensions[it].config.id },
+                            count = extensions.size
+                        ) { index ->
+                            val extension = extensions[index]
+                            ExtensionCard(
+                                extension,
+                                onClickSettings = {
+                                    selectedExtension = extension
+                                    showExtensionSetting = true
+                                }
                             )
                         }
-                    }
 
-                    items(
-                        key = { extensions[it].config.id },
-                        count = extensions.size
-                    ) { index ->
-                        val extension = extensions[index]
-                        ExtensionCard(
-                            extension,
-                            onClickSettings = {
-                                selectedExtension = extension
-                                showExtensionSetting = true
+                        item {
+                            Column {
+                                Text(
+                                    readI18n("extension.resource"),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(start = 5.dp)
+                                )
+
+                                HorizontalDivider(thickness = 3.dp,
+                                    modifier = Modifier.padding(top = 2.dp, bottom = 5.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
                             }
-                        )
-                    }
+                        }
 
-                    item {
-                        Column {
-                            Text(
-                                readI18n("extension.resource"),
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(start = 5.dp)
-                            )
-
-                            HorizontalDivider(thickness = 3.dp,
-                                modifier = Modifier.padding(top = 2.dp, bottom = 5.dp),
-                                color = MaterialTheme.colorScheme.primary
+                        items(
+                            key = { resources[it].config.id },
+                            count = resources.size
+                        ) { index ->
+                            val resource = resources[index]
+                            ExtensionCard(
+                                resource,
+                                onClickSettings = {
+                                    // Resource cannot be enabled.
+                                },
+                                selectedResource,
+                                onCheckedChange = {
+                                    selectedResource = resource
+                                }
                             )
                         }
-                    }
-
-                    items(
-                        key = { resources[it].config.id },
-                        count = resources.size
-                    ) { index ->
-                        val resource = resources[index]
-                        ExtensionCard(
-                            resource,
-                            onClickSettings = {
-                                // Resource cannot be enabled.
-                            },
-                            selectedResource,
-                            onCheckedChange = {
-                                selectedResource = resource
-                            }
-                        )
                     }
                 }
             }
@@ -300,11 +303,18 @@ private fun LazyItemScope.ExtensionCard(
             }
 
             Row {
-                Image(
-                    extension.iconPainter ?: painterResource(Res.drawable.error_missingmap),
-                    null,
-                    modifier = Modifier.size(120.dp).padding(5.dp)
-                )
+                Card(
+                    Modifier.padding(5.dp),
+                    shape = RectangleShape,
+                    border = BorderStroke(3.dp, MaterialTheme.colorScheme.secondary)
+                ) {
+                    Image(
+                        extension.iconPainter ?: painterResource(Res.drawable.error_missingmap),
+                        null,
+                        modifier = Modifier.size(120.dp)
+                    )
+                }
+
                 Column(modifier = Modifier.padding(5.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RWCheckbox(checked, onCheckedChange = {

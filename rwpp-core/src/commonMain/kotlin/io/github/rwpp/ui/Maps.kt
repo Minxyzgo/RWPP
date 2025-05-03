@@ -33,6 +33,7 @@ import io.github.rwpp.config.Settings
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.rwpp_core.generated.resources.Res
 import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
 import io.github.rwpp.widget.*
@@ -52,88 +53,106 @@ fun MapViewDialog(
 ) { d ->
     BorderCard(
         modifier = Modifier
-           // .fillMaxSize(0.95f)
+            // .fillMaxSize(0.95f)
             .padding(10.dp)
             .autoClearFocus()
     ) {
-        ExitButton(d)
+        Box {
+            ExitButton(d)
+            Column {
 
-        val game = koinInject<Game>()
-        var filter by remember { mutableStateOf("") }
-        val room = koinInject<Game>().gameRoom
+                val game = koinInject<Game>()
+                var filter by remember { mutableStateOf("") }
+                val room = koinInject<Game>().gameRoom
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text("MapView", style = MaterialTheme.typography.headlineLarge.run { copy(fontSize = this.fontSize * scaleFitFloat()) })
-        }
-
-        var selectedIndex0 by remember { mutableStateOf(lastSelectedMapType.ordinal) }
-        var maps by remember { mutableStateOf(listOf<GameMap>()) }
-        var mapType = remember { MapType.entries[selectedIndex0] }
-
-        val permissionHelper = koinInject<PermissionHelper>()
-        remember(mapType) {
-            if (mapType != MapType.SkirmishMap) permissionHelper.requestExternalStoragePermission()
-        }
-
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(top = 5.dp)
-
-        ) {
-            LargeDropdownMenu(
-                modifier = Modifier.wrapContentSize().padding(5.dp),
-                label = "Map Type",
-                items = if (room.isHost) MapType.entries else listOf(MapType.SkirmishMap),
-                selectedIndex = selectedIndex0,
-                onItemSelected = { index, _ -> selectedIndex0 = index }
-            )
-
-            RWSingleOutlinedTextField(
-                "Filter",
-                filter,
-                modifier = Modifier.fillMaxWidth(.4f).padding(5.dp),
-                leadingIcon = { Icon(Icons.Default.Search, null) }
-            ) {
-                filter = it
-            }
-
-            RWIconButton(Icons.Default.Refresh, modifier = Modifier.offset(y = 10.dp).padding(5.dp), size = 50.dp) {
-                game.getAllMaps(true)
-                maps = game.getAllMapsByMapType(mapType).filter { it.displayName().contains(filter, true) }
-            }
-        }
-
-        LargeDividingLine { 0.dp }
-
-        with(game) {
-            remember(selectedIndex0, filter) {
-                mapType = MapType.entries[selectedIndex0]
-                maps = getAllMapsByMapType(mapType).filter { it.displayName().contains(filter, true) }
-            }
-
-            val state = rememberLazyListState()
-            val state1 = rememberLazyGridState()
-
-            LaunchedEffect(Unit) {
-                state1.scrollToItem(lastSelectedIndex)
-            }
-
-            LazyVerticalGrid(
-                state = state1,
-                columns = GridCells.Fixed(5),
-            ) {
-                items(
-                    count = maps.size,
-                    key = { maps[it].id }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    val map = maps[it]
-                    MapItem(it, state, map.displayName(), map.image, mapType != MapType.SavedGame) { onSelectedMap(it, map); d() }
+                    Text(
+                        readI18n("multiplayer.room.mapView"),
+                        modifier = Modifier.padding(5.dp),
+                        style = MaterialTheme.typography.headlineLarge.run { copy(fontSize = this.fontSize * scaleFitFloat()) })
+                }
+
+                var selectedIndex0 by remember { mutableStateOf(lastSelectedMapType.ordinal) }
+                var maps by remember { mutableStateOf(listOf<GameMap>()) }
+                var mapType = remember { MapType.entries[selectedIndex0] }
+
+                val permissionHelper = koinInject<PermissionHelper>()
+                remember(mapType) {
+                    if (mapType != MapType.SkirmishMap) permissionHelper.requestExternalStoragePermission()
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(top = 5.dp)
+
+                ) {
+                    LargeDropdownMenu(
+                        modifier = Modifier.wrapContentSize().padding(5.dp),
+                        label = readI18n("multiplayer.room.mapType"),
+                        items = if (room.isHost) MapType.entries else listOf(MapType.SkirmishMap),
+                        selectedIndex = selectedIndex0,
+                        onItemSelected = { index, _ -> selectedIndex0 = index }
+                    )
+
+                    RWSingleOutlinedTextField(
+                        "Filter",
+                        filter,
+                        modifier = Modifier.fillMaxWidth(.4f).padding(5.dp),
+                        leadingIcon = { Icon(Icons.Default.Search, null) }
+                    ) {
+                        filter = it
+                    }
+
+                    RWIconButton(
+                        Icons.Default.Refresh,
+                        modifier = Modifier.offset(y = 10.dp).padding(5.dp),
+                        size = 50.dp
+                    ) {
+                        game.getAllMaps(true)
+                        maps = game.getAllMapsByMapType(mapType)
+                            .filter { it.displayName().contains(filter, true) }
+                    }
+                }
+
+                LargeDividingLine { 0.dp }
+
+                with(game) {
+                    remember(selectedIndex0, filter) {
+                        mapType = MapType.entries[selectedIndex0]
+                        maps = getAllMapsByMapType(mapType).filter {
+                            it.displayName().contains(filter, true)
+                        }
+                    }
+
+                    val state = rememberLazyListState()
+                    val state1 = rememberLazyGridState()
+
+                    LaunchedEffect(Unit) {
+                        state1.scrollToItem(lastSelectedIndex)
+                    }
+
+                    LazyVerticalGrid(
+                        state = state1,
+                        columns = GridCells.Fixed(5),
+                    ) {
+                        items(
+                            count = maps.size,
+                            key = { maps[it].id }
+                        ) {
+                            val map = maps[it]
+                            MapItem(
+                                map.displayName(),
+                                map.image,
+                                mapType != MapType.SavedGame
+                            ) { onSelectedMap(it, map); d() }
+                        }
+                    }
                 }
             }
         }
@@ -142,8 +161,6 @@ fun MapViewDialog(
 
 @Composable
 fun LazyGridItemScope.MapItem(
-    index: Int,
-    state: LazyListState,
     name: String,
     image: Painter?,
     showImage: Boolean = true,
@@ -154,8 +171,8 @@ fun LazyGridItemScope.MapItem(
             Modifier.animateItem()
         else Modifier)
             .padding(10.dp)
-            .sizeIn(maxHeight = 200.dp * scaleFitFloat(), maxWidth = 200.dp * scaleFitFloat())
-            .clickable { onClick() },
+            .sizeIn(maxHeight = 200.dp * scaleFitFloat(), maxWidth = 200.dp * scaleFitFloat()),
+        onClick = onClick,
         backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
     ) {
         Column(
