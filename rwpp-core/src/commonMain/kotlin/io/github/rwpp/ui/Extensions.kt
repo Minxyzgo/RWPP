@@ -35,6 +35,9 @@ import io.github.rwpp.appKoin
 import io.github.rwpp.config.EnabledExtensions
 import io.github.rwpp.config.Settings
 import io.github.rwpp.core.UI
+import io.github.rwpp.event.broadcast
+import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.CloseUIPanelEvent
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.i18n.readI18n
@@ -54,6 +57,11 @@ import org.koin.compose.koinInject
 fun ExtensionView(
     onExit: () -> Unit
 ) {
+    DisposableEffect(Unit) {
+        onDispose {
+            CloseUIPanelEvent("extension").broadcastIn()
+        }
+    }
     BackHandler(true, onExit)
     val appContext = koinInject<AppContext>()
     val externalHandler = koinInject<ExternalHandler>()

@@ -17,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.CloseUIPanelEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.Mission
@@ -28,6 +30,11 @@ import org.koin.compose.koinInject
 @Composable
 fun MissionView(onExit: () -> Unit) {
     BackHandler(true, onExit)
+    DisposableEffect(Unit) {
+        onDispose {
+            CloseUIPanelEvent("mission").broadcastIn()
+        }
+    }
 
     val game = koinInject<Game>()
     val configIO = koinInject<ConfigIO>()

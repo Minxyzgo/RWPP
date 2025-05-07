@@ -111,7 +111,7 @@ val resOutputDir = if(Platform.isAndroid()) {
 
 val mapDir = if(Platform.isAndroid()) {
     "/storage/emulated/0/rustedWarfare/maps"
-} else System.getProperty("user.dir") + "mods/maps"
+} else System.getProperty("user.dir") + "/mods/maps"
 
 val modDir = if(Platform.isAndroid()) {
     "/storage/emulated/0/rustedWarfare/units"

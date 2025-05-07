@@ -34,6 +34,7 @@ import io.github.rwpp.*
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.config.Settings
 import io.github.rwpp.event.GlobalEventChannel
+import io.github.rwpp.event.broadcast
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.GameLoadedEvent
 import io.github.rwpp.event.events.KeyboardEvent
@@ -118,8 +119,10 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager()
         .addKeyEventDispatcher { dispatcher ->
-            KeyboardEvent(dispatcher.keyCode).broadcastIn()
-            false
+            val event = runBlocking {
+                KeyboardEvent(dispatcher.keyCode).broadcast()
+            }
+            event.isIntercepted
         }
 
     window.addWindowListener(object : WindowListener {

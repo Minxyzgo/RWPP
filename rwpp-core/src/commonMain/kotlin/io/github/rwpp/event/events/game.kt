@@ -68,3 +68,4 @@ class ChatMessageEvent(var sender: String, var message: String, val player: Play
  */
 class SystemMessageEvent(val message: String) : GameEvent()
 
+class CloseUIPanelEvent(val ui: String) : GameEvent()

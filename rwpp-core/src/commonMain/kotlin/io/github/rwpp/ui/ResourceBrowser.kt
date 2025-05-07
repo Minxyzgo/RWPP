@@ -12,6 +12,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
@@ -168,6 +169,7 @@ fun ResourceBrowser(
                                 modifier = Modifier.width(300.dp).padding(10.dp),
                                 backgroundColor = MaterialTheme.colorScheme.surfaceContainer
                             ) {
+                                val image = remember { resourceInfo.imagePainter }
                                 Row(modifier = Modifier.fillMaxSize()) {
                                     Card(
                                         Modifier.padding(5.dp),
@@ -176,8 +178,7 @@ fun ResourceBrowser(
                                         border = BorderStroke(3.dp, MaterialTheme.colorScheme.secondary)
                                     ) {
                                         Image(
-                                            resourceInfo.imageBytes?.let { BitmapPainter(it.decodeToImageBitmap()) }
-                                                ?: painterResource(Res.drawable.error_missingmap),
+                                            image ?: painterResource(Res.drawable.error_missingmap),
                                             null,
                                             modifier = Modifier.size(100.dp)
                                         )
@@ -221,34 +222,38 @@ fun ResourceBrowser(
                                     )
 
                                     Column(Modifier.align(Alignment.CenterVertically)) {
-                                        IconButton(onClick = {
-                                            resourceInfo.bbsUrl?.let { net.openUriInBrowser(it) }
-                                        }, modifier = Modifier.size(45.dp)) {
-                                            Icon(
-                                                Icons.Default.Home,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.surfaceTint
-                                            )
+                                        if (resourceInfo.bbsUrl != null) {
+                                            IconButton(onClick = {
+                                                resourceInfo.bbsUrl.let { net.openUriInBrowser(it) }
+                                            }, modifier = Modifier.size(45.dp)) {
+                                                Icon(
+                                                    Icons.Default.Home,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.surfaceTint
+                                                )
+                                            }
                                         }
 
-                                        IconButton(onClick = {
-                                            resourceInfo.downloadUrl?.let {
-                                                downloadingMod = true
-                                                net.downloadFile(
-                                                    it,
-                                                    File(
-                                                        if (selectedTypeIndex == 0)
-                                                            "$modDir/${resourceInfo.title}.rwmod"
-                                                        else "$mapDir/${resourceInfo.title}.tmx"
-                                                    )
-                                                ) { p -> progress = p }
+                                        if (resourceInfo.downloadUrl != null) {
+                                            IconButton(onClick = {
+                                                resourceInfo.downloadUrl.let {
+                                                    downloadingMod = true
+                                                    net.downloadFile(
+                                                        it,
+                                                        File(
+                                                            if (selectedTypeIndex == 0)
+                                                                "$modDir/${resourceInfo.title}.rwmod"
+                                                            else "$mapDir/${resourceInfo.title}.tmx"
+                                                        )
+                                                    ) { p -> progress = p }
+                                                }
+                                            }, modifier = Modifier.size(45.dp)) {
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.download),
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.surfaceTint
+                                                )
                                             }
-                                        }, modifier = Modifier.size(45.dp)) {
-                                            Icon(
-                                                painter = painterResource(Res.drawable.download),
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.surfaceTint
-                                            )
                                         }
                                     }
                                 }
@@ -256,11 +261,15 @@ fun ResourceBrowser(
                         }
 
                         LazyVerticalGrid(GridCells.Adaptive(320.dp), modifier = Modifier.fillMaxWidth()) {
-                            items(allInfo) { info ->
+                            items(allInfo, key = { it.id }) { info ->
                                 ResourceInfoCard(info)
                             }
 
-                            item {
+                            item(span = {
+                                // LazyGridItemSpanScope:
+                                // maxLineSpan
+                                GridItemSpan(maxLineSpan)
+                            }) {
                                 Spacer(Modifier.height(50.dp))
                             }
                         }
@@ -276,6 +285,12 @@ fun ResourceBrowser(
         }
     }
 
+    val failed by remember {
+        derivedStateOf {
+            progress < 0
+        }
+    }
+
     AnimatedAlertDialog(downloadingMod,
         {
             downloadingMod = false
@@ -285,7 +300,11 @@ fun ResourceBrowser(
         BorderCard(modifier = Modifier.size(200.dp)) {
             Spacer(Modifier.weight(1f))
             Text(
-                if (downloaded) "Done" else "Downloading...",
+                if (downloaded) {
+                     "Done"
+                } else if (failed)
+                    "Failed"
+                else "Downloading...",
                 modifier = Modifier.padding(start = 2.dp).align(Alignment.CenterHorizontally),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary

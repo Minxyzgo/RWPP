@@ -45,6 +45,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.config.*
 import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.CloseUIPanelEvent
 import io.github.rwpp.event.events.HostGameEvent
 import io.github.rwpp.event.events.JoinGameEvent
 import io.github.rwpp.game.Game
@@ -79,6 +80,11 @@ fun MultiplayerView(
     onOpenRoomView: () -> Unit,
 ) {
     BackHandler(true, onExit)
+    DisposableEffect(Unit) {
+        onDispose {
+            CloseUIPanelEvent("multiplayer").broadcastIn()
+        }
+    }
 
     val instance = koinInject<MultiplayerPreferences>()
     val settings = koinInject<Settings>()
@@ -296,6 +302,7 @@ fun MultiplayerView(
                     RWTextButton(readI18n("multiplayer.hostPrivate"), modifier = Modifier.padding(5.dp)) {
                         dismiss()
                         game.gameRoom.option = RoomOption()
+                        HostGameEvent().broadcastIn()
                         if (hostByRCN) {
                             game.onQuestionCallback(if (enableMods) "smod" else "snew")
                             serverAddress = rcnAddress
@@ -310,6 +317,7 @@ fun MultiplayerView(
                     RWTextButton(readI18n("multiplayer.hostPublic"), modifier = Modifier.padding(5.dp)) {
                         dismiss()
                         game.gameRoom.option = RoomOption()
+                        HostGameEvent().broadcastIn()
                         if (hostByRCN) {
                             game.onQuestionCallback(if (enableMods) "smodup" else "snewup")
                             serverAddress = rcnAddress
@@ -968,7 +976,6 @@ fun MultiplayerView(
         onExit()
         onOpenRoomView()
         game.setUserName(userName)
-        HostGameEvent().broadcastIn()
     }
 
 

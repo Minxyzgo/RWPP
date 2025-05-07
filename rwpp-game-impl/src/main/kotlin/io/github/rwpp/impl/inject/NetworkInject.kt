@@ -164,7 +164,7 @@ object NetworkInject {
         val player = room.getPlayers()
             .firstOrNull {
                 if (gameRoom.isHost)
-                    c != null && it.client == c
+                    (c != null && it.client == c) || (c == null && it.name == room.localPlayer.name)
                 else it.name == str
             }
 

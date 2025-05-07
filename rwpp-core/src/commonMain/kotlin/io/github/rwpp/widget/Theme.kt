@@ -57,8 +57,8 @@ val RWTextFieldColors
     @Composable get() = TextFieldDefaults.colors(
         focusedTextColor = MaterialTheme.colorScheme.onSurface,
         unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f),
-        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f),
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = UI.backgroundTransparency + 0.1f.coerceAtMost(1f)),
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha =  UI.backgroundTransparency + 0.1f.coerceAtMost(1f)),
         cursorColor = MaterialTheme.colorScheme.primary,
         focusedLabelColor = MaterialTheme.colorScheme.primary,
         unfocusedLabelColor = MaterialTheme.colorScheme.onSurface,
@@ -151,8 +151,10 @@ fun RWPPTheme(content: @Composable () -> Unit) {
 
 val themes = mapOf(
     "RWPP" to defaultRWPPColorScheme,
-
-    "Material Purple" to darkColorScheme(),
+    "Material Purple" to darkColorScheme(
+        background = Color(48, 40, 56), // 偏紫的深灰色
+        surfaceContainer = Color(68, 60, 76),
+    ),
 
     "Material Default" to darkColorScheme(
         primary = Color(0xFFBB86FC),
@@ -168,9 +170,10 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFF003E3E),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF543F6A),
+        background = Color(48, 40, 56), // 偏紫的深灰色
+        surfaceContainer = Color(68, 60, 76),
     ),
 
-    // copy from https://github.com/MFlisar/ComposeThemer/tree/main
     "Amber Blue" to darkColorScheme(
         primary = Color(0xFFFFB300),
         onPrimary = Color(0xFF000000),
@@ -185,6 +188,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFF0B429C),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF6A510A),
+        background = Color(48, 44, 40), // 偏黄的深灰色
+        surfaceContainer = Color(68, 64, 60),
     ),
 
     "Aqua Blue" to darkColorScheme(
@@ -201,6 +206,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFF004F50),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF2F515F),
+        background = Color(40, 50, 56), // 偏蓝的深灰色
+        surfaceContainer = Color(60, 70, 76),
     ),
 
     "Bahama And Trinidad" to darkColorScheme(
@@ -217,6 +224,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFF3A7292),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF253F52),
+        background = Color(40, 48, 56), // 蓝灰色
+        surfaceContainer = Color(60, 68, 76),
     ),
 
     "Gold Sunset" to darkColorScheme(
@@ -233,6 +242,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFFBF7D4E),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF684D2F),
+        background = Color(56, 48, 40), // 暖灰色
+        surfaceContainer = Color(76, 68, 60),
     ),
 
     "Flutter Dash" to darkColorScheme(
@@ -249,6 +260,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFF514239),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF52666A),
+        background = Color(40, 50, 56), // 偏蓝的深灰色
+        surfaceContainer = Color(60, 70, 76),
     ),
 
     "Hippie Blue" to  darkColorScheme(
@@ -265,6 +278,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFF580810),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF324851),
+        background = Color(40, 50, 56), // 蓝灰色
+        surfaceContainer = Color(60, 70, 76),
     ),
 
     "Pink Sakura" to darkColorScheme(
@@ -281,6 +296,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFFEEBDA8),
         onTertiaryContainer = Color(0xFF000000),
         inversePrimary = Color(0xFF695860),
+        background = Color(56, 48, 52), // 偏粉的深灰色
+        surfaceContainer = Color(76, 68, 72),
     ),
 
     "Blumine" to darkColorScheme(
@@ -297,6 +314,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFF426173),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF3E545C),
+        background = Color(40, 50, 56), // 蓝灰色
+        surfaceContainer = Color(60, 70, 76),
     ),
 
     "Green Money" to darkColorScheme(
@@ -313,6 +332,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFF404204),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF3A5344),
+        background = Color(40, 50, 44), // 偏绿的深灰色
+        surfaceContainer = Color(60, 70, 64),
     ),
 
     "Rosewood" to darkColorScheme(
@@ -329,6 +350,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFF8E6E3C),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF482E34),
+        background = Color(56, 44, 48), // 偏红的深灰色
+        surfaceContainer = Color(76, 64, 68),
     ),
 
     "Verdun Lime" to darkColorScheme(
@@ -345,6 +368,8 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFF224E43),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF555D31),
+        background = Color(48, 50, 40), // 偏黄绿的深灰色
+        surfaceContainer = Color(68, 70, 60),
     ),
 
     "Grey Law" to darkColorScheme(
@@ -365,6 +390,8 @@ val themes = mapOf(
         errorContainer = Color(0xFFB1384E),
         onErrorContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF434B4F),
+        background = Color(48, 50, 52), // 中性深灰色
+        surfaceContainer = Color(68, 70, 72),
     ),
 
     "Red Tornado" to darkColorScheme(
@@ -381,5 +408,7 @@ val themes = mapOf(
         tertiaryContainer = Color(0xFFC2185B),
         onTertiaryContainer = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFF694747),
+        background = Color(56, 44, 44), // 偏红的深灰色
+        surfaceContainer = Color(76, 64, 64),
     )
 )

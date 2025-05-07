@@ -24,6 +24,7 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.RandomAccessFile
+import java.lang.Exception
 import java.util.*
 import kotlin.reflect.full.createInstance
 
@@ -116,6 +117,13 @@ interface Net : KoinComponent, Initialization {
         })
     }
 
+    fun getBytes(url: String): ByteArray? {
+        val request = Request.Builder()
+            .url(url)
+            .build()
+        return client.newCall(request).execute().body?.byteStream()?.readBytes()
+    }
+
     fun downloadFile(
         url: String,
         outputFile: File,
@@ -128,8 +136,9 @@ interface Net : KoinComponent, Initialization {
         client.newCall(request).enqueue(object : Callback {
 
             override fun onFailure(call: Call, e: IOException) {
-                // 处理失败情况
-                e.printStackTrace()
+                progressCallback(-1f)
+
+                logger.error(e.stackTraceToString())
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -159,6 +168,9 @@ interface Net : KoinComponent, Initialization {
                     }
 
                     logger.info("Download completed: ${outputFile.absoluteFile}")
+                } catch (e: Exception) {
+                    logger.error(e.stackTraceToString())
+                    progressCallback(-1f)
                 } finally {
                     inputStream?.close()
                     outputStream?.close()

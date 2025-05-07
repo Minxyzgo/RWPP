@@ -14,4 +14,4 @@ sealed class DesktopEvent : AbstractEvent()
 /**
  * @see [java.awt.event.KeyEvent]
  */
-class KeyboardEvent(val keyCode: Int) :DesktopEvent()
+class KeyboardEvent(val keyCode: Int) : DesktopEvent()

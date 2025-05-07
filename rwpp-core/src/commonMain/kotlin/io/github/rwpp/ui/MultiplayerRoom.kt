@@ -38,6 +38,7 @@ import io.github.rwpp.config.Settings
 import io.github.rwpp.core.UI
 import io.github.rwpp.core.UI.chatMessages
 import io.github.rwpp.event.GlobalEventChannel
+import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.*
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.external.Extension
@@ -66,6 +67,11 @@ import kotlin.math.roundToInt
 @Composable
 fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     BackHandler(true, onExit)
+    DisposableEffect(Unit) {
+        onDispose {
+            CloseUIPanelEvent("multiplayerRoom").broadcastIn()
+        }
+    }
 
     val externalHandler = koinInject<ExternalHandler>()
     val game = koinInject<Game>()
@@ -80,16 +86,13 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     var optionVisible by remember { mutableStateOf(false) }
     var banUnitVisible by remember { mutableStateOf(false) }
     //var downloadModViewVisible by remember { mutableStateOf(false) }
-    var loadModViewVisible by remember { mutableStateOf(false) }
+    //var loadModViewVisible by remember { mutableStateOf(false) }
     var selectedBanUnits by remember { mutableStateOf(listOf<UnitType>()) }
 
     var showMapSelectView by remember { mutableStateOf(false) }
-    val players = remember(update) { room.getPlayers().sortedBy { it.team } }
     val isHost = remember(update) { room.isHost || room.isHostServer }
-    val updateAction = { update = !update }
 
-    var playerOverrideVisible by remember { mutableStateOf(false) }
-    var selectedPlayer by remember { mutableStateOf(players.firstOrNull() ?: ConnectingPlayer) }
+    val updateAction = { update = !update }
 
     val scope = rememberCoroutineScope()
 
@@ -147,18 +150,14 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         optionVisible,
         { optionVisible = false },
         updateAction,
-        room,
         extensions,
         { banUnitVisible = true; optionVisible = false },
-        players
     )
 
     BanUnitViewDialog(banUnitVisible, { banUnitVisible = false }, selectedBanUnits) {
         selectedBanUnits = it
         game.onBanUnits(it)
     }
-
-    PlayerOverrideDialog(playerOverrideVisible, { playerOverrideVisible = false }, updateAction, room, extensions, selectedPlayer)
 
     @Composable
     fun ContentView() {
@@ -228,6 +227,11 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                 .padding(5.dp)
                 .autoClearFocus()
         ) {
+            val players = remember(update) { room.getPlayers().sortedBy { it.team } }
+            var selectedPlayer by remember { mutableStateOf(players.firstOrNull() ?: ConnectingPlayer) }
+            var playerOverrideVisible by remember { mutableStateOf(false) }
+
+            PlayerOverrideDialog(playerOverrideVisible, { playerOverrideVisible = false }, updateAction, room, extensions, selectedPlayer)
             Box {
                 ExitButton(onExit)
                 Column {
@@ -905,17 +909,16 @@ private fun MultiplayerOption(
     visible: Boolean,
     onDismissRequest: () -> Unit,
     update: () -> Unit,
-    room: GameRoom,
     extensions: List<Extension>,
     onShowBanUnitDialog: () -> Unit,
-    players: List<Player>
 ) = AnimatedAlertDialog(
     visible, onDismissRequest = { onDismissRequest(); update() }
 ) { dismiss ->
-
     val game = koinInject<Game>()
+    val room = game.gameRoom
     val configIO = koinInject<ConfigIO>()
 
+    val players = remember { room.getPlayers() }
     var noNukes by remember { mutableStateOf(room.noNukes) }
     var sharedControl by remember { mutableStateOf(room.sharedControl) }
     var allowSpectators by remember { mutableStateOf(room.allowSpectators) }

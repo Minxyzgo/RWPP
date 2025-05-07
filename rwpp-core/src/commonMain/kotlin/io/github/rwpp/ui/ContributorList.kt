@@ -59,7 +59,7 @@ fun ContributorList(
                             styles = TextLinkStyles(style = SpanStyle(color = Color.Red))
                         )
                 ) {
-                    append(" (为RWPP赞助一下？)")
+                    append(" (为RWRPP赞助一下？)")
                 }
             }
 

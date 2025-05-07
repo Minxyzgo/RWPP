@@ -36,6 +36,8 @@ import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.Settings
 import io.github.rwpp.core.UI
+import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.CloseUIPanelEvent
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.Mod
@@ -106,6 +108,12 @@ fun ModsView(onExit: () -> Unit) {
     BackHandler(true) {
         if (deletedMod) reload()
         onExit()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            CloseUIPanelEvent("mods").broadcastIn()
+        }
     }
 
     ResourceBrowser(resourceBrowserVisible) {

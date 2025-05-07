@@ -70,6 +70,7 @@ kotlin {
                 api(compose.material3)
                 api(compose.components.resources)
                 api(compose.ui)
+                api("org.jetbrains.compose.ui:ui-backhandler:${findProperty("compose.version")}")
                 api("org.jetbrains.compose.material:material-icons-core:1.7.3")
                 val koinVersion = findProperty("koin.version") as String
                 val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
