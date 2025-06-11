@@ -7,29 +7,29 @@
 
 package io.github.rwpp.scripts
 
-sealed class LuaWidget {
-    class LuaText @JvmOverloads constructor(
+sealed class ScriptWidget {
+    class Text @JvmOverloads constructor(
         val text: String,
         val size: Int = 16,
         val color: LuaColor = LuaColor(0),
-    ) : LuaWidget()
-    class LuaImage(val imageUrl: String) : LuaWidget()
-    class LuaTextButton(val text: String, val onClick: () -> Unit) : LuaWidget()
-    class LuaCheckbox(
+    ) : ScriptWidget()
+    class Image(val imageUrl: String) : ScriptWidget()
+    class TextButton(val text: String, val onClick: () -> Unit) : ScriptWidget()
+    class Checkbox(
         val text: String,
         val checked: () -> Boolean,
         val onCheckedChange: (Boolean) -> Unit
-    ) : LuaWidget()
-    class LuaSlider(val min: Int, val max: Int, val value: Int, val onChange: String) : LuaWidget()
-    class LuaDropdown(
+    ) : ScriptWidget()
+    class Slider(val min: Int, val max: Int, val value: Int, val onChange: String) : ScriptWidget()
+    class Dropdown(
         val options: Array<String>,
         val label: String,
         val defaultValue: () -> String,
         val onChange: (Int, String) -> Unit
-    ) : LuaWidget()
-    class LuaTextField(
+    ) : ScriptWidget()
+    class TextField(
         val label: String,
         val defaultText: () -> String,
         val onTextChanged: (String) -> Unit,
-    ) : LuaWidget()
+    ) : ScriptWidget()
 }

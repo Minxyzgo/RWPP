@@ -32,6 +32,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import kotlin.concurrent.timer
 import kotlin.math.roundToInt
+import javax.script.ScriptEngineManager
 
 @Suppress("MemberVisibilityCanBePrivate")
 object Scripts : Initialization {
@@ -211,7 +212,7 @@ object Scripts : Initialization {
     fun initLuaUI() {
         @Suppress("UNCHECKED_CAST")
         lua.register("dropdown") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaDropdown(
+            l.pushJavaObject(ScriptWidget.Dropdown(
                 (args[0].toJavaObject() as HashMap<*, String>).values.toTypedArray(), args[1].toJavaObject() as String,
                 { args[2].call().first().toJavaObject() as String },
                 { index, value ->
@@ -224,7 +225,7 @@ object Scripts : Initialization {
         }
 
         lua.register("textField") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaTextField(
+            l.pushJavaObject(ScriptWidget.TextField(
                 args[0].toJavaObject() as String,
                 {
                     synchronized(lua.mainState) {
@@ -241,7 +242,7 @@ object Scripts : Initialization {
         }
 
         lua.register("checkbox") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaCheckbox(
+            l.pushJavaObject(ScriptWidget.Checkbox(
                 args[0].toJavaObject() as String,
                 {
                     synchronized(lua.mainState) {
@@ -258,7 +259,7 @@ object Scripts : Initialization {
         }
 
         lua.register("textButton") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaTextButton(
+            l.pushJavaObject(ScriptWidget.TextButton(
                 args[0].toJavaObject() as String
             ) {
                 synchronized(lua.mainState) {
@@ -269,7 +270,7 @@ object Scripts : Initialization {
         }
 
         lua.register("text") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaText(
+            l.pushJavaObject(ScriptWidget.Text(
                 args[0].toJavaObject() as String,
                 args[1].toNumber().roundToInt(),
                 args[2].toJavaObject() as LuaColor,
@@ -285,3 +286,33 @@ object Scripts : Initialization {
         }
     }
 }
+
+actual object JSScripts : Initialization {
+    override fun init() {
+        js("window.game = ...") // 需要用Kotlin/JS的interop方式暴露
+        js("window.externalHandler = ...")
+        js("window.config = ...")
+    }
+
+    override fun loadScript(id: String, src: String) {
+        // 直接用 js("eval(...)") 执行
+        js("eval(src)")
+    }
+
+    private fun initJSUI() {
+        engine.put("createText", { text: String, size: Int, color: Int ->
+            ScriptWidget.Text(text, size, LuaColor(color))
+        })
+        engine.put("createButton", { text: String, onClick: () -> Unit ->
+            ScriptWidget.TextButton(text, onClick)
+        })
+        // 其他组件同理
+    }
+}
+
+fun getKoin(): Koin {
+    // Implementation of getKoin() function
+    throw UnsupportedOperationException("Implementation needed")
+}
+
+fun getKoin().getAll<Initialization>().forEach { it.init() }
