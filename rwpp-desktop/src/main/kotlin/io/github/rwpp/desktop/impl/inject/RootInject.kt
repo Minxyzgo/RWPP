@@ -77,6 +77,7 @@ object RootInject {
     @Inject("makeSendTeamMessagePopupWithDefaultText", InjectMode.Override)
     fun onMakeSendTeamMessagePopupWithDefaultText(str: String) {
         SwingUtilities.invokeLater {
+            isSendingTeamChat = true
             showSendMessageDialog()
         }
     }
