@@ -15,14 +15,12 @@ import net.peanuuutz.tomlkt.Toml
 import net.peanuuutz.tomlkt.TomlTable
 import net.peanuuutz.tomlkt.asTomlLiteral
 import net.peanuuutz.tomlkt.asTomlTable
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import java.text.MessageFormat
 import java.util.*
 
 internal lateinit var i18nTable: TomlTable
 private val cacheMap = mutableMapOf<String, String>()
 
-@OptIn(ExperimentalResourceApi::class)
 suspend fun parseI18n() {
     i18nTable = Toml.parseToTomlTable(withContext(Dispatchers.IO) {
         runCatching { Res.readBytes("files/bundle_${Locale.getDefault().language}.toml") }.getOrNull() ?: Res.readBytes("files/bundle_en.toml")
