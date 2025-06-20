@@ -130,6 +130,7 @@ fun ResourceBrowser(
 
                             LargeDropdownMenu(
                                 modifier = Modifier.weight(.3f).padding(5.dp),
+                                enabled = false,
                                 label = "Api",
                                 items = net.bbsProtocols,
                                 selectedIndex = selectedProtocolIndex,
