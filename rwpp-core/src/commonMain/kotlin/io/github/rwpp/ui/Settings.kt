@@ -459,7 +459,6 @@ private fun SettingsSwitchComp(
 private fun SettingsTextField(
     label: String,
     value: String,
-    requestFocus: Boolean = false,
     trailingIcon: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     lengthLimitCount: Int = Int.MAX_VALUE,
@@ -494,7 +493,6 @@ private fun SettingsTextField(
                     "",
                     value,
                     Modifier.width(300.dp).padding(end = 15.dp),
-                    requestFocus,
                     trailingIcon,
                     leadingIcon,
                     lengthLimitCount,
@@ -502,7 +500,7 @@ private fun SettingsTextField(
                     typeInNumberOnly,
                     enabled,
                     appendedContent,
-                    onValueChange
+                    onValueChange = onValueChange
                 )
 
             }
