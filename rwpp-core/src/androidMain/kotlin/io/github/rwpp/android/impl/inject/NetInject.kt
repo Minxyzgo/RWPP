@@ -256,7 +256,7 @@ object NetInject {
     fun onReceiveGameCommand(b3: com.corrodinggames.rts.gameFramework.e): Any {
         val actionString = b3.k.b
 
-        if(actionString.removePrefix("c_").removePrefix("u_") in bannedUnitList) {
+        if(actionString.removePrefix("u_") in bannedUnitList) {
             return InterruptResult.Unit
         }
 
