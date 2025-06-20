@@ -132,3 +132,8 @@ importExtension = "Successfully import extension: {0}. Please click `Reload` but
 importMap = "Successfully import map: {0}."
 importSave = "Successfully import save: {0}."
 importReplay = "Successfully import replay: {0}."
+
+[map.type]
+SkirmishMap = "Skirmish Map"
+CustomMap = "Custom Map"
+SavedGame = "Saved Game"

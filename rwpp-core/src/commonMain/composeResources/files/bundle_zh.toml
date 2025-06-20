@@ -127,3 +127,8 @@ importExtension = "成功导入扩展: {0}。请点击`刷新`按钮更新扩展
 importMap = "成功导入地图: {0}。"
 importSave = "成功导入存档: {0}。"
 importReplay = "成功导入回放: {0}。"
+
+[map.type]
+SkirmishMap = "遭遇战地图"
+CustomMap = "自定义地图"
+SavedGame = "保存的游戏"
