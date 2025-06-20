@@ -8,7 +8,10 @@
 package io.github.rwpp.widget
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,12 +22,14 @@ import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -229,14 +234,15 @@ fun RWSingleOutlinedTextField(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    requestFocus: Boolean = false,
     trailingIcon: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     lengthLimitCount: Int = Int.MAX_VALUE,
     typeInOnlyInteger: Boolean = false,
     typeInNumberOnly: Boolean = false,
     enabled: Boolean = true,
-    appendedContent: @Composable (() -> Unit)? = null,
+    appendedContent: @Composable (() -> Unit)? = null ,
+    focusRequester: FocusRequester? = null,
+    onFocusChanged: (FocusState) -> Unit = {},
     onValueChange: (String) -> Unit
 ) {
     Box(
@@ -244,10 +250,6 @@ fun RWSingleOutlinedTextField(
             .height(IntrinsicSize.Min)
             .width(IntrinsicSize.Max)
     ) {
-
-        val focusRequester = remember { if (requestFocus) FocusRequester() else null }
-        var requested by remember { mutableStateOf(false) }
-
         OutlinedTextField(
             label = {
                 Text(
@@ -260,15 +262,11 @@ fun RWSingleOutlinedTextField(
             value = value,
             enabled = enabled,
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().apply {
-                if (requestFocus)
-                    focusRequester(focusRequester!!)
-                        .onGloballyPositioned {
-                            if (!requested) {
-                                requested = true
-                                focusRequester.requestFocus()
-                            }
-                        }
+            modifier = Modifier.fillMaxWidth().composed {
+                if (focusRequester != null)
+                    focusRequester(focusRequester)
+                        .onFocusChanged(onFocusChanged)
+                else this
             },
             trailingIcon = trailingIcon,
             leadingIcon = leadingIcon,
