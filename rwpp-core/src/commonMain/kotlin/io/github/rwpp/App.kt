@@ -663,6 +663,10 @@ fun MainMenu(
 
             val net = koinInject<Net>()
 
+            RWIconButton(painterResource(Res.drawable.qq), modifier = Modifier.padding(10.dp)) {
+                net.openUriInBrowser("https://qun.qq.com/universal-share/share?ac=1&authKey=QmG6huGEuUos23WJ0WBwh2sUXiP8%2FsLbsX375KEw9HQzdqT2HK2yEY1WS1Me87%2Bw&busi_data=eyJncm91cENvZGUiOiI5Mjc1OTc0OTUiLCJ0b2tlbiI6ImNaZ2dRYXNLd1d3Q0dhS1p0aG9pcVBsOTYxTEJNb0Z4ZDdXT3lmdTljazB2ZEhVQXd5S1dNa0lYVCtwdDZGYXoiLCJ1aW4iOiIxMjI1MzI3ODY2In0%3D&data=ys1-t0OmBONJktYt21HLtehR3nE23CFtG-YUNRRq7Q7aAMmkd-K_EupcjeKeapL9Aob7bXEpuXIp74FsCcUStg&svctype=4&tempid=h5_group_info")
+            }
+
             RWIconButton(painterResource(Res.drawable.library_30), modifier = Modifier.padding(10.dp)) {
                 net.openUriInBrowser("https://rwpp.netlify.app/")
             }
