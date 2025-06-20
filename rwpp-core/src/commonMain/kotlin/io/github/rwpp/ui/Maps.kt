@@ -96,6 +96,7 @@ fun MapViewDialog(
                         modifier = Modifier.wrapContentSize().padding(5.dp),
                         label = readI18n("multiplayer.room.mapType"),
                         items = if (room.isHost) MapType.entries else listOf(MapType.SkirmishMap),
+                        selectedItemToString = { it.displayName() },
                         selectedIndex = selectedIndex0,
                         onItemSelected = { index, _ -> selectedIndex0 = index }
                     )
