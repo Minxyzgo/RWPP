@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.composed
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -74,11 +75,13 @@ import javax.swing.WindowConstants
 typealias ColorCompose = androidx.compose.ui.graphics.Color
 
 var native: Boolean = false
+var isSendingTeamChat = false
 lateinit var mainJFrame: JFrame
 lateinit var gameCanvas: Canvas
 lateinit var displaySize: Dimension
 lateinit var sendMessageDialog: Dialog
 lateinit var rwppVisibleSetter: (Boolean) -> Unit
+lateinit var focusRequester: FocusRequester
 //val cacheModSize = AtomicInteger(0)
 
 fun main(array: Array<String>) {
@@ -191,6 +194,8 @@ fun swingApplication() = SwingUtilities.invokeLater {
         }
     })
 
+    focusRequester = FocusRequester()
+
     panel.setContent {
 
         var isLoading by remember { mutableStateOf(true) }
@@ -293,25 +298,41 @@ fun swingApplication() = SwingUtilities.invokeLater {
             ) {
                 var chatMessage by remember { mutableStateOf("") }
                 Box {
-                    ExitButton {
+
+                    fun onExit() {
                         sendMessageDialog.isVisible = false
+                        isSendingTeamChat = false
+                    }
+
+                    fun onSendMessage() {
+                        if (isSendingTeamChat) {
+                            game.gameRoom.sendChatMessage("-t $chatMessage")
+                        } else {
+                            game.gameRoom.sendChatMessageOrCommand(chatMessage)
+                        }
+
+                        chatMessage = ""
+                        onExit()
+                    }
+
+                    ExitButton {
+                        onExit()
                     }
 
                     GlobalEventChannel.filter(QuitGameEvent::class).onDispose {
-                        subscribeAlways { sendMessageDialog.isVisible = false }
+                        subscribeAlways { onExit() }
                     }
+
                     Column {
                         Spacer(modifier = Modifier.height(30.dp))
                         RWSingleOutlinedTextField(
-                            label = readI18n("ingame.sendMessage"),
+                            label = if (isSendingTeamChat) readI18n("ingame.sendTeamMessage") else readI18n("ingame.sendMessage"),
                             value = chatMessage,
-                            requestFocus = true,
+                            focusRequester = focusRequester,
                             modifier = Modifier.fillMaxWidth().padding(10.dp)
                                 .onKeyEvent {
                                     if (it.key == Key.Enter && chatMessage.isNotEmpty()) {
-                                        game.gameRoom.sendChatMessageOrCommand(chatMessage)
-                                        chatMessage = ""
-                                        sendMessageDialog.isVisible = false
+                                        onSendMessage()
                                     }
 
                                     true
@@ -321,9 +342,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                                     Icons.AutoMirrored.Filled.ArrowForward,
                                     null,
                                     modifier = Modifier.clickable {
-                                        game.gameRoom.sendChatMessageOrCommand(chatMessage)
-                                        chatMessage = ""
-                                        sendMessageDialog.isVisible = false
+                                        onSendMessage()
                                     }
                                 )
                             },
@@ -343,7 +362,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                             ) {
                                 game.gameRoom.sendChatMessageOrCommand(chatMessage)
                                 chatMessage = ""
-                                sendMessageDialog.isVisible = false
+                                onExit()
                             }
 
                             RWTextButton(
@@ -352,7 +371,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                             ) {
                                 game.gameRoom.sendChatMessage("-t $chatMessage")
                                 chatMessage = ""
-                                sendMessageDialog.isVisible = false
+                                onExit()
                             }
                         }
                     }
@@ -377,6 +396,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
 fun showSendMessageDialog() {
     sendMessageDialog.isVisible = true
     sendMessageDialog.requestFocus()
+    focusRequester.requestFocus()
     resetSendMessageDialogLocation()
 }
 
