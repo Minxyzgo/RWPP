@@ -93,7 +93,6 @@ class LoadingScreen : ComponentActivity() {
                                     appKoin.get<AppContext>().init()
 
                                     withContext(Dispatchers.IO) {
-
                                         File("/storage/emulated/0/rustedWarfare/maps/")
                                             .walk()
                                             .filter { it.name.startsWith("generated_") }
