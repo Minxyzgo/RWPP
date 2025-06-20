@@ -33,18 +33,18 @@ import java.io.IOException
 @InjectClass(com.corrodinggames.rts.gameFramework.j.ad::class)
 object NetworkInject {
     @Inject("a", injectMode = InjectMode.InsertBefore)
-    fun onBanUnits(netPacket: com.corrodinggames.rts.gameFramework.e): Any{
+    fun onBanUnits(netPacket: com.corrodinggames.rts.gameFramework.e): Any {
         val actionString = netPacket.k.a()
-        if(actionString.startsWith("u_")) {
-            if(actionString.removePrefix("u_").removePrefix("c_") in bannedUnitList) {
-                return InterruptResult.Unit
-            }
+
+        if (actionString.removePrefix("u_") in bannedUnitList) {
+            return InterruptResult.Unit
         }
-        if(netPacket.j == null) return Unit
+
+        if (netPacket.j == null) return Unit
         val realAction = GameCommandActions.from(netPacket.j.d().ordinal)
         val u = netPacket.j.a()
-        return if(u is com.corrodinggames.rts.game.units.`as`) {
-            if(realAction == GameCommandActions.BUILD && u.v() in bannedUnitList) {
+        return if (u is com.corrodinggames.rts.game.units.`as`) {
+            if (realAction == GameCommandActions.BUILD && u.v() in bannedUnitList) {
                 InterruptResult.Unit
             } else Unit
         } else Unit
