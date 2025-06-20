@@ -236,6 +236,14 @@ fun SettingsView(
                                                 ) {
                                                     settings.showBuildingAttackRange = it
                                                 }
+
+                                                SettingsSwitchComp(
+                                                    "",
+                                                    readI18n("settings.showExtraButton"),
+                                                    settings.showExtraButton
+                                                ) {
+                                                    settings.showExtraButton = it
+                                                }
                                             }
 
                                             SettingsGroup("", readI18n("settings.units")) {

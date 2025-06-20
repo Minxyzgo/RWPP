@@ -26,6 +26,7 @@ data class Settings(
     var backgroundTransparency: Float = 0.7f,
     var backgroundImageTransparency: Float = 1f,
     var showBuildingAttackRange: Boolean = false,
+    var showExtraButton: Boolean = false,
     var showAttackRangeUnit: String = "Never",
     var enableAnimations: Boolean = true,
     var maxDisplayUnitGroupCount: Int = 7,

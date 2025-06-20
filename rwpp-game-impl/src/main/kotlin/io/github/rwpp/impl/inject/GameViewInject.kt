@@ -29,7 +29,6 @@ import kotlin.math.roundToInt
 object GameViewInject {
     var buttons: java.util.ArrayList<Any?>? = null
 
-
     val teamChat: Any? by lazy { Reflect.get(render!!, "q") }
     val mapPing: Any? by lazy { Reflect.get(render!!, "r") }
     @Inject("a", InjectMode.InsertBefore)
@@ -40,15 +39,18 @@ object GameViewInject {
         val q: Int = render!!.q()
         if (q == 0) {
             if (GameEngine.B().bQ.showChatAndPingShortcuts && GameEngine.B().M()) {
-                buttons!!.add(0,
+                buttons!!.add(
                     teamChat
                 )
-                buttons!!.add(0,
+                buttons!!.add(
                     mapPing
                 )
-                buttons!!.add(1,
-                    SelectBuild
-                )
+
+                if (appKoin.get<Settings>().showExtraButton) {
+                    buttons!!.add(
+                        SelectBuild
+                    )
+                }
             }
             return InterruptResult(buttons!!)
         }

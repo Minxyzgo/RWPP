@@ -117,6 +117,7 @@ enhancedReinforceTroops = "Enhanced Reinforce Troops"
 improvedHealthBar = "Improved Health Bar"
 showUnitTargetLine = "Show Unit Target Line (limited in multiplayer)"
 boldText = "Bold text for list"
+showExtraButton = "Show Extra Button"
 
 [extension]
 extension = "Extension"
