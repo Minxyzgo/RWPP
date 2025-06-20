@@ -297,7 +297,7 @@ fun MultiplayerView(
                     configIO.setGameConfig("networkPort", port ?: 5123)
                 }
 
-                val rcnAddress = "43.248.96.172:5123"
+                val rcnAddress = "36.151.65.203:5123"
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                     RWTextButton(readI18n("multiplayer.hostPrivate"), modifier = Modifier.padding(5.dp)) {
                         dismiss()
