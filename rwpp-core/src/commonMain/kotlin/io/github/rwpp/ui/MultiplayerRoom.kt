@@ -24,6 +24,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
@@ -39,7 +42,9 @@ import io.github.rwpp.core.UI
 import io.github.rwpp.core.UI.chatMessages
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadcastIn
-import io.github.rwpp.event.events.*
+import io.github.rwpp.event.events.CloseUIPanelEvent
+import io.github.rwpp.event.events.RefreshUIEvent
+import io.github.rwpp.event.events.ReturnMainMenuEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExternalHandler
@@ -47,6 +52,7 @@ import io.github.rwpp.game.*
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.MapType
+import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.i18n.readI18n
@@ -162,16 +168,22 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     @Composable
     fun ContentView() {
         @Composable
-        fun MessageTextField() {
-            var chatMessage by remember { mutableStateOf("") }
+        fun MessageTextField(
+            chatMessage: String,
+            focusRequester: FocusRequester? = null,
+            onFocusChanged: (FocusState) -> Unit = {},
+            onChatMessageChange: (String) -> Unit
+        ) {
             RWSingleOutlinedTextField(
                 label = readI18n("multiplayer.room.sendMessage"),
                 value = chatMessage,
+                focusRequester = focusRequester,
+                onFocusChanged = onFocusChanged,
                 modifier = Modifier.fillMaxWidth().padding(10.dp)
                     .onKeyEvent {
                         if(it.key == Key.Enter && chatMessage.isNotEmpty()) {
                             room.sendChatMessageOrCommand(chatMessage)
-                            chatMessage = ""
+                            onChatMessageChange("")
                         }
 
                         true
@@ -182,14 +194,14 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                         null,
                         modifier = Modifier.clickable {
                             room.sendChatMessageOrCommand(chatMessage)
-                            chatMessage = ""
+                            onChatMessageChange("")
                         },
                         tint = MaterialTheme.colorScheme.surfaceTint
                     )
                 },
                 onValueChange =
                 {
-                    chatMessage = it
+                    onChatMessageChange(it)
                 },
             )
         }
@@ -242,8 +254,9 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     .weight(.4f)
                                     .padding(10.dp)
                                     .then(
-                                        if (LocalWindowManager.current == WindowManager.Small)
-                                            Modifier.verticalScroll(rememberScrollState()) else Modifier
+                                        if (LocalWindowManager.current != WindowManager.Large)
+                                            Modifier.verticalScroll(rememberScrollState())
+                                        else Modifier
                                     ),
                                 backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(
                                     .7f
@@ -278,8 +291,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth().then(
-                                        if (LocalWindowManager.current == WindowManager.Small)
-                                            Modifier else Modifier.weight(1f)
+                                        if (LocalWindowManager.current == WindowManager.Large)
+                                            Modifier.weight(1f) else Modifier
                                     ), horizontalArrangement = Arrangement.Center
                                 ) {
                                     Text(
@@ -293,16 +306,16 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     )
                                 }
 
-                                if (LocalWindowManager.current == WindowManager.Middle) MapImage(
-                                    Modifier.weight(1f).fillMaxWidth()
-                                )
-                                if (LocalWindowManager.current == WindowManager.Small) MapImage(
-                                    Modifier.defaultMinSize(minHeight = 200.dp).fillMaxWidth()
-                                )
+                                if (LocalWindowManager.current != WindowManager.Large) {
+                                    MapImage(
+                                        Modifier.defaultMinSize(minHeight = 200.dp).fillMaxWidth()
+                                    )
+                                }
+
                                 val mapType = remember(update) { room.mapType }
 
                                 Text(
-                                    mapType.name,
+                                    mapType.displayName(),
                                     modifier = Modifier.padding(5.dp)
                                         .align(Alignment.CenterHorizontally),
                                     style = MaterialTheme.typography.headlineLarge,
@@ -316,7 +329,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     modifier = Modifier.padding(5.dp)
                                         .align(Alignment.CenterHorizontally),
                                     style = MaterialTheme.typography.headlineMedium,
-                                    maxLines = 1,
+                                //    maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -364,6 +377,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         if (room.isHostServer) room.sendQuickGameCommand("-start") else room.startGame()
                                     }
                                 }
+
 
                                 if (isHost) {
                                     if (LocalWindowManager.current == WindowManager.Small) {
@@ -513,12 +527,15 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 //                                        PlayerTable(i)
 //                                    }
 //                                } else {
+
                                     LazyColumnScrollbar(
                                         listState = state,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
+                                        val focusRequester = remember { FocusRequester() }
+                                        var chatMessage by remember { mutableStateOf("") }
                                         LazyColumn(
-                                            modifier = Modifier.fillMaxWidth(),
+                                            modifier = Modifier.fillMaxWidth().focusRestorer(focusRequester),
                                             state = state
                                         ) {
                                             items(
@@ -533,7 +550,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                                 )
                                             }
 
-                                            item {
+                                            item(key = "chat-field") {
                                                 if (LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
                                                     BorderCard(
                                                         modifier = Modifier.fillMaxWidth()
@@ -558,7 +575,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                                                 }
                                                             }
 
-                                                            MessageTextField()
+                                                            MessageTextField(chatMessage, focusRequester) { chatMessage = it }
                                                         }
 
                                                         MessageView()
@@ -629,7 +646,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         )
                                     }
 
-                                    if (!isSandboxGame) MessageTextField()
+                                    var chatMessage by remember { mutableStateOf("") }
+                                    if (!isSandboxGame) MessageTextField(chatMessage) { chatMessage = it }
                                 }
 
                                 if (!isSandboxGame) BorderCard(
@@ -919,6 +937,7 @@ private fun MultiplayerOption(
     val configIO = koinInject<ConfigIO>()
 
     val players = remember { room.getPlayers() }
+
     var noNukes by remember { mutableStateOf(room.noNukes) }
     var sharedControl by remember { mutableStateOf(room.sharedControl) }
     var allowSpectators by remember { mutableStateOf(room.allowSpectators) }
