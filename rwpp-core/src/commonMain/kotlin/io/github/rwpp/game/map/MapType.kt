@@ -7,6 +7,10 @@
 
 package io.github.rwpp.game.map
 
+import io.github.rwpp.i18n.readI18n
+
 enum class MapType {
     SkirmishMap, CustomMap, SavedGame;
+
+    fun displayName(): String = readI18n("map.type.$name")
 }
