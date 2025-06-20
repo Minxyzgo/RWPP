@@ -60,7 +60,11 @@ class MainActivity : ComponentActivity() {
             gameOver = false
             QuitGameEvent().broadcastIn()
             isSinglePlayerGame = false
-            if(!isReturnToBattleRoom) { ReturnMainMenuEvent().broadcastIn() }
+            if(!isReturnToBattleRoom) {
+                ReturnMainMenuEvent().broadcastIn()
+            } else {
+                GameEngine.t().a(appKoin.get(), gameView)
+            }
             isReturnToBattleRoom = false
         }
 
