@@ -105,6 +105,7 @@ class MainActivity : ComponentActivity() {
 
         if(d.b(this, true, true)) {
             gameView = d.b(this)
+            activityResume()
         }
 
         setContent {
@@ -164,11 +165,11 @@ class MainActivity : ComponentActivity() {
         super.onPause()
         if(gameView != null) GameEngine.t()?.b(gameView)
     }
-
-    override fun onResume() {
-        super.onResume()
-        activityResume()
-    }
+//
+//    override fun onResume() {
+//        super.onResume()
+//        activityResume()
+//    }
 
     override fun onStop() {
         super.onStop()
