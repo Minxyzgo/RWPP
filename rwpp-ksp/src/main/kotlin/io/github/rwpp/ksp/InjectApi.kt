@@ -69,16 +69,12 @@ internal object InjectApi {
     ) {
         @Suppress("NAME_SHADOWING")
         val methodArgs = transformClasses(methodArgs)
-
         val classPool = GameLibraries.includes.first().classTree.defPool
         val clazz = classPool.get(className)
-
         val method = if (desc.isNotBlank())
             clazz.getMethod(methodName, desc)
         else clazz.getDeclaredMethod(methodName, methodArgs.map(classPool::get).toTypedArray())
-
         val isNative = Modifier.isNative(method.modifiers)
-
         val originalName = "__original__${method.name}"
         if (!isNative) {
             val proceed = CtNewMethod.copy(method, originalName, clazz, null)
@@ -220,23 +216,15 @@ internal object InjectApi {
             }
 
             InjectMode.InsertAfter -> {
-                method.addLocalVariable("result2", method.returnType)
-                method.insertBefore("\$r result2 = $originalCode")
-                if (returnClassIsVoid) {
-                    method.insertAfter(
-                        """
-                        if(result != kotlin.Unit.INSTANCE) {
-                            $returnCode result;
-                        } else {
-                            $returnCode result2;
-                        }
-                    """.trimIndent()
-                    )
-                } else {
+                if (!returnClassIsVoid) {
+                    method.addLocalVariable("result2", method.returnType)
+                    method.insertBefore("Object result2 = $originalCode")
                     method.insertAfter(
                         """
                         $returnCode result2;
                         """.trimIndent())
+                } else {
+                    method.insertBefore(originalCode)
                 }
             }
         }
@@ -253,7 +241,6 @@ internal object InjectApi {
         returnType: String,
         injectFunctionPath: String,
     ) {
-
         val classPool = GameLibraries.includes.first().classTree.defPool
         val clazz = classPool.get(className)
         val methodArgs = Descriptor.getParameterTypes(methodDesc, classPool)
@@ -267,7 +254,6 @@ internal object InjectApi {
         val targetMethod = classPool.get(targetClassName).getDeclaredMethod(targetMethodName, targetMethodArgs)
 
         val newMethodName = "__redirect__${methodName}__$targetMethodName"
-
         val newMethod = CtNewMethod.make(targetMethodReturnType,
             newMethodName,
             targetMethodArgs,
