@@ -25,9 +25,12 @@ import io.github.rwpp.game.Player
 object UI : Initialization {
     internal var backgroundTransparency by mutableStateOf(appKoin.get<Settings>().backgroundTransparency)
     internal var selectedColorSchemeName by mutableStateOf(appKoin.get<Settings>().selectedTheme ?: "RWPP")
-    internal var question by mutableStateOf<Question?>(null)
-    internal var chatMessages by mutableStateOf(AnnotatedString(""))
-    internal var warning by mutableStateOf<Warning?>(null)
+    var question by mutableStateOf<Question?>(null)
+        internal set
+    var warning by mutableStateOf<Warning?>(null)
+        internal set
+    var chatMessages by mutableStateOf(AnnotatedString(""))
+        internal set
 
     var showMissionView by mutableStateOf(false)
     var showMultiplayerView by mutableStateOf(false)

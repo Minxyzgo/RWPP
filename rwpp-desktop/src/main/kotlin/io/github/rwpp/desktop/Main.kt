@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,10 +32,12 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.*
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.config.Settings
+import io.github.rwpp.core.UI.chatMessages
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadcast
 import io.github.rwpp.event.broadcastIn
@@ -77,7 +81,7 @@ import javax.swing.SwingUtilities
 typealias ColorCompose = androidx.compose.ui.graphics.Color
 
 var native: Boolean = false
-var isSendingTeamChat = false
+var isSendingTeamChat by mutableStateOf(false)
 lateinit var mainJFrame: JFrame
 lateinit var gameCanvas: Canvas
 lateinit var displaySize: Dimension
@@ -279,14 +283,14 @@ fun swingApplication() = SwingUtilities.invokeLater {
     val panel2 = ComposePanel()
     panel2.isOpaque = false
     panel2.isFocusable = true
-    panel2.size = Dimension(550, 180)
+    panel2.size = Dimension(550, 540)
     panel2.setContent {
         val game = koinInject<Game>()
         RWPPTheme {
             BorderCard(
                 modifier = Modifier
-                    .height(180.dp)
-                    .width(550.dp).onKeyEvent {
+                    .fillMaxSize()
+                    .onKeyEvent {
                         if (it.key == Key.Escape && it.type == KeyDown) {
                             sendMessageDialog.isVisible = false
                         }
@@ -297,8 +301,11 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 shape = RectangleShape
             ) {
                 var chatMessage by remember { mutableStateOf("") }
-                Box {
+                var allChatMessages by remember(chatMessages) {
+                    mutableStateOf(TextFieldValue(chatMessages))
+                }
 
+                Box {
                     fun onExit() {
                         sendMessageDialog.isVisible = false
                         isSendingTeamChat = false
@@ -323,8 +330,17 @@ fun swingApplication() = SwingUtilities.invokeLater {
                         subscribeAlways { onExit() }
                     }
 
-                    Column {
+                    Column(modifier = Modifier.fillMaxSize()) {
                         Spacer(modifier = Modifier.height(30.dp))
+                        TextField(
+                            value = allChatMessages,
+                            onValueChange = {  },
+                            readOnly = true,
+                            textStyle = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.fillMaxWidth().weight(1f),
+                            colors = RWTextFieldColors,
+                            maxLines = 100
+                        )
                         RWSingleOutlinedTextField(
                             label = if (isSendingTeamChat) readI18n("ingame.sendTeamMessage") else readI18n("ingame.sendMessage"),
                             value = chatMessage,
@@ -333,6 +349,10 @@ fun swingApplication() = SwingUtilities.invokeLater {
                                 .onKeyEvent {
                                     if (it.key == Key.Enter && chatMessage.isNotEmpty()) {
                                         onSendMessage()
+                                    }
+
+                                    if (it.key == Key.Escape && it.type == KeyDown) {
+                                        sendMessageDialog.isVisible = false
                                     }
 
                                     true
@@ -385,7 +405,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
     sendMessageDialog.isFocusable = true
     sendMessageDialog.isVisible = false
     sendMessageDialog.isAlwaysOnTop = true
-    sendMessageDialog.size = Dimension(550, 180)
+    sendMessageDialog.size = Dimension(550, 540)
     sendMessageDialog.add(panel2)
 
     mainJFrame = window
