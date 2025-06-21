@@ -24,6 +24,7 @@ import io.github.rwpp.android.mainThreadChannel
 import io.github.rwpp.android.questionOption
 import io.github.rwpp.appKoin
 import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.HostGameEvent
 import io.github.rwpp.event.events.MapChangedEvent
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
@@ -92,6 +93,7 @@ class GameImpl : Game, CoroutineScope {
             MapChangedEvent(gameRoom.selectedMap.displayName()).broadcastIn()
             delay(100)
             RefreshUIEvent().broadcastIn()
+            HostGameEvent().broadcastIn()
         }
     }
 
