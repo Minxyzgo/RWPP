@@ -16,9 +16,11 @@ import io.github.rwpp.appKoin
 import io.github.rwpp.config.Settings
 import io.github.rwpp.desktop.impl.RwOutputStream
 import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.PlayerJoinEvent
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.event.events.StartGameEvent
 import io.github.rwpp.impl.GameEngine
+import io.github.rwpp.impl.PlayerImpl
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
@@ -40,7 +42,7 @@ object MainInject {
 
     @Inject("c", InjectMode.Override)
     fun onPlayerJoin(
-        player: c, m1: String?, m2: String?
+        client: c, m1: String?, m2: String?
     ) {
         if(appKoin.get<Settings>().showWelcomeMessage != true) return
         val rwOutputStream = RwOutputStream()
@@ -49,7 +51,8 @@ object MainInject {
         rwOutputStream.b("RWPP")
         rwOutputStream.a(null as c?)
         rwOutputStream.a(-1)
-        GameEngine.B().bX.a(player, rwOutputStream.b(141))
+        GameEngine.B().bX.a(client, rwOutputStream.b(141))
+        PlayerJoinEvent(client.z as PlayerImpl).broadcastIn()
     }
 
     @Inject("b", InjectMode.Override)
