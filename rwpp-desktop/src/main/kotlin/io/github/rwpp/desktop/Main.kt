@@ -64,6 +64,8 @@ import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.io.File
+import java.io.FileOutputStream
+import java.io.PrintStream
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.imageio.ImageIO
@@ -85,7 +87,7 @@ lateinit var focusRequester: FocusRequester
 //val cacheModSize = AtomicInteger(0)
 
 fun main(array: Array<String>) {
-    if (File("opengl32.dll").exists()) { // for only debug
+    if (array.contains("-localgl") && File("opengl32.dll").exists()) { // for only debug
         System.loadLibrary("opengl32")
     }
 
@@ -97,6 +99,26 @@ fun main(array: Array<String>) {
             .displayMode
             .run { Dimension(width, height) }
     native = array.contains("-native")
+
+    if (native) {
+        // 指定输出文件路径
+        val outFilePath = "rwpp-log.txt"
+
+        try {
+            // 创建文件输出流
+            val fileOut = FileOutputStream(outFilePath)
+
+            // 创建PrintStream实例
+            val printOut = PrintStream(fileOut)
+
+            // 重定向标准输出和标准错误输出
+            System.setOut(printOut)
+            System.setErr(printOut)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     swingApplication()
 }

@@ -87,7 +87,6 @@ compose.desktop {
             )
 
             windows {
-                console = true
                 iconFile.set(project.file("logo.ico"))
                 upgradeUuid = guid
             }
