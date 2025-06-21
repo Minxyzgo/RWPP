@@ -104,13 +104,13 @@ class CommandHandler(prefix: String) {
 
         when (response.type) {
             UnknownCommand -> {
-                reply("Invalid command. Type '/help' for help.")
+                reply("Invalid command. Type '/help' for help. (输入的命令无效, 请使用'/help'获取帮助.)")
             }
             FewArguments -> {
-                reply("Too few command arguments. Usage: " + response.command!!.text + " " + response.command!!.paramText)
+                reply("Too few command arguments (输入的参数太少). Usage: /" + response.command!!.text + " " + response.command!!.paramText)
             }
             ManyArguments -> {
-                reply("Too many command arguments. Usage: " + response.command!!.text + " " + response.command!!.paramText)
+                reply("Too many command arguments (输入的参数太多). Usage: /" + response.command!!.text + " " + response.command!!.paramText)
             }
 
             else -> {}
