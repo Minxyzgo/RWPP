@@ -55,7 +55,6 @@ fun LoadingView(
             }
 
             Box {
-
                 if (cancellable || cancel) ExitButton(dismiss)
 
                 Column(
