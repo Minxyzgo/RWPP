@@ -302,7 +302,6 @@ fun MultiplayerView(
                     RWTextButton(readI18n("multiplayer.hostPrivate"), modifier = Modifier.padding(5.dp)) {
                         dismiss()
                         game.gameRoom.option = RoomOption()
-                        HostGameEvent().broadcastIn()
                         if (hostByRCN) {
                             game.onQuestionCallback(if (enableMods) "smod" else "snew")
                             serverAddress = rcnAddress
@@ -317,7 +316,6 @@ fun MultiplayerView(
                     RWTextButton(readI18n("multiplayer.hostPublic"), modifier = Modifier.padding(5.dp)) {
                         dismiss()
                         game.gameRoom.option = RoomOption()
-                        HostGameEvent().broadcastIn()
                         if (hostByRCN) {
                             game.onQuestionCallback(if (enableMods) "smodup" else "snewup")
                             serverAddress = rcnAddress
