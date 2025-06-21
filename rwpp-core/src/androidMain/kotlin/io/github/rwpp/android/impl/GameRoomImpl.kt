@@ -136,7 +136,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                 PlayerImpl(it, this)
                     .also { p ->
                         sendWelcomeMessage(p)
-                        if (it != GameEngine.t().bU.A) PlayerJoinEvent(p).broadcastIn()
+                        PlayerJoinEvent(p).broadcastIn()
                     }
             }
         }
@@ -567,10 +567,13 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         MultiplayerBattleroomActivity.startGameCommon()
         if(t.bI != null && t.bI.X) {
             t.bU.bf = true
+            t.bU.bv = 0
+            t.bU.bu = 0
             //GameEngine.K()
             val intent = Intent(game.get(), InGameActivity::class.java)
             intent.putExtra("level", t.di)
             gameLauncher.launch(intent)
+            StartGameEvent().broadcastIn()
             return
         }
         //d("Not starting multiplayer game because map failed to load")
@@ -583,8 +586,6 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         }
         aeVar.aY = false
         aeVar.h("Map load failed.")
-
-        StartGameEvent().broadcastIn()
     }
 
     private fun getMapRealPath(map: GameMap): String {
