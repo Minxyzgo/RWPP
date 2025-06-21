@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
@@ -52,7 +51,6 @@ import io.github.rwpp.game.*
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.MapType
-import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.i18n.readI18n
@@ -532,10 +530,9 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         listState = state,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        val focusRequester = remember { FocusRequester() }
                                         var chatMessage by remember { mutableStateOf("") }
                                         LazyColumn(
-                                            modifier = Modifier.fillMaxWidth().focusRestorer(focusRequester),
+                                            modifier = Modifier.fillMaxWidth(),
                                             state = state
                                         ) {
                                             items(
@@ -575,7 +572,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                                                 }
                                                             }
 
-                                                            MessageTextField(chatMessage, focusRequester) { chatMessage = it }
+                                                            MessageTextField(chatMessage) { chatMessage = it }
                                                         }
 
                                                         MessageView()
@@ -782,10 +779,10 @@ private fun PlayerOverrideDialog(
                 }
 
                 Text(
-                    "The spawn point controls where on the map this player starts. Most maps use old-even spawn points.",
+                    readI18n("multiplayer.room.spawnPointTip"),
                     modifier = Modifier.padding(5.dp),
                     color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyMedium
                 )
 
                 var expanded by remember { mutableStateOf(false) }
@@ -822,10 +819,10 @@ private fun PlayerOverrideDialog(
 
 
                 Text(
-                    "Players with the same team will be allied together.",
+                    readI18n("multiplayer.room.teamTip"),
                     modifier = Modifier.padding(5.dp),
                     color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyMedium
                 )
 
                 if(room.isHost) {

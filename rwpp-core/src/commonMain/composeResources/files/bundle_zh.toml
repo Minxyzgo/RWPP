@@ -49,6 +49,8 @@ teamUnitCapHostedGame = "团队最大单位数量"
 banUnits = "禁用单位"
 mapView = "地图视图"
 mapType = "地图类型"
+spawnPointTip = "出生点控制着玩家在地图上的初始位置。大多数地图使用偶数出生点。"
+teamTip = "具有相同队伍的玩家将会团结在一起。"
 
 [mod]
 update = "刷新"

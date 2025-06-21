@@ -55,6 +55,8 @@ teamUnitCapHostedGame = "Team Unit Cap Hosted Game"
 banUnits = "Ban Units"
 mapView = "Map View"
 mapType = "Map Type"
+spawnPointTip = "The spawn point controls where on the map this player starts. Most maps use old-even spawn points."
+teamTip = "Players with the same team will be allied together."
 
 [mod]
 update = "Update"
