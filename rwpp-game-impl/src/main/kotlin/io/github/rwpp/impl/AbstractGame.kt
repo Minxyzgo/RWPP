@@ -7,20 +7,17 @@
 
 package io.github.rwpp.impl
 
-import com.corrodinggames.rts.game.a.a
-import com.corrodinggames.rts.game.e
-import com.corrodinggames.rts.game.n
-import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.l
 import com.corrodinggames.rts.gameFramework.s
 import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.HostGameEvent
 import io.github.rwpp.event.events.MapChangedEvent
+import io.github.rwpp.event.events.PlayerJoinEvent
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.base.Difficulty
-import io.github.rwpp.game.map.*
+import io.github.rwpp.game.map.MissionType
 import io.github.rwpp.game.units.UnitType
-import io.github.rwpp.game.world.World
 import io.github.rwpp.logger
 import io.github.rwpp.widget.LoadingContext
 import kotlinx.coroutines.channels.Channel
@@ -100,7 +97,9 @@ abstract class AbstractGame : Game {
 
         if(B.bX.b(false)) {
             initMap(true)
+            PlayerJoinEvent(gameRoom.localPlayer).broadcastIn()
             MapChangedEvent(gameRoom.selectedMap.displayName()).broadcastIn()
+            HostGameEvent().broadcastIn()
         }
     }
 
