@@ -275,7 +275,11 @@ fun RWSingleOutlinedTextField(
                     (if(it.length <= lengthLimitCount
                         && (!typeInNumberOnly || !typeInOnlyInteger || it.all { s -> s.isDigit() }))
                         it
-                    else "").split("\n").last()
+                    else "").run {
+                        if (contains("\n"))
+                            split("\n").last()
+                        else this
+                    }
                 )
             },
             keyboardOptions = KeyboardOptions(keyboardType = if(typeInNumberOnly) KeyboardType.Number else KeyboardType.Text)
