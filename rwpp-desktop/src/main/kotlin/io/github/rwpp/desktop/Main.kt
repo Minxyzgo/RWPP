@@ -61,15 +61,15 @@ import org.slf4j.LoggerFactory
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.awt.event.WindowListener
 import java.io.File
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.imageio.ImageIO
 import javax.swing.JFrame
+import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
-import javax.swing.WindowConstants
 
 
 typealias ColorCompose = androidx.compose.ui.graphics.Color
@@ -102,8 +102,6 @@ fun main(array: Array<String>) {
 }
 
 fun swingApplication() = SwingUtilities.invokeLater {
-    val window = JFrame()
-
     appKoin = startKoin {
         logger(org.koin.core.logger.PrintLogger(org.koin.core.logger.Level.ERROR))
         modules(ConfigModule().module, DesktopModule().module, TeamModeModule().module, CommonImplModule().module, CompModule().module)
@@ -128,79 +126,15 @@ fun swingApplication() = SwingUtilities.invokeLater {
             event.isIntercepted
         }
 
-    window.addWindowListener(object : WindowListener {
-        override fun windowOpened(e: WindowEvent?) {
-        }
-
-        override fun windowClosing(e: WindowEvent?) {
-        }
-
-        override fun windowClosed(e: WindowEvent?) {
-            appKoin.get<AppContext>().exit()
-        }
-        override fun windowIconified(e: WindowEvent?) {}
-
-        override fun windowDeiconified(e: WindowEvent?) {
-        }
-
-        override fun windowActivated(e: WindowEvent?) {
-        }
-
-        override fun windowDeactivated(e: WindowEvent?) {
-        }
-    })
-
     val panel = ComposePanel()
     panel.isVisible = true
     panel.size = displaySize.size
     panel.isOpaque = false
     panel.isFocusable = true
     rwppVisibleSetter = { panel.isVisible = it }
-
-    window.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
-    window.title = "Rusted Warfare Plus Plus"
-    window.iconImage = ImageIO.read(ClassLoader.getSystemResource("composeResources/io.github.rwpp.rwpp_core.generated.resources/drawable/logo.png"))
-
-    val canvas = Canvas()
-    gameCanvas = canvas
-    canvas.size = displaySize.size
-    canvas.isVisible = false
-    canvas.background = java.awt.Color.BLACK
-    canvas.isFocusable = true
-
-    window.layout = BorderLayout()
-    window.add(canvas, BorderLayout.CENTER)
-    window.add(panel, BorderLayout.CENTER)
-
-    window.addComponentListener(object : ComponentAdapter() {
-        override fun componentResized(e: ComponentEvent) {
-            val scale = getDPIScale()
-
-            // 计算逻辑像素尺寸（抵消 HiDPI 缩放）
-            val logicalWidth = (window.contentPane.width * scale).toInt()
-            val logicalHeight = (window.contentPane.height * scale).toInt()
-
-            // 设置 Canvas 物理像素尺寸
-            canvas.setSize(
-                logicalWidth,
-                logicalHeight
-            )
-
-            resetSendMessageDialogLocation()
-        }
-
-        override fun componentMoved(e: ComponentEvent) {
-            resetSendMessageDialogLocation()
-        }
-    })
-
-    focusRequester = FocusRequester()
-
     panel.setContent {
-
         var isLoading by remember { mutableStateOf(true) }
         var message by remember { mutableStateOf("loading...") }
-
         val game = koinInject<Game>()
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
@@ -216,7 +150,6 @@ fun swingApplication() = SwingUtilities.invokeLater {
         val settings = koinInject<Settings>()
         val isPremium = true
         var backgroundImagePath by remember { mutableStateOf(settings.backgroundImagePath ?: "") }
-
         val painter = remember (backgroundImagePath) {
             if (backgroundImagePath.isNotBlank() && isPremium) {
                 runCatching { ImageIO.read(File(backgroundImagePath)).toPainter() }.getOrNull()
@@ -261,25 +194,70 @@ fun swingApplication() = SwingUtilities.invokeLater {
         }
     }
 
-
+    val window = JFrame()
+    val frame = JFrame("退出RWPP")
+    frame.setSize(300, 200)
+    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
+    window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
     window.background = java.awt.Color.BLACK
     window.extendedState = JFrame.MAXIMIZED_BOTH
-
     if (appKoin.get<Settings>().isFullscreen) {
         window.isUndecorated = true
     } else {
         window.minimumSize = Dimension(800, 600)
         window.isResizable = true
     }
+    window.title = "Rusted Warfare Plus Plus"
+    window.iconImage = ImageIO.read(ClassLoader.getSystemResource("composeResources/io.github.rwpp.rwpp_core.generated.resources/drawable/logo.png"))
+    window.addWindowListener(object : WindowAdapter() {
+        override fun windowClosing(e: WindowEvent?) {
+            val result = JOptionPane.showConfirmDialog(frame, "确定要退出RWPP吗？", "提示", JOptionPane.YES_NO_OPTION)
+            if (result == JOptionPane.YES_OPTION) {
+                appKoin.get<AppContext>().exit()
+            }
+        }
+    })
+
+    val canvas = Canvas()
+    gameCanvas = canvas
+    canvas.size = displaySize.size
+    canvas.isVisible = false
+    canvas.background = java.awt.Color.BLACK
+    canvas.isFocusable = true
+
+    window.layout = BorderLayout()
+    window.add(canvas, BorderLayout.CENTER)
+    window.add(panel, BorderLayout.CENTER)
+    window.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent) {
+            val scale = getDPIScale()
+
+            // 计算逻辑像素尺寸（抵消 HiDPI 缩放）
+            val logicalWidth = (window.contentPane.width * scale).toInt()
+            val logicalHeight = (window.contentPane.height * scale).toInt()
+
+            // 设置 Canvas 物理像素尺寸
+            canvas.setSize(
+                logicalWidth,
+                logicalHeight
+            )
+
+            resetSendMessageDialogLocation()
+        }
+
+        override fun componentMoved(e: ComponentEvent) {
+            resetSendMessageDialogLocation()
+        }
+    })
 
     window.isVisible = true
     panel.requestFocus()
 
+    focusRequester = FocusRequester()
     val panel2 = ComposePanel()
     panel2.isOpaque = false
     panel2.isFocusable = true
     panel2.size = Dimension(550, 180)
-
     panel2.setContent {
         val game = koinInject<Game>()
         RWPPTheme {
@@ -389,7 +367,6 @@ fun swingApplication() = SwingUtilities.invokeLater {
     sendMessageDialog.add(panel2)
 
     mainJFrame = window
-
     canvas.createBufferStrategy(2)
 }
 
