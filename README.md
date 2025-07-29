@@ -10,7 +10,7 @@
 <br />
 
 ----
-[![Kotlin](https://img.shields.io/badge/kotlin-2.1.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.1.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-1.8.2-brightgreen)](https://www.jetbrains.com/lp/compose-multiplatform/)
 ![Android](https://img.shields.io/badge/Android-green)
 ![Desktop](https://img.shields.io/badge/Desktop-tomato)
