@@ -37,13 +37,14 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.config.Settings
-import io.github.rwpp.core.UI
+import io.github.rwpp.ui.UI
 import io.github.rwpp.widget.v2.bounceClick
 import org.koin.compose.koinInject
 
@@ -240,8 +241,9 @@ fun RWSingleOutlinedTextField(
     typeInOnlyInteger: Boolean = false,
     typeInNumberOnly: Boolean = false,
     enabled: Boolean = true,
-    appendedContent: @Composable (() -> Unit)? = null ,
+    appendedContent: @Composable (() -> Unit)? = null,
     focusRequester: FocusRequester? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     onFocusChanged: (FocusState) -> Unit = {},
     onValueChange: (String) -> Unit
 ) {
@@ -282,6 +284,7 @@ fun RWSingleOutlinedTextField(
                     }
                 )
             },
+            visualTransformation = visualTransformation,
             keyboardOptions = KeyboardOptions(keyboardType = if(typeInNumberOnly) KeyboardType.Number else KeyboardType.Text)
         )
 

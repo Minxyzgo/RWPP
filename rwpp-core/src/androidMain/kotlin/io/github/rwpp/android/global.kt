@@ -7,16 +7,26 @@
 
 package io.github.rwpp.android
 
+import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.result.ActivityResultLauncher
+import dalvik.system.BaseDexClassLoader
+import dalvik.system.PathClassLoader
 import io.github.rwpp.android.impl.PlayerInternal
 import io.github.rwpp.game.Player
+import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.channels.Channel
 import org.koin.core.KoinApplication
 import java.io.File
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.getValue
 
+@Volatile
+var init = false
+var requireReloadingLib = false
 lateinit var gameLauncher: ActivityResultLauncher<Intent>
 lateinit var fileChooser: ActivityResultLauncher<Intent>
 val mainThreadChannel = Channel<() -> Unit>(Channel.UNLIMITED)
@@ -31,6 +41,36 @@ var bannedUnitList: List<String> = listOf()
 val cacheModSize = AtomicInteger(0)
 var playerCacheMap = mutableMapOf<PlayerInternal, Player>()
 lateinit var koinApplication: KoinApplication
+lateinit var dexFolder: File
 val pickFileActions = mutableListOf<(File) -> Unit>()
 var gameLoaded = false
+val uiHandler by lazy {
+    Handler(Looper.getMainLooper())
+}
 
+private var libClassLoader: PathClassLoader? = null
+
+fun loadDex(context: Context) {
+    val pathClassLoader = context.classLoader as PathClassLoader
+    val dexPath = "${dexFolder.absolutePath}/classes.dex"
+
+    val cl = libClassLoader ?: PathClassLoader(dexPath, pathClassLoader)
+    val systemPathList = Reflect.reifiedGet<BaseDexClassLoader, Any>(pathClassLoader, "pathList")!!
+    val pathList = Reflect.reifiedGet<BaseDexClassLoader, Any>(cl, "pathList")!!
+
+    val systemDexElements = Reflect.get<Array<*>>(systemPathList, "dexElements")!!
+    val dexElements = Reflect.get<Array<*>>(pathList, "dexElements")!!
+
+    val elements = java.lang.reflect.Array
+        .newInstance(
+            dexElements.javaClass.componentType,
+            systemDexElements.size + dexElements.size
+        )
+
+    systemDexElements.toMutableList()
+        .apply { addAll(dexElements) }
+        .forEachIndexed { i, v -> java.lang.reflect.Array.set(elements, i, v) }
+
+    libClassLoader = cl
+    Reflect.set(systemPathList, "dexElements", elements)
+}

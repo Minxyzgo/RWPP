@@ -8,12 +8,15 @@
 
 package io.github.rwpp.ui
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
@@ -29,27 +32,26 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import io.github.rwpp.AppContext
 import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.EnabledExtensions
 import io.github.rwpp.config.Settings
-import io.github.rwpp.core.UI
-import io.github.rwpp.event.broadcast
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.CloseUIPanelEvent
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExternalHandler
+import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
-import io.github.rwpp.rwpp_core.generated.resources.Res
-import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
+import io.github.rwpp.projectVersion
 import io.github.rwpp.scripts.Render
+import io.github.rwpp.utils.compareVersions
 import io.github.rwpp.widget.*
 import io.github.rwpp.widget.v2.LazyColumnScrollbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
@@ -68,12 +70,12 @@ fun ExtensionView(
     var updateExtensions by remember { mutableStateOf(false) }
 
     val extensions = remember(updateExtensions) {
-        externalHandler.getAllExtensions().onFailure {
+        externalHandler.getAllExtensions(true).onFailure {
             UI.showWarning(it.message ?: "Unexpected error")
         }.getOrDefault(listOf()).filter { !it.config.hasResource }
     }
 
-    val resources = remember(updateExtensions) {
+    val resources = remember(extensions) {
         externalHandler.getAllExtensions().onFailure {
             UI.showWarning(it.message ?: "Unexpected error")
         }.getOrDefault(listOf()).filter { it.config.hasResource }
@@ -113,19 +115,28 @@ fun ExtensionView(
         showResultView = true
     }) {
         message("Loading")
+        val enabledExtensions = extensions
+            .filter { it.isEnabled }
+            .map {
+                if (!externalHandler.canEnable(it)) {
+                    result = readI18n("extension.require")
+                    return@LoadingView true
+                }
+                it.config.id
+            }
         result = kotlin.runCatching {
-            appKoin.get<EnabledExtensions>().values = extensions.filter { it.isEnabled }.map { it.config.id }
+            appKoin.get<EnabledExtensions>().values = enabledExtensions
             if (defaultResource != selectedResource) {
                 withContext(Dispatchers.IO) {
                     externalHandler.enableResource(selectedResource)
                 }
             }
-        }.exceptionOrNull()?.stackTraceToString() ?: "Loading successfully. You should restart RWPP to enable changes."
+        }.exceptionOrNull()?.stackTraceToString() ?: readI18n("extension.loadedInfo")
         true
     }
     AnimatedAlertDialog(
         showResultView,
-        onDismissRequest = { }) { _ ->
+        onDismissRequest = { showResultView = false }) { _ ->
         BorderCard(
             modifier = Modifier.size(500.dp),
         ) {
@@ -159,7 +170,7 @@ fun ExtensionView(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     RWTextButton(
-                        "Restart",
+                        readI18n("extension.restart"),
                         modifier = Modifier.padding(5.dp)
                     ) { appContext.exit() }
                 }
@@ -316,8 +327,8 @@ private fun LazyItemScope.ExtensionCard(
                     shape = RectangleShape,
                     border = BorderStroke(3.dp, MaterialTheme.colorScheme.secondary)
                 ) {
-                    Image(
-                        extension.iconPainter ?: painterResource(Res.drawable.error_missingmap),
+                    AsyncImage(
+                        extension,
                         null,
                         modifier = Modifier.size(120.dp)
                     )
@@ -358,6 +369,45 @@ private fun LazyItemScope.ExtensionCard(
                 }
             }
 
+            if (compareVersions(extension.config.minGameVersion, projectVersion) == 1) {
+                Text(
+                    readI18n(
+                        "extension.minGameVersion",
+                        I18nType.RWPP,
+                        extension.config.minGameVersion
+                    ),
+                    modifier = Modifier.padding(top = 5.dp, start = 5.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Red
+                )
+            }
+
+            if (!extension.isSupportedForCurrentPlatform) {
+                Text(
+                    readI18n(
+                        "extension.supportedPlatform",
+                        I18nType.RWPP,
+                        extension.config.supportedPlatforms.joinToString(", ")
+                    ),
+                    modifier = Modifier.padding(top = 5.dp, start = 5.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Red
+                )
+            }
+
+            if (extension.config.dependencies.isNotEmpty()) {
+                Text(
+                    readI18n(
+                        "extension.dependencyInfo",
+                        I18nType.RWPP,
+                        extension.config.dependencies.joinToString(", ")
+                    ),
+                    modifier = Modifier.padding(top = 5.dp, start = 5.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Yellow
+                )
+            }
+
             val expandedStyle = remember {
                 SpanStyle(
                     fontWeight = FontWeight.W500,
@@ -371,7 +421,7 @@ private fun LazyItemScope.ExtensionCard(
                 ExpandableText(
                     text = extension.config.description,
                     style = MaterialTheme.typography.bodyMedium,
-                    textModifier = Modifier.padding(top = 5.dp, start = 5.dp),
+                    textModifier = Modifier.padding(top = 2.dp, start = 5.dp),
                     showMoreStyle = expandedStyle,
                     showLessStyle = expandedStyle
                 )

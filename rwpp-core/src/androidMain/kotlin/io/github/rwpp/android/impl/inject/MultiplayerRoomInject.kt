@@ -12,13 +12,13 @@ import com.corrodinggames.rts.gameFramework.h.a
 import io.github.rwpp.android.isGaming
 import io.github.rwpp.android.questionOption
 import io.github.rwpp.appKoin
-import io.github.rwpp.core.UI
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
+import io.github.rwpp.ui.UI
 
 @InjectClass(MultiplayerBattleroomActivity::class)
 object MultiplayerRoomInject {

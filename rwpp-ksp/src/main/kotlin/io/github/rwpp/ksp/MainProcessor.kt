@@ -12,39 +12,40 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.*
 import io.github.rwpp.inject.*
-import javassist.ClassMap
+import io.github.rwpp.inject.runtime.Builder
+import javassist.ClassPool
 
 class MainProcessor(
     private val logger: KSPLogger
 ) : SymbolProcessor {
+
+    lateinit var classPool: ClassPool
+    val injectInfos = mutableSetOf<InjectInfo>()
+    val setInterfaceOnInfos = mutableSetOf<SetInterfaceOnInfo>()
+    val redirectToInfos = mutableSetOf<RedirectToInfo>()
+    val redirectMethodInfos = mutableSetOf<RedirectMethodInfo>()
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         MainProcessor.logger = logger
         //only run once
         if (finished) return emptyList()
 
+
         if (!init) {
             init = true
             Builder.loadLib()
+            classPool = GameLibraries.includes.first().classTree.defPool
         }
-
-        val classMap = ClassMap()
 
         for (file in resolver.getSymbolsWithAnnotation(RedirectTo::class.qualifiedName!!)) {
             file.annotations.forEach { annotation ->
                 if (annotation.shortName.asString() == RedirectTo::class.simpleName) {
                     val from = annotation.arguments.first().value as String
                     val to = annotation.arguments[1].value as String
-                    logger.warn("redirecting $from to $to")
-                    classMap[from] = to
+                    redirectToInfos.add(RedirectToInfo(from, to))
                 }
             }
         }
-
-        if (classMap.isNotEmpty()) {
-            InjectApi.redirectClassName(classMap)
-        }
-
 
         for (clazz in resolver.getSymbolsWithAnnotation(InjectClass::class.qualifiedName!!)) {
            processClass(clazz as KSClassDeclaration) {
@@ -68,22 +69,25 @@ class MainProcessor(
                 val hasSelfProperty = clazz.declarations.any {
                     it is KSPropertyDeclaration && it.simpleName.asString() == "self"
                 }
-                InjectApi.injectInterface(
-                    clazz.qualifiedName!!.asString(),
-                    className,
-                    clazz.declarations.filter { anno ->
-                        anno is KSPropertyDeclaration && anno.annotations.any { it.shortName.asString() == NewField::class.simpleName }
-                    }.map {
-                        it as KSPropertyDeclaration
-                        it.simpleName.asString() to  it.type.resolve().declaration.qualifiedName!!.asString()
-                    }.toList(),
-                    clazz.declarations.filter { anno ->
-                        anno is KSPropertyDeclaration && anno.annotations.any { it.shortName.asString() == Accessor::class.simpleName }
-                    }.map {
-                        it as KSPropertyDeclaration
-                        it.simpleName.asString() to  it.annotations.first { it.shortName.asString() == Accessor::class.simpleName }.arguments.first().value as String
-                    }.toList(),
-                    hasSelfProperty
+
+                setInterfaceOnInfos.add(
+                    SetInterfaceOnInfo(
+                        clazz.qualifiedName!!.asString(),
+                        className,
+                        clazz.declarations.filter { anno ->
+                            anno is KSPropertyDeclaration && anno.annotations.any { it.shortName.asString() == NewField::class.simpleName }
+                        }.map { property ->
+                            property as KSPropertyDeclaration
+                            property.simpleName.asString() to transformClass(property.type.resolve().declaration.qualifiedName!!.asString())
+                        }.toList(),
+                        clazz.declarations.filter { anno ->
+                            anno is KSPropertyDeclaration && anno.annotations.any { it.shortName.asString() == Accessor::class.simpleName }
+                        }.map { property ->
+                            property as KSPropertyDeclaration
+                            property.simpleName.asString() to property.annotations.first { it.shortName.asString() == Accessor::class.simpleName }.arguments.first().value as String
+                        }.toList(),
+                        hasSelfProperty
+                    )
                 )
             }
         }
@@ -94,7 +98,15 @@ class MainProcessor(
     }
 
     override fun finish() {
-        if (init) Builder.saveLib()
+        if (init) {
+            Builder.rootInfo = RootInfo(
+                injectInfos,
+                setInterfaceOnInfos,
+                redirectToInfos,
+                redirectMethodInfos,
+            )
+            Builder.saveConfig(Builder.rootInfo!!, Builder.configFile)
+        }
     }
 
     private fun processClass(
@@ -106,8 +118,8 @@ class MainProcessor(
             Builder.loadLib()
         }
 
-        if (clazz.classKind != ClassKind.OBJECT) throw IllegalArgumentException("Only objects can be annotated with @InjectClass")
-        if (clazz.parentDeclaration != null) throw IllegalArgumentException("Object ${clazz.simpleName.asString()} must be top level")
+        require(clazz.classKind == ClassKind.OBJECT) { "Only objects can be annotated with @InjectClass" }
+        require(clazz.parentDeclaration == null) { "Object ${clazz.simpleName.asString()} must be top level" }
 
         val injectClassName = injectClassNameProvider() ?: return
 
@@ -134,7 +146,6 @@ class MainProcessor(
                         if (receiver.declaration is KSTypeAlias) receiver = (receiver.declaration as KSTypeAlias).type.resolve()
                     }
 
-
                     val receiverType = receiver?.declaration?.qualifiedName?.asString() ?: ""
                     if (receiver != null && receiverType != injectClassName && receiverType != "kotlin.Any")
                         throw IllegalArgumentException(
@@ -146,46 +157,57 @@ class MainProcessor(
 
                     val injectFunctionPath = "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}"
 
+                    val args by lazy {
+                        declaration.parameters.map { param ->
+                            val type = param.type.resolve()
+                            val paramDeclaration = type.declaration
+                            val qualifiedName = paramDeclaration.qualifiedName!!.asString()
+                            val className = if (qualifiedName == "kotlin.Array") {
+                                type.arguments.first().type!!.resolve().declaration.qualifiedName!!.asString() + "[]"
+                            } else transformClass(qualifiedName)
+                            classPool[className]
+                        }
+                    }
+
                     when (annotation.shortName.asString()) {
                         RedirectMethod::class.simpleName -> {
-                            InjectApi.redirect(
-                                injectClassName,
-                                receiver != null,
-                                methodName,
-                                annotation.arguments[1].value as String,
-                                annotation.arguments[2].value as String,
-                                annotation.arguments[3].value as String,
-                                declaration.parameters.map { param ->
-                                    val type = param.type.resolve()
-                                    val paramDeclaration = type.declaration
-                                    val qualifiedName = paramDeclaration.qualifiedName!!.asString()
-                                    if (qualifiedName == "kotlin.Array") {
-                                        type.arguments.first().type!!.resolve().declaration.qualifiedName!!.asString() + "[]"
-                                    } else qualifiedName
-                                },
-                                declaration.returnType!!.resolve().declaration.qualifiedName!!.asString(),
-                                injectFunctionPath,
+                            val method = classPool[injectClassName].getMethod(methodName, annotation.arguments[1].value as String)
+                            val targetClassName = annotation.arguments[2].value as String
+                            val targetMethodName = annotation.arguments[3].value as String
+                            val targetMethod = classPool[targetClassName].getDeclaredMethod(targetMethodName, args.toTypedArray())
+                            redirectMethodInfos.add(
+                                RedirectMethodInfo(
+                                    receiver != null,
+                                    injectClassName,
+                                    methodName,
+                                    method.signature,
+                                    targetClassName,
+                                    targetMethodName,
+                                    targetMethod.signature,
+                                    injectFunctionPath,
+                                    PathType.Path
+                                )
                             )
                         }
 
                         Inject::class.simpleName -> {
-                            logger.warn("processing method $methodName of $injectClassName with mode ${annotation.arguments[1].value} and desc ${annotation.arguments.getOrNull(2)?.value} and injectFunctionPath $injectFunctionPath and desc ${annotation.arguments.getOrNull(2)?.value}")
-                            InjectApi.injectMethod(
-                                injectClassName,
-                                receiver != null,
-                                methodName,
-                                declaration.parameters.map {
-                                    val type = it.type.resolve()
-                                    val paramDeclaration = type.declaration
-                                    val qualifiedName = paramDeclaration.qualifiedName!!.asString()
-                                    if (qualifiedName == "kotlin.Array") {
-                                        type.arguments.first().type!!.resolve().declaration.qualifiedName!!.asString() + "[]"
-                                    } else qualifiedName
-                                },
-                                InjectMode.valueOf((annotation.arguments[1].value as KSType).declaration.simpleName.asString()),
-                                declaration.returnType!!.resolve().declaration.qualifiedName!!.asString() == Unit::class.qualifiedName!!,
-                                injectFunctionPath,
-                                (annotation.arguments.getOrNull(2)?.value as? String) ?: "",
+                            val methodDesc = ((annotation.arguments.getOrNull(2)?.value as? String) ?: "")
+                                .ifBlank {
+                                    classPool[injectClassName]
+                                        .getDeclaredMethod(methodName, args.toTypedArray()).signature
+                                }
+
+                            injectInfos.add(
+                                InjectInfo(
+                                    injectClassName,
+                                    receiver != null,
+                                    methodName,
+                                    methodDesc,
+                                    injectFunctionPath,
+                                    PathType.Path,
+                                    declaration.returnType!!.resolve().declaration.qualifiedName!!.asString() == Unit::class.qualifiedName!!,
+                                    InjectMode.valueOf((annotation.arguments[1].value as KSType).declaration.simpleName.asString())
+                                )
                             )
                         }
                     }
@@ -197,6 +219,36 @@ class MainProcessor(
     private var init = false
     private var finished = false
     private val injectClasses = mutableSetOf<String>()
+
+    private fun transformClass(className: String): String = when (className) {
+        "kotlin.Any" -> "java.lang.Object"
+        "kotlin.Int" -> "int"
+        "kotlin.Long" -> "long"
+        "kotlin.Float" -> "float"
+        "kotlin.Double" -> "double"
+        "kotlin.Boolean" -> "boolean"
+        "kotlin.Byte" -> "byte"
+        "kotlin.Char" -> "char"
+        "kotlin.Short" -> "short"
+        "kotlin.String" -> "java.lang.String"
+        "kotlin.Array" -> "java.lang.Object[]"
+        "kotlin.IntArray" -> "int[]"
+        "kotlin.LongArray" -> "long[]"
+        "kotlin.FloatArray" -> "float[]"
+        "kotlin.DoubleArray" -> "double[]"
+        "kotlin.BooleanArray" -> "boolean[]"
+        "kotlin.ByteArray" -> "byte[]"
+        "kotlin.CharArray" -> "char[]"
+        "kotlin.ShortArray" -> "short[]"
+        "kotlin.collections.List" -> "java.util.List"
+        "kotlin.collections.Map" -> "java.util.Map"
+        "kotlin.collections.Set" -> "java.util.Set"
+        "kotlin.collections.MutableList" -> "java.util.List"
+        "kotlin.collections.MutableMap" -> "java.util.Map"
+        "kotlin.collections.MutableSet" -> "java.util.Set"
+        "kotlin.Unit" -> "void"
+        else -> className
+    }
 
     companion object {
         lateinit var logger: KSPLogger

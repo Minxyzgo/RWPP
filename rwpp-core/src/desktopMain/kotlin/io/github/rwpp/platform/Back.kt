@@ -8,24 +8,19 @@
 package io.github.rwpp.platform
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.backhandler.BackHandler
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.events.KeyboardEvent
 import io.github.rwpp.event.onDispose
 
 @Composable
 actual fun BackHandler(enabled: Boolean, onBack: () -> Unit) {
-//    BackHandler {
-//        if (enabled) onBack()
-//    }
-//    GlobalEventChannel.filter(KeyboardEvent::class).onDispose {
-//        subscribeAlways {
-//            //ESC
-//            if (it.keyCode == 0x1B ) {
-//                onBack()
-//                it.intercept()
-//            }
-//        }
-//    }
+    GlobalEventChannel.filter(KeyboardEvent::class).onDispose {
+        subscribeAlways {
+            //ESC
+            if (it.keyCode == 0x1B && enabled) {
+                onBack()
+                it.intercept()
+            }
+        }
+    }
 }

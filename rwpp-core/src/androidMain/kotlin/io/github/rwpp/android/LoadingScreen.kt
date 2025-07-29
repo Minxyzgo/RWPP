@@ -22,26 +22,39 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dalvik.system.BaseDexClassLoader
+import dalvik.system.PathClassLoader
 import io.github.rwpp.AppContext
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
+import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.GameLoadedEvent
+import io.github.rwpp.generatedLibDir
+import io.github.rwpp.inject.GameLibraries
+import io.github.rwpp.inject.runtime.Builder
+import io.github.rwpp.inject.runtime.Builder.logger
+import io.github.rwpp.ui.InjectConsole
+import io.github.rwpp.ui.defaultBuildLogger
+import io.github.rwpp.utils.Reflect
 import io.github.rwpp.widget.ConstraintWindowManager
 import io.github.rwpp.widget.MenuLoadingView
+import io.github.rwpp.widget.RWPPTheme
 import io.github.rwpp.widget.RWSelectionColors
 import io.github.rwpp.widget.v2.TitleBrush
+import javassist.android.DexFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.KoinContext
-import org.koin.compose.koinInject
 import java.io.File
 import kotlin.system.exitProcess
+
 
 class LoadingScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,6 +62,15 @@ class LoadingScreen : ComponentActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         appKoin.declare(this, secondaryTypes = listOf(Context::class))
+
+        appKoin.get<ConfigIO>().readAllConfig()
+        Builder.outputDir = generatedLibDir
+        Builder.logger = defaultBuildLogger
+
+        val permissionHelper = appKoin.get<PermissionHelper>()
+        var hasPermission by mutableStateOf(permissionHelper.hasManageFilePermission())
+        val hasPermissionPast = hasPermission
+        onInit(hasPermission)
 
         setContent {
             KoinContext {
@@ -62,14 +84,12 @@ class LoadingScreen : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxSize()
                             .background(brush),
+                        contentAlignment = Alignment.Center
                     ) {
                         CompositionLocalProvider(
                             LocalTextSelectionColors provides RWSelectionColors,
                             LocalWindowManager provides ConstraintWindowManager(maxWidth, maxHeight)
                         ) {
-                            val permissionHelper = koinInject<PermissionHelper>()
-                            var hasPermission by remember { mutableStateOf(permissionHelper.hasManageFilePermission()) }
-
                             if (!hasPermission) {
                                 LaunchedEffect(Unit) {
                                     Toast.makeText(
@@ -85,42 +105,107 @@ class LoadingScreen : ComponentActivity() {
                                     }
                                 }
                             } else {
-                                var message by remember { mutableStateOf("loading") }
+                                if (requireReloadingLib) {
+                                    LaunchedEffect(Unit) {
+                                        launch(Dispatchers.IO) {
+                                            runCatching {
+                                                val resource = Thread
+                                                    .currentThread()
+                                                    .contextClassLoader!!
+                                                    .getResourceAsStream("android-game-lib.jar")
 
-                                MenuLoadingView(message)
 
-                                LaunchedEffect(Unit) {
-                                    appKoin.get<AppContext>().init()
+                                                val tempJar = File.createTempFile("android-game-lib", ".jar")
+                                                tempJar.deleteOnExit()
+                                                tempJar.writeBytes(resource.readBytes())
+                                                resource.close()
 
-                                    withContext(Dispatchers.IO) {
-                                        File("/storage/emulated/0/rustedWarfare/maps/")
-                                            .walk()
-                                            .filter { it.name.startsWith("generated_") }
-                                            .forEach {
-                                                it.delete()
-                                            }
+                                                if (!hasPermissionPast) {
+                                                    Builder.prepareReloadingLib()
+                                                }
 
-                                        val job = launch {
-                                            while (true) {
-                                                val msg = GameEngine.t()?.dF
-                                                message = (if (msg.isNullOrBlank()) "loading..." else msg)
+                                                GameLibraries.defClassPool.appendDalvikClassPath()
+                                                Builder.init(GameLibraries.`android-game-lib`, tempJar)
+
+                                                val libPath = "$generatedLibDir/android-game-lib.jar"
+                                                logger?.logging("compiling dex: $libPath")
+                                                val dex = DexFile()
+                                                dex.addJarFile(libPath)
+                                                dex.writeFile("${dexFolder.absolutePath}/classes.dex")
+                                                logger?.logging("Successfully compile dex")
+                                                logger?.info("Apply config successfully. Now you can restart game to take effect. (已成功应用配置，请重启游戏以生效。)")
+                                            }.onFailure {
+                                                logger?.error("failed: ${it.stackTraceToString()}")
                                             }
                                         }
+                                    }
 
-                                        async { GameEngine.c(this@LoadingScreen) }.await()
+                                    RWPPTheme(true) {
+                                        InjectConsole()
+                                    }
 
-                                        job.cancel()
+                                } else {
+                                    var message by remember { mutableStateOf("loading") }
 
-                                        gameLoaded = true
-                                        GameLoadedEvent().broadcastIn()
-                                        startActivityForResult(Intent(this@LoadingScreen, MainActivity::class.java), 0)
-                                        finish()
+                                    MenuLoadingView(message)
+
+                                    LaunchedEffect(Unit) {
+                                        appKoin.get<AppContext>().init()
+
+                                        withContext(Dispatchers.IO) {
+                                            File("/storage/emulated/0/rustedWarfare/maps/")
+                                                .walk()
+                                                .filter { it.name.startsWith("generated_") }
+                                                .forEach {
+                                                    it.delete()
+                                                }
+
+                                            val job = launch {
+                                                while (true) {
+                                                    val msg = GameEngine.t()?.dF
+                                                    message = (if (msg.isNullOrBlank()) "loading..." else msg)
+                                                }
+                                            }
+
+                                            async {
+                                                try {
+                                                    val engineImpl = GameEngine.dv.a(this@LoadingScreen)
+                                                    Reflect.reifiedSet<GameEngine>(null, "ak", engineImpl)
+                                                    engineImpl.a(this@LoadingScreen as Context)
+                                                } catch (e: Exception) {
+                                                    e.printStackTrace()
+                                                }
+                                                //Reflect.callVoid<GameEngine>(null, "f", listOf(Context::class), listOf(this@LoadingScreen))
+                                            }.await()
+
+                                            job.cancel()
+
+                                            gameLoaded = true
+                                            GameLoadedEvent().broadcastIn()
+                                            startActivityForResult(
+                                                Intent(this@LoadingScreen, MainActivity::class.java),
+                                                0
+                                            )
+                                            finish()
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+            }
+        }
+    }
+
+    fun onInit(hasPermission: Boolean) {
+        if (!init) {
+            init = true
+            dexFolder = getDir("odex", MODE_PRIVATE)
+            requireReloadingLib = !hasPermission || Builder.prepareReloadingLib() || !File("${dexFolder.absolutePath}/classes.dex").exists()
+
+            if (!requireReloadingLib) {
+                loadDex(this)
             }
         }
     }

@@ -14,13 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.widget.v2.LineSpinFadeLoaderIndicator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-val loadingMessage = mutableStateOf("")
-
-@JvmInline
-value class LoadingContext(val message: (str: String) -> Unit)
+var loadingMessage by mutableStateOf("")
 
 @Composable
 fun LoadingView(
@@ -28,7 +27,7 @@ fun LoadingView(
     onLoaded: () -> Unit,
     enableAnimation: Boolean = true,
     cancellable: Boolean = false,
-    loadContent: suspend LoadingContext.() -> Boolean
+    loadContent: suspend LoadingContext.() -> Boolean?
 ) {
 
     val scope = rememberCoroutineScope()
@@ -38,19 +37,20 @@ fun LoadingView(
         onDismissRequest = onLoaded,
         enableDismiss = cancellable
     ) { dismiss ->
-
-        val message by remember { loadingMessage }
         var cancel by remember { mutableStateOf(false) }
 
         BorderCard(
             modifier = Modifier.size(500.dp),
         ) {
             LaunchedEffect(Unit) {
-                scope.launch {
-                    if (loadContent(LoadingContext { loadingMessage.value = it })) {
-                        loadingMessage.value = ""
+                scope.launch(Dispatchers.IO) {
+                    val result = loadContent(LoadingContext { loadingMessage = it })
+                    if (result == true) {
+                        loadingMessage = ""
                         dismiss()
-                    } else cancel = true
+                    } else if (result == false) {
+                        cancel = true
+                    }
                 }
             }
 
@@ -64,7 +64,7 @@ fun LoadingView(
                 ) {
                     if (enableAnimation && !cancel) LineSpinFadeLoaderIndicator(MaterialTheme.colorScheme.onSecondaryContainer)
                     Text(
-                        message,
+                        loadingMessage,
                         modifier = Modifier.padding(20.dp).offset(y = 50.dp),
                         color = MaterialTheme.colorScheme.onSurface
                     )

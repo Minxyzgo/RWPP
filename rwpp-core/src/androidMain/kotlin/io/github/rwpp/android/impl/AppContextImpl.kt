@@ -9,6 +9,7 @@ package io.github.rwpp.android.impl
 
 import io.github.rwpp.AppContext
 import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.impl.BaseAppContextImpl
 import okhttp3.OkHttpClient
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
@@ -16,8 +17,8 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.system.exitProcess
 
-@Single
-class AppContextImpl : AppContext {
+@Single([AppContext::class])
+class AppContextImpl : BaseAppContextImpl() {
     private val exitActions = mutableListOf<() -> Unit>()
 
     init {
@@ -27,6 +28,10 @@ class AppContextImpl : AppContext {
     override fun onExit(action: () -> Unit) {
         exitActions.add(action)
     }
+
+    override fun isAndroid(): Boolean = true
+
+    override fun isDesktop(): Boolean = false
 
     override fun exit() {
         get<ConfigIO>().saveAllConfig()

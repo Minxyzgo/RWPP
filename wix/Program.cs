@@ -4,10 +4,8 @@ using System.Linq;
 using Microsoft.Win32;
 using RSetup.RDialogs;
 using WixSharp;
-using WixSharp.Forms;
-using Wpf.Ui.Appearance;
-using Wpf.Ui.Controls;
-using File = WixSharp.File;
+using WixToolset.Dtf.WindowsInstaller;
+using File = System.IO.File;
 
 namespace RSetup
 {
@@ -32,22 +30,23 @@ namespace RSetup
             var appFeature = new Feature("App", "RWPP运行的主要部分", true, false);
             var jvmFeature = new Feature("Jvm64", "RWPP运行时Jvm", true, true);
             var steamFeature = new Feature("Steam", "RWPP对Steam的支持", false, true);
-
+            
+            appFeature.Add(steamFeature);
+            
             var entities = new WixEntity[]
             {
-                new File(appFeature, $@"{appDir}\RWPP.exe"),
-                new File(appFeature, $@"{appDir}\RWPP.ico"),
+                new WixSharp.File(appFeature, $@"{appDir}\RWPP.exe"),
+                new WixSharp.File(appFeature, $@"{appDir}\RWPP.ico"),
                 new Dir(appFeature, "app", new Files($@"{appDir}\app\*")),
-                new Dir(jvmFeature, "runtime", new Files($@"{appDir}\runtime\*"))
+                new Dir(jvmFeature, "runtime", new Files($@"{appDir}\runtime\*")),
             };
 
             var project = new ManagedProject("RWPP",
                 new Dir( @"%ProgramFiles%\Minxyzgo\RWPP", entities));
 
             project.SourceBaseDir = RootDir;
-
+            
             project.DefaultFeature = appFeature;
-
             //此部分由gradle task执行，提供guid和version
             if (args.Length == 2)
             {
@@ -133,8 +132,25 @@ namespace RSetup
 
         private static void Msi_AfterInstall(SetupEventArgs e)
         {
-            if (!e.IsUISupressed && !e.IsUninstalling)
+            
+            if (e.Session.IsFeatureEnabled("Steam"))
             {
+                var sourcePath = $@"{e.InstallDir}\Rusted Warfare - 64.exe";
+                var targetPath = $@"{e.InstallDir}\Rusted Warfare - 64.exe.bak";
+                var launcherPath = $@"{e.InstallDir}\RWPP.exe";
+                var icoPath = $@"{e.InstallDir}\RWPP.ico";
+                var targetIcoPath = $@"{e.InstallDir}\Rusted Warfare - 64.ico";
+                var cfgPath = $@"{e.InstallDir}\app\RWPP.cfg";
+                var targetCfgPath = $@"{e.InstallDir}\app\Rusted Warfare - 64.cfg";
+                
+                if (!File.Exists(targetPath) && File.Exists(sourcePath))
+                {
+                    File.Move(sourcePath, targetPath);
+                }
+                
+                File.Copy(launcherPath, sourcePath, true);
+                File.Copy(icoPath, targetIcoPath, true);
+                File.Copy(cfgPath, targetCfgPath, true);
             }
             //MessageBox.Show(e.ToString(), "AfterExecute");
         }

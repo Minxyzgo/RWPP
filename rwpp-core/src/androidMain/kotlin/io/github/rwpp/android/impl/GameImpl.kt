@@ -9,20 +9,13 @@ package io.github.rwpp.android.impl
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.painter.Painter
 import com.corrodinggames.rts.appFramework.*
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.k
+import io.github.rwpp.android.*
 import io.github.rwpp.android.MainActivity.Companion.gameView
-import io.github.rwpp.android.bannedUnitList
-import io.github.rwpp.android.gameLauncher
-import io.github.rwpp.android.isSinglePlayerGame
-import io.github.rwpp.android.mainThreadChannel
-import io.github.rwpp.android.questionOption
 import io.github.rwpp.appKoin
+import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.HostGameEvent
 import io.github.rwpp.event.events.MapChangedEvent
@@ -37,7 +30,6 @@ import io.github.rwpp.game.ui.GUI
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.world.World
-import io.github.rwpp.widget.LoadingContext
 import kotlinx.coroutines.*
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
@@ -183,14 +175,14 @@ class GameImpl : Game, CoroutineScope {
                             else f.removeSuffix(".tmx")
                         override val type: MissionType
                             get() = type
-                        override val image: Painter =
-                            BitmapPainter(BitmapFactory.decodeStream(
-                                assets.open("maps/${type.pathName()}/${f.removeSuffix(".tmx") + "_map.png"}")
-                            ).asImageBitmap())
                         override val mapName: String
-                            get() = f.removeSuffix(".tmx")
+                            get() = name.removeSuffix(".tmx")
                         override val mapType: MapType
                             get() = MapType.SkirmishMap
+
+                        override fun openImageInputStream(): InputStream? {
+                            return assets.open("maps/${type.pathName()}/${f.removeSuffix(".tmx") + "_map.png"}")
+                        }
 
                         override fun openInputStream(): InputStream {
                             throw RuntimeException("Not implemented")
@@ -220,14 +212,14 @@ class GameImpl : Game, CoroutineScope {
                 .forEachIndexed { i, f ->
                     assetMaps.add(object : GameMap {
                         override val id: Int = i
-                        override val image: Painter =
-                            BitmapPainter(BitmapFactory.decodeStream(
-                                assets.open("maps/skirmish/${f.removeSuffix(".tmx") + "_map.png"}")
-                            ).asImageBitmap())
                         override val mapName: String
                             get() = f.removeSuffix(".tmx")
                         override val mapType: MapType
                             get() = MapType.SkirmishMap
+
+                        override fun openImageInputStream(): InputStream? {
+                            return assets.open("maps/skirmish/${f.removeSuffix(".tmx") + "_map.png"}")
+                        }
 
                         override fun openInputStream(): InputStream {
                             return com.corrodinggames.rts.game.b.b.a("maps/skirmish/$f")
@@ -241,22 +233,26 @@ class GameImpl : Game, CoroutineScope {
                 path?.forEachIndexed { i, name ->
                         maps.add(object : GameMap {
                             override val id: Int = i
-                            override val image: Painter? =
-                                if(type == MapType.CustomMap) {
-                                    com.corrodinggames.rts.appFramework.d.d(
-                                        "/SD/rusted_warfare_maps/$name"
-                                    )?.asImageBitmap()?.let { BitmapPainter(it) }
-                                } else null
                             override val mapName: String
                                 get() = name.removeSuffix(".tmx").removeSuffix(".rwsave")
                             override val mapType: MapType
                                 get() = type
 
+                            private val _displayName = LevelSelectActivity.convertLevelFileNameForDisplay(mapName)
+
+                            override fun openImageInputStream(): InputStream? {
+                                return if(type == MapType.CustomMap) {
+                                    com.corrodinggames.rts.appFramework.d.c(
+                                        "/SD/rusted_warfare_maps/$name"
+                                    )
+                                } else null
+                            }
+
                             override fun openInputStream(): InputStream {
                                 return com.corrodinggames.rts.game.b.b.a("/SD/rusted_warfare_maps/$name")
                             }
 
-                            override fun displayName(): String = LevelSelectActivity.convertLevelFileNameForDisplay(mapName)
+                            override fun displayName(): String = _displayName
                         })
                     }
                 _maps[type] = maps.toList()
@@ -319,8 +315,11 @@ class GameImpl : Game, CoroutineScope {
             object : Replay {
                 override val id: Int = i
                 override val name: String = str
+
+                private val _displayName = LoadLevelActivity.convertDataFileNameForDisplay(com.corrodinggames.rts.gameFramework.e.a.q(name))
+
                 override fun displayName(): String {
-                    return LoadLevelActivity.convertDataFileNameForDisplay(com.corrodinggames.rts.gameFramework.e.a.q(name));
+                    return _displayName
                 }
             }
         } ?: listOf()

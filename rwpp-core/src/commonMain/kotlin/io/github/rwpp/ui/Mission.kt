@@ -94,8 +94,6 @@ fun MissionView(onExit: () -> Unit) {
                         missions = getMissionsByType(getAllMissionTypes()[selectedIndex0])
                     }
 
-                    val state = rememberLazyListState()
-
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(5),
                     ) {
@@ -105,7 +103,7 @@ fun MissionView(onExit: () -> Unit) {
                         ) {
                             val mission = missions[it]
                             val difficulty = Difficulty.entries[selectedIndex1]
-                            MapItem(mission.name, mission.image) {
+                            MapItem(mission.displayName(), mission) {
                                 startNewMissionGame(
                                     difficulty,
                                     mission

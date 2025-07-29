@@ -51,8 +51,7 @@ You can download RWPP release version in the releases.
 
 <h1 align="center"> Build </h1>
 
-- Using OpenJdk 17 or above.
-- Run gradle task `kspKotlin` to build necessary libs at first.
+- Use OpenJdk 17 or above.
 - For desktop, run task `rwpp-desktop:packageReleaseUberJarForCurrentOS`
 - To build msi, run task `rwpp-desktop:packageWixDistribution` (Note that you need .net SDK)
 - For android, assets and res are missing for some reason, you can find them in your Rusted Warfare client.

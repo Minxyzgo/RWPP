@@ -13,6 +13,9 @@ import com.corrodinggames.rts.gameFramework.i.b
 import com.corrodinggames.rts.gameFramework.k
 import com.corrodinggames.rts.gameFramework.k.d
 import io.github.rwpp.android.MainActivity
+import io.github.rwpp.event.broadcastIn
+import io.github.rwpp.event.events.ReloadModEvent
+import io.github.rwpp.event.events.ReloadModFinishedEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
@@ -30,6 +33,7 @@ class ModManagerImpl : ModManager {
     private var mods: List<Mod>? = null
 
     override suspend fun modReload() = withContext(Dispatchers.IO) {
+        ReloadModEvent().broadcastIn()
         val t = GameEngine.t()
         modSaveChange()
         val aVar = t.bW
@@ -38,6 +42,7 @@ class ModManagerImpl : ModManager {
         aVar.a(false, false)
         t.bo = false
         t.q()
+        ReloadModFinishedEvent().broadcastIn()
     }
 //
 //    override fun modUpdate() {

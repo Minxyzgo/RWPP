@@ -35,7 +35,7 @@ import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.Settings
-import io.github.rwpp.core.UI
+import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.CloseUIPanelEvent
 import io.github.rwpp.external.ExternalHandler
@@ -49,6 +49,9 @@ import io.github.rwpp.rwpp_core.generated.resources.*
 import io.github.rwpp.widget.*
 import io.github.rwpp.widget.v2.ExpandedCard
 import io.github.rwpp.widget.v2.LazyColumnScrollbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import java.io.File
@@ -60,7 +63,6 @@ fun ModsView(onExit: () -> Unit) {
     val modManager = koinInject<ModManager>()
     val game = koinInject<Game>()
 
-    var resourceBrowserVisible by remember { mutableStateOf(false) }
     var deletedMod by remember { mutableStateOf(false) }
     val mods = remember { SnapshotStateList<Mod>().apply { addAll(modManager.getAllMods()) } }
     var filter by remember { mutableStateOf("") }
@@ -69,10 +71,10 @@ fun ModsView(onExit: () -> Unit) {
             it.name.uppercase().contains(filter.uppercase())
         }
     }
+
+    var scope = rememberCoroutineScope()
     var updated by remember { mutableStateOf(false) }
     var enabledChanged by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var loadingAction by remember { mutableStateOf<suspend () -> Unit>({}) }
     var disableAll by remember { mutableStateOf(false) }
 
     val enabledMods = remember(enabledChanged, filteredMods.size) {
@@ -83,26 +85,18 @@ fun ModsView(onExit: () -> Unit) {
         filteredMods.filter { !it.isEnabled }
     }
 
-
-
-    LoadingView(isLoading, onLoaded = { isLoading = false }) {
-        loadingAction()
-        true
-    }
-
     LaunchedEffect(Unit) {
         permissionHelper.requestExternalStoragePermission()
     }
 
     fun reload() {
-        loadingAction = {
+        scope.launch(Dispatchers.IO) {
             modManager.modReload()
             game.getAllMaps(true)
             mods.clear()
             mods.addAll(modManager.getAllMods())
             updated = !updated
         }
-        isLoading = true
     }
 
     BackHandler(true) {
@@ -114,10 +108,6 @@ fun ModsView(onExit: () -> Unit) {
         onDispose {
             CloseUIPanelEvent("mods").broadcastIn()
         }
-    }
-
-    ResourceBrowser(resourceBrowserVisible) {
-        resourceBrowserVisible = false
     }
 
     @Composable
@@ -172,7 +162,7 @@ fun ModsView(onExit: () -> Unit) {
                         Text(
                             errorMessage,
                             modifier = Modifier.padding(start = 2.dp),
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = Color.Red
                         )
                     }
@@ -346,18 +336,6 @@ fun ModsView(onExit: () -> Unit) {
                 }
 
                 RWTextButton(
-                    readI18n("mod.resourceBrowser"),
-                    leadingIcon = {
-                        Icon(
-                            painterResource(Res.drawable.public_30),
-                            null,
-                            modifier = Modifier.size(30.dp)
-                        )
-                    },
-                    modifier = Modifier.padding(5.dp)
-                ) { resourceBrowserVisible = true }
-
-                RWTextButton(
                     readI18n("mod.disableAll"),
                     leadingIcon = {
                         Icon(
@@ -379,7 +357,7 @@ fun ModsView(onExit: () -> Unit) {
                         )
                     },
                     modifier = Modifier.padding(5.dp),
-                ) { loadingAction = { modManager.modSaveChange(); onExit() }; isLoading = true }
+                ) { runBlocking { modManager.modSaveChange() }; onExit() }
             }
         }
     ) { paddingValues ->
@@ -395,8 +373,6 @@ fun ModsView(onExit: () -> Unit) {
                         onExit()
                     }
                     Column {
-
-
                         Filter()
                         Spacer(modifier = Modifier.size(20.dp))
 

@@ -15,7 +15,7 @@ joinServer = "加入服务器"
 userName = "用户名"
 useAsDefaultList = "用作默认房间列表"
 battleroom = "战役室"
-transferMod = "传输模组 (实验性)"
+transferMod = "传输模组"
 addToBlackList = "添加进黑名单"
 join = "加入"
 password = "密码"
@@ -51,6 +51,7 @@ mapView = "地图视图"
 mapType = "地图类型"
 spawnPointTip = "出生点控制着玩家在地图上的初始位置。大多数地图使用偶数出生点。"
 teamTip = "具有相同队伍的玩家将会团结在一起。"
+setTeam = "设置队伍"
 
 [mod]
 update = "刷新"
@@ -62,11 +63,18 @@ delete = "删除"
 enabled = "已启用"
 disabled = "已禁用"
 inputFile = "导入文件"
+loadInfo = "请导入.rwmod文件"
+removeInfo = "删除模组失败，请禁用后并重启重试"
+
+[browser]
+user = "用户"
+username = "手机/邮箱"
+password = "密码"
+login = "登录"
 resourceBrowser = "资源浏览器"
 resourceType = "资源类型"
 loadMore = "加载更多"
-loadInfo = "请导入.rwmod文件"
-removeInfo = "删除模组失败，请禁用后并重启重试"
+search = "搜索"
 
 [menu]
 mission = "战役"
@@ -114,11 +122,17 @@ improvedHealthBar = "改进血量条"
 showUnitTargetLine = "显示单位目标线 (多人模式受限)"
 boldText = "列表粗体文字"
 showExtraButton = "显示额外按钮"
+renderingBackend = "渲染后端 (需要重启)"
 
 [extension]
 extension = "扩展"
 resource = "资源"
-
+loadedInfo = "加载成功，请重启RWPP以生效"
+restart = "重启"
+denpendencyInfo = "该扩展依赖于以下扩展: {0}"
+minGameVersion = "该扩展要求游戏版本至少为 {0}"
+require = "扩展: {0} 无法被启用，请检查所需的依赖和最小游戏版本是否满足"
+supportedPlatform = "支持的平台: {0}"
 
 [ingame]
 sendMessage = "发送消息"

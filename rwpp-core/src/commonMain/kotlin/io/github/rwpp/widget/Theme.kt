@@ -17,8 +17,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import io.github.rwpp.config.Settings
-import io.github.rwpp.core.UI
 import io.github.rwpp.game.Game
+import io.github.rwpp.ui.UI
 import org.koin.compose.koinInject
 
 val RWOutlinedTextColors
@@ -89,17 +89,25 @@ val defaultRWPPColorScheme = darkColorScheme(
     )
 
 @Composable
-fun RWPPTheme(content: @Composable () -> Unit) {
+fun RWPPTheme(default: Boolean = false, content: @Composable () -> Unit) {
     val jostFonts = JostFonts()
     val valoraxFont = ValoraxFont()
-    val game = koinInject<Game>()
-    val settings = koinInject<Settings>()
-    val selectedColorScheme = remember(UI.selectedColorSchemeName) { themes[UI.selectedColorSchemeName]!! }
+    val selectedColorScheme = remember(
+        if (default)
+            UI.selectedColorSchemeName
+        else Unit
+    ) { themes[if (default) "RWPP" else UI.selectedColorSchemeName]!! }
 
-    remember(UI.selectedColorSchemeName) {
-        if (settings.changeGameTheme) {
-            val color = themes[UI.selectedColorSchemeName]!!.primary
-            game.gui.textPaint.argb = color.toArgb()
+    if (!default) {
+        val game = koinInject<Game>()
+        val settings = koinInject<Settings>()
+
+
+        remember(UI.selectedColorSchemeName) {
+            if (settings.changeGameTheme) {
+                val color = themes[UI.selectedColorSchemeName]!!.primary
+                game.gui.textPaint.argb = color.toArgb()
+            }
         }
     }
 

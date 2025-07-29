@@ -43,21 +43,23 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.AppContext
 import io.github.rwpp.config.*
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.CloseUIPanelEvent
-import io.github.rwpp.event.events.HostGameEvent
 import io.github.rwpp.event.events.JoinGameEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.data.RoomOption
+import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.gameVersion
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.io.SizeUtils
 import io.github.rwpp.logger
+import io.github.rwpp.maxModSize
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.sorted
 import io.github.rwpp.platform.BackHandler
-import io.github.rwpp.platform.Platform
 import io.github.rwpp.platform.readPainterByBytes
 import io.github.rwpp.rwpp_core.generated.resources.*
 import io.github.rwpp.widget.*
@@ -79,7 +81,7 @@ fun MultiplayerView(
     onExit: () -> Unit,
     onOpenRoomView: () -> Unit,
 ) {
-    BackHandler(true, onExit)
+    BackHandler(UI.showMultiplayerView, onExit)
     DisposableEffect(Unit) {
         onDispose {
             CloseUIPanelEvent("multiplayer").broadcastIn()
@@ -235,21 +237,22 @@ fun MultiplayerView(
 
             LargeDividingLine { 0.dp }
 
+            val modManager = koinInject<ModManager>()
             var enableMods by remember { mutableStateOf(false) }
             var hostByRCN by remember { mutableStateOf(false) }
-            // var transferMod by remember { mutableStateOf(false) }
-//            val modSize by remember {
-//                mutableStateOf(
-//                    modManager.getAllMods()
-//                        .filter { it.isEnabled }
-//                        .sumOf { it.getSize() }
-//                )
-//            }
+            var transferMod by remember { mutableStateOf(false) }
+            val modSize by remember {
+                mutableStateOf(
+                    modManager.getAllMods()
+                        .filter { it.isEnabled }
+                        .sumOf { it.getSize() }
+                )
+            }
 
 
-//            remember(enableMods) {
-//                if(!enableMods) transferMod = false
-//            }
+            remember(enableMods, hostByRCN) {
+                if(!enableMods || hostByRCN) transferMod = false
+            }
 
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -262,18 +265,17 @@ fun MultiplayerView(
                     Text(readI18n("multiplayer.hostByRCN"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 5.dp))
                 }
 
-//            Row {
-//                RWCheckbox(transferMod,
-//                    onCheckedChange = { transferMod = !transferMod },
-//                    modifier = Modifier.padding(5.dp),
-//                    enabled = enableMods && modSize <= maxModSize
-//                )
-//                Text("${readI18n("multiplayer.transferMod")} ${if(modSize > maxModSize) "(Disabled for total mods size: ${SizeUtils.byteToMB(modSize)}MB > ${SizeUtils.byteToMB(maxModSize)}MB)" else ""}",
-//                    style = MaterialTheme.typography.bodyLarge,
-//                    modifier = Modifier.padding(top = 15.dp),
-//                    color = if(enableMods && modSize <= maxModSize) Color.White else Color.Gray
-//                )
-//            }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RWCheckbox(transferMod,
+                        onCheckedChange = { transferMod = !transferMod },
+                        modifier = Modifier.padding(5.dp),
+                        enabled = enableMods && modSize <= maxModSize && !hostByRCN
+                    )
+                    Text("${readI18n("multiplayer.transferMod")} ${if(modSize > maxModSize) "(Disabled for total mods size: ${SizeUtils.byteToMB(modSize)}MB > ${SizeUtils.byteToMB(maxModSize)}MB)" else ""}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(top = 15.dp),
+                    )
+                }
 
 
                 var password by remember { mutableStateOf("") }
@@ -301,7 +303,7 @@ fun MultiplayerView(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                     RWTextButton(readI18n("multiplayer.hostPrivate"), modifier = Modifier.padding(5.dp)) {
                         dismiss()
-                        game.gameRoom.option = RoomOption()
+                        game.gameRoom.option = RoomOption(transferMod, modSize.toInt())
                         if (hostByRCN) {
                             game.onQuestionCallback(if (enableMods) "smod" else "snew")
                             serverAddress = rcnAddress
@@ -315,7 +317,7 @@ fun MultiplayerView(
                     }
                     RWTextButton(readI18n("multiplayer.hostPublic"), modifier = Modifier.padding(5.dp)) {
                         dismiss()
-                        game.gameRoom.option = RoomOption()
+                        game.gameRoom.option = RoomOption(transferMod, modSize.toInt())
                         if (hostByRCN) {
                             game.onQuestionCallback(if (enableMods) "smodup" else "snewup")
                             serverAddress = rcnAddress
@@ -675,6 +677,7 @@ fun MultiplayerView(
                                                     serverData.config.useAsDefaultList = true
                                                     selectedDefaultRoomList = serverData
                                                 } else {
+                                                    selectedDefaultRoomList = null
                                                     serverData.config.useAsDefaultList = false
                                                 }
                                             }
@@ -1039,7 +1042,9 @@ fun MultiplayerView(
                             }
                         }
 
-                        if (Platform.isDesktop()) {
+                        val appContext = koinInject<AppContext>()
+
+                        if (appContext.isDesktop()) {
                             Card(
                                 modifier = Modifier.align(Alignment.BottomCenter).padding(1.dp),
                                 shape = RoundedCornerShape(10.dp),
@@ -1087,7 +1092,7 @@ fun MultiplayerView(
                             }
 
                             if (room.playerMaxCount != null) {
-                                return@filter room.playerMaxCount in playerLimitRange || room.playerMaxCount > 100
+                                return@filter room.playerMaxCount in playerLimitRange || room.playerMaxCount!! > 100
                             }
 
                             true

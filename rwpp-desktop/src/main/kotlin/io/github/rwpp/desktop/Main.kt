@@ -35,9 +35,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.*
+import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.config.Settings
-import io.github.rwpp.core.UI.chatMessages
+import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadcast
 import io.github.rwpp.event.broadcastIn
@@ -48,14 +49,13 @@ import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.comp.CompModule
 import io.github.rwpp.game.sendChatMessageOrCommand
-import io.github.rwpp.game.team.TeamModeModule
-import io.github.rwpp.i18n.parseI18n
 import io.github.rwpp.i18n.readI18n
-import io.github.rwpp.impl.CommonImplModule
+import io.github.rwpp.inject.GameLibraries
+import io.github.rwpp.inject.runtime.Builder
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.UI.chatMessages
 import io.github.rwpp.widget.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.koin.compose.koinInject
@@ -76,6 +76,7 @@ import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
+import kotlin.system.exitProcess
 
 
 typealias ColorCompose = androidx.compose.ui.graphics.Color
@@ -96,12 +97,6 @@ fun main(array: Array<String>) {
     }
 
     logger = LoggerFactory.getLogger(packageName)
-    displaySize =
-        GraphicsEnvironment
-            .getLocalGraphicsEnvironment()
-            .defaultScreenDevice
-            .displayMode
-            .run { Dimension(width, height) }
     native = array.contains("-native")
 
     if (native) {
@@ -128,14 +123,22 @@ fun main(array: Array<String>) {
 }
 
 fun swingApplication() = SwingUtilities.invokeLater {
+    koinInit = true
     appKoin = startKoin {
         logger(org.koin.core.logger.PrintLogger(org.koin.core.logger.Level.ERROR))
-        modules(ConfigModule().module, DesktopModule().module, TeamModeModule().module, CommonImplModule().module, CompModule().module)
+        modules(ConfigModule().module, DesktopModule().module, CompModule().module)
     }.koin
 
-    val app = appKoin.get<AppContext>()
-    runBlocking { parseI18n() }
-    app.init()
+    appKoin.get<ConfigIO>().readAllConfig()
+    Builder.outputDir = generatedLibDir
+    Builder.logger = defaultBuildLogger
+    val requireReloadingLib = Builder.prepareReloadingLib()
+
+    if (!requireReloadingLib) {
+        val app = appKoin.get<AppContext>()
+        app.init()
+    }
+
     Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
     File("mods/maps/")
         .walk()
@@ -144,13 +147,17 @@ fun swingApplication() = SwingUtilities.invokeLater {
             it.delete()
         }
 
-    KeyboardFocusManager.getCurrentKeyboardFocusManager()
-        .addKeyEventDispatcher { dispatcher ->
-            val event = runBlocking {
-                KeyboardEvent(dispatcher.keyCode).broadcast()
-            }
-            event.isIntercepted
-        }
+    val settings = appKoin.get<Settings>()
+    if (settings.renderingBackend != "Default") {
+        System.setProperty("SKIKO_RENDER_API", settings.renderingBackend.uppercase())
+    }
+
+    displaySize =
+        GraphicsEnvironment
+            .getLocalGraphicsEnvironment()
+            .defaultScreenDevice
+            .displayMode
+            .run { Dimension(width, height) }
 
     val panel = ComposePanel()
     panel.isVisible = true
@@ -161,33 +168,37 @@ fun swingApplication() = SwingUtilities.invokeLater {
     panel.setContent {
         var isLoading by remember { mutableStateOf(true) }
         var message by remember { mutableStateOf("loading...") }
-        val game = koinInject<Game>()
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
-                game.load(
-                    LoadingContext { message = it }
-                )
+                if (requireReloadingLib) {
+                    runCatching {
+                        Builder.init(GameLibraries.`game-lib`, File(System.getProperty("user.dir"), "game-lib.jar"))
 
-                GameLoadedEvent().broadcastIn()
+                        Builder.logger?.info("Apply config successfully. Now you can restart game to take effect. (已成功应用配置，请重启游戏以生效。)")
+                        if (native) {
+                            val processBuilder = ProcessBuilder(System.getProperty("user.dir") + "/RWPP.exe")
+                            processBuilder.start()
+                            exitProcess(0)
+                        }
+                    }.onFailure {
+                        Builder.logger?.error(it.stackTraceToString())
+                    }
+                } else {
+                    val game = appKoin.get<Game>()
+                    game.load { message = it }
 
-                isLoading = false
+                    GameLoadedEvent().broadcastIn()
+
+                    isLoading = false
+                }
             }
         }
-        val settings = koinInject<Settings>()
-        val isPremium = true
-        var backgroundImagePath by remember { mutableStateOf(settings.backgroundImagePath ?: "") }
-        val painter = remember (backgroundImagePath) {
-            if (backgroundImagePath.isNotBlank() && isPremium) {
-                runCatching { ImageIO.read(File(backgroundImagePath)).toPainter() }.getOrNull()
-            } else {
-                null
-            }
-        }
 
-        Box(
-            modifier = Modifier.fillMaxSize().composed {
-                if (backgroundImagePath.isBlank() || !isPremium || painter == null) {
-                    background(
+        if (requireReloadingLib) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
                         brush = Brush.verticalGradient(
                             listOf(
                                 ColorCompose.Black,
@@ -197,25 +208,59 @@ fun swingApplication() = SwingUtilities.invokeLater {
                                 ColorCompose.Black
                             )
                         )
-                    )
-                } else {
-                    this
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                RWPPTheme(true) {
+                    InjectConsole()
                 }
-            },
-            contentAlignment = Alignment.Center
-        ) {
-
-            if (backgroundImagePath.isNotBlank() && isPremium && painter != null) {
-                Image(
-                    painter = painter,
-                    null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+            }
+        } else {
+            val settings = koinInject<Settings>()
+            val isPremium = true
+            var backgroundImagePath by remember { mutableStateOf(settings.backgroundImagePath ?: "") }
+            val painter = remember(backgroundImagePath) {
+                if (backgroundImagePath.isNotBlank() && isPremium) {
+                    runCatching { ImageIO.read(File(backgroundImagePath)).toPainter() }.getOrNull()
+                } else {
+                    null
+                }
             }
 
-            if (isLoading) MenuLoadingView(message) else App(isPremium = isPremium) { path ->
-                backgroundImagePath = path
+            Box(
+                modifier = Modifier.fillMaxSize().composed {
+                    if (backgroundImagePath.isBlank() || !isPremium || painter == null) {
+                        background(
+                            brush = Brush.verticalGradient(
+                                listOf(
+                                    ColorCompose.Black,
+                                    androidx.compose.ui.graphics.Color(52, 52, 52),
+                                    androidx.compose.ui.graphics.Color(2, 48, 32),
+                                    androidx.compose.ui.graphics.Color(52, 52, 52),
+                                    ColorCompose.Black
+                                )
+                            )
+                        )
+                    } else {
+                        this
+                    }
+                },
+                contentAlignment = Alignment.Center
+            ) {
+
+                if (backgroundImagePath.isNotBlank() && isPremium && painter != null) {
+                    Image(
+                        painter = painter,
+                        null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                if (isLoading) MenuLoadingView(message) else App(isPremium = isPremium) { path ->
+                    backgroundImagePath = path
+                }
+
             }
         }
     }
@@ -223,11 +268,15 @@ fun swingApplication() = SwingUtilities.invokeLater {
     val window = JFrame()
     val frame = JFrame("退出RWPP")
     frame.setSize(300, 200)
-    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
-    window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
+    if (requireReloadingLib) {
+        window.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+    } else {
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
+        window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
+    }
     window.background = java.awt.Color.BLACK
     window.extendedState = JFrame.MAXIMIZED_BOTH
-    if (appKoin.get<Settings>().isFullscreen) {
+    if(!requireReloadingLib && appKoin.get<Settings>().isFullscreen) {
         window.isUndecorated = true
     } else {
         window.minimumSize = Dimension(800, 600)
@@ -235,14 +284,21 @@ fun swingApplication() = SwingUtilities.invokeLater {
     }
     window.title = "Rusted Warfare Plus Plus"
     window.iconImage = ImageIO.read(ClassLoader.getSystemResource("composeResources/io.github.rwpp.rwpp_core.generated.resources/drawable/logo.png"))
-    window.addWindowListener(object : WindowAdapter() {
-        override fun windowClosing(e: WindowEvent?) {
-            val result = JOptionPane.showConfirmDialog(frame, "确定要退出RWPP吗？", "提示", JOptionPane.YES_NO_OPTION)
-            if (result == JOptionPane.YES_OPTION) {
-                appKoin.get<AppContext>().exit()
+    if (!requireReloadingLib) {
+        window.addWindowListener(object : WindowAdapter() {
+            override fun windowClosing(e: WindowEvent?) {
+                val result = JOptionPane.showConfirmDialog(
+                    frame,
+                    "Are you sure to exit RWPP? (确定要退出RWPP吗？)",
+                    "提示",
+                    JOptionPane.YES_NO_OPTION
+                )
+                if (result == JOptionPane.YES_OPTION) {
+                    appKoin.get<AppContext>().exit()
+                }
             }
-        }
-    })
+        })
+    }
 
     val canvas = Canvas()
     gameCanvas = canvas
@@ -254,27 +310,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
     window.layout = BorderLayout()
     window.add(canvas, BorderLayout.CENTER)
     window.add(panel, BorderLayout.CENTER)
-    window.addComponentListener(object : ComponentAdapter() {
-        override fun componentResized(e: ComponentEvent) {
-            val scale = getDPIScale()
 
-            // 计算逻辑像素尺寸（抵消 HiDPI 缩放）
-            val logicalWidth = (window.contentPane.width * scale).toInt()
-            val logicalHeight = (window.contentPane.height * scale).toInt()
-
-            // 设置 Canvas 物理像素尺寸
-            canvas.setSize(
-                logicalWidth,
-                logicalHeight
-            )
-
-            resetSendMessageDialogLocation()
-        }
-
-        override fun componentMoved(e: ComponentEvent) {
-            resetSendMessageDialogLocation()
-        }
-    })
 
     window.isVisible = true
     panel.requestFocus()
@@ -334,7 +370,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                         Spacer(modifier = Modifier.height(30.dp))
                         TextField(
                             value = allChatMessages,
-                            onValueChange = {  },
+                            onValueChange = { allChatMessages = it },
                             readOnly = true,
                             textStyle = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.fillMaxWidth().weight(1f),
@@ -410,6 +446,28 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
     mainJFrame = window
     canvas.createBufferStrategy(2)
+
+    window.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent) {
+            val scale = getDPIScale()
+
+            // 计算逻辑像素尺寸（抵消 HiDPI 缩放）
+            val logicalWidth = (window.contentPane.width * scale).toInt()
+            val logicalHeight = (window.contentPane.height * scale).toInt()
+
+            // 设置 Canvas 物理像素尺寸
+            canvas.setSize(
+                logicalWidth,
+                logicalHeight
+            )
+
+            resetSendMessageDialogLocation()
+        }
+
+        override fun componentMoved(e: ComponentEvent) {
+            resetSendMessageDialogLocation()
+        }
+    })
 }
 
 fun showSendMessageDialog() {

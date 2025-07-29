@@ -3,6 +3,7 @@ import okhttp3.Callback
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.Response
 import org.jetbrains.annotations.TestOnly
 import org.junit.Test
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeUnit
 class MainTest {
     @Test
     fun test() {
+
         searchBBS(
             bbsId = "4",
             keyword = "红警",
@@ -89,6 +91,41 @@ class MainTest {
         callback(Result.success(response.body?.string() ?: ""))
     }
 
+    @Test
+    fun login() {
+        val requestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("username", "")
+            .addFormDataPart("password", "")
+            .build()
+        // 构建请求对象
+        val request = Request.Builder()
+            .url("https://www.rtsbox.cn/api/login/api.php")
+            .post(requestBody)
+            .build()
 
+        val response = okHttpClient.newCall(request).execute()
 
+        response.headers.forEach { println(it.toString()) }
+        println(response.body?.string() ?: "")
+    }
+
+    @Test
+    fun userInfo() {
+        val requestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("type", "UserInfo")
+            .addFormDataPart("accountID", "124216")
+            .build()
+        // 构建请求对象
+        val request = Request.Builder()
+            .url("https://www.rtsbox.cn/api/it_api/data.php")
+            .post(requestBody)
+            .build()
+
+        val response = okHttpClient.newCall(request).execute()
+
+        response.headers.forEach { println(it.toString()) }
+        println(response.body?.string() ?: "")
+    }
 }

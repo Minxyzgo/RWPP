@@ -27,6 +27,6 @@ fun Modifier.autoClearFocus() = composed {
         indication = null
     ) {
         keyboardController?.hide()
-        focusManager.clearFocus(true)
+        focusManager.clearFocus()
     }
 }

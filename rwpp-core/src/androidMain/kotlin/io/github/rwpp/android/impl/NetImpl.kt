@@ -10,12 +10,12 @@ package io.github.rwpp.android.impl
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import io.github.rwpp.appKoin
 import io.github.rwpp.core.Initialization
 import io.github.rwpp.impl.BaseNetImpl
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
 import org.koin.core.annotation.Single
-import org.koin.core.component.get
 
 @Single(binds = [Net::class, Initialization::class])
 class NetImpl : BaseNetImpl() {
@@ -29,6 +29,6 @@ class NetImpl : BaseNetImpl() {
 
     override fun openUriInBrowser(uri: String) {
         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-        get<Context>().startActivity(browserIntent)
+        appKoin.get<Context>().startActivity(browserIntent)
     }
 }

@@ -33,7 +33,6 @@ import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.team.TeamMode
-import io.github.rwpp.logger
 import io.github.rwpp.net.Packet
 import io.github.rwpp.net.packets.GamePacket
 import io.github.rwpp.utils.Reflect
@@ -541,51 +540,53 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     }
 
     override fun startGame() {
-        val t: k = GameEngine.t()
-        gameOver = false
-        defeatedPlayerSet.clear()
-        isGaming = true
+        uiHandler.post {
+            val t: k = GameEngine.t()
+            gameOver = false
+            defeatedPlayerSet.clear()
+            isGaming = true
 
-        if(isHost || isSinglePlayerGame) {
-            if (!isSinglePlayerGame && gameMapTransformer != null) {
-                val xmlMap = XMLMap(selectedMap)
-                gameMapTransformer!!.invoke(xmlMap)
-                val path = "/storage/emulated/0/rustedWarfare/maps/generated_${LevelSelectActivity.convertLevelFileNameForDisplay(selectedMap.mapName + selectedMap.getMapSuffix()) + selectedMap.getMapSuffix()}"
-                val file = xmlMap.saveToFile(path)
-                GameEngine.t().bU.aB = path
-                GlobalEventChannel.filter(DisconnectEvent::class).subscribeOnce {
-                    file.delete()
+            if(isHost || isSinglePlayerGame) {
+                if (!isSinglePlayerGame && gameMapTransformer != null) {
+                    val xmlMap = XMLMap(selectedMap)
+                    gameMapTransformer!!.invoke(xmlMap)
+                    val path = "/storage/emulated/0/rustedWarfare/maps/generated_${LevelSelectActivity.convertLevelFileNameForDisplay(selectedMap.mapName + selectedMap.getMapSuffix()) + selectedMap.getMapSuffix()}"
+                    val file = xmlMap.saveToFile(path)
+                    GameEngine.t().bU.aB = path
+                    GlobalEventChannel.filter(DisconnectEvent::class).subscribeOnce {
+                        file.delete()
+                    }
+                    GameEngine.t().bU.aA.a = com.corrodinggames.rts.gameFramework.j.at.entries[1]
+                    updateUI()
                 }
-                GameEngine.t().bU.aA.a = com.corrodinggames.rts.gameFramework.j.at.entries[1]
-                updateUI()
+                t.bU.q()
+                t.bU.n()
+                t.bU.a(null, false)
             }
-            t.bU.q()
-            t.bU.n()
-            t.bU.a(null, false)
-        }
 
-        MultiplayerBattleroomActivity.startGameCommon()
-        if(t.bI != null && t.bI.X) {
-            t.bU.bf = true
-            t.bU.bv = 0
-            t.bU.bu = 0
-            //GameEngine.K()
-            val intent = Intent(game.get(), InGameActivity::class.java)
-            intent.putExtra("level", t.di)
-            gameLauncher.launch(intent)
-            StartGameEvent().broadcastIn()
-            return
+            MultiplayerBattleroomActivity.startGameCommon()
+            if(t.bI != null && t.bI.X) {
+                t.bU.bf = true
+                t.bU.bv = 0
+                t.bU.bu = 0
+                //GameEngine.K()
+                val intent = Intent(game.get(), InGameActivity::class.java)
+                intent.putExtra("level", t.di)
+                gameLauncher.launch(intent)
+                StartGameEvent().broadcastIn()
+                return@post
+            }
+            //d("Not starting multiplayer game because map failed to load")
+            val aeVar = t.bU
+            aeVar.be = true
+            //d("onStartGameFailed")
+            if(!aeVar.D) {
+                aeVar.b("Map load failed")
+                return@post
+            }
+            aeVar.aY = false
+            aeVar.h("Map load failed.")
         }
-        //d("Not starting multiplayer game because map failed to load")
-        val aeVar = t.bU
-        aeVar.be = true
-        //d("onStartGameFailed")
-        if(!aeVar.D) {
-            aeVar.b("Map load failed")
-            return
-        }
-        aeVar.aY = false
-        aeVar.h("Map load failed.")
     }
 
     private fun getMapRealPath(map: GameMap): String {

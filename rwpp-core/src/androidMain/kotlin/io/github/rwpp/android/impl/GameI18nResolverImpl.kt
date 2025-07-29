@@ -7,11 +7,13 @@
 
 package io.github.rwpp.android.impl
 
+import io.github.rwpp.core.Initialization
 import io.github.rwpp.i18n.GameI18nResolver
+import io.github.rwpp.impl.BaseGameI18nResolverImpl
 import org.koin.core.annotation.Single
 
-@Single
-class GameI18nResolverImpl : GameI18nResolver {
+@Single([GameI18nResolver::class, Initialization::class])
+class GameI18nResolverImpl : BaseGameI18nResolverImpl() {
     override fun i18n(str: String, vararg args: Any?): String {
         return com.corrodinggames.rts.gameFramework.h.a.a(str, args)
     }

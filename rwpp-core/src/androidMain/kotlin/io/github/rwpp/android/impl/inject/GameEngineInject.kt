@@ -10,11 +10,11 @@ package io.github.rwpp.android.impl.inject
 import android.util.Log
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.isReturnToBattleRoom
-import io.github.rwpp.core.UI
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
 import io.github.rwpp.inject.InterruptResult
+import io.github.rwpp.ui.UI
 
 @InjectClass(GameEngine::class)
 object GameEngineInject {
@@ -39,7 +39,7 @@ object GameEngineInject {
 
     @Inject("b", InjectMode.InsertBefore)
     fun showToast(title: String, message: String): Any {
-        return if (title == "Players" || title == "Briefing") {
+        return if (title == "Players" || title == "Briefing" || title == "Search units") {
             Unit
         } else {
             InterruptResult(Unit)

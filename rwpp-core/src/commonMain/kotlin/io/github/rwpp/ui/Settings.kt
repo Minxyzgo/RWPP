@@ -27,9 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.rwpp.AppContext
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.Settings
-import io.github.rwpp.core.UI
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.CloseUIPanelEvent
 import io.github.rwpp.external.ExternalHandler
@@ -39,7 +39,6 @@ import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.LatestVersionProfile
 import io.github.rwpp.net.Net
 import io.github.rwpp.platform.BackHandler
-import io.github.rwpp.platform.Platform
 import io.github.rwpp.widget.*
 import io.github.rwpp.widget.v2.ExpandedCard
 import io.github.rwpp.widget.v2.LazyColumnScrollbar
@@ -65,7 +64,7 @@ fun SettingsView(
     }
 
     val configIO = koinInject<ConfigIO>()
-    koinInject<Game>()
+    val appContext = koinInject<AppContext>()
     val settings = koinInject<Settings>()
 
 
@@ -152,7 +151,7 @@ fun SettingsView(
                                         SettingsSwitchComp("quickRally")
                                         SettingsSwitchComp("doubleClickToAttackMove")
 
-                                        if (Platform.isDesktop()) {
+                                        if (appContext.isDesktop()) {
                                             SettingsSwitchComp(
                                                 readI18n("menus.settings.option.immersiveFullScreen", I18nType.RW),
                                                 defaultValue = settings.isFullscreen,
@@ -169,15 +168,30 @@ fun SettingsView(
                                             SettingsSwitchComp("useMinimapAllyColors")
                                             SettingsSwitchComp("showWarLogOnScreen")
                                             SettingsSwitchComp("smartSelection_v2", "smartSelection") //v2 ???
-                                            SettingsSwitchComp("forceEnglish")
+                                            SettingsSwitchComp(
+                                                "forceEnglish",
+                                                labelName = readI18n("menus.settings.option.forceEnglish", I18nType.RW)
+                                            ) { value ->
+                                                settings.forceEnglish = value
+                                                configIO.setGameConfig("forceEnglish", value)
+                                            }
                                             SettingsSwitchComp("showUnitGroups", "unitGroupInterface")
-                                            if (Platform.isDesktop()) {
+                                            if (appContext.isDesktop()) {
                                                 SettingsSlider(
                                                     readI18n("settings.maxDisplayUnitGroupCount"),
                                                     settings.maxDisplayUnitGroupCount / 10f,
                                                     { settings.maxDisplayUnitGroupCount = (it * 10).roundToInt() },
                                                     valueFormat = { "${(it * 10).roundToInt()}" },
                                                 )
+
+
+                                                val list = remember { listOf("Default", "Software", "OpenGL") }
+                                                var selectedIndex by remember { mutableStateOf(list.indexOf(settings.renderingBackend)) }
+
+                                                SettingsDropDown("renderingBackend", list, selectedIndex) { index, backend ->
+                                                    settings.renderingBackend = list[index]
+                                                    selectedIndex = index
+                                                }
                                             }
                                             SettingsSwitchComp(
                                                 "",
@@ -187,7 +201,7 @@ fun SettingsView(
                                                 settings.enhancedReinforceTroops = it
                                             }
 
-                                            if (Platform.isDesktop()) {
+                                            if (appContext.isDesktop()) {
                                                 SettingsSwitchComp(
                                                     "",
                                                     readI18n("settings.showUnitTargetLine"),
@@ -227,7 +241,7 @@ fun SettingsView(
                                                 configIO.setGameConfig("teamUnitCapHostedGame", teamUnitCapHostedGame ?: 100)
                                             }
                                         }
-                                        if (Platform.isDesktop()) {
+                                        if (appContext.isDesktop()) {
                                             SettingsGroup("", readI18n("settings.buildings")) {
                                                 SettingsSwitchComp(
                                                     "",

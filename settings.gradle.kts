@@ -10,8 +10,7 @@ rootProject.name = "RWPP"
 include(":rwpp-desktop")
 include(":rwpp-core")
 include(":rwpp-ksp")
-include(":rwpp-core-utils")
-include(":rwpp-game-impl")
+include(":rwpp-core-api")
 
 pluginManagement {
     repositories {
@@ -51,4 +50,3 @@ dependencyResolutionManagement {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 }
-

@@ -24,9 +24,10 @@ kotlin {
     sourceSets {
         val jvmMain by getting {
             dependencies {
-                implementation("org.javassist:javassist:3.30.2-GA")
                 implementation("com.google.devtools.ksp:symbol-processing-api:2.1.0-1.0.29")
-                api(project(":rwpp-core-utils"))
+                implementation("org.javassist:javassist:3.30.2-GA")
+
+                api(project(":rwpp-core-api"))
                 //compileOnly(project(":desktop"))
             }
             kotlin.srcDir("src/main/kotlin")

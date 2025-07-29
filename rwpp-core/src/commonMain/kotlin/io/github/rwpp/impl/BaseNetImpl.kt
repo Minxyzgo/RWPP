@@ -7,12 +7,12 @@
 
 package io.github.rwpp.impl
 
-import io.github.rwpp.net.BBSProtocol
-import io.github.rwpp.net.Client
-import io.github.rwpp.net.Net
-import io.github.rwpp.net.Packet
-import io.github.rwpp.net.RTSBoxProtocol
+import com.eclipsesource.json.Json
+import io.github.rwpp.net.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import okhttp3.Interceptor
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import java.io.DataInputStream
 import java.util.concurrent.TimeUnit
@@ -31,5 +31,84 @@ abstract class BaseNetImpl : Net {
         .readTimeout(5000L, TimeUnit.MILLISECONDS)
         .build()
 
-    override val bbsProtocols: MutableList<BBSProtocol> = mutableListOf(RTSBoxProtocol)
+    override val scope: CoroutineScope = CoroutineScope(SupervisorJob())
+    override val bbsProtocols: MutableList<BBSProtocol> = mutableListOf(RTSBoxProtocol, RTSBoxDownloadWeeklyProtocol)
 }
+
+
+val RTSBoxProtocol = BBSProtocol(
+    "https://www.rtsbox.cn/api/search_bbs.php",
+    "铁锈盒子",
+    { page, keyword, type ->
+        MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .apply {
+                addFormDataPart("bbs_id", if (type == ResourceType.Mod) "4" else "5")
+                addFormDataPart("keyword", keyword)
+                addFormDataPart("page", page.toString())
+            }
+            .build()
+    },
+    { response ->
+        runCatching {
+            val jsonBody = Json.parse(response.body?.string()).asObject()
+            var id = 0
+            buildList {
+                for (data in jsonBody.get("data").asArray()) {
+                    val info = data.asObject()
+                    val title = String(info.getString("title", "???").toByteArray(), Charsets.UTF_8)
+
+                    add(
+                        NetResourceInfo(
+                            title + id, // ???
+                            title,
+                            bbsUrl = info.getString("bbsurl", "???"),
+                            //downloadUrl = info.getString("downurl", "???"),
+                            imageUrl = info.getString("img", null)
+                        )
+                    )
+
+                    id++
+                }
+            }.toTypedArray()
+        }.getOrNull()
+    }
+)
+
+val RTSBoxDownloadWeeklyProtocol = BBSProtocol(
+    "https://www.rtsbox.cn/api/lt_api/data.php",
+    "铁锈盒子 下载周榜",
+    { page, _, type ->
+        MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .apply {
+                addFormDataPart("catID", if (type == ResourceType.Mod) "mod" else "map")
+                addFormDataPart("type", "WeekDownload")
+                addFormDataPart("page", page.toString())
+            }
+            .build()
+    },
+    { response ->
+        runCatching {
+            val jsonBody = Json.parse(response.body?.string().apply { println(this) })
+            buildList {
+                for (data in jsonBody.asArray()) {
+                    val info = data.asObject()
+                    val title = String(info.getString("title", "???").toByteArray(), Charsets.UTF_8)
+                    val postID = info.getInt("postID", -1)
+                    val downloadNum = info.getInt("download_num", -1)
+
+                    add(
+                        NetResourceInfo(
+                            postID.toString(),
+                            title,
+                            bbsUrl = "https://www.rtsbox.cn/$postID.html",
+                            imageUrl = info.getString("img_url", null),
+                            downloadNum = downloadNum
+                        )
+                    )
+                }
+            }.toTypedArray()
+        }.getOrNull()
+    }
+)

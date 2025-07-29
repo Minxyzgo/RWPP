@@ -7,16 +7,11 @@
 
 package io.github.rwpp.ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -24,21 +19,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import io.github.rwpp.app.PermissionHelper
-import io.github.rwpp.config.Settings
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
 import io.github.rwpp.i18n.readI18n
-import io.github.rwpp.rwpp_core.generated.resources.Res
-import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
 import io.github.rwpp.widget.*
 import io.github.rwpp.widget.v2.RWIconButton
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -131,7 +123,6 @@ fun MapViewDialog(
                         }
                     }
 
-                    val state = rememberLazyListState()
                     val state1 = rememberLazyGridState()
 
                     LaunchedEffect(Unit) {
@@ -144,12 +135,13 @@ fun MapViewDialog(
                     ) {
                         items(
                             count = maps.size,
-                            key = { maps[it].id }
+                            key = { maps[it].mapName + maps[it].id }
                         ) {
                             val map = maps[it]
+                            val name = rememberSaveable { map.displayName() }
                             MapItem(
-                                map.displayName(),
-                                map.image,
+                                name,
+                                map,
                                 mapType != MapType.SavedGame
                             ) { onSelectedMap(it, map); d() }
                         }
@@ -163,33 +155,28 @@ fun MapViewDialog(
 @Composable
 fun LazyGridItemScope.MapItem(
     name: String,
-    image: Painter?,
+    model: Any?,
     showImage: Boolean = true,
     onClick: () -> Unit,
 ) {
     BorderCard(
-        modifier = Modifier.then(if (koinInject<Settings>().enableAnimations)
-            Modifier.animateItem()
-        else Modifier)
+        modifier = Modifier.then(Modifier.animateItem())
             .padding(10.dp)
             .sizeIn(maxHeight = 200.dp * scaleFitFloat(), maxWidth = 200.dp * scaleFitFloat()),
         onClick = onClick,
         backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.7f)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if(showImage) Image(
-                modifier = Modifier.padding(5.dp).weight(1f),
-                painter = image ?: painterResource(Res.drawable.error_missingmap),
-                contentDescription = null
-            )
-            Text(
-                name,
-                modifier = Modifier.padding(5.dp),
-                style = MaterialTheme.typography.headlineSmall
+        if(showImage) {
+            AsyncImage(
+                model,
+                contentDescription = null,
+                modifier = Modifier.padding(5.dp).weight(1f).align(Alignment.CenterHorizontally),
             )
         }
+        Text(
+            name,
+            modifier = Modifier.padding(5.dp).align(Alignment.CenterHorizontally),
+            style = MaterialTheme.typography.headlineSmall
+        )
     }
 }

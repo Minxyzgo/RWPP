@@ -9,16 +9,11 @@ package io.github.rwpp.android.impl
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.painter.Painter
 import io.github.rwpp.R
 import io.github.rwpp.android.fileChooser
 import io.github.rwpp.android.pickFileActions
 import io.github.rwpp.core.Initialization
 import io.github.rwpp.external.Extension
-import io.github.rwpp.external.ExtensionConfig
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.impl.BaseExternalHandlerImpl
 import io.github.rwpp.io.unzipTo
@@ -27,7 +22,6 @@ import io.github.rwpp.resourceOutputDir
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import java.io.File
-import java.util.zip.ZipFile
 
 
 @Single(binds = [ExternalHandler::class, Initialization::class])
@@ -43,7 +37,6 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
             }
             return
         }
-
 
         val resourceList = listOf("units", "tilesets", "music", "shaders")
         resourceList.forEach {
@@ -79,29 +72,6 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         fileChooser.launch(intent)
     }
 
-    override fun newExtension(
-        isEnabled: Boolean,
-        isZip: Boolean,
-        extensionFile: File,
-        config: ExtensionConfig
-    ): Extension {
-        return object : Extension(
-            isEnabled, extensionFile, if (isZip) ZipFile(extensionFile) else null, config
-        ) {
-            override val iconPainter: Painter? by lazy {
-                if (config.icon.isBlank())
-                    null
-                else {
-                    BitmapPainter(
-                        BitmapFactory.decodeStream(
-                            zipFile?.let { it.getInputStream(it.getEntry(config.icon)) }
-                            ?: File(extensionFile, config.icon).inputStream()
-                        ).asImageBitmap()
-                    )
-                }
-            }
-        }
-    }
 
     //private val exFilePicker = ExFilePicker()
 }

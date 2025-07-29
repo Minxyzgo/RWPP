@@ -5,7 +5,7 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-@file:RedirectTo("com.corrodinggames.rts.R", "io.github.rwpp.R")
+//@file:RedirectTo("com.corrodinggames.rts.R", "io.github.rwpp.R")
 @file:RedirectTo("com.corrodinggames.rts.R\$anim", "io.github.rwpp.R\$anim")
 @file:RedirectTo("com.corrodinggames.rts.R\$array", "io.github.rwpp.R\$array")
 @file:RedirectTo("com.corrodinggames.rts.R\$attr", "io.github.rwpp.R\$attr")
@@ -21,6 +21,7 @@
 
 package io.github.rwpp.android.impl.inject
 
+import android.content.Context
 import io.github.rwpp.inject.*
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -33,6 +34,7 @@ import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.getResourceFileName
 import io.github.rwpp.appKoin
 import io.github.rwpp.external.ExternalHandler
+import io.github.rwpp.logger
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
 import io.github.rwpp.utils.Reflect

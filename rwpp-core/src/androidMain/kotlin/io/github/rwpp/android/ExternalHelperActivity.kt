@@ -16,10 +16,10 @@ import android.provider.OpenableColumns
 import androidx.appcompat.app.AppCompatActivity
 import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
-import io.github.rwpp.core.UI
 import io.github.rwpp.extensionPath
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
+import io.github.rwpp.ui.UI
 import org.koin.core.error.DefinitionOverrideException
 import java.io.File
 

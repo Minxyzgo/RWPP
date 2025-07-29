@@ -7,20 +7,31 @@
 
 package io.github.rwpp.impl
 
+import io.github.rwpp.AppContext
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.EnabledExtensions
-import io.github.rwpp.core.UI
 import io.github.rwpp.extensionPath
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExtensionConfig
 import io.github.rwpp.external.ExternalHandler
+import io.github.rwpp.generatedLibDir
+import io.github.rwpp.inject.InjectInfo
+import io.github.rwpp.inject.PathType
+import io.github.rwpp.inject.RedirectMethodInfo
+import io.github.rwpp.inject.RootInfo
 import io.github.rwpp.logger
+import io.github.rwpp.projectVersion
 import io.github.rwpp.resourceOutputDir
+import io.github.rwpp.scripts.LuaRootInfo
 import io.github.rwpp.scripts.Scripts
+import io.github.rwpp.ui.UI
+import io.github.rwpp.utils.compareVersions
 import net.peanuuutz.tomlkt.Toml
 import net.peanuuutz.tomlkt.decodeFromNativeReader
+import org.koin.core.component.get
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.zip.ZipFile
 
 abstract class BaseExternalHandlerImpl : ExternalHandler {
     protected var _usingResource: Extension? = null
@@ -28,6 +39,73 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
 
     private val fileExists by lazy {
         File(resourceOutputDir).exists()
+    }
+
+    override fun newExtension(
+        isEnabled: Boolean,
+        isZip: Boolean,
+        extensionFile: File,
+        config: ExtensionConfig
+    ): Extension {
+        return object : Extension(
+            isEnabled, extensionFile, if (isZip) ZipFile(extensionFile) else null, config
+        ) {
+            override val injectInfo: RootInfo? by lazy {
+                var isLuaInfo = false
+                val inputStream = openInputStream("inject_lua.toml")
+                    .also { if (it != null) isLuaInfo = true }
+                    ?: if (appKoin.get<AppContext>().isDesktop())
+                        openInputStream("inject_desktop.toml")
+                    else
+                        openInputStream("inject_android.toml")
+                    ?: openInputStream("inject.toml")
+                return@lazy if (inputStream != null) {
+                    if (isLuaInfo) {
+                        val luaRootInfo = Toml.decodeFromNativeReader<LuaRootInfo>(inputStream.reader())
+
+                        RootInfo(
+                            injectInfos = luaRootInfo.injectInfos.mapNotNull {
+                                if (isSupportCurrentGamePlatform(it.platform)) {
+                                    InjectInfo(
+                                        it.className,
+                                        true,
+                                        it.methodName,
+                                        it.methodDesc,
+                                        "io.github.rwpp.scripts.Scripts.callGlobalFunction(\"__global__${config.id}__${it.alias}\", this, \$args);",
+                                        PathType.JavaCode,
+                                        false,
+                                        it.injectMode,
+                                    )
+                                } else {
+                                    null
+                                }
+                            }.toSet(),
+                            redirectMethodInfos = luaRootInfo.redirectInfos.mapNotNull {
+                                if (isSupportCurrentGamePlatform(it.platform)) {
+                                    RedirectMethodInfo(
+                                        true,
+                                        it.className,
+                                        it.method,
+                                        it.methodDesc,
+                                        it.targetClassName,
+                                        it.targetMethod,
+                                        it.targetMethodDesc,
+                                        "io.github.rwpp.scripts.Scripts.callGlobalFunction(\"__global__${config.id}__${it.alias}\", this, \$args);",
+                                        PathType.JavaCode,
+                                    )
+                                } else {
+                                     null
+                                }
+                            }.toSet(),
+                        )
+                    } else {
+                        Toml.decodeFromNativeReader<RootInfo>(inputStream.reader())
+                    }
+                } else {
+                    null
+                }
+            }
+        }
     }
 
     override fun getAllExtensions(update: Boolean): Result<List<Extension>> {
@@ -55,7 +133,7 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                                         if (!infoTomlFile.exists()) return@forEachIndexed
                                         config = Toml.decodeFromNativeReader(infoTomlFile.reader())
                                     } else {
-                                        val zipFile = java.util.zip.ZipFile(fi)
+                                        val zipFile = ZipFile(fi)
                                         val entry = zipFile.getEntry("info.toml")
 
                                         if (entry != null) {
@@ -86,13 +164,20 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                                             enabledExtension.contains(config.id),
                                             !fi.isDirectory,
                                             fi,
-                                            config
+                                            config.copy(hasResource = config.hasResource || fi.name.endsWith(".rwres"))
                                         )
                                     )
                                 }
                         }
                 } else emptyList()
             })
+    }
+
+    override fun canEnable(extension: Extension): Boolean {
+        return extension.isSupportedForCurrentPlatform &&
+                compareVersions(extension.config.minGameVersion, projectVersion) != -1 &&
+                (extension.config.dependencies.isEmpty() || extension.config.dependencies
+                    .all { getExtensionById(it)?.isEnabled == true })
     }
 
     override fun getUsingResource(): Extension? {
@@ -128,5 +213,11 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                 } catch (e: Exception) { logger.error(e.stackTraceToString()) }
             }
         }
+    }
+
+    private fun isSupportCurrentGamePlatform(platform: String): Boolean {
+        val app = get<AppContext>()
+        return (platform.equals("android", ignoreCase = true) && app.isAndroid())
+                || (platform.equals("desktop", ignoreCase = true) && app.isDesktop())
     }
 }

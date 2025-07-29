@@ -66,27 +66,4 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
             onChooseFile(fileChooser.selectedFile)
         }
     }
-
-
-    override fun newExtension(
-        isEnabled: Boolean,
-        isZip: Boolean,
-        extensionFile: File,
-        config: ExtensionConfig
-    ): Extension {
-        return object : Extension(
-            isEnabled, extensionFile, if (isZip) ZipFile(extensionFile) else null, config
-        ) {
-            override val iconPainter: Painter? by lazy {
-                if (config.icon.isBlank())
-                    null
-                else {
-                    ImageIO.read(
-                        zipFile?.let { it.getInputStream(it.getEntry(config.icon)) }
-                            ?: File(extensionFile, config.icon).inputStream()
-                    ).toPainter()
-                }
-            }
-        }
-    }
 }

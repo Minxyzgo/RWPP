@@ -9,8 +9,6 @@ package io.github.rwpp.desktop.impl
 
 import android.content.ServerContext
 import android.graphics.Point
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.toPainter
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
 import com.corrodinggames.rts.gameFramework.ac
@@ -22,11 +20,8 @@ import com.corrodinggames.rts.java.audio.lwjgl.OpenALAudio
 import com.corrodinggames.rts.java.b
 import com.corrodinggames.rts.java.b.a
 import com.corrodinggames.rts.java.u
-import io.github.rwpp.core.UI
-import io.github.rwpp.desktop.displaySize
-import io.github.rwpp.desktop.gameCanvas
-import io.github.rwpp.desktop.native
-import io.github.rwpp.desktop.rwppVisibleSetter
+import io.github.rwpp.core.LoadingContext
+import io.github.rwpp.desktop.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.events.StartGameEvent
 import io.github.rwpp.game.Game
@@ -35,37 +30,28 @@ import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.ui.GUI
 import io.github.rwpp.game.world.World
-import io.github.rwpp.impl.*
 import io.github.rwpp.logger
+import io.github.rwpp.ui.UI
 import io.github.rwpp.utils.Reflect
-import io.github.rwpp.widget.LoadingContext
+import io.github.rwpp.widget.loadingMessage
 import kotlinx.coroutines.channels.Channel
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.Headers
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
 import org.koin.core.annotation.Single
 import org.lwjgl.opengl.Display
-import java.awt.image.BufferedImage
 import java.io.*
-import javax.imageio.ImageIO
 
 @Single(binds = [Game::class])
 class GameImpl : AbstractGame() {
     private var _missions: List<Mission>? = null
     private var _allMaps: List<GameMap>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
-    override val gameRoom: GameRoom
-        get() = object : AbstractGameRoom() {
-            override fun startGame() {
-                rwppVisibleSetter(false)
-                gameCanvas.isVisible = true
-                gameCanvas.requestFocus()
-                super.startGame()
-            }
+    override val gameRoom: GameRoom = object : AbstractGameRoom() {
+        override fun startGame() {
+            rwppVisibleSetter(false)
+            gameCanvas.isVisible = true
+            gameCanvas.requestFocus()
+            super.startGame()
         }
+    }
 
     override val gui: GUI
         get() = GameEngine.B().bS as GUI
@@ -117,7 +103,6 @@ class GameImpl : AbstractGame() {
     }
 
     override suspend fun load(context: LoadingContext): Unit = with(context) {
-
         gameThread = Thread {
             Display.setParent(gameCanvas)
             container.start()
@@ -154,8 +139,9 @@ class GameImpl : AbstractGame() {
                 }
 
                 override fun a(p0: String, p1: Boolean) {
-                    println(p0)
+                    println("RWPP:" + p0)
                     message(p0)
+                    loadingMessage = p0
                 }
 
                 override fun a(p0: Throwable?) {
@@ -288,15 +274,16 @@ class GameImpl : AbstractGame() {
                             else f.name.removeSuffix(".tmx")
                         override val type: MissionType
                             get() = type
-                        override val image: Painter =
-                            ImageIO.read(File(f.parent!! + "/" + f.name.removeSuffix(".tmx") + "_map.png")).toPainter()
                         override val mapName: String
                             get() = f.nameWithoutExtension
-                        override fun displayName(): String {
-                            return ScriptEngine.getInstance().root.convertMapName(name)
-                        }
+                        private val _displayName = ScriptEngine.getInstance().root.convertMapName(name)
+                        override fun displayName(): String = _displayName
                         override val mapType: MapType
                             get() = MapType.SkirmishMap
+
+                        override fun openImageInputStream(): InputStream? {
+                            return File(f.parent!! + "/" + f.name.removeSuffix(".tmx") + "_map.png").inputStream()
+                        }
 
                         override fun openInputStream(): InputStream {
                             throw RuntimeException("not supported")
@@ -328,14 +315,16 @@ class GameImpl : AbstractGame() {
                         .forEachIndexed { i, f ->
                             maps.add(object : GameMap {
                                 override val id: Int = i
-                                override val image: Painter? =
-                                    if(mapType != MapType.SavedGame) File(f.parent!! + "/" + f.name.removeSuffix(".tmx") + "_map.png")
-                                        .let { if(it.exists()) ImageIO.read(it).toPainter() else null }
-                                    else null
                                 override val mapName: String
                                     get() = f.nameWithoutExtension
                                 override val mapType: MapType
                                     get() = type
+
+                                override fun openImageInputStream(): InputStream? {
+                                    return if(mapType != MapType.SavedGame)
+                                        File(f.parent!! + "/" + f.name.removeSuffix(".tmx") + "_map.png").inputStream()
+                                    else null
+                                }
 
                                 override fun openInputStream(): InputStream {
                                     return f.inputStream()
@@ -347,25 +336,28 @@ class GameImpl : AbstractGame() {
                     folder.forEachIndexed { i, name ->
                         maps.add(object : GameMap {
                             override val id: Int = i
-                            override val image: Painter? =
-                                if(type == MapType.CustomMap) {
-                                    if (name.contains("MOD|")) //TODO 实现mod图片
-                                        null
-                                    else loadImage(
-                                        com.corrodinggames.rts.appFramework.c.c(name)
-                                    )?.toPainter()
-                                } else null
                             override val mapName: String
                                 get() = name.removeSuffix(".tmx").removeSuffix(".rwsave")
                             override val mapType: MapType
                                 get() = type
+                            private val _displayName = ScriptEngine.getInstance().root.convertMapName(name)
+
+                            override fun openImageInputStream(): InputStream? {
+                                return if(type == MapType.CustomMap) {
+                                    if (name.contains("MOD|")) //TODO 实现mod图片
+                                        null
+                                    else loadInputStream(
+                                        com.corrodinggames.rts.appFramework.c.c(name)
+                                    )
+                                } else null
+                            }
 
                             override fun openInputStream(): InputStream {
                                 return com.corrodinggames.rts.game.b.b.b("/SD/rusted_warfare_maps/$name")
                             }
 
                             override fun displayName(): String {
-                                return ScriptEngine.getInstance().root.convertMapName(name)
+                                return _displayName
                             }
                         })
                     }
@@ -397,9 +389,8 @@ class GameImpl : AbstractGame() {
             object : Replay {
                 override val id: Int = i
                 override val name: String = str
-                override fun displayName(): String {
-                    return ScriptEngine.getInstance().root.convertMapName(name)
-                }
+                private val _displayName = ScriptEngine.getInstance().root.convertMapName(name)
+                override fun displayName(): String = _displayName
             }
         }
     }
@@ -439,7 +430,7 @@ class GameImpl : AbstractGame() {
 
 
 
-    private fun loadImage(path: String): BufferedImage? {
+    private fun loadInputStream(path: String): InputStream? {
         val fileInputStream: InputStream?
         val bufferedInputStream: BufferedInputStream
         val a2 = ae.a(path)
@@ -458,16 +449,7 @@ class GameImpl : AbstractGame() {
             }
         }
 
-        try {
-            bufferedInputStream = BufferedInputStream(fileInputStream)
-        } catch (e: Exception) {
-            logger.error(e.stackTraceToString())
-            return null
-        }
-
-        bufferedInputStream.use { stream ->
-            return ImageIO.read(stream)
-        }
+        return fileInputStream
     }
 
 

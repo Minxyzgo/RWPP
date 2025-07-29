@@ -26,7 +26,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
-import io.github.rwpp.core.UI
+import io.github.rwpp.ui.UI
+
 import io.github.rwpp.widget.WindowManager
 
 @Composable

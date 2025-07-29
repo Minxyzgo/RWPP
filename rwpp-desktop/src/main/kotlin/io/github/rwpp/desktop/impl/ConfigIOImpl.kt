@@ -9,7 +9,7 @@ package io.github.rwpp.desktop.impl
 
 import io.github.rwpp.config.Config
 import io.github.rwpp.config.ConfigIO
-import io.github.rwpp.impl.AbstractConfigIO
+import io.github.rwpp.desktop.AbstractConfigIO
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer

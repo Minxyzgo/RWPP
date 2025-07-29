@@ -11,7 +11,9 @@ package io.github.rwpp
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -24,31 +26,38 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.request.crossfade
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import io.github.rwpp.coil.ImageableFetcherFactory
+import io.github.rwpp.coil.ImageableKeyer
 import io.github.rwpp.config.CoreData
 import io.github.rwpp.config.Settings
-import io.github.rwpp.core.UI
-import io.github.rwpp.core.UI.selectedColorSchemeName
-import io.github.rwpp.core.UI.showContributorList
-import io.github.rwpp.core.UI.showExtensionView
-import io.github.rwpp.core.UI.showMissionView
-import io.github.rwpp.core.UI.showModsView
-import io.github.rwpp.core.UI.showMultiplayerView
-import io.github.rwpp.core.UI.showReplayView
-import io.github.rwpp.core.UI.showRoomView
-import io.github.rwpp.core.UI.showSettingsView
+import io.github.rwpp.event.GlobalEventChannel
+import io.github.rwpp.event.broadcast
+import io.github.rwpp.event.events.KeyboardEvent
+import io.github.rwpp.event.events.ReloadModEvent
+import io.github.rwpp.event.events.ReloadModFinishedEvent
+import io.github.rwpp.event.events.ReturnMainMenuEvent
+import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.Game
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
@@ -56,9 +65,21 @@ import io.github.rwpp.net.LatestVersionProfile
 import io.github.rwpp.net.Net
 import io.github.rwpp.rwpp_core.generated.resources.*
 import io.github.rwpp.ui.*
+import io.github.rwpp.ui.UI.selectedColorSchemeName
+import io.github.rwpp.ui.UI.showContributorList
+import io.github.rwpp.ui.UI.showExtensionView
+import io.github.rwpp.ui.UI.showMissionView
+import io.github.rwpp.ui.UI.showModsView
+import io.github.rwpp.ui.UI.showMultiplayerView
+import io.github.rwpp.ui.UI.showReplayView
+import io.github.rwpp.ui.UI.showResourceBrowser
+import io.github.rwpp.ui.UI.showRoomView
+import io.github.rwpp.ui.UI.showSettingsView
 import io.github.rwpp.widget.*
+import io.github.rwpp.widget.v2.LineSpinFadeLoaderIndicator
 import io.github.rwpp.widget.v2.RWIconButton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -75,8 +96,6 @@ fun App(
     val coreData = koinInject<CoreData>()
     val settings = koinInject<Settings>()
     val net = koinInject<Net>()
-
-
     var isSinglePlayerGame by remember { mutableStateOf(false) }
 
     var checkUpdateDialogVisible by remember { mutableStateOf(false) }
@@ -104,6 +123,16 @@ fun App(
         }
     }
 
+    setSingletonImageLoaderFactory { context ->
+        ImageLoader.Builder(context)
+            .crossfade(true)
+            .components {
+                add(ImageableFetcherFactory())
+                add(ImageableKeyer())
+            }
+            .build()
+    }
+
     val showMainMenu = !(showMultiplayerView
             || showMissionView
             || showSettingsView
@@ -111,18 +140,33 @@ fun App(
             || showRoomView
             || showExtensionView
             || showReplayView
-            || showContributorList)
-
+            || showContributorList
+            || showResourceBrowser)
 
     val game = koinInject<Game>()
 
-    RWPPTheme {
+    val globalFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val interactionSource = remember { MutableInteractionSource() }
 
+    RWPPTheme {
         BoxWithConstraints(
             modifier = Modifier
                 .then(sizeModifier)
-                .autoClearFocus()
-                //.background(brush),
+                .focusRequester(globalFocusRequester)
+                .clickable(
+                    interactionSource,
+                    null
+                ) {
+                    globalFocusRequester.requestFocus()
+                    keyboardController?.hide()
+                }.onKeyEvent {
+                    runBlocking {
+                        if (it.type == KeyEventType.KeyDown) {
+                            KeyboardEvent(it.key.keyCode.toInt()).broadcast().isIntercepted
+                        } else false
+                    }
+                }
         ) {
             CompositionLocalProvider(
                 LocalTextSelectionColors provides RWSelectionColors,
@@ -130,7 +174,7 @@ fun App(
             ) {
 
                 val enableAnimations = settings.enableAnimations
-
+                val state = rememberLazyListState()
                 Scaffold(
                     containerColor = Color.Transparent,
                     floatingActionButton = {
@@ -153,6 +197,7 @@ fun App(
                         exit = if(enableAnimations) fadeOut() else ExitTransition.None,
                     ) {
                         MainMenu(
+                            state,
                             multiplayer = {
                                 isSinglePlayerGame = false
                                 showMultiplayerView = true
@@ -184,6 +229,9 @@ fun App(
                             },
                             contributor = {
                                 showContributorList = true
+                            },
+                            resourceBrowser = {
+                                showResourceBrowser = true
                             }
                         )
                     }
@@ -234,6 +282,14 @@ fun App(
                     exit = if (enableAnimations) shrinkOut() + fadeOut() else ExitTransition.None,
                 ) {
                     ModsView { showModsView = false }
+                }
+
+                AnimatedVisibility(
+                    showResourceBrowser,
+                    enter = if (enableAnimations) fadeIn() + expandIn() else EnterTransition.None,
+                    exit = if (enableAnimations) shrinkOut() + fadeOut() else ExitTransition.None,
+                ) {
+                    ResourceBrowser { showResourceBrowser = false }
                 }
 
                 AnimatedVisibility(
@@ -528,6 +584,43 @@ fun App(
                         }
                     }
                 }
+
+                var reloadingModViewVisible by remember { mutableStateOf(false) }
+                GlobalEventChannel.filter(ReloadModEvent::class).onDispose {
+                    subscribeAlways {
+                        reloadingModViewVisible = true
+                    }
+                }
+
+                GlobalEventChannel.filter(ReloadModFinishedEvent::class).onDispose {
+                    subscribeAlways {
+                        reloadingModViewVisible = false
+                    }
+                }
+
+                LoadingView(reloadingModViewVisible, onLoaded = {}) { null }
+
+                AnimatedAlertDialog(
+                    UI.showNetworkDialog,
+                    {
+                        UI.showNetworkDialog = false
+                        UI.receivingNetworkDialogTitle = ""
+                        val game = appKoin.get<Game>()
+                        game.gameRoom.disconnect("refuse to receive network data.")
+                    }, enableDismiss = true
+                ) { dismiss ->
+                    BorderCard(modifier = Modifier.size(500.dp)) {
+                        Spacer(Modifier.weight(1f))
+                        LineSpinFadeLoaderIndicator(MaterialTheme.colorScheme.onSecondaryContainer)
+                        Text(
+                            UI.receivingNetworkDialogTitle,
+                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(20.dp).offset(y = 50.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.weight(1f))
+                    }
+                }
             }
         }
     }
@@ -535,6 +628,7 @@ fun App(
 
 @Composable
 fun MainMenu(
+    state: LazyListState,
     multiplayer: () -> Unit,
     mission: () -> Unit,
     skirmish: () -> Unit,
@@ -543,7 +637,8 @@ fun MainMenu(
     sandbox: () -> Unit,
     extension: () -> Unit,
     replay: () -> Unit,
-    contributor: () -> Unit
+    contributor: () -> Unit,
+    resourceBrowser: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -576,7 +671,6 @@ fun MainMenu(
             border = BorderStroke(4.dp, MaterialTheme.colorScheme.surfaceContainer),
             shape = RectangleShape
         ) {
-            val state = rememberLazyListState()
             LazyRow(
                 state = state,
                 modifier = Modifier.fillMaxWidth().lazyRowDesktopScrollable(state),
@@ -632,6 +726,14 @@ fun MainMenu(
 
                 item {
                     MenuButton(
+                        readI18n("browser.resourceBrowser"),
+                        painterResource(Res.drawable.public_30),
+                        onClick = resourceBrowser
+                    )
+                }
+
+                item {
+                    MenuButton(
                         readI18n("menu.extension"),
                         painterResource(Res.drawable.extension_30),
                         onClick = extension
@@ -645,15 +747,6 @@ fun MainMenu(
                         Icons.Default.PlayArrow,
                         onClick = replay
                     )
-                }
-
-                item {
-                    with(koinInject<AppContext>()) {
-                        MenuButton(
-                            readI18n("menu.exit"),
-                            painterResource(Res.drawable.exit_30)
-                        ) { exit() }
-                    }
                 }
             }
         }
@@ -673,6 +766,12 @@ fun MainMenu(
 
             RWIconButton(painterResource(Res.drawable.octocat_30), modifier = Modifier.padding(10.dp)) {
                 net.openUriInBrowser("https://github.com/Minxyzgo/RWPP")
+            }
+
+            with(koinInject<AppContext>()) {
+                RWIconButton(painterResource(Res.drawable.exit_30), modifier = Modifier.padding(10.dp)) {
+                    exit()
+                }
             }
         }
 

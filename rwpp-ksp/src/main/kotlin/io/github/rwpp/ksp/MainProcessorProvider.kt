@@ -10,12 +10,36 @@ package io.github.rwpp.ksp
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
+import io.github.rwpp.inject.BuildLogger
+import io.github.rwpp.inject.GameLibraries
+import io.github.rwpp.inject.runtime.Builder
 import io.github.rwpp.rwpp_ksp.BuildConfig
 
 class MainProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
         Builder.libDir = BuildConfig.DEFAULT_LIB_DIR
         Builder.outputDir = environment.options["outputDir"].toString()
+        Builder.logger = object : BuildLogger {
+            override fun logging(message: String) {
+                environment.logger.logging(message)
+            }
+
+            override fun info(message: String) {
+                environment.logger.info(message)
+            }
+
+            override fun warn(message: String) {
+                environment.logger.warn(message)
+            }
+
+            override fun error(message: String) {
+                environment.logger.error(message)
+            }
+
+            override fun exception(e: Throwable) {
+                environment.logger.exception(e)
+            }
+        }
         GameLibraries.includes.add(GameLibraries.valueOf(environment.options["lib"].toString()))
         environment.logger.warn("RWPP-KSP: libs: ${GameLibraries.includes.joinToString(",")}")
         return MainProcessor(environment.logger)

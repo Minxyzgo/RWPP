@@ -16,12 +16,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
-import io.github.rwpp.platform.Platform
+import io.github.rwpp.AppContext
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 @Composable
 fun Modifier.lazyRowDesktopScrollable(scrollState: LazyListState) = composed {
-    if (Platform.isDesktop()) {
+    val appContext = koinInject<AppContext>()
+    if (appContext.isDesktop()) {
         val coroutineScope = rememberCoroutineScope()
 
         draggable(

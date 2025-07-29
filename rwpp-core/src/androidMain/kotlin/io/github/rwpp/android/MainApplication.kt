@@ -18,10 +18,8 @@ import io.github.rwpp.android.impl.GameSoundPoolImpl
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.game.audio.GameSoundPool
-import io.github.rwpp.game.team.TeamModeModule
-import io.github.rwpp.i18n.parseI18n
+import io.github.rwpp.koinInit
 import io.github.rwpp.logger
-import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
@@ -33,15 +31,13 @@ class MainApplication : Application() {
         super.onCreate()
         koinApplication = startKoin {
             androidLogger()
-            modules(ConfigModule().module, AndroidModule().module, TeamModeModule().module)
+            modules(ConfigModule().module, AndroidModule().module)
         }
 
-
+        koinInit = true
         appKoin = koinApplication.koin
 
         appKoin.declare(GameSoundPoolImpl(), secondaryTypes = listOf(GameSoundPool::class))
-
-        runBlocking { parseI18n() }
 
         val lc = LoggerFactory.getILoggerFactory() as LoggerContext
         lc.stop()

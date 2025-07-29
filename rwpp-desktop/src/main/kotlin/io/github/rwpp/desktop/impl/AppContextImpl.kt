@@ -10,13 +10,14 @@ package io.github.rwpp.desktop.impl
 import com.corrodinggames.librocket.scripts.ScriptEngine
 import io.github.rwpp.AppContext
 import io.github.rwpp.config.ConfigIO
-import io.github.rwpp.impl.GameEngine
+import io.github.rwpp.desktop.GameEngine
+import io.github.rwpp.impl.BaseAppContextImpl
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import kotlin.system.exitProcess
 
-@Single
-class AppContextImpl : AppContext {
+@Single([AppContext::class])
+class AppContextImpl : BaseAppContextImpl() {
 
     private val exitActions = mutableListOf<() -> Unit>()
 
@@ -24,6 +25,10 @@ class AppContextImpl : AppContext {
     override fun onExit(action: () -> Unit) {
         exitActions.add(action)
     }
+
+    override fun isAndroid(): Boolean = false
+
+    override fun isDesktop(): Boolean = true
 
 
     override fun exit() {

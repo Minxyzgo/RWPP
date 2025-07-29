@@ -73,5 +73,4 @@ fun copyAssets(context: Context, assetDir: String, targetDir: String) {
         if(!fi.exists()) fi.createNewFile()
         fi.writeBytes(context.assets.open(assetDir).use { it.readBytes() })
     }
-
 }

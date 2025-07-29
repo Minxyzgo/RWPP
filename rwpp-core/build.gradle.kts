@@ -15,7 +15,6 @@ plugins {
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
-    id("com.github.gmazzo.buildconfig")
 }
 
 
@@ -46,7 +45,7 @@ plugins {
 
 
 ksp {
-    arg("outputDir", project.buildDir.absolutePath + "/generated/libs")
+    arg("outputDir", project.buildDir.absolutePath + "/generated")
     arg("lib", "android-game-lib")
 }
 
@@ -70,23 +69,22 @@ kotlin {
                 api(compose.material3)
                 api(compose.components.resources)
                 api(compose.ui)
-                api("org.jetbrains.compose.ui:ui-backhandler:${findProperty("compose.version")}")
+                api(project(":rwpp-core-api"))
                 api("org.jetbrains.compose.material:material-icons-core:1.7.3")
                 val koinVersion = findProperty("koin.version") as String
                 val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
+                api("io.insert-koin:koin-annotations:${koinAnnotationsVersion}")
+                api("io.insert-koin:koin-compose:${koinVersion}")
                 val markdownVersion = findProperty("markdown.version") as String
-                api("io.insert-koin:koin-core:$koinVersion")
-                api("io.insert-koin:koin-compose:$koinVersion")
-                api("io.insert-koin:koin-annotations:$koinAnnotationsVersion")
-                api("com.squareup.okhttp3:okhttp:4.12.0")
                 api("net.peanuuutz.tomlkt:tomlkt:0.3.7")
-                api("com.eclipsesource.minimal-json:minimal-json:0.9.5")
-                api("com.mikepenz:multiplatform-markdown-renderer:$markdownVersion")
-                api("com.mikepenz:multiplatform-markdown-renderer-m3:$markdownVersion")
-                api("party.iroiro.luajava:luajava:4.0.2")
-                api("party.iroiro.luajava:lua54:4.0.2")
-                api("org.slf4j:slf4j-api:2.0.16")
-                api("sh.calvin.reorderable:reorderable:2.4.3")
+                implementation("com.eclipsesource.minimal-json:minimal-json:0.9.5")
+                implementation("com.mikepenz:multiplatform-markdown-renderer:$markdownVersion")
+                implementation("com.mikepenz:multiplatform-markdown-renderer-m3:$markdownVersion")
+                implementation("party.iroiro.luajava:luajava:4.0.2")
+                implementation("party.iroiro.luajava:lua54:4.0.2")
+                implementation("sh.calvin.reorderable:reorderable:2.4.3")
+                api("io.coil-kt.coil3:coil-compose:3.2.0")
+                api("io.coil-kt.coil3:coil-network-okhttp:3.2.0")
             }
         }
 
@@ -95,22 +93,26 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 api("androidx.activity:activity-compose:1.10.1")
-                api("androidx.appcompat:appcompat:1.7.0")
+                api("androidx.appcompat:appcompat:1.7.1")
                 api("androidx.core:core-ktx:1.16.0")
+                implementation(fileTree(
+                    "dir" to "$rootDir/dx",
+                    "include" to listOf("*.jar")
+                ))
                 implementation("com.github.getActivity:XXPermissions:20.0")
                 implementation("com.github.tony19:logback-android:3.0.0")
                 compileOnly(fileTree(
                     "dir" to rootDir.absolutePath + "/lib",
                     "include" to "android-game-lib.jar",
                 ))
-                runtimeOnly(fileTree(
-                    "dir" to buildDir.absolutePath + "/generated/libs",
-                    "include" to "android-game-lib.jar",
-                ))
-
                 val koinVersion = findProperty("koin.version") as String
                 implementation("io.insert-koin:koin-android:$koinVersion")
                 runtimeOnly("party.iroiro.luajava:android:4.0.2:lua54@aar")
+
+                implementation(fileTree(
+                    "dir" to rootDir.absolutePath,
+                    "include" to "javassist4android.jar",
+                ))
             }
         }
 
@@ -147,7 +149,10 @@ android {
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+    sourceSets["main"].resources.srcDir(project.buildDir.absolutePath + "/generated")
+    sourceSets["main"].resources.include("config.toml")
+    sourceSets["main"].resources.srcDir(rootDir.absolutePath + "/lib")
+    sourceSets["main"].resources.include("android-game-lib.jar")
 
     // For KSP
 //    applicationVariants.configureEach {
@@ -175,13 +180,8 @@ android {
     }
 }
 
-buildConfig {
-    buildConfigField("VERSION", rootProject.version.toString())
-}
-
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-test-junit:" + findProperty("kotlin.version") as String)
-    commonMainApi(project(":rwpp-core-utils"))
     val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
     ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
     ksp(project(":rwpp-ksp"))

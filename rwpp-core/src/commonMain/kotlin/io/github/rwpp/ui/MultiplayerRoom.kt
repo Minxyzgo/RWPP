@@ -8,6 +8,7 @@
 package io.github.rwpp.ui
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -26,19 +27,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import io.github.rwpp.AppContext
 import io.github.rwpp.LocalWindowManager
+import io.github.rwpp.appKoin
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.Settings
-import io.github.rwpp.core.UI
-import io.github.rwpp.core.UI.chatMessages
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.CloseUIPanelEvent
@@ -55,15 +59,13 @@ import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
-import io.github.rwpp.rwpp_core.generated.resources.Res
-import io.github.rwpp.rwpp_core.generated.resources.error_missingmap
 import io.github.rwpp.scripts.Render
+import io.github.rwpp.ui.UI.chatMessages
+import io.github.rwpp.ui.color.getTeamColor
 import io.github.rwpp.widget.*
 import io.github.rwpp.widget.v2.LazyColumnScrollbar
 import io.github.rwpp.widget.v2.LongPressFloatingActionButton
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
@@ -84,7 +86,6 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     var update by remember { mutableStateOf(false) }
     var lastSelectedIndex by remember { mutableStateOf(0) }
     var selectedMap by remember(update) { mutableStateOf(room.selectedMap) }
-    var mapImage by remember(update) { mutableStateOf(selectedMap.image) }
     val displayMapName = remember(update) { room.displayMapName }
 
     var optionVisible by remember { mutableStateOf(false) }
@@ -105,6 +106,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
             UI.showWarning(it.message ?: "Unexpected error")
         }.getOrDefault(listOf()).filter { !it.config.hasResource }
     }
+
 //
 //    GlobalEventChannel.filter(CallReloadModEvent::class).onDispose {
 //        subscribeAlways {
@@ -139,6 +141,19 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 //        false
 //    }
 
+    val players = remember(update) { room.getPlayers().sortedBy { it.team } }
+    var selectedPlayer by remember { mutableStateOf(players.firstOrNull() ?: ConnectingPlayer) }
+    var playerOverrideVisible by remember { mutableStateOf(false) }
+
+    PlayerOverrideDialog(
+        playerOverrideVisible,
+        { playerOverrideVisible = false },
+        updateAction,
+        room,
+        extensions,
+        selectedPlayer
+    )
+
     MapViewDialog(
         showMapSelectView,
         { showMapSelectView = false },
@@ -163,23 +178,24 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         game.onBanUnits(it)
     }
 
+    val chatFocusRequester = remember { FocusRequester() }
+
     @Composable
     fun ContentView() {
         @Composable
         fun MessageTextField(
             chatMessage: String,
-            focusRequester: FocusRequester? = null,
             onFocusChanged: (FocusState) -> Unit = {},
             onChatMessageChange: (String) -> Unit
         ) {
             RWSingleOutlinedTextField(
                 label = readI18n("multiplayer.room.sendMessage"),
                 value = chatMessage,
-                focusRequester = focusRequester,
+                focusRequester = chatFocusRequester,
                 onFocusChanged = onFocusChanged,
                 modifier = Modifier.fillMaxWidth().padding(10.dp)
                     .onKeyEvent {
-                        if(it.key == Key.Enter && chatMessage.isNotEmpty()) {
+                        if (it.key == Key.Enter && chatMessage.isNotEmpty()) {
                             room.sendChatMessageOrCommand(chatMessage)
                             onChatMessageChange("")
                         }
@@ -198,11 +214,12 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                     )
                 },
                 onValueChange =
-                {
-                    onChatMessageChange(it)
-                },
+                    {
+                        onChatMessageChange(it)
+                    },
             )
         }
+
 
         @Composable
         fun MessageView() {
@@ -231,17 +248,52 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
             }
         }
 
+        val globalFocusRequester = remember { FocusRequester() }
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val interactionSource = remember { MutableInteractionSource() }
+        val isDesktop = remember { appKoin.get<AppContext>().isDesktop() }
+
         BorderCard(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(5.dp)
-                .autoClearFocus()
+                .focusRequester(globalFocusRequester)
+                .clickable(
+                    interactionSource,
+                    null
+                ) {
+                    globalFocusRequester.requestFocus()
+                    keyboardController?.hide()
+                }.onKeyEvent {
+                    when(it.key) {
+                        Key.Enter -> {
+                            chatFocusRequester.requestFocus()
+                            true
+                        }
+                        Key.M -> {
+                            showMapSelectView = true
+                            true
+                        }
+                        Key.O -> {
+                            optionVisible = true
+                            true
+                        }
+                        Key.A -> {
+                            room.addAI()
+                            true
+                        }
+                        Key.C -> {
+                            if (players.isNotEmpty()) {
+                                selectedPlayer =
+                                    room.localPlayer
+                                playerOverrideVisible = true
+                            }
+                            true
+                        }
+                        else -> false
+                    }
+                }
         ) {
-            val players = remember(update) { room.getPlayers().sortedBy { it.team } }
-            var selectedPlayer by remember { mutableStateOf(players.firstOrNull() ?: ConnectingPlayer) }
-            var playerOverrideVisible by remember { mutableStateOf(false) }
-
-            PlayerOverrideDialog(playerOverrideVisible, { playerOverrideVisible = false }, updateAction, room, extensions, selectedPlayer)
             Box {
                 ExitButton(onExit)
                 Column {
@@ -253,7 +305,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     .padding(10.dp)
                                     .then(
                                         if (LocalWindowManager.current != WindowManager.Large)
-                                            Modifier.verticalScroll(rememberScrollState())
+                                            Modifier.verticalScroll(rememberScrollState()).align(Alignment.CenterVertically)
                                         else Modifier
                                     ),
                                 backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(
@@ -264,8 +316,8 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
                                 @Composable
                                 fun MapImage(modifier: Modifier = Modifier) {
-                                    Image(
-                                        mapImage ?: painterResource(Res.drawable.error_missingmap),
+                                    AsyncImage(
+                                        selectedMap,
                                         null,
                                         contentScale = ContentScale.Fit,
                                         modifier = Modifier.then(modifier).padding(10.dp)
@@ -327,7 +379,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     modifier = Modifier.padding(5.dp)
                                         .align(Alignment.CenterHorizontally),
                                     style = MaterialTheme.typography.headlineMedium,
-                                //    maxLines = 1,
+                                    //    maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -335,7 +387,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 @Composable
                                 fun OptionButtons() {
                                     if (LocalWindowManager.current == WindowManager.Large) RWTextButton(
-                                        readI18n("multiplayer.room.selectMap"),
+                                        readI18n("multiplayer.room.selectMap") + if (isDesktop) "(M)" else "",
                                         modifier = Modifier.padding(5.dp)
                                     ) { showMapSelectView = true }
                                     if (LocalWindowManager.current != WindowManager.Large && !isSandboxGame) {
@@ -360,19 +412,18 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         }
                                     }
                                     RWTextButton(
-                                        readI18n("multiplayer.room.option"),
+                                        readI18n("multiplayer.room.option") + if (isDesktop) "(O)" else "",
                                         modifier = Modifier.padding(5.dp)
                                     ) { optionVisible = true }
                                     RWTextButton(
                                         readI18n("multiplayer.room.start"),
                                         modifier = Modifier.padding(5.dp)
                                     ) {
-                                        // val unpreparedPlayers = game.gameRoom.getPlayers().filter { !it.data.ready }
-                                        // if(unpreparedPlayers.isNotEmpty()) {
-                                        //     game.gameRoom.sendSystemMessage(
-                                        //         "Cannot start game. Because players: ${unpreparedPlayers.joinToString(", ") { it.name }} aren't ready.")
-                                        //} else
-                                        if (room.isHostServer) room.sendQuickGameCommand("-start") else room.startGame()
+                                         val unpreparedPlayers = game.gameRoom.getPlayers().filter { !it.data.ready }
+                                         if(unpreparedPlayers.isNotEmpty()) {
+                                             game.gameRoom.sendSystemMessage(
+                                                 "Cannot start game. Because players: ${unpreparedPlayers.joinToString(", ") { it.name }} aren't ready.")
+                                        } else if (room.isHostServer) room.sendQuickGameCommand("-start") else room.startGame()
                                     }
                                 }
 
@@ -460,63 +511,65 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         val options = remember {
                                             game.getStartingUnitOptions()
                                         }
-                                        val player = players[index]
+                                        val player = players.getOrNull(index)
 
-                                        Row(
-                                            modifier = Modifier
-                                                .then(modifier)
-                                                .height(IntrinsicSize.Max)
-                                                .padding(5.dp)
-                                                .border(
-                                                    BorderStroke(
-                                                        2.dp,
-                                                        MaterialTheme.colorScheme.primary
-                                                    ), CircleShape
-                                                )
-                                                .fillMaxWidth()
-                                                .clickable(room.isHost || room.isHostServer || room.localPlayer == player) {
-                                                    selectedPlayer = player
-                                                    playerOverrideVisible = true
-                                                }
-                                        ) {
-                                            TableCell(
-                                                player.name + if (player.startingUnit != -1) " - ${options.first { it.first == player.startingUnit }.second}" else "",
-                                                color = if (player.color != -1) Player.getTeamColor(
-                                                    player.color
-                                                ) else MaterialTheme.colorScheme.onSurface,
-                                                weight = playerNameWeight, drawStroke = false,
-                                                modifier = Modifier.fillMaxHeight()
+                                        if (player != null) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .then(modifier)
+                                                    .height(IntrinsicSize.Max)
+                                                    .padding(5.dp)
+                                                    .border(
+                                                        BorderStroke(
+                                                            2.dp,
+                                                            MaterialTheme.colorScheme.primary
+                                                        ), CircleShape
+                                                    )
+                                                    .fillMaxWidth()
+                                                    .clickable(room.isHost || room.isHostServer || room.localPlayer == player) {
+                                                        selectedPlayer = player
+                                                        playerOverrideVisible = true
+                                                    }
                                             ) {
-//                                            if (!player.data.ready) {
-//                                                CircularProgressIndicator(
-//                                                    color = Color(199, 234, 70),
-//                                                    modifier = Modifier.size(15.dp).padding(0.dp, 2.dp, 0.dp, 2.dp)
-//                                                )
-//                                            }
+                                                TableCell(
+                                                    player.name + if (player.startingUnit != -1) " - ${options.first { it.first == player.startingUnit }.second}" else "",
+                                                    color = if (player.color != -1) Player.getTeamColor(
+                                                        player.color
+                                                    ) else MaterialTheme.colorScheme.onSurface,
+                                                    weight = playerNameWeight, drawStroke = false,
+                                                    modifier = Modifier.fillMaxHeight()
+                                                ) {
+                                                if (!player.data.ready) {
+                                                    CircularProgressIndicator(
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(15.dp).padding(0.dp, 2.dp, 0.dp, 2.dp)
+                                                    )
+                                                }
+                                                }
+                                                TableCell(
+                                                    if (player.isSpectator)
+                                                        "S"
+                                                    else (player.spawnPoint + 1).toString(),
+                                                    playerSpawnWeight,
+                                                    color = if (player.isSpectator)
+                                                        Color.Black
+                                                    else Player.getTeamColor(player.spawnPoint),
+                                                    modifier = Modifier.fillMaxHeight()
+                                                )
+                                                TableCell(
+                                                    player.teamAlias(),
+                                                    playerTeamWeight,
+                                                    color = Player.getTeamColor(player.team),
+                                                    modifier = Modifier.fillMaxHeight()
+                                                )
+                                                val ping = remember(update) { player.ping }
+                                                TableCell(
+                                                    ping,
+                                                    playerPingWeight,
+                                                    drawStroke = false,
+                                                    modifier = Modifier.fillMaxHeight()
+                                                )
                                             }
-                                            TableCell(
-                                                if (player.isSpectator)
-                                                    "S"
-                                                else (player.spawnPoint + 1).toString(),
-                                                playerSpawnWeight,
-                                                color = if (player.isSpectator)
-                                                    Color.Black
-                                                else Player.getTeamColor(player.spawnPoint),
-                                                modifier = Modifier.fillMaxHeight()
-                                            )
-                                            TableCell(
-                                                player.teamAlias(),
-                                                playerTeamWeight,
-                                                color = Player.getTeamColor(player.team),
-                                                modifier = Modifier.fillMaxHeight()
-                                            )
-                                            val ping = remember(update) { player.ping }
-                                            TableCell(
-                                                ping,
-                                                playerPingWeight,
-                                                drawStroke = false,
-                                                modifier = Modifier.fillMaxHeight()
-                                            )
                                         }
                                     }
 
@@ -559,7 +612,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                                     ) {
                                                         Row(modifier = Modifier.fillMaxWidth()) {
                                                             RWTextButton(
-                                                                readI18n("multiplayer.room.changeSite"),
+                                                                readI18n("multiplayer.room.changeSite") + if (isDesktop) "(C)" else "",
                                                                 modifier = Modifier.padding(
                                                                     horizontal = 5.dp,
                                                                     vertical = 30.dp
@@ -601,7 +654,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         .padding(5.dp)
                                 ) {
                                     RWTextButton(
-                                        readI18n("multiplayer.room.changeSite"),
+                                        readI18n("multiplayer.room.changeSite") + if (isDesktop) "(C)" else "",
                                         modifier = Modifier.padding(
                                             horizontal = 5.dp,
                                             vertical = 30.dp
@@ -614,7 +667,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     }
                                     if (isHost) {
                                         RWTextButton(
-                                            readI18n("multiplayer.room.addAI"),
+                                            readI18n("multiplayer.room.addAI") + if (isDesktop) "(A)" else "",
                                             modifier = Modifier.padding(
                                                 horizontal = 5.dp,
                                                 vertical = 30.dp
@@ -662,11 +715,11 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
         }
     }
 
-    if(LocalWindowManager.current != WindowManager.Large) {
+    if (LocalWindowManager.current != WindowManager.Large) {
         Scaffold(
             containerColor = Color.Transparent,
             floatingActionButton = {
-                if(isHost) {
+                if (isHost) {
                     LongPressFloatingActionButton(
                         Icons.Default.Add,
                         modifier = Modifier.padding(5.dp),
@@ -749,14 +802,14 @@ private fun PlayerOverrideDialog(
                 var expanded0 by remember { mutableStateOf(false) }
                 RWSingleOutlinedTextField(
                     readI18n("common.spawnPoint"),
-                    if(playerSpawnPoint == -3) "Spectator" else playerSpawnPoint?.toString() ?: "",
+                    if (playerSpawnPoint == -3) "Spectator" else playerSpawnPoint?.toString() ?: "",
                     lengthLimitCount = 3,
                     modifier = Modifier.padding(10.dp),
                     typeInNumberOnly = true,
                     typeInOnlyInteger = true,
                     trailingIcon = {
                         val icon =
-                            if(expanded0) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                            if (expanded0) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
                         Icon(
                             icon,
                             "",
@@ -767,7 +820,7 @@ private fun PlayerOverrideDialog(
                             expanded0,
                             buildList<Any> { addAll(1..10); add("Spectator") },
                             onItemSelected = { i, v ->
-                                playerSpawnPoint = if(v != "Spectator") i + 1 else -3
+                                playerSpawnPoint = if (v != "Spectator") i + 1 else -3
                             }
                         ) {
                             expanded0 = false
@@ -775,7 +828,7 @@ private fun PlayerOverrideDialog(
                     }
                 ) {
                     val n = it.toIntOrNull()
-                    if(n == null || n <= room.maxPlayerCount) playerSpawnPoint = n
+                    if (n == null || n <= room.maxPlayerCount) playerSpawnPoint = n
                 }
 
                 Text(
@@ -788,14 +841,14 @@ private fun PlayerOverrideDialog(
                 var expanded by remember { mutableStateOf(false) }
                 RWSingleOutlinedTextField(
                     readI18n("common.team"),
-                    if(playerTeam == -1) "auto" else playerTeam?.toString() ?: "",
+                    if (playerTeam == -1) "auto" else playerTeam?.toString() ?: "",
                     lengthLimitCount = 3,
                     modifier = Modifier.padding(10.dp),
                     typeInNumberOnly = true,
                     typeInOnlyInteger = true,
                     trailingIcon = {
                         val icon =
-                            if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                            if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
                         Icon(
                             icon,
                             "",
@@ -806,14 +859,14 @@ private fun PlayerOverrideDialog(
                             expanded,
                             buildList<Any> { add("auto"); addAll(1..10) },
                             onItemSelected = { _, v ->
-                                playerTeam = if(v == "auto") -1 else (v as Int)
+                                playerTeam = if (v == "auto") -1 else (v as Int)
                             }
                         ) {
                             expanded = false
                         }
                     }
                 ) {
-                    playerTeam = it.toIntOrNull()?.coerceAtMost(100)
+                    playerTeam = it.toIntOrNull()?.coerceAtMost(100)?.coerceAtLeast(1)
                 }
 
 
@@ -825,7 +878,7 @@ private fun PlayerOverrideDialog(
                     style = MaterialTheme.typography.bodyMedium
                 )
 
-                if(room.isHost) {
+                if (room.isHost) {
                     LargeDropdownMenu(
                         modifier = Modifier.padding(20.dp),
                         label = "Color",
@@ -858,7 +911,7 @@ private fun PlayerOverrideDialog(
                 }
 
 
-                if(player.isAI) {
+                if (player.isAI) {
                     LargeDropdownMenu(
                         modifier = Modifier.padding(20.dp),
                         label = "Difficulty",
@@ -871,8 +924,10 @@ private fun PlayerOverrideDialog(
 
 
             LargeDividingLine { 0.dp }
-            Row(modifier = Modifier.fillMaxWidth().padding(end = 10.dp),
-                 horizontalArrangement = Arrangement.Center) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(end = 10.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
 
                 for (extension in extensions) {
                     if (extension.isEnabled && extension.extraPlayerOptions.isNotEmpty()) {
@@ -884,7 +939,8 @@ private fun PlayerOverrideDialog(
                                 modifier = Modifier.padding(start = 5.dp)
                             )
 
-                            HorizontalDivider(thickness = 3.dp,
+                            HorizontalDivider(
+                                thickness = 3.dp,
                                 modifier = Modifier.padding(top = 2.dp, bottom = 5.dp),
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -896,7 +952,7 @@ private fun PlayerOverrideDialog(
                     }
                 }
 
-                if(player != room.localPlayer && (room.isHost || room.isHostServer))
+                if (player != room.localPlayer && (room.isHost || room.isHostServer))
                     RWTextButton(readI18n("multiplayer.room.kick"), Modifier.padding(5.dp)) {
                         room.kickPlayer(player)
                         dismiss()
@@ -904,10 +960,11 @@ private fun PlayerOverrideDialog(
 
                 RWTextButton(readI18n("multiplayer.room.apply"), Modifier.padding(5.dp)) {
                     player.applyConfigChange(
-                        if(playerSpawnPoint == -3) -3 else ((playerSpawnPoint ?: 1) - 1).coerceAtLeast(0),
-                        if(playerTeam == -1) 0 else if((playerTeam ?: 0) > 10) (playerTeam ?: 0) + 1 else (playerTeam ?: 1),
-                        if(playerColor > -1) playerColor else null,
-                        if(playerStartingUnits > 0) items[playerStartingUnits].first else null,
+                        if (playerSpawnPoint == -3) -3 else ((playerSpawnPoint ?: 1) - 1).coerceAtLeast(0),
+                        if (playerTeam == -1) 0 else if ((playerTeam ?: 0) > 10) (playerTeam ?: 0) + 1 else (playerTeam
+                            ?: 1),
+                        if (playerColor > -1) playerColor else null,
+                        if (playerStartingUnits > 0) items[playerStartingUnits].first else null,
                         aiDifficulty,
                         playerTeam == -1
                     )
@@ -947,9 +1004,8 @@ private fun MultiplayerOption(
     var maxPlayerCount by remember { mutableStateOf(room.maxPlayerCount) }
     var realIncomeMultiplier by remember { mutableStateOf(room.incomeMultiplier) }
 
-    val koin = getKoin()
     val teamModes = remember {
-        koin.getAll<TeamMode>()
+        TeamMode.modes
     }
 
     BorderCard(
@@ -973,7 +1029,9 @@ private fun MultiplayerOption(
                         ) { allowSpectators = it }
                     }
                     item {
-                        MultiplayerOption(readI18n("multiplayer.room.teamLock"), teamLock, room.isHost) { teamLock = it }
+                        MultiplayerOption(readI18n("multiplayer.room.teamLock"), teamLock, room.isHost) {
+                            teamLock = it
+                        }
                     }
                 }
             }
@@ -1037,10 +1095,12 @@ private fun MultiplayerOption(
                         }
                     }
 
-                    var selectedIndex by remember { mutableStateOf(teamMode?.let { teamModes.indexOf(teamMode) + 1 } ?: 0) }
+                    var selectedIndex by remember {
+                        mutableStateOf(teamMode?.let { teamModes.indexOf(teamMode) + 1 } ?: 0)
+                    }
                     LargeDropdownMenu(
                         modifier = Modifier.weight(.5f).padding(5.dp),
-                        label = "Set Team",
+                        label = readI18n("multiplayer.room.setTeam"),
                         enabled = room.isHost,
                         items = teamList,
                         selectedIndex = selectedIndex,
@@ -1049,7 +1109,7 @@ private fun MultiplayerOption(
                         },
                         onItemSelected = { index, _ ->
                             selectedIndex = index
-                            teamMode = when(index) {
+                            teamMode = when (index) {
                                 0 -> null
                                 else -> teamModes[index - 1]
                             }
@@ -1101,7 +1161,7 @@ private fun MultiplayerOption(
                         colors = RWSliderColors,
                         onValueChange = { range = it.roundToInt().coerceAtLeast(10) },
                         onValueChangeFinished = {
-                            if(range >= players.size) maxPlayerCount = range else range =
+                            if (range >= players.size) maxPlayerCount = range else range =
                                 room.maxPlayerCount
                         }
                     )
@@ -1120,7 +1180,7 @@ private fun MultiplayerOption(
                         modifier = Modifier.weight(.5f).padding(5.dp),
                         trailingIcon = {
                             val icon =
-                                if(expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                                if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
                             Icon(
                                 icon,
                                 "",
@@ -1160,7 +1220,7 @@ private fun MultiplayerOption(
                         typeInOnlyInteger = true,
                         trailingIcon = {
                             val icon =
-                                if(expanded1) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                                if (expanded1) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
                             Icon(
                                 icon,
                                 "",
@@ -1181,7 +1241,7 @@ private fun MultiplayerOption(
                 }
             }
 
-            if(room.isHost) {
+            if (room.isHost) {
                 item {
                     RWTextButton(
                         readI18n("multiplayer.room.banUnits"),
@@ -1219,7 +1279,7 @@ private fun MultiplayerOption(
             modifier = Modifier.fillMaxWidth().padding(5.dp),
             horizontalArrangement = Arrangement.Center
         ) {
-            RWTextButton("Apply") {
+            RWTextButton(readI18n("multiplayer.room.apply")) {
                 room.applyRoomConfig(
                     maxPlayerCount,
                     sharedControl,

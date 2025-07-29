@@ -23,12 +23,10 @@ import io.github.rwpp.android.impl.ClientImpl
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.PlayerImpl
 import io.github.rwpp.android.isReturnToBattleRoom
-import io.github.rwpp.core.UI
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.ChatMessageEvent
 import io.github.rwpp.event.events.SystemMessageEvent
 import io.github.rwpp.game.Game
-import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
@@ -36,8 +34,8 @@ import io.github.rwpp.inject.InjectMode
 import io.github.rwpp.inject.InterruptResult
 import io.github.rwpp.net.InternalPacketType
 import io.github.rwpp.net.Net
+import io.github.rwpp.ui.UI
 import io.github.rwpp.utils.Reflect
-import net.peanuuutz.tomlkt.Toml
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.util.*
@@ -313,7 +311,7 @@ object NetInject {
         val player = room.getPlayers()
             .firstOrNull {
                 if (gameRoom.isHost)
-                    (c != null && (it.client as ClientImpl?)?.client == c) || (c == null && it.name == room.localPlayer.name)
+                    (c != null && (it.client as ClientImpl?)?.client == c) || (c == null && it.name == room.localPlayer.name && str != null)
                 else it.name == str
             }
 

@@ -7,10 +7,10 @@
 
 package io.github.rwpp.scripts
 
+import androidx.compose.foundation.Image
 import io.github.rwpp.*
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.core.Initialization
-import io.github.rwpp.core.UI
 import io.github.rwpp.event.Event
 import io.github.rwpp.event.EventPriority
 import io.github.rwpp.event.GlobalEventChannel
@@ -18,18 +18,23 @@ import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.audio.GameSoundPool
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.inject.InterruptResult
 import io.github.rwpp.net.Client
 import io.github.rwpp.net.Net
 import io.github.rwpp.net.Packet
-import io.github.rwpp.platform.Platform
-import io.github.rwpp.widget.parseColorToArgb
+import io.github.rwpp.ui.Color
+import io.github.rwpp.ui.UI
+import io.github.rwpp.ui.Widget
+import io.github.rwpp.utils.parseColorToArgb
 import party.iroiro.luajava.ClassPathLoader.BufferOutputStream
 import party.iroiro.luajava.lua54.Lua54
+import party.iroiro.luajava.value.LuaValue
 import party.iroiro.luajava.value.RefLuaValue
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.File
 import java.nio.ByteBuffer
+import java.util.Objects
 import kotlin.concurrent.timer
 import kotlin.math.roundToInt
 
@@ -46,7 +51,6 @@ object Scripts : Initialization {
                     .getOrThrow()
                     .firstOrNull { it.config.id == module.split("/").first() }
                     ?: throw IllegalArgumentException("Extension not found: $module")
-
 
                 val path = "scripts/" + module.removePrefix(extension.config.id + "/")
 
@@ -75,6 +79,7 @@ object Scripts : Initialization {
             logger.error(e.stackTraceToString())
         }
 
+        val appContext = appKoin.get<AppContext>()
         lua["scripts"] = lua
         lua["game"] = appKoin.get<Game>()
         lua["externalHandler"] = appKoin.get<ExternalHandler>()
@@ -84,12 +89,12 @@ object Scripts : Initialization {
         lua["config"] = appKoin.get<ConfigIO>()
         lua["commands"] = commands
         lua["ui"] = UI
-        lua["isAndroid"] = Platform.isAndroid()
-        lua["isDesktop"] = Platform.isDesktop()
+        lua["isAndroid"] = appContext.isAndroid()
+        lua["isDesktop"] = appContext.isDesktop()
         lua["version"] = projectVersion
 
         @Suppress("UNCHECKED_CAST")
-        lua.register("filterEvents") { _, args ->
+        lua.register("filterEvents") { l, args ->
             GlobalEventChannel.subscribeGlobalAlways(
                 Class.forName(
                     "io.github.rwpp.event.events." + args[0].toJavaObject() as String
@@ -97,7 +102,7 @@ object Scripts : Initialization {
                     EventPriority.valueOf(args[1].toJavaObject() as String)
                 else EventPriority.NORMAL
             ) {
-                synchronized(lua.mainState) {
+                synchronized(l.mainState) {
                     (args[if (args.size > 2) 2 else 1] as RefLuaValue).call(it)
                 }
             }
@@ -106,7 +111,7 @@ object Scripts : Initialization {
         }
 
         @Suppress("UNCHECKED_CAST")
-        lua.register("filterEventsOnce") { _, args ->
+        lua.register("filterEventsOnce") { l, args ->
             GlobalEventChannel.subscribeGlobalOnce(
                 Class.forName(
                     "io.github.rwpp.event.events." + args[0].toJavaObject() as String
@@ -114,7 +119,7 @@ object Scripts : Initialization {
                     EventPriority.valueOf(args[1].toJavaObject() as String)
                 else EventPriority.NORMAL
             ) {
-                synchronized(lua.mainState) {
+                synchronized(l.mainState) {
                     args[if (args.size > 2) 2 else 1].call(it)
                 }
             }
@@ -122,13 +127,13 @@ object Scripts : Initialization {
             arrayOf()
         }
 
-        lua.register("registerCommand") { _, args ->
+        lua.register("registerCommand") { l, args ->
             commands.register<Any?>(
                 args[0].toJavaObject() as String,
                 args[1].toJavaObject() as String,
                 args[2].toJavaObject() as String?,
             ) { a, p -> if (p != null) {
-                synchronized(lua.mainState) {
+                synchronized(l.mainState) {
                     args[3].call(a, p)
                 }
             } }
@@ -166,10 +171,16 @@ object Scripts : Initialization {
             l.pushJavaObject(timer(
                 initialDelay = args[0].toNumber().toLong(),
                 period = args[1].toNumber().toLong()) {
-                synchronized(lua.mainState) {
+                synchronized(l.mainState) {
                     args[2].call()
                 }
             })
+            arrayOf(l.get())
+        }
+
+
+        lua.register("interruptResult")  { l, args ->
+            l.pushJavaObject(InterruptResult(args.getOrNull(0)?.toJavaObject() ?: Unit))
             arrayOf(l.get())
         }
 
@@ -198,11 +209,16 @@ object Scripts : Initialization {
                      local gameRoom = game:getGameRoom()
                      gameRoom:sendMessageToPlayer(player, title or id, message, color or -1)
                 end
+                local inject = function(alias, func)
+                    _G['__global__' .. id .. '__' .. alias] = func
+                end
                 local functionN = function(count, func) 
                     return java.proxy('kotlin.jvm.functions.Function' .. count, func)
                 end
             """.trimIndent().replace("\n", " ")
-            lua.run("$body $src")
+            val newState = lua.newThread()
+            newState.openLibraries()
+            newState.run("$body $src")
         } catch (e: Exception) {
             logger.error(e.stackTraceToString())
         }
@@ -211,11 +227,11 @@ object Scripts : Initialization {
     fun initLuaUI() {
         @Suppress("UNCHECKED_CAST")
         lua.register("dropdown") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaDropdown(
+            l.pushJavaObject(Widget.Dropdown(
                 (args[0].toJavaObject() as HashMap<*, String>).values.toTypedArray(), args[1].toJavaObject() as String,
                 { args[2].call().first().toJavaObject() as String },
                 { index, value ->
-                    synchronized(lua.mainState) {
+                    synchronized(l.mainState) {
                         args[3].call(index, value)
                     }
                 }
@@ -224,15 +240,15 @@ object Scripts : Initialization {
         }
 
         lua.register("textField") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaTextField(
+            l.pushJavaObject(Widget.TextField(
                 args[0].toJavaObject() as String,
                 {
-                    synchronized(lua.mainState) {
+                    synchronized(l.mainState) {
                         args[1].call().first().toJavaObject() as String
                     }
                 },
                 { str ->
-                    synchronized(lua.mainState) {
+                    synchronized(l.mainState) {
                         args[2].call(str)
                     }
                 }
@@ -241,15 +257,15 @@ object Scripts : Initialization {
         }
 
         lua.register("checkbox") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaCheckbox(
+            l.pushJavaObject(Widget.Checkbox(
                 args[0].toJavaObject() as String,
                 {
-                    synchronized(lua.mainState) {
+                    synchronized(l.mainState) {
                         args[1].call().first().toJavaObject() as Boolean
                     }
                 },
                 { bool ->
-                    synchronized(lua.mainState) {
+                    synchronized(l.mainState) {
                         args[2].call(bool)
                     }
                 }
@@ -258,10 +274,10 @@ object Scripts : Initialization {
         }
 
         lua.register("textButton") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaTextButton(
+            l.pushJavaObject(Widget.TextButton(
                 args[0].toJavaObject() as String
             ) {
-                synchronized(lua.mainState) {
+                synchronized(l.mainState) {
                     args[1].call()
                 }
             })
@@ -269,19 +285,36 @@ object Scripts : Initialization {
         }
 
         lua.register("text") { l, args ->
-            l.pushJavaObject(LuaWidget.LuaText(
+            l.pushJavaObject(Widget.Text(
                 args[0].toJavaObject() as String,
                 args[1].toNumber().roundToInt(),
-                args[2].toJavaObject() as LuaColor,
+                args[2].toJavaObject() as Color,
+                args[3].toBoolean()
             ))
             arrayOf(l.get())
         }
 
         lua.register("color") { l, args ->
-            l.pushJavaObject(LuaColor(
+            l.pushJavaObject(Color(
                 parseColorToArgb(args[0].toJavaObject() as String)
             ))
             arrayOf(l.get())
+        }
+
+        lua.register("image") { l, args ->
+            l.pushJavaObject(Widget.Image(args[0].toJavaObject()))
+            arrayOf(l.get())
+        }
+    }
+
+    @Suppress("unused")
+    @JvmStatic
+    fun callGlobalFunction(globalName: String, self: Any?, args: Array<Any?>): Any? {
+        val result = lua[globalName].call(self, *args)
+        return if (result.isEmpty()) {
+            Unit
+        } else {
+            result.first().toJavaObject()
         }
     }
 }
