@@ -7,15 +7,30 @@
 
 package io.github.rwpp.android.impl.inject
 
+import com.corrodinggames.rts.game.i
+import io.github.rwpp.android._gameSpeed
+import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.mainThreadChannel
+import io.github.rwpp.appKoin
+import io.github.rwpp.game.Game
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
+import io.github.rwpp.utils.Reflect
 
 @InjectClass(com.corrodinggames.rts.game.i::class)
 object BaseEngineInject {
+    val room by lazy { appKoin.get<Game>().gameRoom }
     @Inject("b", InjectMode.InsertBefore)
     fun onUpdate(deltaTime: Float) {
         mainThreadChannel.tryReceive().getOrNull()?.invoke()
+        if (room.isHost && _gameSpeed != 1f) {
+            GameEngine.t().bU.K = 1f / _gameSpeed
+            GameEngine.t().bU.M = 1f / _gameSpeed
+            (GameEngine.t() as i).G = _gameSpeed
+        } else {
+            GameEngine.t().bU.M = 1f
+            (GameEngine.t() as i).G = 1f
+        }
     }
 }
