@@ -57,6 +57,11 @@ abstract class Extension(
     val extraRoomOptions = mutableListOf<Widget>()
 
     /**
+     * The jvm launcher of the extension.
+     */
+    var launcher: ExtensionLauncher? = null
+
+    /**
      * The inject info of the extension.
      *
      * It will load the inject info from the file "inject.toml" or "inject_lua.toml" in the extension file.

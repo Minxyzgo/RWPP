@@ -11,6 +11,7 @@ import io.github.rwpp.core.Initialization
 import io.github.rwpp.inject.RootInfo
 import org.koin.core.component.KoinComponent
 import java.io.File
+import java.io.InputStream
 
 interface ExternalHandler : KoinComponent, Initialization {
     fun getAllExtensions(update: Boolean = false): Result<List<Extension>>
@@ -27,6 +28,8 @@ interface ExternalHandler : KoinComponent, Initialization {
     fun getUsingResource(): Extension?
 
     fun openFileChooser(onChooseFile: (File) -> Unit)
+
+    fun loadJar(jar: File, parent: ClassLoader): ClassLoader
 
     fun newExtension(
         isEnabled: Boolean,

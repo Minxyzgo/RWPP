@@ -67,6 +67,11 @@ data class ExtensionConfig(
     val dependencies: List<String> = emptyList(),
 
     /**
+     * The main class of the extension.
+     */
+    val mainClass: String? = null,
+
+    /**
      * The supported platforms of the extension.
      *
      * If it is empty, it means that the extension can run on all platforms.

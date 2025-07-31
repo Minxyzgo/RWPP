@@ -13,12 +13,15 @@ import io.github.rwpp.core.Initialization
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExtensionConfig
+import io.github.rwpp.external.ExtensionLauncher
 import io.github.rwpp.impl.BaseExternalHandlerImpl
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
 import io.github.rwpp.io.unzipTo
 import org.koin.core.annotation.Single
 import java.io.File
+import java.net.URL
+import java.net.URLClassLoader
 import java.util.zip.ZipFile
 import javax.imageio.ImageIO
 import javax.swing.JFileChooser
@@ -64,6 +67,30 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         val result = fileChooser.showOpenDialog(null)
         if (result == JFileChooser.APPROVE_OPTION) {
             onChooseFile(fileChooser.selectedFile)
+        }
+    }
+
+    override fun loadJar(jar: File, parent: ClassLoader): ClassLoader {
+        return object : URLClassLoader(arrayOf<URL?>(jar.toURI().toURL()), parent) {
+            @Throws(ClassNotFoundException::class)
+            override fun loadClass(name: String?, resolve: Boolean): Class<*>? {
+                //check for loaded state
+                var loadedClass = findLoadedClass(name)
+                if (loadedClass == null) {
+                    try {
+                        //try to load own class first
+                        loadedClass = findClass(name)
+                    } catch (_: ClassNotFoundException) {
+                        //use parent if not found
+                        return parent.loadClass(name)
+                    }
+                }
+
+                if (resolve) {
+                    resolveClass(loadedClass)
+                }
+                return loadedClass
+            }
         }
     }
 }

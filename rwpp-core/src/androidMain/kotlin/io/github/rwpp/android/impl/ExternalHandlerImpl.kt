@@ -9,7 +9,9 @@ package io.github.rwpp.android.impl
 
 import android.content.Context
 import android.content.Intent
+import dalvik.system.PathClassLoader
 import io.github.rwpp.R
+import io.github.rwpp.android.dexFolder
 import io.github.rwpp.android.fileChooser
 import io.github.rwpp.android.pickFileActions
 import io.github.rwpp.core.Initialization
@@ -22,6 +24,7 @@ import io.github.rwpp.resourceOutputDir
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import java.io.File
+import java.util.zip.ZipFile
 
 
 @Single(binds = [ExternalHandler::class, Initialization::class])
@@ -70,6 +73,39 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         intent.setType("*/*") // 设置文件类型为任意类型
         intent.addCategory(Intent.CATEGORY_OPENABLE) // 添加可打开的文件分类
         fileChooser.launch(intent)
+    }
+
+    override fun loadJar(jar: File, parent: ClassLoader): ClassLoader {
+        val targetFile = File(dexFolder, "classes-${jar.nameWithoutExtension}.dex")
+        val zip = ZipFile(jar)
+        val dex = zip.getEntry("classes.dex")
+        val inputStream = zip.getInputStream(dex)
+        if (targetFile.exists()) {
+            targetFile.delete()
+        }
+        targetFile.setReadOnly()
+        targetFile.writeBytes(inputStream.readBytes())
+        return object : PathClassLoader(targetFile.absolutePath, parent) {
+            @Throws(ClassNotFoundException::class)
+            override fun loadClass(name: String?, resolve: Boolean): Class<*>? {
+                //check for loaded state
+                var loadedClass = findLoadedClass(name)
+                if (loadedClass == null) {
+                    try {
+                        //try to load own class first
+                        loadedClass = findClass(name)
+                    } catch (_: ClassNotFoundException) {
+                        //use parent if not found
+                        return parent.loadClass(name)
+                    }
+                }
+
+                if (resolve) {
+                    resolveClass(loadedClass)
+                }
+                return loadedClass
+            }
+        }
     }
 
 

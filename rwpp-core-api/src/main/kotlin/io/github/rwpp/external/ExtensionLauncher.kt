@@ -7,17 +7,65 @@
 
 package io.github.rwpp.external
 
+import io.github.rwpp.appKoin
+import io.github.rwpp.config.Config
+import io.github.rwpp.config.ConfigIO
+import java.io.InputStream
+import kotlin.reflect.KClass
+
 /**
  * Abstract class for launching external jar extensions.
  */
 abstract class ExtensionLauncher {
     /**
-     * Initialize the extension.
+     * The extension this launcher is for.
      */
-    abstract fun init()
+    val extension by lazy {
+        appKoin.get<ExternalHandler>().getAllExtensions().getOrThrow().first { it.launcher == this }
+    }
 
     /**
-     * Called when the game is loaded.
+     * Saves the specified config to the config file.
+     *
+     * The config must be serializable using the [Config] interface.
      */
-    abstract fun onLoaded()
+    fun saveConfig(config: Config) {
+        appKoin.get<ConfigIO>().saveConfig(config)
+    }
+
+    /**
+     * Gets the specified config from the config file.
+     */
+    fun <C : Config> getConfig(clazz: KClass<C>): Config? {
+        return appKoin.get<ConfigIO>().readConfig(clazz)
+    }
+
+    /**
+     * Gets the specified single config from the config file.
+     */
+    fun getSingleConfig(key: String): String? {
+        return appKoin.get<ConfigIO>().readSingleConfig(extension.config.id, key)
+    }
+
+    /**
+     * Saves the specified single config to the config file.
+     */
+    fun saveSingleConfig(key: String, value: Any?) {
+        appKoin.get<ConfigIO>().saveSingleConfig(extension.config.id, key, value)
+    }
+
+    /**
+     * Opens an input stream for the specified entry name.
+     *
+     * You should use this method instead of calling [ClassLoader.getResourceAsStream] on the extension's classloader,
+     * otherwise you may get null if the extension run on android platform.
+     */
+    fun openInputStream(entryName: String): InputStream? {
+        return extension.openInputStream(entryName)
+    }
+
+    /**
+     * Called after all extensions have been loaded.
+     */
+    abstract fun init()
 }

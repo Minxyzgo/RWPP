@@ -22,37 +22,10 @@ class LibClassLoader : ClassLoader {
         }
     }
 
-    constructor() : super()
-
     constructor(parent: ClassLoader) : super(parent)
 
     fun addChild(child: ClassLoader) {
         children.add(child)
-    }
-
-    fun loadJar(jar: File, parent: ClassLoader): ClassLoader {
-        Thread.currentThread().contextClassLoader
-        return object : URLClassLoader(arrayOf<URL?>(jar.toURI().toURL()), parent) {
-            @Throws(ClassNotFoundException::class)
-            override fun loadClass(name: String?, resolve: Boolean): Class<*>? {
-                //check for loaded state
-                var loadedClass = findLoadedClass(name)
-                if (loadedClass == null) {
-                    try {
-                        //try to load own class first
-                        loadedClass = findClass(name)
-                    } catch (e: ClassNotFoundException) {
-                        //use parent if not found
-                        return parent.loadClass(name)
-                    }
-                }
-
-                if (resolve) {
-                    resolveClass(loadedClass)
-                }
-                return loadedClass
-            }
-        }
     }
 
     @Throws(ClassNotFoundException::class)
