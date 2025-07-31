@@ -24,3 +24,4 @@ var rcnOption: String? = null
 var singlePlayer: Boolean = false
 var bannedUnitList: List<String> = listOf()
 val defeatedPlayerSet = CopyOnWriteArraySet<PlayerInternal>()
+var _gameSpeed: Float = 1f

@@ -20,6 +20,8 @@ import com.corrodinggames.rts.java.audio.lwjgl.OpenALAudio
 import com.corrodinggames.rts.java.b
 import com.corrodinggames.rts.java.b.a
 import com.corrodinggames.rts.java.u
+import io.github.rwpp.appKoin
+import io.github.rwpp.config.Settings
 import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.desktop.*
 import io.github.rwpp.event.GlobalEventChannel
@@ -139,7 +141,6 @@ class GameImpl : AbstractGame() {
                 }
 
                 override fun a(p0: String, p1: Boolean) {
-                    println("RWPP:" + p0)
                     message(p0)
                     loadingMessage = p0
                 }
@@ -177,7 +178,13 @@ class GameImpl : AbstractGame() {
             main.g()
 
 
-            main.d = DClass()
+            main.d = object : DClass() {
+                //返回是否全屏，以便能处理边缘移动
+                override fun f(): Boolean {
+                    val B = GameEngine.B()
+                    return B != null && appKoin.get<Settings>().isFullscreen
+                }
+            }
             val i = com.corrodinggames.rts.java.b.a()
             com.corrodinggames.librocket.a::class.java.getDeclaredField("a").apply {
                 isAccessible = true
@@ -247,6 +254,16 @@ class GameImpl : AbstractGame() {
 
 
             l.B().bQ.sendReports = false // why luke should know
+
+            //此处忽略dpi来正确设置librocket的显示大小
+            val root = ScriptEngine.getInstance().root
+            val libRocket = ScriptContext::class.java.getDeclaredField("libRocket").run {
+                isAccessible = true
+                get(root)
+            } as com.corrodinggames.librocket.b
+            val scale = getDPIScale()
+            libRocket.setDimensionsWrap((displaySize.width / scale).toInt(), (displaySize.height / scale).toInt())
+
             receivedChannel.trySend(Unit)
 
             //Display.destroy()

@@ -176,7 +176,7 @@ class GameImpl : Game, CoroutineScope {
                         override val type: MissionType
                             get() = type
                         override val mapName: String
-                            get() = name.removeSuffix(".tmx")
+                            get() = f.removeSuffix(".tmx")
                         override val mapType: MapType
                             get() = MapType.SkirmishMap
 

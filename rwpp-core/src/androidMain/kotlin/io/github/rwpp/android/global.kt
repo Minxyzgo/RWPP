@@ -12,11 +12,17 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import androidx.activity.result.ActivityResultLauncher
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import dalvik.system.BaseDexClassLoader
 import dalvik.system.PathClassLoader
+import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.PlayerInternal
 import io.github.rwpp.game.Player
 import io.github.rwpp.utils.Reflect
+import io.github.rwpp.widget.loadingMessage
 import kotlinx.coroutines.channels.Channel
 import org.koin.core.KoinApplication
 import java.io.File
@@ -24,9 +30,12 @@ import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.getValue
 
+var _gameSpeed = 1f
+
 @Volatile
 var init = false
 var requireReloadingLib = false
+var message by mutableStateOf("loading")
 lateinit var gameLauncher: ActivityResultLauncher<Intent>
 lateinit var fileChooser: ActivityResultLauncher<Intent>
 val mainThreadChannel = Channel<() -> Unit>(Channel.UNLIMITED)
@@ -46,6 +55,17 @@ val pickFileActions = mutableListOf<(File) -> Unit>()
 var gameLoaded = false
 val uiHandler by lazy {
     Handler(Looper.getMainLooper())
+}
+val loadingThread by lazy {
+    Thread({
+        while (true) {
+            val msg = GameEngine.t()?.dF
+            if (msg != null) {
+                message = msg
+                loadingMessage = msg
+            }
+        }
+    }, "LoadingContextThread").apply { start() }
 }
 
 private var libClassLoader: PathClassLoader? = null

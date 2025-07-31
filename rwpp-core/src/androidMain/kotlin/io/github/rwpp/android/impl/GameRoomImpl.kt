@@ -13,6 +13,7 @@ import com.corrodinggames.rts.appFramework.InGameActivity
 import com.corrodinggames.rts.appFramework.LevelSelectActivity
 import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
 import com.corrodinggames.rts.game.a.a
+import com.corrodinggames.rts.gameFramework.e
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.j.bg
 import com.corrodinggames.rts.gameFramework.j.c
@@ -33,7 +34,6 @@ import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.team.TeamMode
-import io.github.rwpp.net.Packet
 import io.github.rwpp.net.packets.GamePacket
 import io.github.rwpp.utils.Reflect
 import io.github.rwpp.welcomeMessage
@@ -121,6 +121,9 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override var teamMode: TeamMode? = null
     override val isSinglePlayerGame: Boolean
         get() = io.github.rwpp.android.isSinglePlayerGame
+    override var gameSpeed: Float
+        get() = _gameSpeed
+        set(value) { _gameSpeed = value }
     override var gameMapTransformer: ((XMLMap) -> Unit)? = null
     override var isRWPPRoom: Boolean = false
     override var option: RoomOption = RoomOption()
@@ -364,15 +367,15 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     }
 
     override fun sendSurrender(player: Player) {
-        if (player == localPlayer) {
-            sendChatMessage("-surrender")
-        } else if (player.client != null) {
-            Reflect.call<ae, Any>(
-                GameEngine.t().bU,
-                "b",
-                listOf(com.corrodinggames.rts.gameFramework.j.c::class, com.corrodinggames.rts.game.p::class, String::class, String::class),
-                listOf((player.client as ClientImpl).client, (player as PlayerImpl).player, player.name, "-surrender")
-            )
+        if (isHost) {
+            val pVar = (player as PlayerImpl).player
+            val t = GameEngine.t()
+            pVar.F = true
+            val b2: e = t.cc.b()
+            b2.i = pVar
+            b2.s = true
+            b2.v = 100
+            t.bU.a(b2)
         }
     }
 
@@ -390,10 +393,6 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             //Reflect.set(GameEngine.t().bU, "br", 3601)
             //GameEngine.t().bU.br
         }
-    }
-
-    override fun addCommandPacket(packet: Packet) {
-        TODO("Not yet implemented")
     }
 
     override fun addAI(count: Int) {
@@ -525,6 +524,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         teamMode = null
         defeatedPlayerSet.clear()
         gameOver = false
+        _gameSpeed = 1f
 
         MainActivity.activityResume()
 
@@ -563,13 +563,12 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                 t.bU.n()
                 t.bU.a(null, false)
             }
-
+            Reflect.set(t.bU, "bI", false)
+            t.bU.bv = 0
+            t.bU.bu = 0
             MultiplayerBattleroomActivity.startGameCommon()
             if(t.bI != null && t.bI.X) {
                 t.bU.bf = true
-                t.bU.bv = 0
-                t.bU.bu = 0
-                //GameEngine.K()
                 val intent = Intent(game.get(), InGameActivity::class.java)
                 intent.putExtra("level", t.di)
                 gameLauncher.launch(intent)

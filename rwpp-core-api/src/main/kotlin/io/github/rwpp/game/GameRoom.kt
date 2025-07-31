@@ -44,6 +44,11 @@ interface GameRoom {
     val isSinglePlayerGame: Boolean
 
     /**
+     * Experimental
+     */
+    var gameSpeed: Float
+
+    /**
      * Transform the map before loading. (if host)
      */
     var gameMapTransformer: ((XMLMap) -> Unit)?
@@ -119,12 +124,6 @@ interface GameRoom {
      * Sync all players. (if host)
      */
     fun syncAllPlayer()
-
-    /**
-     * Add a command packet to the game. (if host)
-     * @param packet the packet to add.
-     */
-    fun addCommandPacket(packet: Packet)
 
     /**
      * Add AIs to the room with the specific count. (if host)
