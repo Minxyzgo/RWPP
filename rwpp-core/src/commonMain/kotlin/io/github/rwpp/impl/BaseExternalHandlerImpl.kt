@@ -7,21 +7,17 @@
 
 package io.github.rwpp.impl
 
-import io.github.rwpp.AppContext
-import io.github.rwpp.appKoin
+import io.github.rwpp.*
 import io.github.rwpp.config.EnabledExtensions
-import io.github.rwpp.extensionPath
+import io.github.rwpp.core.LibClassLoader
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExtensionConfig
+import io.github.rwpp.external.ExtensionLauncher
 import io.github.rwpp.external.ExternalHandler
-import io.github.rwpp.generatedLibDir
 import io.github.rwpp.inject.InjectInfo
 import io.github.rwpp.inject.PathType
 import io.github.rwpp.inject.RedirectMethodInfo
 import io.github.rwpp.inject.RootInfo
-import io.github.rwpp.logger
-import io.github.rwpp.projectVersion
-import io.github.rwpp.resourceOutputDir
 import io.github.rwpp.scripts.LuaRootInfo
 import io.github.rwpp.scripts.Scripts
 import io.github.rwpp.ui.UI
@@ -37,9 +33,11 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
     protected var _usingResource: Extension? = null
     protected var extensions: List<Extension>? = null
 
+    private val mainLoader by lazy { LibClassLoader(Thread.currentThread().contextClassLoader) }
     private val fileExists by lazy {
         File(resourceOutputDir).exists()
     }
+
 
     override fun newExtension(
         isEnabled: Boolean,
@@ -116,12 +114,12 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                 if (file.exists()) {
                     val enabledExtension =
                         appKoin.get<EnabledExtensions>().values.also { logger.info("Enabled extensions: ${it.joinToString()}") }
-                    mutableListOf<Extension>()
-                        .also { extensions = it }
+                    val idList = extensions?.associate { it.config.id to it }
+                    val _extension = mutableListOf<Extension>()
                         .apply {
                             file
                                 .walk()
-                                .filter { it.name.endsWith(".rwext") || it.name.endsWith(".rwres") || it.isDirectory }
+                                .filter { it.name.endsWith(".jar") || it.name.endsWith(".rwext") || it.name.endsWith(".rwres") || it.isDirectory }
                                 .forEachIndexed { _, fi ->
                                     var config: ExtensionConfig? = null
 
@@ -142,7 +140,6 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                                         }
                                     }
 
-
                                     logger.info("Config: $config")
 
                                     config
@@ -151,24 +148,31 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                                             return Result.failure(FileNotFoundException("No info.toml found in extension: ${fi.absolutePath}"))
                                         }
 
-                                    if (extensions!!.any { it.config.id == config.id }) {
+                                    if (this.any { it.config.id == config.id }) {
                                         extensions = listOf()
                                         return Result.failure(
                                             IllegalStateException("Duplicate extension id found: ${config.id}")
                                         )
                                     }
 
-                                    logger.info("add extension")
-                                    add(
-                                        newExtension(
-                                            enabledExtension.contains(config.id),
-                                            !fi.isDirectory,
-                                            fi,
-                                            config.copy(hasResource = config.hasResource || fi.name.endsWith(".rwres"))
+                                    if (idList?.contains(config.id) == true) {
+                                        add(idList[config.id]!!)
+                                    } else {
+                                        logger.info("add new extension")
+                                        add(
+                                            newExtension(
+                                                enabledExtension.contains(config.id),
+                                                !fi.isDirectory,
+                                                fi,
+                                                config.copy(hasResource = config.hasResource || fi.name.endsWith(".rwres"))
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                         }
+
+                    extensions = _extension
+                    extensions!!
                 } else emptyList()
             })
     }
@@ -196,23 +200,50 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
 
     override fun init() {
         logger.info("Init extensions...")
-        getAllExtensions().onFailure {
+        val extensions =getAllExtensions().onFailure {
             UI.showWarning(it.message ?: "Load extensions failed.")
-        }.getOrNull()?.forEach { extension ->
-            if (extension.isEnabled) {
-                try {
-                    logger.info("Init for ${extension.config.id}")
+        }.getOrNull()
 
-                    Scripts.loadScript(
-                        extension.config.id,
-                        extension.zipFile?.let { zip ->
-                            val entry = zip.getEntry("scripts/main.lua")
-                            zip.getInputStream(entry).reader().readText()
-                        } ?: File(extension.file, "scripts/main.lua").readText()
-                    )
-                } catch (e: Exception) { logger.error(e.stackTraceToString()) }
+        extensions?.forEach { extension ->
+            if (extension.isEnabled) {
+                logger.info("Init for ${extension.config.id}")
+
+                //如果未找到脚本文件，则不加载脚本
+                val src = runCatching {
+                    extension.zipFile?.let { zip ->
+                        val entry = zip.getEntry("scripts/main.lua")
+                        zip.getInputStream(entry).reader().readText()
+                    } ?: File(extension.file, "scripts/main.lua").readText()
+                }.getOrNull()
+
+                if (src == null && extension.config.mainClass == null)
+                    logger.warn("There are no loadable files for ${extension.config.id}")
+
+                runCatching {
+                    if (src != null) {
+                        Scripts.loadScript(
+                            extension.config.id,
+                            src
+                        )
+                    }
+                }.onFailure {
+                    logger.error("Load script failed: ${it.message}")
+                }
+
+                if (extension.config.mainClass != null) {
+                    runCatching {
+                        val classLoader = loadJar(extension.file, mainLoader)
+                        mainLoader.addChild(classLoader)
+                        val main = classLoader.loadClass(extension.config.mainClass)
+                        extension.launcher = main.getDeclaredConstructor().newInstance() as ExtensionLauncher
+                    }.onFailure {
+                        logger.error("Load main class failed: ${it.stackTraceToString()}")
+                    }
+                }
             }
         }
+
+        extensions?.filter { it.isEnabled && it.launcher != null }?.forEach { it.launcher?.init() }
     }
 
     private fun isSupportCurrentGamePlatform(platform: String): Boolean {
