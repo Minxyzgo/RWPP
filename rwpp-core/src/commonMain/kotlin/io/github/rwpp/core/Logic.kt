@@ -53,17 +53,30 @@ object Logic : Initialization {
             val game = appKoin.get<Game>()
             val room = game.gameRoom
             val net = appKoin.get<Net>()
-            val allMods = appKoin.get<ModManager>().getAllMods()
+            val manager = appKoin.get<ModManager>()
+            val allMods = manager.getAllMods()
             if (room.isRWPPRoom && room.option.canTransferMod) {
                 // TODO check different mod data.
                 val missingMods = e.requiredMods.toMutableList().apply { removeAll(allMods.map { it.name }) }
-                modQueue = LinkedList(missingMods)
-                requiredMods = e.requiredMods
-                net.sendPacketToServer(ModPacket.RequestPacket().apply {
-                    mods = missingMods.joinToString(",")
-                })
-                setDownloadingTitle(0)
-                e.intercept()
+
+                if (missingMods.isEmpty()) {
+                    net.sendPacketToServer(ModPacket.RequestPacket())
+                    allMods.forEach { mod ->
+                        if (mod.name in e.requiredMods) {
+                            mod.isEnabled = true
+                        }
+                    }
+                    manager.modReload()
+                    net.sendPacketToServer(ModPacket.ModReloadFinishPacket())
+                } else {
+                    modQueue = LinkedList(missingMods)
+                    requiredMods = e.requiredMods
+                    net.sendPacketToServer(ModPacket.RequestPacket().apply {
+                        mods = missingMods.joinToString(",")
+                    })
+                    setDownloadingTitle(0)
+                    e.intercept()
+                }
             }
         }
 
@@ -110,10 +123,6 @@ object Logic : Initialization {
             ModPacket.MOD_DOWNLOAD_REQUEST
         ) { client, packet ->
             val room = game.gameRoom
-            println("on request")
-            println("isHost: ${room.isHost}")
-            println("mods: ${packet.mods}")
-            println("manager: ${appKoin.get<ModManager>().getAllMods().joinToString(", ") { it.name }}")
             if (!room.isHost) return@registerPacketListener true
             runCatching {
                 val player = room.getPlayerByClient(client!!)!!
@@ -122,7 +131,7 @@ object Logic : Initialization {
                     .getAllMods()
                     .filter { it.isEnabled && it.name in packet.mods.split(",") }
                 mods.forEachIndexed { i, mod ->
-                    println("send mod: ${mod.name}")
+                    logger.info("send mod: ${mod.name}")
                     client.sendPacketToClient(
                         ModPacket.ModPackPacket().apply {
                             index = i
@@ -142,12 +151,10 @@ object Logic : Initialization {
             ModPacket.DOWNLOAD_MOD_PACK
         ) { client, packet ->
             val room = game.gameRoom
-            println("get modpacket")
-            println("isHost: ${room.isHost} modQueue: ${modQueue}")
             if (modQueue == null || room.isHost) return@registerPacketListener true
             scope.launch(Dispatchers.IO) {
                 runCatching {
-                    println("get mod: ${packet.name}")
+                    logger.info("get mod packet: ${packet.name}")
                     modQueue!!.poll()
                     setDownloadingTitle(packet.index + 1)
                     val modFile = File(modDir, packet.name + ".rwmod")
@@ -157,31 +164,25 @@ object Logic : Initialization {
                     if (modQueue!!.isEmpty()) {
                         UI.showNetworkDialog = false
                         val manager = appKoin.get<ModManager>()
-                        manager.getAllMods().forEach { mod ->
-                            mod.isEnabled = false
-                        }
-                        manager.modUpdate()
                         val mods = manager.getAllMods()
-                        if (requiredMods!!.any { m -> m !in mods.map { it.name } }) {
+                        mods.forEach { mod ->
+                            mod.isEnabled = mod.name in requiredMods!!
+                        }
+                        manager.modReload()
+                        val mods2 = manager.getAllMods()
+                        if (requiredMods!!.any { m -> m !in mods2.map { it.name } }) {
                             room.disconnect("Mod download failed.")
-                            UI.showWarning("Mod download failed: required mods not found. Please make sure you have permission to reload mods.", true)
+                            UI.showWarning("Mod download failed: required mods were not found. Please make sure you have permission to reload mods.", true)
                             return@runCatching
                         }
 
-                        mods.forEach { mod ->
-                            if (mod.name in requiredMods!!) {
-                                mod.isEnabled = true
-                            }
-                        }
-
-                        manager.modReload()
                         net.sendPacketToServer(ModPacket.ModReloadFinishPacket())
                     } else {
                         UI.showNetworkDialog = true
                     }
                 }.onFailure {
                     room.disconnect("Mod download failed.")
-                    UI.showWarning("Mod download failed: ${it.message}", true)
+                    UI.showWarning("Mod download failed: ${it.stackTraceToString()}", true)
                 }
             }
 
