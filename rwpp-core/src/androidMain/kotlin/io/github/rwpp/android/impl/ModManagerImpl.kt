@@ -9,9 +9,8 @@ package io.github.rwpp.android.impl
 
 import com.corrodinggames.rts.game.units.custom.ag
 import com.corrodinggames.rts.gameFramework.e.a
-import com.corrodinggames.rts.gameFramework.i.b
-import com.corrodinggames.rts.gameFramework.k
 import com.corrodinggames.rts.gameFramework.k.d
+import com.corrodinggames.rts.gameFramework.utility.ah
 import io.github.rwpp.android.MainActivity
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.ReloadModEvent
@@ -26,12 +25,11 @@ import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import java.io.File
+import java.util.concurrent.locks.ReentrantLock
 
 @Single
 class ModManagerImpl : ModManager {
     private val game: Game = get()
-    private var mods: List<Mod>? = null
-
     override suspend fun modReload() = withContext(Dispatchers.IO) {
         ReloadModEvent().broadcastIn()
         val t = GameEngine.t()
@@ -43,14 +41,12 @@ class ModManagerImpl : ModManager {
         t.bo = false
         t.q()
         ReloadModFinishedEvent().broadcastIn()
+        Unit
     }
-//
-//    override fun modUpdate() {
-//        //LClass.B().bZ.k()
-//        GameEngine.t().bW.j()
-//        mods = null
-//        mods = getAllMods()
-//    }
+
+    override suspend fun modUpdate() {
+        modReload()
+    }
 
     override suspend fun modSaveChange() {
         val t = GameEngine.t()
@@ -69,13 +65,11 @@ class ModManagerImpl : ModManager {
     }
 
     override fun getModByName(name: String): Mod? {
-        mods = mods ?: getAllMods()
-        return mods!!.firstOrNull { it.name == name }
+        return getAllMods().firstOrNull { it.name == name }
     }
 
     @Suppress("unchecked_cast")
     override fun getAllMods(): List<Mod> {
-        if(mods != null) return mods!!
         val mods = GameEngine.t().bW.e as ArrayList<com.corrodinggames.rts.gameFramework.i.b>
 
         return buildList {

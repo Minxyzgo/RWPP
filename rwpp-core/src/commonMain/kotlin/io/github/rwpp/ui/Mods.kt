@@ -35,7 +35,6 @@ import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.Settings
-import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.CloseUIPanelEvent
 import io.github.rwpp.external.ExternalHandler
@@ -72,7 +71,7 @@ fun ModsView(onExit: () -> Unit) {
         }
     }
 
-    var scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     var updated by remember { mutableStateOf(false) }
     var enabledChanged by remember { mutableStateOf(false) }
     var disableAll by remember { mutableStateOf(false) }
