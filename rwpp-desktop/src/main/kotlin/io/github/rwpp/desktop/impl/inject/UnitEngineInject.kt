@@ -18,7 +18,7 @@ import io.github.rwpp.utils.Reflect
 import kotlinx.coroutines.runBlocking
 
 @InjectClass(UnitEngine::class)
-object UnitEngineImpl {
+object UnitEngineInject {
     @Inject("a", InjectMode.InsertBefore)
     fun onCheckUnitData(ab: com.corrodinggames.rts.game.units.custom.ab, map: java.util.HashMap<*, com.corrodinggames.rts.game.units.custom.ac>): Any {
         val requiredMods = map.values.mapNotNull { Reflect.get<String>(it, "a")  }
