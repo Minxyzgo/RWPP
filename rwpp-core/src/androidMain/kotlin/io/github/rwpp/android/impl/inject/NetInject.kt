@@ -27,6 +27,7 @@ import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.ChatMessageEvent
 import io.github.rwpp.event.events.SystemMessageEvent
 import io.github.rwpp.game.Game
+import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
@@ -36,6 +37,7 @@ import io.github.rwpp.net.InternalPacketType
 import io.github.rwpp.net.Net
 import io.github.rwpp.ui.UI
 import io.github.rwpp.utils.Reflect
+import net.peanuuutz.tomlkt.Toml
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.util.*
@@ -162,13 +164,13 @@ object NetInject {
                 if (str.startsWith(packageName)) {
                     val gameRoom = appKoin.get<Game>().gameRoom
                     gameRoom.isRWPPRoom = true
-//                    gameRoom.option = Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
-//                    val v = gameRoom.option.protocolVersion
-//                    if (v != protocolVersion) {
-//                        gameRoom.disconnect()
-//                        UI.showWarning("Different protocol version. yours: $protocolVersion server's: $v", true)
-//                        return InterruptResult(Unit)
-//                    }
+                    gameRoom.option = Toml.decodeFromString(RoomOption.serializer(), str.removePrefix(packageName))
+                    val v = gameRoom.option.protocolVersion
+                    if (v != protocolVersion) {
+                        gameRoom.disconnect()
+                        UI.showWarning("Different protocol version. yours: $protocolVersion server's: $v", true)
+                        return InterruptResult(Unit)
+                    }
                 }
                 val r2 = r0.b.readInt() // Catch: java.lang.Throwable -> L603
                 val r3 = r0.b.readInt() // Catch: java.lang.Throwable -> L603
@@ -209,7 +211,7 @@ object NetInject {
                 val t = GameEngine.t()
                 val gameRoom = appKoin.get<Game>().gameRoom
                 val a = com.corrodinggames.rts.gameFramework.j.bg()
-                a.b(packageName /*+ Toml.encodeToString(RoomOption.serializer(), gameRoom.option)*/)
+                a.b(packageName + Toml.encodeToString(RoomOption.serializer(), gameRoom.option))
                 a.c(2)
                 a.c(t.bU.e)
                 a.c(t.a(true))
@@ -331,6 +333,21 @@ object NetInject {
             })
         }
         return Unit
+    }
+
+    @Inject("b", injectMode = InjectMode.Override)
+    fun fuckCheck(z: Boolean) {
+        // hack fix game frame
+        val t: k = GameEngine.t()
+        if (t.bu >= t.bU.Z) {
+            if (t.bu > t.bU.Z) {
+                t.bu = t.bU.Z
+            }
+            t.bU.aa = true;
+        }
+        if (z && t.bU.m()) {
+            t.bU.aa = true
+        }
     }
 
     private val gameRoom by lazy { appKoin.get<Game>().gameRoom }

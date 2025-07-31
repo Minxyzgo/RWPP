@@ -11,10 +11,8 @@ import com.corrodinggames.rts.game.n
 import com.corrodinggames.rts.gameFramework.e
 import com.corrodinggames.rts.gameFramework.j.*
 import io.github.rwpp.*
-import io.github.rwpp.core.Logic
 import io.github.rwpp.desktop.GameEngine
 import io.github.rwpp.desktop.bannedUnitList
-import io.github.rwpp.desktop.impl.ClientImpl
 import io.github.rwpp.desktop.impl.PlayerImpl
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.ChatMessageEvent
@@ -191,6 +189,7 @@ object NetworkInject {
         }
         return Unit
     }
+
     private val net by lazy { appKoin.get<Net>() }
     private val gameRoom by lazy { appKoin.get<Game>().gameRoom }
 }
