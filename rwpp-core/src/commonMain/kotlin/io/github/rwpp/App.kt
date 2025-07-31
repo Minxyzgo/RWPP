@@ -196,7 +196,7 @@ fun App(
                         enter = if(enableAnimations) fadeIn() else EnterTransition.None,
                         exit = if(enableAnimations) fadeOut() else ExitTransition.None,
                     ) {
-                        MainMenu(
+                        UI.UiProvider.MainMenu(
                             state,
                             multiplayer = {
                                 isSinglePlayerGame = false
@@ -607,18 +607,20 @@ fun App(
                         UI.receivingNetworkDialogTitle = ""
                         val game = appKoin.get<Game>()
                         game.gameRoom.disconnect("refuse to receive network data.")
+                        UI.showMultiplayerView = true
+                        UI.showRoomView = false
                     }, enableDismiss = true
                 ) { dismiss ->
                     BorderCard(modifier = Modifier.size(500.dp)) {
-                        Spacer(Modifier.weight(1f))
-                        LineSpinFadeLoaderIndicator(MaterialTheme.colorScheme.onSecondaryContainer)
-                        Text(
-                            UI.receivingNetworkDialogTitle,
-                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(20.dp).offset(y = 50.dp),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(Modifier.weight(1f))
+                        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                            LineSpinFadeLoaderIndicator(MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(
+                                UI.receivingNetworkDialogTitle,
+                                modifier = Modifier.align(Alignment.CenterHorizontally).padding(20.dp).offset(y = 50.dp),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
@@ -626,155 +628,3 @@ fun App(
     }
 }
 
-@Composable
-fun MainMenu(
-    state: LazyListState,
-    multiplayer: () -> Unit,
-    mission: () -> Unit,
-    skirmish: () -> Unit,
-    settings: () -> Unit,
-    mods: () -> Unit,
-    sandbox: () -> Unit,
-    extension: () -> Unit,
-    replay: () -> Unit,
-    contributor: () -> Unit,
-    resourceBrowser: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Text(
-            "RWPP",
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            style = TextStyle(
-                fontFamily = MaterialTheme.typography.displayLarge.fontFamily,
-                brush = Brush.linearGradient(listOf(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.primary)),
-                fontSize = 100.sp
-            )
-        )
-
-        Text(
-            "$projectVersion (core $coreVersion)",
-            modifier = Modifier.padding(top = 1.dp, bottom = 5.dp).align(Alignment.CenterHorizontally),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background.copy((UI.backgroundTransparency + 0.1f).coerceAtMost(1f))),
-            border = BorderStroke(4.dp, MaterialTheme.colorScheme.surfaceContainer),
-            shape = RectangleShape
-        ) {
-            LazyRow(
-                state = state,
-                modifier = Modifier.fillMaxWidth().lazyRowDesktopScrollable(state),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                item {
-                    MenuButton(
-                        readI18n("menu.mission"),
-                        painterResource(Res.drawable.destruction_30),
-                        onClick = mission
-                    )
-                }
-
-                item {
-                    MenuButton(
-                        readI18n("menus.singlePlayer.skirmish", I18nType.RW),
-                        painterResource(Res.drawable.swords_30),
-                        onClick = skirmish
-                    )
-                }
-
-                item {
-                    MenuButton(
-                        readI18n("menu.multiplayer"),
-                        painterResource(Res.drawable.group_30),
-                        onClick = multiplayer
-                    )
-                }
-
-                item {
-                    MenuButton(
-                        readI18n("menu.mods"),
-                        painterResource(Res.drawable.dns_30),
-                        onClick = mods
-                    )
-                }
-
-                item {
-                    MenuButton(
-                        readI18n("menu.sandbox"),
-                        painterResource(Res.drawable.edit_square_30),
-                        onClick = sandbox
-                    )
-                }
-
-                item {
-                    MenuButton(
-                        readI18n("menu.settings"),
-                        Icons.Default.Settings,
-                        onClick = settings
-                    )
-                }
-
-                item {
-                    MenuButton(
-                        readI18n("browser.resourceBrowser"),
-                        painterResource(Res.drawable.public_30),
-                        onClick = resourceBrowser
-                    )
-                }
-
-                item {
-                    MenuButton(
-                        readI18n("menu.extension"),
-                        painterResource(Res.drawable.extension_30),
-                        onClick = extension
-                    )
-                }
-
-
-                item {
-                    MenuButton(
-                        readI18n("menu.replay"),
-                        Icons.Default.PlayArrow,
-                        onClick = replay
-                    )
-                }
-            }
-        }
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            RWIconButton(Icons.Filled.Favorite, modifier = Modifier.padding(10.dp), tint = Color.Red, onClick = contributor)
-
-            val net = koinInject<Net>()
-
-            RWIconButton(painterResource(Res.drawable.qq), modifier = Modifier.padding(10.dp)) {
-                net.openUriInBrowser("https://qun.qq.com/universal-share/share?ac=1&authKey=QmG6huGEuUos23WJ0WBwh2sUXiP8%2FsLbsX375KEw9HQzdqT2HK2yEY1WS1Me87%2Bw&busi_data=eyJncm91cENvZGUiOiI5Mjc1OTc0OTUiLCJ0b2tlbiI6ImNaZ2dRYXNLd1d3Q0dhS1p0aG9pcVBsOTYxTEJNb0Z4ZDdXT3lmdTljazB2ZEhVQXd5S1dNa0lYVCtwdDZGYXoiLCJ1aW4iOiIxMjI1MzI3ODY2In0%3D&data=ys1-t0OmBONJktYt21HLtehR3nE23CFtG-YUNRRq7Q7aAMmkd-K_EupcjeKeapL9Aob7bXEpuXIp74FsCcUStg&svctype=4&tempid=h5_group_info")
-            }
-
-            RWIconButton(painterResource(Res.drawable.library_30), modifier = Modifier.padding(10.dp)) {
-                net.openUriInBrowser("https://rwpp.netlify.app/")
-            }
-
-            RWIconButton(painterResource(Res.drawable.octocat_30), modifier = Modifier.padding(10.dp)) {
-                net.openUriInBrowser("https://github.com/Minxyzgo/RWPP")
-            }
-
-            with(koinInject<AppContext>()) {
-                RWIconButton(painterResource(Res.drawable.exit_30), modifier = Modifier.padding(10.dp)) {
-                    exit()
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-    }
-}
