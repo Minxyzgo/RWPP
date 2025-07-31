@@ -273,7 +273,7 @@ fun MultiplayerView(
                     )
                     Text("${readI18n("multiplayer.transferMod")} ${if(modSize > maxModSize) "(Disabled for total mods size: ${SizeUtils.byteToMB(modSize)}MB > ${SizeUtils.byteToMB(maxModSize)}MB)" else ""}",
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(top = 15.dp),
+                        modifier = Modifier.padding(top = 5.dp),
                     )
                 }
 

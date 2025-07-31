@@ -30,8 +30,12 @@ import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.TextFieldValue
@@ -265,33 +269,40 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                     globalFocusRequester.requestFocus()
                     keyboardController?.hide()
                 }.onKeyEvent {
-                    when(it.key) {
-                        Key.Enter -> {
-                            chatFocusRequester.requestFocus()
-                            true
-                        }
-                        Key.M -> {
-                            showMapSelectView = true
-                            true
-                        }
-                        Key.O -> {
-                            optionVisible = true
-                            true
-                        }
-                        Key.A -> {
-                            room.addAI()
-                            true
-                        }
-                        Key.C -> {
-                            if (players.isNotEmpty()) {
-                                selectedPlayer =
-                                    room.localPlayer
-                                playerOverrideVisible = true
+                    if (it.type == KeyEventType.KeyDown && !it.isCtrlPressed && !it.isShiftPressed) {
+                        when (it.key) {
+                            Key.Enter -> {
+                                chatFocusRequester.requestFocus()
+                                true
                             }
-                            true
+
+                            Key.M -> {
+                                showMapSelectView = true
+                                true
+                            }
+
+                            Key.O -> {
+                                optionVisible = true
+                                true
+                            }
+
+                            Key.A -> {
+                                room.addAI()
+                                true
+                            }
+
+                            Key.C -> {
+                                if (players.isNotEmpty()) {
+                                    selectedPlayer =
+                                        room.localPlayer
+                                    playerOverrideVisible = true
+                                }
+                                true
+                            }
+
+                            else -> false
                         }
-                        else -> false
-                    }
+                    } else false
                 }
         ) {
             Box {
@@ -1003,6 +1014,7 @@ private fun MultiplayerOption(
     var startingCredits by remember { mutableStateOf(room.startingCredits) }
     var maxPlayerCount by remember { mutableStateOf(room.maxPlayerCount) }
     var realIncomeMultiplier by remember { mutableStateOf(room.incomeMultiplier) }
+    var gameSpeed by remember { mutableStateOf(room.gameSpeed) }
 
     val teamModes = remember {
         TeamMode.modes
@@ -1241,6 +1253,37 @@ private fun MultiplayerOption(
                 }
             }
 
+            item {
+                var expanded by remember { mutableStateOf(false) }
+                RWSingleOutlinedTextField(
+                    readI18n("multiplayer.room.gameSpeed"),
+                    gameSpeed.toString(),
+                    lengthLimitCount = 5,
+                    typeInNumberOnly = true,
+                    enabled = room.isHost,
+                    modifier = Modifier.weight(.5f).padding(5.dp),
+                    trailingIcon = {
+                        val icon =
+                            if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown
+                        Icon(
+                            icon,
+                            "",
+                            modifier = Modifier.clickable(!expanded && room.isHost) { expanded = !expanded })
+                    },
+                    appendedContent = {
+                        BasicDropdownMenu(
+                            expanded,
+                            listOf(1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f, 9f, 10f),
+                            onItemSelected = { _, v -> gameSpeed = v }
+                        ) {
+                            expanded = false
+                        }
+                    }
+                ) {
+                    gameSpeed = it.toFloatOrNull() ?: 1f
+                }
+            }
+
             if (room.isHost) {
                 item {
                     RWTextButton(
@@ -1293,6 +1336,8 @@ private fun MultiplayerOption(
                     teamLock,
                     teamMode
                 )
+
+                room.gameSpeed = gameSpeed
 
                 dismiss()
             }
