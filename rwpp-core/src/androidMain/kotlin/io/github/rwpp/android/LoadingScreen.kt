@@ -145,8 +145,6 @@ class LoadingScreen : ComponentActivity() {
                                     }
 
                                 } else {
-                                    var message by remember { mutableStateOf("loading") }
-
                                     MenuLoadingView(message)
 
                                     LaunchedEffect(Unit) {
@@ -160,25 +158,17 @@ class LoadingScreen : ComponentActivity() {
                                                     it.delete()
                                                 }
 
-                                            val job = launch {
-                                                while (true) {
-                                                    val msg = GameEngine.t()?.dF
-                                                    message = (if (msg.isNullOrBlank()) "loading..." else msg)
-                                                }
-                                            }
-
                                             async {
                                                 try {
                                                     val engineImpl = GameEngine.dv.a(this@LoadingScreen)
                                                     Reflect.reifiedSet<GameEngine>(null, "ak", engineImpl)
+                                                    loadingThread
                                                     engineImpl.a(this@LoadingScreen as Context)
                                                 } catch (e: Exception) {
                                                     e.printStackTrace()
                                                 }
                                                 //Reflect.callVoid<GameEngine>(null, "f", listOf(Context::class), listOf(this@LoadingScreen))
                                             }.await()
-
-                                            job.cancel()
 
                                             gameLoaded = true
                                             GameLoadedEvent().broadcastIn()
