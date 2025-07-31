@@ -289,7 +289,7 @@ object Scripts : Initialization {
                 args[0].toJavaObject() as String,
                 args[1].toNumber().roundToInt(),
                 args[2].toJavaObject() as Color,
-                args[3].toBoolean()
+                if (args.size > 3) args[3].toBoolean() else false
             ))
             arrayOf(l.get())
         }
