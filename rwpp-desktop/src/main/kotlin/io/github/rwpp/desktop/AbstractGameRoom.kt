@@ -8,6 +8,7 @@
 package io.github.rwpp.desktop
 
 import com.corrodinggames.rts.game.units.custom.logicBooleans.VariableScope
+import com.corrodinggames.rts.gameFramework.e
 import com.corrodinggames.rts.gameFramework.j.c
 import io.github.rwpp.appKoin
 import io.github.rwpp.desktop.impl.PlayerImpl
@@ -22,10 +23,8 @@ import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.mapDir
-import io.github.rwpp.net.Packet
 import io.github.rwpp.net.packets.GamePacket
-import java.io.ByteArrayInputStream
-import java.io.DataInputStream
+import io.github.rwpp.utils.Reflect
 import java.io.File
 import java.util.*
 import java.util.regex.Matcher
@@ -151,6 +150,10 @@ abstract class AbstractGameRoom  : GameRoom {
 
     override var gameMapTransformer: ((XMLMap) -> Unit)? = null
 
+    override var gameSpeed: Float
+        get() = _gameSpeed
+        set(value) { _gameSpeed = value}
+
     @Suppress("unchecked_cast")
     override fun getPlayers(): List<Player> {
         return (asField.get(GameEngine.B().bX.ay) as Array<Player?>).mapNotNull { it }.toList()
@@ -195,14 +198,18 @@ abstract class AbstractGameRoom  : GameRoom {
     }
 
     override fun sendSurrender(player: Player) {
-        if (player == localPlayer) {
-            sendChatMessage("-surrender")
-        } else if (player.client != null) {
-            GameEngine.B().bX.b(
-                player.client as c, (player as PlayerImpl).self, player.name, "-surrender"
+        if (isHost) {
+            val player = player as PlayerImpl
+            Reflect.reifiedSet<com.corrodinggames.rts.game.n>(
+                player as com.corrodinggames.rts.game.n, "at", true
             )
+            val B = GameEngine.B()
+            val b2: e = B.cf.b()
+            b2.i = player
+            b2.r = true
+            b2.u = 100
+            B.bX.a(b2)
         }
-
     }
 
     override fun syncAllPlayer() {
@@ -211,16 +218,6 @@ abstract class AbstractGameRoom  : GameRoom {
                 GameEngine.B().bX.a(false, false, true)
             }
         }
-    }
-
-    override fun addCommandPacket(packet: Packet) {
-        val p = GameEngine.B().cf.b()
-        p.a(
-            com.corrodinggames.rts.gameFramework.j.k(
-                DataInputStream(ByteArrayInputStream(packet.toBytes()))
-            )
-        )
-        GameEngine.B().cf.b.add(p)
     }
 
     override fun addAI(count: Int) {
@@ -324,6 +321,7 @@ abstract class AbstractGameRoom  : GameRoom {
         roomMods = arrayOf()
         teamMode = null
         gameOver = false
+        _gameSpeed = 1f
 
         if (isConnecting) GameEngine.B().bX.b(reason)
         DisconnectEvent(reason).broadcastIn()
