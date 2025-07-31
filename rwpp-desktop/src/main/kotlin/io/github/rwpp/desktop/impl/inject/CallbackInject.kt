@@ -15,18 +15,22 @@ import io.github.rwpp.desktop.rcnOption
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
+import io.github.rwpp.inject.InterruptResult
 import io.github.rwpp.ui.UI
 
 
 @InjectClass(com.corrodinggames.librocket.a::class)
 object CallbackInject {
-    @Inject("a", InjectMode.Override)
-    fun onSetCallback(ae: ae) {
+    @Inject("a", InjectMode.InsertBefore)
+    fun onSetCallback(ae: ae): Any? {
         if(rcnOption != null) {
             ae.a(rcnOption)
             rcnOption = null
-            return
+            return InterruptResult()
         }
+
+
+        if (ae.e == "Search units") return Unit
 
         UI.showQuestion(
             if(ae.b != null)
@@ -42,6 +46,8 @@ object CallbackInject {
                 ae.a(it)
             }
         }
+
+        return InterruptResult()
     }
 
     @Inject("b", InjectMode.Override)
