@@ -18,6 +18,7 @@ import io.github.rwpp.game.Game
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
+import io.github.rwpp.inject.InterruptResult
 import io.github.rwpp.ui.UI
 
 @InjectClass(MultiplayerBattleroomActivity::class)
@@ -32,18 +33,18 @@ object MultiplayerRoomInject {
         if(!isGaming) appKoin.get<Game>().gameRoom.startGame()
     }
 
-    @Inject("askPasswordInternal", InjectMode.Override)
-    fun onAskPassword(ao: com.corrodinggames.rts.gameFramework.j.ao?) {
-        if (ao == null) return
+    @Inject("askPasswordInternal", InjectMode.InsertBefore)
+    fun onAskPassword(ao: com.corrodinggames.rts.gameFramework.j.ao?): Any? {
+        if (ao == null) return Unit
         if(questionOption != null) {
             ao.a(questionOption)
             questionOption = null
-            return
+            return InterruptResult()
         }
 
         val message = ao.b?.let { a.b(it) }
 
-        if(message == "Search units by internal name or text title.") return
+        if(message == "Search units by internal name or text title.") return Unit
 
         UI.showQuestion(
             if(ao.b != null)
@@ -59,5 +60,7 @@ object MultiplayerRoomInject {
                 ao.a(it)
             }
         }
+
+        return InterruptResult()
     }
 }
