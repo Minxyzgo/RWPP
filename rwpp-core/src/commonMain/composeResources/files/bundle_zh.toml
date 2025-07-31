@@ -52,6 +52,7 @@ mapType = "地图类型"
 spawnPointTip = "出生点控制着玩家在地图上的初始位置。大多数地图使用偶数出生点。"
 teamTip = "具有相同队伍的玩家将会团结在一起。"
 setTeam = "设置队伍"
+gameSpeed = "游戏速度 (实验性)"
 
 [mod]
 update = "刷新"

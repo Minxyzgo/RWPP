@@ -58,6 +58,7 @@ mapType = "Map Type"
 spawnPointTip = "The spawn point controls where on the map this player starts. Most maps use old-even spawn points."
 teamTip = "Players with the same team will be allied together."
 setTeam = "Set Team"
+gameSpeed = "Game Speed (Experimental)"
 
 [mod]
 update = "Update"
