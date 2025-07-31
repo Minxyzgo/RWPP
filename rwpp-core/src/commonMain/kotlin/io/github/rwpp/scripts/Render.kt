@@ -7,13 +7,7 @@
 
 package io.github.rwpp.scripts
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -21,16 +15,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import io.github.rwpp.ui.ComposeWidget
 import io.github.rwpp.ui.Widget
-import io.github.rwpp.widget.LargeDropdownMenu
-import io.github.rwpp.widget.RWCheckbox
-import io.github.rwpp.widget.RWSingleOutlinedTextField
-import io.github.rwpp.widget.RWSliderColors
-import io.github.rwpp.widget.RWTextButton
+import io.github.rwpp.widget.*
 
 @Composable
 fun Widget.Render() {
@@ -40,7 +31,8 @@ fun Widget.Render() {
                 text,
                 color = Color(color.color),
                 fontSize = size.sp,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal
             )
         }
 
@@ -77,7 +69,7 @@ fun Widget.Render() {
         is Widget.Dropdown -> {
             var selectedIndex by remember { mutableStateOf(options.indexOf(defaultValue())) }
             LargeDropdownMenu(
-                modifier = Modifier.width(50.dp).padding(10.dp),
+                modifier = Modifier.defaultMinSize(50.dp).padding(10.dp),
                 selectedIndex = selectedIndex,
                 items = options.toList(),
                 label = label,
@@ -92,14 +84,14 @@ fun Widget.Render() {
                 label,
                 value,
                 onValueChange = { value = it; onTextChanged(value) },
-                modifier = Modifier.width(100.dp).padding(5.dp)
+                modifier = Modifier.defaultMinSize(100.dp).padding(5.dp)
             )
         }
         is Widget.Slider -> {
             var v by remember { mutableStateOf(value) }
             Slider(
                 value = v,
-                modifier = Modifier.width(100.dp).padding(5.dp),
+                modifier = Modifier.defaultMinSize(100.dp).padding(5.dp),
                 onValueChange = { v = it; onChange(v) },
                 colors = RWSliderColors
             )
