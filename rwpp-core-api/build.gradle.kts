@@ -14,6 +14,8 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+group = "io.github.rwpp"
+
 buildConfig {
     buildConfigField("VERSION", rootProject.version.toString())
 }
