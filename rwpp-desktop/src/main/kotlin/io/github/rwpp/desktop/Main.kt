@@ -482,7 +482,7 @@ private fun resetSendMessageDialogLocation() {
     sendMessageDialog.setLocation(window.x + window.width / 2 - sendMessageDialog.width / 2, window.y + window.height / 2 - sendMessageDialog.height / 2)
 }
 
-private fun getDPIScale(): Double {
+fun getDPIScale(): Double {
     // 获取原生系统缩放比例（需考虑多显示器场景）
     val env = GraphicsEnvironment.getLocalGraphicsEnvironment()
     val device = env.defaultScreenDevice
