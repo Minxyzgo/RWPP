@@ -102,7 +102,7 @@ namespace RSetup.RDialogs
 
         public void ChangeInstallDir()
         {
-            using (var dialog = new FolderBrowserDialog { SelectedPath = InstallDirPath })
+            using (var dialog = new System.Windows.Forms.FolderBrowserDialog { SelectedPath = InstallDirPath })
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                     InstallDirPath = dialog.SelectedPath;
