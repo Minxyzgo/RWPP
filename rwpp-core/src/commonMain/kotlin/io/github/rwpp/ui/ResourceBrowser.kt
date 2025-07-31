@@ -160,6 +160,7 @@ fun ResourceBrowser(
                             selectedIndex = selectedTypeIndex,
                             onItemSelected = { index, _ ->
                                 allInfo.clear()
+                                page = 1
                                 selectedTypeIndex = index
                             }
                         )
