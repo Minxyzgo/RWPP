@@ -16,6 +16,7 @@ import io.github.rwpp.appKoin
 import io.github.rwpp.config.Settings
 import io.github.rwpp.desktop.GameEngine
 import io.github.rwpp.desktop.impl.RwOutputStream
+import io.github.rwpp.desktop.main
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.event.events.StartGameEvent
@@ -27,14 +28,6 @@ import io.github.rwpp.welcomeMessage
 
 @InjectClass(Main::class)
 object MainInject {
-//
-//    @Inject("a", InjectMode.Override)
-//    fun onMain(array: Array<java.lang.String>) {
-//        main(arrayOf())
-//    }
-
-
-
     @Inject("c", InjectMode.Override)
     fun onRefreshUI() {
         RefreshUIEvent().broadcastIn()
