@@ -38,12 +38,9 @@ import io.github.rwpp.*
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.config.Settings
-import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.event.GlobalEventChannel
-import io.github.rwpp.event.broadcast
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.GameLoadedEvent
-import io.github.rwpp.event.events.KeyboardEvent
 import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.Game
@@ -87,6 +84,7 @@ lateinit var mainJFrame: JFrame
 lateinit var gameCanvas: Canvas
 lateinit var displaySize: Dimension
 lateinit var sendMessageDialog: Dialog
+lateinit var uiDialog: Dialog
 lateinit var rwppVisibleSetter: (Boolean) -> Unit
 lateinit var focusRequester: FocusRequester
 //val cacheModSize = AtomicInteger(0)
@@ -444,6 +442,14 @@ fun swingApplication() = SwingUtilities.invokeLater {
     sendMessageDialog.size = Dimension(550, 540)
     sendMessageDialog.add(panel2)
 
+    uiDialog = Dialog(window)
+    uiDialog.isUndecorated = true
+    uiDialog.isFocusable = true
+    uiDialog.isVisible = false
+    uiDialog.isAlwaysOnTop = true
+    uiDialog.size = Dimension(550, 540)
+    uiDialog.add(panel2)
+
     mainJFrame = window
     canvas.createBufferStrategy(2)
 
@@ -461,11 +467,11 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 logicalHeight
             )
 
-            resetSendMessageDialogLocation()
+            resetSendDialogLocation()
         }
 
         override fun componentMoved(e: ComponentEvent) {
-            resetSendMessageDialogLocation()
+            resetSendDialogLocation()
         }
     })
 }
@@ -474,10 +480,10 @@ fun showSendMessageDialog() {
     sendMessageDialog.isVisible = true
     sendMessageDialog.requestFocus()
     focusRequester.requestFocus()
-    resetSendMessageDialogLocation()
+    resetSendDialogLocation()
 }
 
-private fun resetSendMessageDialogLocation() {
+private fun resetSendDialogLocation() {
     val window = mainJFrame
     sendMessageDialog.setLocation(window.x + window.width / 2 - sendMessageDialog.width / 2, window.y + window.height / 2 - sendMessageDialog.height / 2)
 }

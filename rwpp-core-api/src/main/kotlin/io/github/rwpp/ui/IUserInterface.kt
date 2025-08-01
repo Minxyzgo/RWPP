@@ -21,14 +21,10 @@ interface IUserInterface : KoinComponent {
      */
     fun showQuestion(title: String, message: String, callback: (String?) -> Unit)
 
-    /**
-     * Show a request dialog to the user.
-     * @param callback The callback function to be called when the user submits the answer, or dismisses the dialog when given null.
-     */
-    fun showRequest(title: String, message: String, callback: (Boolean) -> Unit)
 
     /**
      * Show a dialog to the user. Note that there can only be one dialog at a time.
+     *
      * @param widget The widget to be displayed in the dialog.
      */
     fun showDialog(widget: Widget)

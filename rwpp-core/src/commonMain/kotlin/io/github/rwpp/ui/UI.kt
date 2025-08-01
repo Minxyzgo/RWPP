@@ -84,6 +84,8 @@ object UI : Initialization, IUserInterface {
         internal set
     var warning by mutableStateOf<Warning?>(null)
         internal set
+    var dialogWidget by mutableStateOf<Widget?>(null)
+        internal set
     var chatMessages by mutableStateOf(AnnotatedString(""))
         internal set
 
@@ -99,6 +101,8 @@ object UI : Initialization, IUserInterface {
 
     var receivingNetworkDialogTitle by mutableStateOf("")
     var showNetworkDialog by mutableStateOf(false)
+
+
 
     var UiProvider: UIProvider = UIProvider()
 
@@ -116,12 +120,10 @@ object UI : Initialization, IUserInterface {
         }
     }
 
-    override fun showRequest(title: String, message: String, callback: (Boolean) -> Unit) {
-        TODO("Not yet implemented")
-    }
-
     override fun showDialog(widget: Widget) {
-        TODO("Not yet implemented")
+        synchronized(UI) {
+            dialogWidget = widget
+        }
     }
 
     fun onReceiveChatMessage(sender: String,  message: String, color: Int) {
@@ -167,10 +169,6 @@ object UI : Initialization, IUserInterface {
      * @see [showWarning]
      */
     class Warning(val reason: String, val isKicked: Boolean = false)
-
-    class Request(val title: String, val message: String, val callback: (Boolean) -> Unit)
-
-    class Dialog(val widget: Widget)
 
     override fun init() {
         GlobalEventChannel.filter(DisconnectEvent::class).subscribeAlways(priority = EventPriority.MONITOR) {

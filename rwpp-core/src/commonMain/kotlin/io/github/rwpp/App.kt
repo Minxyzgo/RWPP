@@ -64,6 +64,7 @@ import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.LatestVersionProfile
 import io.github.rwpp.net.Net
 import io.github.rwpp.rwpp_core.generated.resources.*
+import io.github.rwpp.scripts.Render
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.UI.selectedColorSchemeName
 import io.github.rwpp.ui.UI.showContributorList
@@ -621,6 +622,17 @@ fun App(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
+                    }
+                }
+
+                AnimatedAlertDialog(
+                    UI.dialogWidget != null,
+                    {
+                        UI.dialogWidget = null
+                    }, enableDismiss = true
+                ) { dismiss ->
+                    BorderCard {
+                        UI.dialogWidget?.Render()
                     }
                 }
             }
