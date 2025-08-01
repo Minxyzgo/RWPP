@@ -37,6 +37,7 @@ dependencies {
     ))
     val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
     ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
+    ksp(project(":rwpp-ksp"))
 }
 
 android {
