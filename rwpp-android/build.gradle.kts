@@ -17,9 +17,6 @@ ksp {
 
 dependencies {
     api(project(":rwpp-core"))
-    api("androidx.activity:activity-compose:1.10.1")
-    api("androidx.appcompat:appcompat:1.7.1")
-    api("androidx.core:core-ktx:1.16.0")
     implementation(fileTree(
         "dir" to "$rootDir/dx",
         "include" to listOf("*.jar")
@@ -38,10 +35,11 @@ dependencies {
         "dir" to rootDir.absolutePath,
         "include" to "javassist4android.jar",
     ))
+    val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
+    ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
 }
 
 android {
-    namespace = "io.github.rwpp.android"
     compileSdk = (findProperty("android.compileSdk") as String).toInt()
     buildToolsVersion = "34.0.0"
     namespace = "io.github.rwpp"

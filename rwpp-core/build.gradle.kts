@@ -55,7 +55,9 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
-
+                api("androidx.activity:activity-compose:1.10.1")
+                api("androidx.appcompat:appcompat:1.7.1")
+                api("androidx.core:core-ktx:1.16.0")
             }
         }
 
@@ -81,10 +83,25 @@ afterEvaluate {
     }
 }
 
+android {
+    compileSdk = (findProperty("android.compileSdk") as String).toInt()
+    buildToolsVersion = "34.0.0"
+    namespace = "io.github.rwpp"
+
+    sourceSets["main"].res.srcDirs("src/androidMain/res")
+    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlin {
+        jvmToolchain(17)
+    }
+}
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-test-junit:" + findProperty("kotlin.version") as String)
     val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
     ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
-    ksp(project(":rwpp-ksp"))
 }

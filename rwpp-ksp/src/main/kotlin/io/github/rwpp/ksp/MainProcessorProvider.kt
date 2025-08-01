@@ -40,6 +40,12 @@ class MainProcessorProvider : SymbolProcessorProvider {
                 environment.logger.exception(e)
             }
         }
+
+        environment.options.forEach { t, u ->
+            environment.logger.warn("RWPP-KSP: option: $t=$u")
+        }
+
+        environment.logger.warn("RWPP-KSP: lib: ${environment.options["lib"]} output: ${environment.options["outputDir"]}")
         GameLibraries.includes.add(GameLibraries.valueOf(environment.options["lib"].toString()))
         environment.logger.warn("RWPP-KSP: libs: ${GameLibraries.includes.joinToString(",")}")
         return MainProcessor(environment.logger)

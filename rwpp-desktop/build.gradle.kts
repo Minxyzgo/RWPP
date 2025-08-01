@@ -6,6 +6,7 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
+import com.google.devtools.ksp.processing.kspJvmArgParser
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -19,11 +20,14 @@ plugins {
 ksp {
     arg("outputDir", project.buildDir.absolutePath + "/generated")
     arg("lib", "game-lib")
+    arg("aa", "ddw")
 }
 
 dependencies {
     api(project(":rwpp-core"))
-    implementation(compose.desktop.currentOs)
+    implementation(compose.desktop.macos_arm64)
+    implementation(compose.desktop.windows_x64)
+    implementation(compose.desktop.linux_x64)
     implementation("org.slf4j:slf4j-simple:2.0.16")
     compileOnly(fileTree(
         "dir" to rootDir.absolutePath + "/lib",
@@ -40,8 +44,6 @@ dependencies {
 
 sourceSets.main {
     java.srcDirs("build/generated/ksp/main/kotlin")
-//    resources.srcDir(rootDir.absolutePath + "/lib")
-//    resources.include("game-lib.jar")
     resources.srcDir(project.buildDir.absolutePath + "/generated")
     resources.include("config.toml")
 }
