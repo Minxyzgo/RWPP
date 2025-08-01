@@ -83,8 +83,8 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         if (targetFile.exists()) {
             targetFile.delete()
         }
-        targetFile.setReadOnly()
         targetFile.writeBytes(inputStream.readBytes())
+        targetFile.setReadOnly()
         return object : PathClassLoader(targetFile.absolutePath, parent) {
             @Throws(ClassNotFoundException::class)
             override fun loadClass(name: String?, resolve: Boolean): Class<*>? {
