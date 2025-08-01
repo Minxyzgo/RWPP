@@ -9,6 +9,7 @@ plugins {
     kotlin("multiplatform")
     id("com.google.devtools.ksp")
     id("com.github.gmazzo.buildconfig")
+    id("maven-publish")
 }
 
 group = "io.github.rwpp"
@@ -32,6 +33,20 @@ kotlin {
             }
             kotlin.srcDir("src/main/kotlin")
             resources.srcDir("src/main/resources")
+        }
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                group = "io.github.rwpp"
+                artifactId = "ksp"
+                version = rootProject.version.toString()
+
+                from(components.getByName("kotlin"))
+            }
         }
     }
 }

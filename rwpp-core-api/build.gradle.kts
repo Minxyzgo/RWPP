@@ -12,6 +12,7 @@ plugins {
     kotlin("plugin.serialization")
     id("com.github.gmazzo.buildconfig")
     id("com.google.devtools.ksp")
+    id("maven-publish")
 }
 
 group = "io.github.rwpp"
@@ -35,3 +36,16 @@ dependencies {
     ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
 }
 
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                group = "io.github.rwpp"
+                artifactId = "api"
+                version = rootProject.version.toString()
+
+                from(components.getByName("kotlin"))
+            }
+        }
+    }
+}
