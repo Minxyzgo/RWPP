@@ -10,58 +10,21 @@ group = "io.github.rwpp"
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
-    id("com.android.application")
-    //id("com.android.library")
+    id("com.android.library")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
-}
-
-
-//        action {
-//
-//            // set all members of Main to public
-//            com.github.minxyzgo.rwij.Libs.`game-lib`.classTree.defPool["com.corrodinggames.rts.java.Main"].apply {
-//                this.declaredMethods.forEach {
-//                    it.modifiers = Modifier.setPublic(it.modifiers)
-//                }
-//
-//                this.declaredFields.forEach {
-//                    it.modifiers = Modifier.setPublic(it.modifiers)
-//                }
-//
-//                // support steam
-//                val code = Bytecode(classFile.constPool)
-//                code.maxLocals = 2
-//                code.addIconst(0)
-//                code.addAnewarray("java/lang/String")
-//                code.addInvokestatic("io/github/rwpp/desktop/MainKt", "main", "([Ljava/lang/String;)V")
-//                code.addReturn(CtClass.voidType)
-//                this.getDeclaredMethod("main").methodInfo.codeAttribute = code.toCodeAttribute()
-//            }
-//        }
-//    }
-//}
-
-
-ksp {
-    arg("outputDir", project.buildDir.absolutePath + "/generated")
-    arg("lib", "android-game-lib")
+    id("maven-publish")
 }
 
 kotlin {
     androidTarget()
-
     jvm("desktop")
-
     compilerOptions {
         freeCompilerArgs.add("-Xjvm-default=all")
     }
-
-
     sourceSets {
         val commonMain by getting {
-
             dependencies {
                 api(compose.preview)
                 api(compose.runtime)
@@ -92,27 +55,7 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
-                api("androidx.activity:activity-compose:1.10.1")
-                api("androidx.appcompat:appcompat:1.7.1")
-                api("androidx.core:core-ktx:1.16.0")
-                implementation(fileTree(
-                    "dir" to "$rootDir/dx",
-                    "include" to listOf("*.jar")
-                ))
-                implementation("com.github.getActivity:XXPermissions:20.0")
-                implementation("com.github.tony19:logback-android:3.0.0")
-                compileOnly(fileTree(
-                    "dir" to rootDir.absolutePath + "/lib",
-                    "include" to "android-game-lib.jar",
-                ))
-                val koinVersion = findProperty("koin.version") as String
-                implementation("io.insert-koin:koin-android:$koinVersion")
-                runtimeOnly("party.iroiro.luajava:android:4.0.2:lua54@aar")
 
-                implementation(fileTree(
-                    "dir" to rootDir.absolutePath,
-                    "include" to "javassist4android.jar",
-                ))
             }
         }
 
@@ -124,61 +67,20 @@ kotlin {
     }
 }
 
-android {
-    namespace = "io.github.rwpp.android"
-    compileSdk = (findProperty("android.compileSdk") as String).toInt()
-    buildToolsVersion = "34.0.0"
-    namespace = "io.github.rwpp"
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                group = "io.github.rwpp"
+                artifactId = "core"
+                version = rootProject.version.toString()
 
-    useLibrary("org.apache.http.legacy")
-
-    packaging {
-        resources.excludes.add("META-INF/*")
-    }
-
-    dexOptions {
-        javaMaxHeapSize = "2G"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            // isDebuggable = true
+                from(components.getByName("kotlin"))
+            }
         }
     }
-
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDir(project.buildDir.absolutePath + "/generated")
-    sourceSets["main"].resources.include("config.toml")
-    sourceSets["main"].resources.srcDir(rootDir.absolutePath + "/lib")
-    sourceSets["main"].resources.include("android-game-lib.jar")
-
-    // For KSP
-//    applicationVariants.configureEach {
-//        val variant: com.android.build.gradle.api.ApplicationVariant = this
-//        kotlin.sourceSets {
-//            getByName(name) {
-//                kotlin.srcDir("build/generated/ksp/${variant.name}/kotlin")
-//            }
-//        }
-//    }
-
-    defaultConfig {
-        applicationId = "io.github.rwpp"
-        minSdk = (findProperty("android.minSdk") as String).toInt()
-        targetSdk = (findProperty("android.targetSdk") as String).toInt()
-        versionCode = 1
-        versionName = rootProject.version.toString()
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlin {
-        jvmToolchain(17)
-    }
 }
+
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-test-junit:" + findProperty("kotlin.version") as String)

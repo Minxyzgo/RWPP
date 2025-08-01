@@ -11,6 +11,7 @@ include(":rwpp-desktop")
 include(":rwpp-core")
 include(":rwpp-ksp")
 include(":rwpp-core-api")
+include(":rwpp-android")
 
 pluginManagement {
     repositories {
@@ -50,3 +51,4 @@ dependencyResolutionManagement {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 }
+

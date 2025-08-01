@@ -73,12 +73,12 @@ compose.desktop {
             mainClass = "io.github.rwpp.desktop.MainKt"
             vendor = "RWPP Contributors"
             description = "Multiplatform launcher for Rusted Warfare"
-            copyright = "Copyright 2023-2024 RWPP contributors"
+            copyright = "Copyright 2023-2025 RWPP contributors"
             licenseFile.set(rootProject.file("LICENSE"))
 
             jvmArgs += listOf(
                 "-Djava.net.preferIPv4Stack=true",
-                "-Xmx2000M",
+             //   "-Xmx2000M",
                 "-Dfile.encoding=UTF-8",
                 "-Djava.library.path=\$ROOTDIR",
                 "--add-opens=java.base/java.net=ALL-UNNAMED",
