@@ -38,7 +38,7 @@ class ExternalHelperActivity : AppCompatActivity() {
         if (dataString != null) {
             val fileName = getFileName(intent.data!!)!!
 
-            val path = if (dataString.endsWith(".rwres") || dataString.endsWith(".rwext")) {
+            val path = if (dataString.endsWith(".rwres") || dataString.endsWith(".rwext") || dataString.endsWith(".jar")) {
                 endsAction = {
                     UI.showExtensionView = true
                     UI.showWarning(
