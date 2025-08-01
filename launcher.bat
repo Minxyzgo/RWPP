@@ -10,10 +10,17 @@ set /a lastName=0
 for /f "usebackq delims=" %%a in (`dir /b/a-d/s  "%DestPath%\%DestExt%"`) do (
 set "name=%%~na"
 set "c=!name:~0,18!"
-if "!c!"=="RWPP-multiplatform" (
+set "c1=!name:~0,12!"
+if "!c!"=="RWPP-multiplatform"  (
 set /a count+=1
 set "lastName=%%a"
 )
+
+if "!c1!"=="RWPP-windows"  (
+set /a count+=1
+set "lastName=%%a"
+)
+
 )
 
 if %count% EQU 0 (
