@@ -13,3 +13,12 @@ abstract class ComposeWidget : Widget() {
     @Composable
     abstract fun Content()
 }
+
+fun composeWidget(content: @Composable () -> Unit): ComposeWidget {
+    return object : ComposeWidget() {
+        @Composable
+        override fun Content() {
+            content()
+        }
+    }
+}
