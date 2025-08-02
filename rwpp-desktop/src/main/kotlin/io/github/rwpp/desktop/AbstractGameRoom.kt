@@ -18,10 +18,10 @@ import io.github.rwpp.event.events.MapChangedEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.team.TeamMode
+import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.mapDir
 import io.github.rwpp.net.packets.GamePacket
 import io.github.rwpp.utils.Reflect
@@ -105,10 +105,10 @@ abstract class AbstractGameRoom  : GameRoom {
         set(value) {
             GameEngine.B().bX.ay.e = value
         }
-    override var aiDifficulty: Difficulty
-        get() = io.github.rwpp.game.base.Difficulty.entries[GameEngine.B().bX.ay.f + 2]
+    override var aiDifficulty: Int
+        get() = GameEngine.B().bX.ay.f
         set(value) {
-            GameEngine.B().bX.ay.f = value.ordinal - 2
+            GameEngine.B().bX.ay.f = value
         }
     override var incomeMultiplier: Float
         get() = GameEngine.B().bX.ay.h
@@ -175,6 +175,15 @@ abstract class AbstractGameRoom  : GameRoom {
         GameEngine.B().bX.k(command)
     }
 
+    override fun pauseOrResumeGame(pause: Boolean) {
+        if (isSinglePlayerGame) {
+            _gameSpeed = if (pause) 0f else 1f
+        } else {
+            GameEngine.B().bX.aj = pause
+            GameEngine.B().bX.ak = pause
+        }
+    }
+
     override fun sendMessageToPlayer(player: Player?, title: String?, message: String, color: Int) {
         if (player != null && player != localPlayer) {
             player.client?.sendPacketToClient(
@@ -206,8 +215,20 @@ abstract class AbstractGameRoom  : GameRoom {
             val B = GameEngine.B()
             val b2: e = B.cf.b()
             b2.i = player
-            b2.r = true
-            b2.u = 100
+            b2.r = true // system action
+            b2.u = 100 // type
+            B.bX.a(b2)
+        }
+    }
+
+    override fun spawnUnit(player: Player, unitType: UnitType, x: Float, y: Float, size: Int) {
+        if (isHost) {
+            val B = GameEngine.B()
+            val b2: e = B.cf.b()
+            b2.r = true // system action
+            b2.i = player as com.corrodinggames.rts.game.n
+            b2.u = 5 // type
+            b2.a(x, y, unitType as com.corrodinggames.rts.game.units.`as`, size)
             B.bX.a(b2)
         }
     }
@@ -253,7 +274,7 @@ abstract class AbstractGameRoom  : GameRoom {
         startingCredits: Int,
         startingUnits: Int,
         fogMode: FogMode,
-        aiDifficulty: Difficulty,
+        aiDifficulty: Int,
         incomeMultiplier: Float,
         noNukes: Boolean,
         allowSpectators: Boolean,
@@ -279,7 +300,7 @@ abstract class AbstractGameRoom  : GameRoom {
             e.l = sharedControl
             e.c = startingCredits
             e.g = startingUnits
-            e.f = aiDifficulty.ordinal - 2
+            e.f = aiDifficulty
             e.h = incomeMultiplier
             e.i = noNukes
             GameEngine.B().bX.a(e)

@@ -30,10 +30,10 @@ import io.github.rwpp.event.events.StartGameEvent
 import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.team.TeamMode
+import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.net.packets.GamePacket
 import io.github.rwpp.utils.Reflect
 import io.github.rwpp.welcomeMessage
@@ -93,9 +93,9 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override var revealedMap: Boolean
         get() = GameEngine.t().bU.aA.e
         set(value) { GameEngine.t().bU.aA.e = value }
-    override var aiDifficulty: Difficulty
-        get() = Difficulty.entries[GameEngine.t().bU.aA.f + 2]
-        set(value) {  GameEngine.t().bU.aA.f = value.ordinal - 2}
+    override var aiDifficulty: Int
+        get() = GameEngine.t().bU.aA.f
+        set(value) {  GameEngine.t().bU.aA.f = value }
     override var incomeMultiplier: Float
         get() = GameEngine.t().bU.aA.h
         set(value) { GameEngine.t().bU.aA.h = value}
@@ -350,6 +350,15 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         GameEngine.t().bU.i(command)
     }
 
+    override fun pauseOrResumeGame(pause: Boolean) {
+        if (isSinglePlayerGame) {
+            _gameSpeed = if (pause) 0f else 1f
+        } else {
+            GameEngine.t().bU.al = pause
+            GameEngine.t().bU.am = pause
+        }
+    }
+
     override fun sendMessageToPlayer(player: Player?, title: String?, message: String, color: Int) {
         if (player != null && player != localPlayer) {
             player.client?.sendPacketToClient(GamePacket.getChatPacket(title, message, color))
@@ -375,6 +384,25 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             b2.i = pVar
             b2.s = true
             b2.v = 100
+            t.bU.a(b2)
+        }
+    }
+
+    override fun spawnUnit(
+        player: Player,
+        unitType: UnitType,
+        x: Float,
+        y: Float,
+        size: Int
+    ) {
+        if (isHost) {
+            val pVar = (player as PlayerImpl).player
+            val t = GameEngine.t()
+            val b2: e = t.cc.b()
+            b2.i = pVar
+            b2.s = true
+            b2.v = 5
+            b2.a(x, y, (unitType as UnitTypeImpl).type, size)
             t.bU.a(b2)
         }
     }
@@ -437,7 +465,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         startingCredits: Int,
         startingUnits: Int,
         fogMode: FogMode,
-        aiDifficulty: Difficulty,
+        aiDifficulty: Int,
         incomeMultiplier: Float,
         noNukes: Boolean,
         allowSpectators: Boolean,
@@ -476,7 +504,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             }
 
             if (aiDifficulty != this.aiDifficulty) {
-                t.bU.i("-ai ${aiDifficulty.ordinal - 2}")
+                t.bU.i("-ai aiDifficulty")
             }
 
             if (startingUnits != this.startingUnits) {
