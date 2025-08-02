@@ -84,7 +84,6 @@ lateinit var mainJFrame: JFrame
 lateinit var gameCanvas: Canvas
 lateinit var displaySize: Dimension
 lateinit var sendMessageDialog: Dialog
-lateinit var uiDialog: Dialog
 lateinit var rwppVisibleSetter: (Boolean) -> Unit
 lateinit var focusRequester: FocusRequester
 //val cacheModSize = AtomicInteger(0)
@@ -381,7 +380,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
                             focusRequester = focusRequester,
                             modifier = Modifier.fillMaxWidth().padding(10.dp)
                                 .onKeyEvent {
-                                    if (it.key == Key.Enter && chatMessage.isNotEmpty()) {
+                                    if ((it.key == Key.Enter || it.key == Key.NumPadEnter) &&  chatMessage.isNotEmpty()) {
                                         onSendMessage()
                                     }
 
@@ -441,15 +440,6 @@ fun swingApplication() = SwingUtilities.invokeLater {
     sendMessageDialog.isAlwaysOnTop = true
     sendMessageDialog.size = Dimension(550, 540)
     sendMessageDialog.add(panel2)
-
-    uiDialog = Dialog(window)
-    uiDialog.isUndecorated = true
-    uiDialog.isFocusable = true
-    uiDialog.isVisible = false
-    uiDialog.isAlwaysOnTop = true
-    uiDialog.size = Dimension(550, 540)
-    uiDialog.add(panel2)
-
     mainJFrame = window
     canvas.createBufferStrategy(2)
 
