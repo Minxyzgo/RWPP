@@ -13,6 +13,7 @@ version = rootProject.version
 ksp {
     arg("outputDir", project.buildDir.absolutePath + "/generated")
     arg("lib", "android-game-lib")
+    arg("pathType", "Path")
 }
 
 dependencies {

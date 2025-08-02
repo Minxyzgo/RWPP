@@ -20,7 +20,7 @@ plugins {
 ksp {
     arg("outputDir", project.buildDir.absolutePath + "/generated")
     arg("lib", "game-lib")
-    arg("aa", "ddw")
+    arg("pathType", "Path")
 }
 
 dependencies {
