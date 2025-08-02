@@ -7,7 +7,6 @@
 
 package io.github.rwpp.game
 
-import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
 import io.github.rwpp.game.data.PlayerStatisticsData
 import io.github.rwpp.net.Client
@@ -36,7 +35,7 @@ object ConnectingPlayer : Player {
         get() = false
     override val isAI: Boolean
         get() = false
-    override var difficulty: Difficulty?
+    override var difficulty: Int?
         get() = null
         set(_) {}
     override var credits: Int
@@ -60,7 +59,7 @@ object ConnectingPlayer : Player {
         team: Int,
         color: Int?,
         startingUnits: Int?,
-        aiDifficulty: Difficulty?,
+        aiDifficulty: Int?,
         changeTeamFromSpawn: Boolean
     ) {}
 }
