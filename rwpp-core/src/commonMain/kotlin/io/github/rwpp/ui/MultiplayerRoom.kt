@@ -199,7 +199,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                 onFocusChanged = onFocusChanged,
                 modifier = Modifier.fillMaxWidth().padding(10.dp)
                     .onKeyEvent {
-                        if (it.key == Key.Enter && chatMessage.isNotEmpty()) {
+                        if ((it.key == Key.Enter || it.key == Key.NumPadEnter) && chatMessage.isNotEmpty()) {
                             room.sendChatMessageOrCommand(chatMessage)
                             onChatMessageChange("")
                         }
@@ -271,7 +271,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                 }.onKeyEvent {
                     if (it.type == KeyEventType.KeyDown && !it.isCtrlPressed && !it.isShiftPressed) {
                         when (it.key) {
-                            Key.Enter -> {
+                            Key.Enter, Key.NumPadEnter -> {
                                 chatFocusRequester.requestFocus()
                                 true
                             }
@@ -927,8 +927,8 @@ private fun PlayerOverrideDialog(
                         modifier = Modifier.padding(20.dp),
                         label = "Difficulty",
                         items = Difficulty.entries,
-                        selectedIndex = aiDifficulty.ordinal,
-                        onItemSelected = { _, v -> aiDifficulty = v }
+                        selectedIndex = (aiDifficulty + 2).coerceAtMost(Difficulty.entries.size - 1),
+                        onItemSelected = { _, v -> aiDifficulty = v.ordinal - 2 }
                     )
                 }
             }
@@ -1050,7 +1050,7 @@ private fun MultiplayerOption(
 
             item {
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    var selectedIndex1 by remember(room) { mutableStateOf(room.aiDifficulty.ordinal) }
+                    var selectedIndex1 by remember(room) { mutableStateOf((room.aiDifficulty + 2).coerceAtMost(Difficulty.entries.size - 1)) }
                     LargeDropdownMenu(
                         modifier = Modifier.weight(.3f).padding(5.dp),
                         label = readI18n("common.difficulty"),
@@ -1060,7 +1060,7 @@ private fun MultiplayerOption(
                     )
 
                     remember(selectedIndex1) {
-                        aiDifficulty = Difficulty.entries[selectedIndex1]
+                        aiDifficulty = selectedIndex1 - 2
                     }
 
                     var selectedIndex2 by remember(room) { mutableStateOf(room.fogMode.ordinal) }
