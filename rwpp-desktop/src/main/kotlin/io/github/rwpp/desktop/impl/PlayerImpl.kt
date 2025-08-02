@@ -15,7 +15,6 @@ import io.github.rwpp.desktop.GameEngine
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
 import io.github.rwpp.game.data.PlayerStatisticsData
 import io.github.rwpp.inject.NewField
@@ -83,10 +82,10 @@ interface PlayerImpl : Player {
         get() = team == -3
     override val isAI: Boolean
         get() = self.w
-    override var difficulty: Difficulty?
-        get() = if(isAI) self.z?.let { Difficulty.entries[it + 2] } else null
+    override var difficulty: Int?
+        get() = if(isAI) self.z else null
         set(value) {
-            if (room.isHost) self.z = value?.ordinal?.minus(2)
+            if (room.isHost) self.z = value
         }
     override var credits: Int
         //4000.0d
@@ -98,7 +97,6 @@ interface PlayerImpl : Player {
         }
     override val income: Int
         get() = self.v()
-
     override val isDefeated: Boolean
         get() = self.F || self.G
     override val isWipedOut: Boolean
@@ -117,7 +115,7 @@ interface PlayerImpl : Player {
         team: Int,
         color: Int?,
         startingUnits: Int?,
-        aiDifficulty: Difficulty?,
+        aiDifficulty: Int?,
         changeTeamFromSpawn: Boolean
     ) {
         val B = GameEngine.B()
@@ -186,7 +184,7 @@ interface PlayerImpl : Player {
             logger.error(e2.stackTraceToString())
         }
         if(self.w) {
-            val intValue2: Int = (aiDifficulty?.ordinal?.minus(2)) ?: -99
+            val intValue2: Int = (aiDifficulty) ?: -99
             valueOf3 = if(intValue2 == -99) {
                 null
             } else {

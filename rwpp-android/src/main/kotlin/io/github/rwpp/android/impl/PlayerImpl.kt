@@ -11,7 +11,6 @@ import com.corrodinggames.rts.game.p
 import io.github.rwpp.core.Logic
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
 import io.github.rwpp.game.data.PlayerStatisticsData
 import io.github.rwpp.net.Client
@@ -71,9 +70,9 @@ class PlayerImpl(
         get() = team == -3
     override val isAI: Boolean
         get() = player.x
-    override var difficulty: Difficulty?
-        get() = if(isAI) player.y.let { Difficulty.entries[it + 2] } else null
-        set(value) { if(room.isHost) player.y = value?.ordinal?.minus(2) ?: 0 }
+    override var difficulty: Int?
+        get() = if(isAI) player.y else null
+        set(value) { if(room.isHost) player.y = value!! }
 
     override var credits: Int
         get() = player.p.roundToInt()
@@ -99,7 +98,7 @@ class PlayerImpl(
         team: Int,
         color: Int?,
         startingUnits: Int?,
-        aiDifficulty: Difficulty?,
+        aiDifficulty: Int?,
         changeTeamFromSpawn: Boolean
     ) {
         val t = GameEngine.t()
@@ -112,7 +111,7 @@ class PlayerImpl(
             run block29@{
                 run block30@{
                     n4 = 1;
-                    n3 = (aiDifficulty?.ordinal?.minus(2)) ?: -99
+                    n3 = (aiDifficulty) ?: -99
                     //k.d("newAiDifficultyValue:".concat(String.valueOf(n3)));
                     if(t.bU.D) {
                         player.A = if(n3 == -99) null else Integer.valueOf(n3);

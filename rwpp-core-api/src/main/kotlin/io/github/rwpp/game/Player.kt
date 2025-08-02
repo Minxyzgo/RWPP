@@ -7,7 +7,6 @@
 
 package io.github.rwpp.game
 
-import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.PlayerData
 import io.github.rwpp.game.data.PlayerStatisticsData
 import io.github.rwpp.net.Client
@@ -38,7 +37,7 @@ interface Player {
      */
     val isSpectator: Boolean
     val isAI: Boolean
-    var difficulty: Difficulty?
+    var difficulty: Int?
 
     /**
      * The player's credits.
@@ -67,7 +66,7 @@ interface Player {
         team: Int = this.team,
         color: Int? = null,
         startingUnits: Int? = null,
-        aiDifficulty: Difficulty? = null,
+        aiDifficulty: Int? = null,
         changeTeamFromSpawn: Boolean = false
     )
 
