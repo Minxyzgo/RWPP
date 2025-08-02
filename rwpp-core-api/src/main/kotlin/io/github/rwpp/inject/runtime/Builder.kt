@@ -17,6 +17,7 @@ import io.github.rwpp.inject.RedirectMethodInfo
 import io.github.rwpp.inject.RootInfo
 import javassist.ClassMap
 import javassist.CtClass
+import javassist.LoaderClassPath
 import javassist.bytecode.Descriptor
 import kotlinx.serialization.encodeToString
 import net.peanuuutz.tomlkt.Toml
@@ -43,13 +44,16 @@ object Builder {
     fun init(lib: GameLibraries, libFile: File) {
         GameLibraries.includes.add(lib)
         lib.load(libFile)
-        val extensions = appKoin.get<ExternalHandler>().getAllExtensions().getOrNull()
+        val externalHandler = appKoin.get<ExternalHandler>()
+        val extensions = externalHandler.getAllExtensions().getOrNull()
         saveConfig(rootInfo!!, configFile)
         extensions?.forEach {
             if (it.config.hasInjectInfo && it.isEnabled) {
                 checkAndMergeConfig(it.injectInfo!!)
+                externalHandler.loadExtensionClass(it)
             }
         }
+        GameLibraries.defClassPool.appendClassPath(LoaderClassPath(externalHandler.mainLoader))
         applyConfig()
         extensions?.forEach {
             if (it.config.hasInjectInfo && it.isEnabled) {

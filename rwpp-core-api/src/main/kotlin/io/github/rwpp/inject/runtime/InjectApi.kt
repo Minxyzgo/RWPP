@@ -54,7 +54,7 @@ object InjectApi {
             targetClass.addMethod(CtNewMethod.setter("set${propertyName.replaceFirstChar { it.uppercase() }}", field))
         }
 
-        if (hasSelfField) {
+        if (hasSelfField && targetClass.declaredMethods.none { it.name == "getSelf" }) {
             targetClass.addMethod(CtNewMethod.make("""
                 public $targetClassName getSelf() {
                     return this;
@@ -83,7 +83,9 @@ object InjectApi {
         if (pathType == PathType.Path) {
             val originalName = "__original__${method.name}"
             val isNative = Modifier.isNative(method.modifiers)
-            if (!isNative && clazz.declaredMethods.all { it.name != originalName || !it.parameterTypes.contentEquals(method.parameterTypes)}) {
+            if (!isNative && clazz.declaredMethods.none {
+                it.name == originalName && it.parameterTypes.contentEquals(method.parameterTypes)
+            }) {
                 val proceed = CtNewMethod.copy(method, originalName, clazz, null)
                 proceed.modifiers = Modifier.setProtected(method.modifiers)
                 clazz.addMethod(proceed)

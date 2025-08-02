@@ -16,7 +16,8 @@ import io.github.rwpp.inject.runtime.Builder
 import javassist.ClassPool
 
 class MainProcessor(
-    private val logger: KSPLogger
+    private val logger: KSPLogger,
+    private val requiredPathType: PathType
 ) : SymbolProcessor {
 
     lateinit var classPool: ClassPool
@@ -155,7 +156,12 @@ class MainProcessor(
 
                     val methodName = annotation.arguments.first().value as String
 
-                    val injectFunctionPath = "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}"
+                    val thisCode = if (receiver != null) "this," else ""
+
+                    val injectFunctionPath = if (requiredPathType == PathType.Path)
+                        "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}"
+                    else
+                        "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}($thisCode$$);"
 
                     val args by lazy {
                         declaration.parameters.map { param ->
@@ -185,7 +191,7 @@ class MainProcessor(
                                     targetMethodName,
                                     targetMethod.signature,
                                     injectFunctionPath,
-                                    PathType.Path
+                                    requiredPathType
                                 )
                             )
                         }
@@ -204,7 +210,7 @@ class MainProcessor(
                                     methodName,
                                     methodDesc,
                                     injectFunctionPath,
-                                    PathType.Path,
+                                    requiredPathType,
                                     declaration.returnType!!.resolve().declaration.qualifiedName!!.asString() == Unit::class.qualifiedName!!,
                                     InjectMode.valueOf((annotation.arguments[1].value as KSType).declaration.simpleName.asString())
                                 )

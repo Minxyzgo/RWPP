@@ -33,11 +33,10 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
     protected var _usingResource: Extension? = null
     protected var extensions: List<Extension>? = null
 
-    private val mainLoader by lazy { LibClassLoader(Thread.currentThread().contextClassLoader) }
+    override val mainLoader by lazy { LibClassLoader(Thread.currentThread().contextClassLoader) }
     private val fileExists by lazy {
         File(resourceOutputDir).exists()
     }
-
 
     override fun newExtension(
         isEnabled: Boolean,
@@ -230,20 +229,28 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                     logger.error("Load script failed: ${it.message}")
                 }
 
-                if (extension.config.mainClass != null) {
-                    runCatching {
-                        val classLoader = loadJar(extension.file, mainLoader)
-                        mainLoader.addChild(classLoader)
-                        val main = classLoader.loadClass(extension.config.mainClass)
-                        extension.launcher = main.getDeclaredConstructor().newInstance() as ExtensionLauncher
-                    }.onFailure {
-                        logger.error("Load main class failed: ${it.stackTraceToString()}")
-                    }
+                val main = loadExtensionClass(extension)?.loadClass(extension.config.mainClass)
+                if (main != null) {
+                    extension.launcher = main.getDeclaredConstructor().newInstance() as ExtensionLauncher
                 }
             }
         }
 
         extensions?.filter { it.isEnabled && it.launcher != null }?.forEach { it.launcher?.init() }
+    }
+
+    override fun loadExtensionClass(extension: Extension): ClassLoader? {
+        return if (extension.config.mainClass != null) {
+            runCatching {
+                val classLoader = loadJar(extension.file, mainLoader)
+                mainLoader.addChild(classLoader)
+                classLoader
+            }.onFailure {
+                logger.error("Load main class failed: ${it.stackTraceToString()}")
+            }.getOrNull()
+        } else {
+            null
+        }
     }
 
     private fun isSupportCurrentGamePlatform(platform: String): Boolean {

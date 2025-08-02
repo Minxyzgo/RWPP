@@ -12,6 +12,7 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import io.github.rwpp.inject.BuildLogger
 import io.github.rwpp.inject.GameLibraries
+import io.github.rwpp.inject.PathType
 import io.github.rwpp.inject.runtime.Builder
 import io.github.rwpp.rwpp_ksp.BuildConfig
 
@@ -48,6 +49,7 @@ class MainProcessorProvider : SymbolProcessorProvider {
         environment.logger.warn("RWPP-KSP: lib: ${environment.options["lib"]} output: ${environment.options["outputDir"]}")
         GameLibraries.includes.add(GameLibraries.valueOf(environment.options["lib"].toString()))
         environment.logger.warn("RWPP-KSP: libs: ${GameLibraries.includes.joinToString(",")}")
-        return MainProcessor(environment.logger)
+        val pathType = PathType.valueOf(environment.options["pathType"] ?: "JavaCode")
+        return MainProcessor(environment.logger, pathType)
     }
 }
