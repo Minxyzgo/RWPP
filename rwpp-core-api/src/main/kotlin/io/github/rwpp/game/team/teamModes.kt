@@ -9,7 +9,6 @@ package io.github.rwpp.game.team
 
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
-import org.koin.core.annotation.Single
 
 sealed class InternalTeamMode(name: String) : TeamMode(name) {
     override fun onInit(gameRoom: GameRoom) {

@@ -285,15 +285,7 @@ class GameImpl : Game, CoroutineScope {
         val units = (com.corrodinggames.rts.game.units.cj.ae as ArrayList<com.corrodinggames.rts.game.units.el>)
         if(cacheUnits != units || _units == null) {
             _units = units.map {
-                object : UnitType {
-                    override val name: String = it.i()
-                    override val displayName: String = it.e()
-                    override val description: String = it.f()
-                    override val movementType: MovementType
-                        get() = MovementType.valueOf(it.o().name)
-                    override val mod: Mod?
-                        get() = (it as? com.corrodinggames.rts.game.units.custom.l)?.J?.q?.let(get<ModManager>()::getModByName)
-                }
+                UnitTypeImpl(it)
             }
 
             cacheUnits = units

@@ -8,15 +8,14 @@
 package io.github.rwpp.game
 
 import io.github.rwpp.commands
-import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.FogMode
 import io.github.rwpp.game.map.GameMap
 import io.github.rwpp.game.map.MapType
 import io.github.rwpp.game.map.XMLMap
 import io.github.rwpp.game.team.TeamMode
+import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.net.Client
-import io.github.rwpp.net.Packet
 
 interface GameRoom {
     val maxPlayerCount: Int
@@ -32,7 +31,7 @@ interface GameRoom {
     var startingUnits: Int
     var fogMode: FogMode
     var revealedMap: Boolean
-    var aiDifficulty: Difficulty
+    var aiDifficulty: Int
     var incomeMultiplier: Float
     var noNukes: Boolean
     var allowSpectators: Boolean
@@ -107,6 +106,12 @@ interface GameRoom {
     fun sendQuickGameCommand(command: String)
 
     /**
+     * Pause or resume the game.
+     * @param pause true to pause the game, false to resume the game.
+     */
+    fun pauseOrResumeGame(pause: Boolean)
+
+    /**
      * Send message to a player. (if host)
      * @param player the target player to send message. if null, send to local player.
      * @param title the title of the message.
@@ -119,6 +124,22 @@ interface GameRoom {
      * @param player the target player to surrender.
      */
     fun sendSurrender(player: Player)
+
+    /**
+     * Spawn a unit to the map. (if host)
+     * @param player the player who spawns the unit.
+     * @param unitType the type of the unit to spawn.
+     * @param x the x position of the unit.
+     * @param y the y position of the unit.
+     * @param size the size of the spawn radius.
+     */
+    fun spawnUnit(
+        player: Player,
+        unitType: UnitType,
+        x: Float,
+        y: Float,
+        size: Int = 0
+    )
 
     /**
      * Sync all players. (if host)
@@ -140,7 +161,7 @@ interface GameRoom {
         startingCredits: Int,
         startingUnits: Int,
         fogMode: FogMode,
-        aiDifficulty: Difficulty,
+        aiDifficulty: Int,
         incomeMultiplier: Float,
         noNukes: Boolean,
         allowSpectators: Boolean,
