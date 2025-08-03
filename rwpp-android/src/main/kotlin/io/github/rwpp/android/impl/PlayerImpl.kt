@@ -8,42 +8,62 @@
 package io.github.rwpp.android.impl
 
 import com.corrodinggames.rts.game.p
+import io.github.rwpp.appKoin
 import io.github.rwpp.core.Logic
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.data.PlayerData
 import io.github.rwpp.game.data.PlayerStatisticsData
+import io.github.rwpp.inject.NewField
+import io.github.rwpp.inject.SetInterfaceOn
 import io.github.rwpp.net.Client
 import kotlin.math.roundToInt
 
-class PlayerImpl(
-    internal val player: PlayerInternal,
+@SetInterfaceOn([PlayerInternal::class])
+interface PlayerImpl : Player {
     private val room: GameRoom
-) : Player {
-    override val connectHexId: String = Logic.getNextPlayerId().toString()
-        get() = player.S ?: field
+        get() = appKoin.get<Game>().gameRoom
+
+    val self: PlayerInternal
+
+    @NewField
+    var _connectHexId: String?
+
+    @NewField
+    var _data: PlayerData?
+
+    override val connectHexId: String
+        get() = self.S ?: run {
+            _connectHexId = if (_connectHexId == null || _connectHexId == "0") {
+                Logic.getNextPlayerId().toString()
+            } else {
+                _connectHexId
+            }
+            _connectHexId!!
+        }
     override var spawnPoint: Int
-        get() = player.l
+        get() = self.l
         set(value) {
             applyConfigChange(spawnPoint = value)
         }
     override var team: Int
-        get() = player.s
+        get() = self.s
         set(value) {
-            if (room.isHost) player.s = value
+            if (room.isHost) self.s = value
             else if (room.isHostServer) {
                 val t = GameEngine.t()
-                t.bU.b(player, value)
+                t.bU.b(self, value)
             }
         }
     override var name: String
-        get() = player.w ?: ""
+        get() = self.w ?: ""
         set(value) {
-            if (room.isHost) player.w = value
+            if (room.isHost) self.w = value
         }
     override val ping: String
         get() {
-            val t = player.t()
+            val t = self.t()
             return if(t == -99) {
                 "HOST"
             } else if(isAI) {
@@ -53,44 +73,47 @@ class PlayerImpl(
             } else if(t == -2) {
                 "-"
             } else {
-                if(player.T == 1) "$t (HOST)" else java.lang.String.valueOf(t)
+                if(self.T == 1) "$t (HOST)" else java.lang.String.valueOf(t)
             }
         }
     override var startingUnit: Int
-        get() = player.B ?: -1
+        get() = self.B ?: -1
         set(value) {
-            if (room.isHost) player.B = if (value == -1) null else value
+            if (room.isHost) self.B = if (value == -1) null else value
         }
     override var color: Int
-        get() = player.D ?: -1
+        get() = self.D ?: -1
         set(value) {
-            if (room.isHost) player.D = if (value == -1) null else value
+            if (room.isHost) self.D = if (value == -1) null else value
         }
     override val isSpectator: Boolean
         get() = team == -3
     override val isAI: Boolean
-        get() = player.x
+        get() = self.x
     override var difficulty: Int?
-        get() = if(isAI) player.y else null
-        set(value) { if(room.isHost) player.y = value!! }
+        get() = if(isAI) self.y else null
+        set(value) { if(room.isHost) self.y = value!! }
 
     override var credits: Int
-        get() = player.p.roundToInt()
-        set(value) { player.p = value.toDouble() }
+        get() = self.p.roundToInt()
+        set(value) { self.p = value.toDouble() }
     override val statisticsData: PlayerStatisticsData
-        get() = with(GameEngine.t().bV.a(player)) {
+        get() = with(GameEngine.t().bV.a(self)) {
             PlayerStatisticsData(c, d, e, f, g, h)
         }
     override val income: Int
-        get() = player.q()
+        get() = self.q()
     override val isDefeated: Boolean
-        get() = player.I || player.J
+        get() = self.I || self.J
     override val isWipedOut: Boolean
-        get() = player.J
-    override val data: PlayerData = PlayerData()
-    override val client: Client? by lazy {
-        GameEngine.t().bU.c(player)?.let { ClientImpl(it) }
-    }
+        get() = self.J
+    override val data: PlayerData
+        get() = _data ?: run {
+            _data = PlayerData()
+            _data!!
+        }
+    override val client: Client?
+        get() = GameEngine.t().bU.c(self) as? Client
 
 
     override fun applyConfigChange(
@@ -114,17 +137,17 @@ class PlayerImpl(
                     n3 = (aiDifficulty) ?: -99
                     //k.d("newAiDifficultyValue:".concat(String.valueOf(n3)));
                     if(t.bU.D) {
-                        player.A = if(n3 == -99) null else Integer.valueOf(n3);
+                        self.A = if(n3 == -99) null else Integer.valueOf(n3);
                     }
                     n3 = startingUnits ?: -99
                     //k.d("startingUnits:" + this.c);
                     if(t.bU.D) {
-                        player.B = if(n3 == -99) null else Integer.valueOf(n3);
+                        self.B = if(n3 == -99) null else Integer.valueOf(n3);
                     }
                     n3 = color ?: -99
                     //k.d("newPlayerColorValue:".concat(String.valueOf(n3)));
                     if(t.bU.D) {
-                        player.D = if(n3 == -99) null else Integer.valueOf(n3);
+                        self.D = if(n3 == -99) null else Integer.valueOf(n3);
                     }
                     n3 = spawnPoint
                     if(n3 == -3 || n3 > p.c - 1) {
@@ -153,31 +176,31 @@ class PlayerImpl(
                     } else {
                         bl = false;
                     }
-                    if(n3 == -1 || player.s == n3) return@block29
+                    if(n3 == -1 || self.s == n3) return@block29
                     if(!t.bU.D) return@block30
-                    player.s = n3;
+                    self.s = n3;
                     n = 0;
                     return@block31
                 }
                 n = n4;
                 if(t.bU.I) return@block31
                 n = n4;
-                if(t.bU.A == player) return@block31
+                if(t.bU.A == self) return@block31
                 //t.a("row.setOnClickListener", "Clicked but not server or proxy controller");
             }
             n = 0;
         }
         n4 = n;
-        if(player.l != n2) {
+        if(self.l != n2) {
             n4 = n;
             if(n2 != -1) {
                 if(t.bU.D) {
-                    t.bU.a(player, n2);
+                    t.bU.a(self, n2);
                     n4 = n;
-                } else if(t.bU.I || t.bU.A == player) {
+                } else if(t.bU.I || t.bU.A == self) {
                     n = if(bl) -1 else n3;
                     val ae2 = t.bU;
-                    val p2 = player;
+                    val p2 = self;
                     var n5: Integer? = Integer(n);
                     var obj = "";
                     if(n5 != null) {
@@ -198,9 +221,9 @@ class PlayerImpl(
         }
         if(n4 != 0) {
             if(bl) {
-                t.bU.b(player, -1);
+                t.bU.b(self, -1);
             } else {
-                t.bU.b(player, n3);
+                t.bU.b(self, n3);
             }
         }
         t.bU.b();

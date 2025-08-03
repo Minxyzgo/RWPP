@@ -7,14 +7,20 @@
 
 package io.github.rwpp.android.impl
 
-import io.github.rwpp.inject.SetInterfaceOn
-import io.github.rwpp.net.Client
-import io.github.rwpp.net.Packet
+import io.github.rwpp.game.base.Rect
 
-@SetInterfaceOn([com.corrodinggames.rts.gameFramework.j.c::class])
-interface ClientImpl : Client {
-    val self: com.corrodinggames.rts.gameFramework.j.c
-    override fun sendPacketToClient(packet: Packet) {
-        self.a(packet.asGamePacket())
-    }
+class RectImpl(
+    val rect: android.graphics.Rect
+) : Rect {
+    override val bottom: Float
+        get() = rect.bottom.toFloat()
+
+    override val left: Float
+        get() = rect.left.toFloat()
+
+    override val right: Float
+        get() = rect.right.toFloat()
+
+    override val top: Float
+        get() = rect.top.toFloat()
 }

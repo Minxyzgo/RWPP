@@ -15,11 +15,9 @@ import com.corrodinggames.rts.appFramework.MultiplayerBattleroomActivity
 import com.corrodinggames.rts.game.a.a
 import com.corrodinggames.rts.gameFramework.e
 import com.corrodinggames.rts.gameFramework.j.ae
-import com.corrodinggames.rts.gameFramework.j.bg
 import com.corrodinggames.rts.gameFramework.j.c
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.*
-import io.github.rwpp.config.Settings
 import io.github.rwpp.core.Logic
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.broadcastIn
@@ -36,9 +34,7 @@ import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.net.packets.GamePacket
 import io.github.rwpp.utils.Reflect
-import io.github.rwpp.welcomeMessage
 import org.koin.core.component.get
-import java.util.concurrent.ConcurrentLinkedQueue
 
 
 class GameRoomImpl(private val game: GameImpl) : GameRoom {
@@ -52,9 +48,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override val localPlayer: Player
         get() {
             val t = GameEngine.t()
-            val p = playerCacheMap[t.bU.A]
-            if(p == null) getPlayers()
-            return playerCacheMap[t.bU.A] ?: ConnectingPlayer
+            return (t.bU.A as Player?) ?: ConnectingPlayer
         }
     override var sharedControl: Boolean
         get() = GameEngine.t().bU.aA.l
@@ -130,18 +124,9 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override val isConnecting: Boolean
         get() = GameEngine.t().bU.C
 
+    @Suppress("UNCHECKED_CAST")
     override fun getPlayers(): List<Player> {
-        return PlayerInternal.j.mapNotNull {
-            if(it == null) return@mapNotNull null
-
-            playerCacheMap.getOrPut(it) {
-                PlayerImpl(it, this)
-                    .also { p ->
-                        sendWelcomeMessage(p)
-                        PlayerJoinEvent(p).broadcastIn()
-                    }
-            }
-        }
+        return (PlayerInternal.j as Array<Player?>).mapNotNull { it }
     }
 
     @SuppressLint("SuspiciousIndentation")
@@ -377,7 +362,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
 
     override fun sendSurrender(player: Player) {
         if (isHost) {
-            val pVar = (player as PlayerImpl).player
+            val pVar = player as com.corrodinggames.rts.game.p
             val t = GameEngine.t()
             pVar.F = true
             val b2: e = t.cc.b()
@@ -396,13 +381,13 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         size: Int
     ) {
         if (isHost) {
-            val pVar = (player as PlayerImpl).player
+            val pVar = player as com.corrodinggames.rts.game.p
             val t = GameEngine.t()
             val b2: e = t.cc.b()
             b2.i = pVar
             b2.s = true
             b2.v = 5
-            b2.a(x, y, (unitType as UnitTypeImpl).type, size)
+            b2.a(x, y, unitType as com.corrodinggames.rts.game.units.el, size)
             t.bU.a(b2)
         }
     }
@@ -453,6 +438,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                 aVar.y = aeVar.aA.f
                 aeVar.B()
                 t.bU.b(null as c?)
+                PlayerJoinEvent(aVar as Player).broadcastIn()
             }
         }
 
@@ -540,7 +526,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
 
 
     override fun kickPlayer(player: Player) {
-        GameEngine.t().bU.d((player as PlayerImpl).player)
+        GameEngine.t().bU.d(player as com.corrodinggames.rts.game.p)
     }
 
     override fun disconnect(reason: String) {
@@ -553,6 +539,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         defeatedPlayerSet.clear()
         gameOver = false
         _gameSpeed = 1f
+        cachePlayerSet.clear()
 
         MainActivity.activityResume()
 
@@ -621,18 +608,5 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             (if(map.mapType == MapType.SkirmishMap) "maps/skirmish/" else "") +
                     (map.mapName + map.getMapSuffix()).replace("\\", "/")
         return com.corrodinggames.rts.gameFramework.e.a.b.f(realPath)
-    }
-
-    private fun sendWelcomeMessage(p: PlayerImpl) {
-        if(game.get<Settings>().showWelcomeMessage != true) return
-        val conn = (GameEngine.t().bU.aO as ConcurrentLinkedQueue<c>).firstOrNull { it.A == p.player } ?: return
-        val bgVar = bg()
-        bgVar.b(welcomeMessage)
-        bgVar.b(3)
-        bgVar.a("RWPP")
-        bgVar.a(null as c?)
-        bgVar.c(-1)
-        val a2 = bgVar.a(141)
-        conn.a(a2)
     }
 }

@@ -12,13 +12,19 @@ import io.github.rwpp.game.mod.Mod
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.game.units.UnitType
+import io.github.rwpp.inject.SetInterfaceOn
 
-class UnitTypeImpl(val type: com.corrodinggames.rts.game.units.el) : UnitType {
-    override val name: String = type.i()
-    override val displayName: String = type.e()
-    override val description: String = type.f()
+@SetInterfaceOn([com.corrodinggames.rts.game.units.el::class])
+interface UnitTypeImpl : UnitType {
+    val self: com.corrodinggames.rts.game.units.el
+    override val name: String
+        get() = self.i()
+    override val displayName: String
+        get() = self.e()
+    override val description: String
+        get() = self.f()
     override val movementType: MovementType
-        get() = MovementType.valueOf(type.o().name)
+        get() = MovementType.valueOf(self.o().name)
     override val mod: Mod?
-        get() = (type as? com.corrodinggames.rts.game.units.custom.l)?.J?.q?.let(appKoin.get<ModManager>()::getModByName)
+        get() = (self as? com.corrodinggames.rts.game.units.custom.l)?.J?.q?.let(appKoin.get<ModManager>()::getModByName)
 }

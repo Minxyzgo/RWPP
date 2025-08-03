@@ -52,11 +52,31 @@ class XMLMap(val map: GameMap) {
     fun addMapObject(
         id: String,
         type: String,
-        x: Int,
-        y: Int,
-        width: Int,
-        height: Int,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
         properties: (MutableList<Pair<String, String>>) -> Unit
+    ) {
+        addMapObject(
+            id,
+            type,
+            x,
+            y,
+            width,
+            height,
+            *buildList { properties(this) }.toTypedArray()
+        )
+    }
+
+    fun addMapObject(
+        id: String,
+        type: String,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        vararg properties: Pair<String, String>
     ) {
         val element = document.createElement("object")
         element.setAttribute("id", id)
@@ -66,12 +86,9 @@ class XMLMap(val map: GameMap) {
         element.setAttribute("height", height.toString())
         element.setAttribute("type", type)
 
-        val propertiesList = mutableListOf<Pair<String, String>>()
-        properties(propertiesList)
-
         val properties2 = document.createElement("properties")
 
-        for (property in propertiesList) {
+        for (property in properties) {
             val prop = document.createElement("property")
             prop.setAttribute("name", property.first)
             prop.setAttribute("value", property.second)

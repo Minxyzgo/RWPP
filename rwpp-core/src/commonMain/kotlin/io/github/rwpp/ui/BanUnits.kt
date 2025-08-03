@@ -57,7 +57,7 @@ fun BanUnitViewDialog(
             val state = rememberLazyListState()
             var filter by remember { mutableStateOf("") }
 
-            val allUnits = remember(filter) { game.getAllUnits().filter { filter.isBlank() || it.displayName.contains(filter, ignoreCase = true) } }
+            val allUnits = remember(filter) { game.getAllUnitTypes().filter { filter.isBlank() || it.displayName.contains(filter, ignoreCase = true) } }
 
             val current = LocalWindowManager.current
 

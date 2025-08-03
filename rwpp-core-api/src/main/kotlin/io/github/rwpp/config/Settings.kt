@@ -30,6 +30,7 @@ data class Settings(
     var showAttackRangeUnit: String = "Never",
     var enableAnimations: Boolean = true,
     var maxDisplayUnitGroupCount: Int = 7,
+    var displayUnitGroupXOffset: Int = 0,
     var changeGameTheme: Boolean = false,
     var showUnitTargetLine: Boolean = false,
     var improvedHealthBar: Boolean = false,

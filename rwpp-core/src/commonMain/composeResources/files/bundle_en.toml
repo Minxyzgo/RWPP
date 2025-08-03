@@ -130,6 +130,7 @@ showUnitTargetLine = "Show Unit Target Line (limited in multiplayer)"
 boldText = "Bold text for list"
 showExtraButton = "Show Extra Button"
 renderingBackend = "Rendering Backend (Requires restart)"
+displayUnitGroupXOffset = "Display Unit Group X Offset"
 
 [extension]
 extension = "Extension"

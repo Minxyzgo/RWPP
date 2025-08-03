@@ -17,6 +17,9 @@ import io.github.rwpp.config.Settings
 import io.github.rwpp.desktop.FClass
 import io.github.rwpp.desktop.GameEngine
 import io.github.rwpp.desktop.GameView
+import io.github.rwpp.game.Game
+import io.github.rwpp.game.GameRoom
+import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
@@ -29,34 +32,21 @@ import kotlin.math.roundToInt
 @InjectClass(GameView::class)
 object GameViewInject {
     var buttons: java.util.ArrayList<Any?>? = null
+    val render: g by lazy { GameEngine.B().bS }
+    var unitGroups: ArrayList<am>? = null
+    val room by lazy { appKoin.get<Game>().gameRoom }
+    val settings by lazy { appKoin.get<Settings>() }
 
-    val teamChat: Any? by lazy { Reflect.get(render!!, "q") }
-    val mapPing: Any? by lazy { Reflect.get(render!!, "r") }
-    @Inject("a", InjectMode.InsertBefore)
-    fun GameView.onAddGameAction(am: com.corrodinggames.rts.game.units.am?, arrayList: java.util.ArrayList<Any?>?): Any {
+    @Inject("a", InjectMode.InsertAfter)
+    fun GameView.onAddGameAction(am: com.corrodinggames.rts.game.units.am?, arrayList: java.util.ArrayList<Any?>?) {
         buttons = buttons ?: Reflect.get(this, "aq")
-        render = render ?: Reflect.get(this, "a")
-        buttons?.clear()
-        val q: Int = render!!.q()
-        if (q == 0) {
-            if (GameEngine.B().bQ.showChatAndPingShortcuts && GameEngine.B().M()) {
-                buttons!!.add(
-                    teamChat
-                )
-                buttons!!.add(
-                    mapPing
-                )
-
-                if (appKoin.get<Settings>().showExtraButton) {
-                    buttons!!.add(
-                        SelectBuild
-                    )
-                }
-            }
-            return InterruptResult(buttons!!)
+        if (settings.showExtraButton
+            && GameEngine.B().bS.bZ.size == 1
+            && (GameEngine.B().bS.bZ.first() as GameUnit).player.team != room.localPlayer.team)  {
+            buttons!!.add(
+                SelectBuild
+            )
         }
-
-        return buttons!!
     }
 
     object SelectBuild : p("c__cut_enable") {
@@ -71,25 +61,27 @@ object GameViewInject {
 
         // com.corrodinggames.rts.game.units.a.s
         override fun a(): String {
-            return "Select Buildings"
+            return "Show Attack Range"
         }
 
         // com.corrodinggames.rts.game.units.a.s
         override fun c(amVar: com.corrodinggames.rts.game.units.am?, z: Boolean): Boolean {
             //GameEngine.B().bS.g.n()
-            settings.showBuildingAttackRange = !settings.showBuildingAttackRange
+            val unit = GameEngine.B().bS.bZ.firstOrNull()
+            if (unit != null) {
+                (unit as GameUnit).comp.showAttackRange = !unit.comp.showAttackRange
+            }
             return true
         }
     }
 
     @Inject("e", InjectMode.Override)
     fun GameView.unitGroupUI(f: Float) {
-        render = render ?: Reflect.get(this, "a")
         unitGroups = unitGroups ?: Reflect.get(this, "aA")
         val B = GameEngine.B()
         val i = (B.cH - (30.0f * B.cj))
         val i3 = ((B.cq - 20.0f).roundToInt()) / 3
-        var i2 = ((B.cl - B.cq) - i3 * (settings.maxDisplayUnitGroupCount - 3) + 10)
+        var i2 = ((B.cl - B.cq) - i3 * (settings.maxDisplayUnitGroupCount - 3) - settings.displayUnitGroupXOffset + 10)
         val i4 = i3 - 5
         for (i5 in 0..<unitGroups!!.size) {
             val amVar = unitGroups!![i5]
@@ -147,7 +139,4 @@ object GameViewInject {
         }
     }
 
-    var render: g? = null
-    var unitGroups: ArrayList<am>? = null
-    val settings by lazy { appKoin.get<Settings>() }
 }

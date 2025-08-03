@@ -22,6 +22,9 @@ import kotlin.math.ceil
 
 @Factory
 open class UnitComp {
+    var showAttackRange: Boolean = false
+
+    // showUnitWayPoint
     open fun onDraw(unit: GameUnit, delta: Float) {
         if (!unit.isDead && unit.maxAttackRange > 70) {
             if (settings.showUnitTargetLine
@@ -36,7 +39,7 @@ open class UnitComp {
                     settings.showBuildingAttackRange
                 }
 
-                MovementType.LAND, MovementType.OVER_CLIFF, MovementType.OVER_CLIFF_WATER, MovementType.HOVER-> {
+                MovementType.LAND, MovementType.OVER_CLIFF, MovementType.OVER_CLIFF_WATER, MovementType.HOVER -> {
                     settings.showAttackRangeUnit == "Land" || settings.showAttackRangeUnit == "All"
                 }
 
@@ -48,7 +51,7 @@ open class UnitComp {
                     settings.showAttackRangeUnit == "All"
                 }
             }
-            if (condition) {
+            if (condition || showAttackRange) {
                 drawRange(unit, unit.maxAttackRange)
             }
         }

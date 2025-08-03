@@ -5,9 +5,8 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.desktop.impl
+package io.github.rwpp.android.impl
 
-import com.corrodinggames.rts.game.units.am
 import io.github.rwpp.appKoin
 import io.github.rwpp.game.Player
 import io.github.rwpp.game.comp.UnitComp
@@ -16,9 +15,9 @@ import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.inject.NewField
 import io.github.rwpp.inject.SetInterfaceOn
 
-@SetInterfaceOn([am::class])
+@SetInterfaceOn([com.corrodinggames.rts.game.units.ce::class])
 interface GameUnitImpl : GameUnit {
-    val self: am
+    val self: com.corrodinggames.rts.game.units.ce
 
     @NewField
     var _comp: UnitComp?
@@ -31,29 +30,29 @@ interface GameUnitImpl : GameUnit {
         set(value) { _comp = value }
 
     override val player: Player
-        get() = self.bX as Player
+        get() = self.bZ as Player
 
     override val isDead: Boolean
-        get() = self.bV
+        get() = self.bX
 
     override val type: UnitType
-        get() = self.dz as UnitType
-
-    override val x: Float
-        get() = self.eo
-
-    override val y: Float
-        get() = self.ep
-
-    override val target: GameUnit?
-        get() = (this as? com.corrodinggames.rts.game.units.y)?.R as? GameUnit
+        get() = self.dB as UnitType
 
     override val health: Float
-        get() = self.cu
+        get() = self.cw
 
     override val maxAttackRange: Float
-        get() = (this as? com.corrodinggames.rts.game.units.y)?.m() ?: 0f
+        get() = (self as? com.corrodinggames.rts.game.units.bp)?.l() ?: 0f
 
     override val maxHealth: Float
-        get() = self.cv
+        get() = self.cx
+
+    override val target: GameUnit?
+        get() = (self as? com.corrodinggames.rts.game.units.bp)?.T as GameUnit?
+
+    override val x: Float
+        get() = self.eq
+
+    override val y: Float
+        get() = self.er
 }

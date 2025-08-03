@@ -226,7 +226,7 @@ object InjectApi {
                 }
 
                 InjectMode.InsertAfter -> {
-                    if (!returnClassIsVoid) {
+                    if (method.returnType != CtClass.voidType) {
                         method.addLocalVariable("result2", method.returnType)
                         method.insertBefore("result2 = $originalCode")
                         method.insertAfter(/* src = */ """

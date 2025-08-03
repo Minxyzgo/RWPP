@@ -176,19 +176,34 @@ fun SettingsView(
                                                 configIO.setGameConfig("forceEnglish", value)
                                             }
                                             SettingsSwitchComp("showUnitGroups", "unitGroupInterface")
+
+                                            var xOffset by remember { mutableStateOf(settings.displayUnitGroupXOffset) }
+                                            SettingsTextField(
+                                                "displayUnitGroupXOffset",
+                                                xOffset.toString(),
+                                                typeInOnlyInteger = true,
+                                                typeInNumberOnly = true,
+                                                onValueChange = {
+                                                    xOffset = it.toIntOrNull() ?: 0
+                                                    settings.displayUnitGroupXOffset = it.toIntOrNull() ?: 0
+                                                },
+                                            )
+
+                                            SettingsSlider(
+                                                readI18n("settings.maxDisplayUnitGroupCount"),
+                                                settings.maxDisplayUnitGroupCount / 10f,
+                                                { settings.maxDisplayUnitGroupCount = (it * 10).roundToInt() },
+                                                valueFormat = { "${(it * 10).roundToInt()}" },
+                                            )
                                             if (appContext.isDesktop()) {
-                                                SettingsSlider(
-                                                    readI18n("settings.maxDisplayUnitGroupCount"),
-                                                    settings.maxDisplayUnitGroupCount / 10f,
-                                                    { settings.maxDisplayUnitGroupCount = (it * 10).roundToInt() },
-                                                    valueFormat = { "${(it * 10).roundToInt()}" },
-                                                )
-
-
                                                 val list = remember { listOf("Default", "Software", "OpenGL") }
                                                 var selectedIndex by remember { mutableStateOf(list.indexOf(settings.renderingBackend)) }
 
-                                                SettingsDropDown("renderingBackend", list, selectedIndex) { index, backend ->
+                                                SettingsDropDown(
+                                                    "renderingBackend",
+                                                    list,
+                                                    selectedIndex
+                                                ) { index, backend ->
                                                     settings.renderingBackend = list[index]
                                                     selectedIndex = index
                                                 }
@@ -201,15 +216,16 @@ fun SettingsView(
                                                 settings.enhancedReinforceTroops = it
                                             }
 
-                                            if (appContext.isDesktop()) {
-                                                SettingsSwitchComp(
-                                                    "",
-                                                    readI18n("settings.showUnitTargetLine"),
-                                                    settings.showUnitTargetLine
-                                                ) {
-                                                    settings.showUnitTargetLine = it
-                                                }
 
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.showUnitTargetLine"),
+                                                settings.showUnitTargetLine
+                                            ) {
+                                                settings.showUnitTargetLine = it
+                                            }
+
+                                            if (appContext.isDesktop()) {
                                                 SettingsSwitchComp(
                                                     "",
                                                     readI18n("settings.improvedHealthBar"),
@@ -218,7 +234,13 @@ fun SettingsView(
                                                     settings.improvedHealthBar = it
                                                 }
                                             }
-                                            var teamUnitCapSinglePlayer by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapSinglePlayer")) }
+                                            var teamUnitCapSinglePlayer by remember {
+                                                mutableStateOf(
+                                                    configIO.getGameConfig<Int?>(
+                                                        "teamUnitCapSinglePlayer"
+                                                    )
+                                                )
+                                            }
                                             SettingsTextField(
                                                 "teamUnitCapSinglePlayer",
                                                 teamUnitCapSinglePlayer?.toString() ?: "",
@@ -227,9 +249,18 @@ fun SettingsView(
                                                 typeInOnlyInteger = true
                                             ) {
                                                 teamUnitCapSinglePlayer = it.toIntOrNull()
-                                                configIO.setGameConfig("teamUnitCapSinglePlayer", teamUnitCapSinglePlayer ?: 100)
+                                                configIO.setGameConfig(
+                                                    "teamUnitCapSinglePlayer",
+                                                    teamUnitCapSinglePlayer ?: 100
+                                                )
                                             }
-                                            var teamUnitCapHostedGame by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapHostedGame")) }
+                                            var teamUnitCapHostedGame by remember {
+                                                mutableStateOf(
+                                                    configIO.getGameConfig<Int?>(
+                                                        "teamUnitCapHostedGame"
+                                                    )
+                                                )
+                                            }
                                             SettingsTextField(
                                                 "teamUnitCapHostedGame",
                                                 teamUnitCapHostedGame?.toString() ?: "",
@@ -238,35 +269,36 @@ fun SettingsView(
                                                 typeInOnlyInteger = true
                                             ) {
                                                 teamUnitCapHostedGame = it.toIntOrNull()
-                                                configIO.setGameConfig("teamUnitCapHostedGame", teamUnitCapHostedGame ?: 100)
+                                                configIO.setGameConfig(
+                                                    "teamUnitCapHostedGame",
+                                                    teamUnitCapHostedGame ?: 100
+                                                )
                                             }
                                         }
-                                        if (appContext.isDesktop()) {
-                                            SettingsGroup("", readI18n("settings.buildings")) {
-                                                SettingsSwitchComp(
-                                                    "",
-                                                    readI18n("settings.showAttackRange"),
-                                                    settings.showBuildingAttackRange
-                                                ) {
-                                                    settings.showBuildingAttackRange = it
-                                                }
 
-                                                SettingsSwitchComp(
-                                                    "",
-                                                    readI18n("settings.showExtraButton"),
-                                                    settings.showExtraButton
-                                                ) {
-                                                    settings.showExtraButton = it
-                                                }
+                                        SettingsGroup("", readI18n("settings.buildings")) {
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.showAttackRange"),
+                                                settings.showBuildingAttackRange
+                                            ) {
+                                                settings.showBuildingAttackRange = it
                                             }
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.showExtraButton"),
+                                                settings.showExtraButton
+                                            ) {
+                                                settings.showExtraButton = it
+                                            }
+                                        }
 
-                                            SettingsGroup("", readI18n("settings.units")) {
-                                                val list = listOf("Never", "Land", "Air", "All")
-                                                var selectedIndex by remember { mutableStateOf(list.indexOf(settings.showAttackRangeUnit)) }
-                                                SettingsDropDown("showAttackRange", list, selectedIndex) { index, type ->
-                                                    selectedIndex = index
-                                                    settings.showAttackRangeUnit = type
-                                                }
+                                        SettingsGroup("", readI18n("settings.units")) {
+                                            val list = listOf("Never", "Land", "Air", "All")
+                                            var selectedIndex by remember { mutableStateOf(list.indexOf(settings.showAttackRangeUnit)) }
+                                            SettingsDropDown("showAttackRange", list, selectedIndex) { index, type ->
+                                                selectedIndex = index
+                                                settings.showAttackRangeUnit = type
                                             }
                                         }
                                     }

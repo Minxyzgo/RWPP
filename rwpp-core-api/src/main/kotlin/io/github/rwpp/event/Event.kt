@@ -9,6 +9,7 @@ package io.github.rwpp.event
 
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -112,8 +113,15 @@ suspend fun <E : Event> E.broadcast(): E {
  */
 @JvmOverloads
 @Suppress("unused")
-fun <E : Event> E.broadcastIn(onFinished: (E) -> Unit = {}, coroutineContext: CoroutineContext = EmptyCoroutineContext): E {
-    GlobalEventChannel.launch(coroutineContext) { broadcast() }.invokeOnCompletion { onFinished(this) }
+fun <E : Event> E.broadcastIn(
+    onFinished: (E) -> Unit = {},
+    delay: Long = 0,
+    coroutineContext: CoroutineContext = EmptyCoroutineContext
+): E {
+    GlobalEventChannel.launch(coroutineContext) {
+        if (delay > 0) delay(delay)
+        broadcast()
+    }.invokeOnCompletion { onFinished(this) }
     return this
 }
 

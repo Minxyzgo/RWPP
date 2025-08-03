@@ -47,8 +47,6 @@ var isGaming = false
 var isReturnToBattleRoom = false
 var roomMods = arrayOf<String>()
 var bannedUnitList: List<String> = listOf()
-val cacheModSize = AtomicInteger(0)
-var playerCacheMap = mutableMapOf<PlayerInternal, Player>()
 lateinit var koinApplication: KoinApplication
 lateinit var dexFolder: File
 val pickFileActions = mutableListOf<(File) -> Unit>()
@@ -56,6 +54,7 @@ var gameLoaded = false
 val uiHandler by lazy {
     Handler(Looper.getMainLooper())
 }
+val cachePlayerSet = CopyOnWriteArraySet<PlayerInternal>()
 val loadingThread by lazy {
     Thread({
         while (true) {

@@ -46,15 +46,12 @@ class GameImpl : Game, CoroutineScope {
     private var _missions: List<Mission>? = null
     private var _allMaps: List<GameMap>? = null
     private var _maps = mutableMapOf<MapType, List<GameMap>>()
-    private var _units: List<UnitType>? = null
-    private var cacheUnits: ArrayList<*>? = null
 
     override val gameRoom: GameRoom = GameRoomImpl(this)
     override val gui: GUI by lazy {
-        GUIImpl()
+        GameEngine.t().bP as GUI
     }
-    override val world: World
-        get() = TODO("Not yet implemented")
+    override val world: World = WorldImpl()
 
     override fun post(action: () -> Unit) {
         mainThreadChannel.trySend(action)
@@ -98,7 +95,7 @@ class GameImpl : Game, CoroutineScope {
         if (sandbox) t.bU.r() else t.bU.s()
         isSinglePlayerGame = true
         initMap(true)
-        RefreshUIEvent().broadcastIn()
+        RefreshUIEvent().broadcastIn(delay = 200L)
     }
 
     override fun setUserName(name: String) {
@@ -179,6 +176,9 @@ class GameImpl : Game, CoroutineScope {
                             get() = f.removeSuffix(".tmx")
                         override val mapType: MapType
                             get() = MapType.SkirmishMap
+
+                        private val _displayName = LevelSelectActivity.convertLevelFileNameForDisplay(name)
+                        override fun displayName(): String = _displayName
 
                         override fun openImageInputStream(): InputStream? {
                             return assets.open("maps/${type.pathName()}/${f.removeSuffix(".tmx") + "_map.png"}")
@@ -281,16 +281,8 @@ class GameImpl : Game, CoroutineScope {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun getAllUnits(): List<UnitType> {
-        val units = (com.corrodinggames.rts.game.units.cj.ae as ArrayList<com.corrodinggames.rts.game.units.el>)
-        if(cacheUnits != units || _units == null) {
-            _units = units.map {
-                UnitTypeImpl(it)
-            }
-
-            cacheUnits = units
-        }
-        return _units!!
+    override fun getAllUnitTypes(): List<UnitType> {
+        return com.corrodinggames.rts.game.units.cj.ae as ArrayList<UnitType>
     }
 
     override fun onBanUnits(units: List<UnitType>) {

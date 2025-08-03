@@ -7,9 +7,9 @@
 
 package io.github.rwpp.android.impl.inject
 
-import io.github.rwpp.android.playerCacheMap
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.PlayerLeaveEvent
+import io.github.rwpp.game.Player
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
@@ -23,9 +23,8 @@ object ClientInject {
         str: String?
     ) {
         if (this.A != null) {
-            playerCacheMap[this.A]?.let { PlayerLeaveEvent(it, com.corrodinggames.rts.gameFramework.j.ae
-                .g(str ?: "")).broadcastIn() }
-            playerCacheMap.remove(this.A)
+            PlayerLeaveEvent(this.A as Player, com.corrodinggames.rts.gameFramework.j.ae
+                .g(str ?: "")).broadcastIn()
         }
     }
 }

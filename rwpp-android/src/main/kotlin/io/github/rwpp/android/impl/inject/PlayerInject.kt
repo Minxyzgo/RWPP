@@ -8,16 +8,16 @@
 package io.github.rwpp.android.impl.inject
 
 import io.github.rwpp.android.defeatedPlayerSet
+import io.github.rwpp.android.gameOver
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.PlayerInternal
-import io.github.rwpp.android.gameOver
 import io.github.rwpp.android.isGaming
-import io.github.rwpp.android.playerCacheMap
 import io.github.rwpp.appKoin
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.GameOverEvent
 import io.github.rwpp.event.events.PlayerDefeatedEvent
 import io.github.rwpp.game.Game
+import io.github.rwpp.game.Player
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
@@ -29,7 +29,7 @@ object PlayerInject {
     fun com.corrodinggames.rts.game.p.onUpdate(delta: Float) {
         if ((I || J) && isGaming && !defeatedPlayerSet.contains(this)) {
             defeatedPlayerSet.add(this)
-            playerCacheMap[this]?.let { PlayerDefeatedEvent(it).broadcastIn() }
+            PlayerDefeatedEvent(this as Player).broadcastIn()
 
             var lastTeam: Int? = null
 

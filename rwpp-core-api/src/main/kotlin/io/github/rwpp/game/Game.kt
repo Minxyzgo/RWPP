@@ -129,7 +129,7 @@ interface Game : KoinComponent {
     /**
      * Get all the unit list.
      */
-    fun getAllUnits(): List<UnitType>
+    fun getAllUnitTypes(): List<UnitType>
 
     /**
      * Ban given unit, and all actions about the unit will not executed.

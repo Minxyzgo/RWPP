@@ -10,11 +10,8 @@ package io.github.rwpp.desktop.impl.inject
 import android.graphics.Paint
 import android.graphics.RectF
 import com.corrodinggames.rts.game.units.am
-import io.github.rwpp.appKoin
-import io.github.rwpp.desktop.impl.GameUnitImpl
 import io.github.rwpp.game.base.GamePaint
 import io.github.rwpp.game.base.Rect
-import io.github.rwpp.game.comp.UnitComp
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
@@ -24,12 +21,6 @@ import io.github.rwpp.inject.RedirectMethod
 
 @InjectClass(am::class)
 object UnitInject {
-
-    @Inject("bS", InjectMode.InsertBefore)
-    fun am.onInit() {
-        (this as GameUnitImpl)._comp = appKoin.get<UnitComp>()
-    }
-
     @Inject("p", InjectMode.InsertBefore)
     fun am.onDraw(delta: Float) {
         (this as GameUnit).comp.onDraw(this, delta)

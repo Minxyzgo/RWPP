@@ -19,20 +19,24 @@ import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.*
 import io.github.rwpp.android.bannedUnitList
+import io.github.rwpp.android.cachePlayerSet
 import io.github.rwpp.android.impl.ClientImpl
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.PlayerImpl
 import io.github.rwpp.android.isReturnToBattleRoom
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.ChatMessageEvent
+import io.github.rwpp.event.events.PlayerJoinEvent
 import io.github.rwpp.event.events.SystemMessageEvent
 import io.github.rwpp.game.Game
+import io.github.rwpp.game.Player
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.units.GameCommandActions
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
 import io.github.rwpp.inject.InterruptResult
+import io.github.rwpp.net.Client
 import io.github.rwpp.net.InternalPacketType
 import io.github.rwpp.net.Net
 import io.github.rwpp.ui.UI
@@ -238,7 +242,7 @@ object NetInject {
             else -> {
                 net.listeners[type]?.forEach { listener ->
                     val result = listener.invoke(
-                        ClientImpl(packet.a),
+                        packet.a as Client,
                         net.packetDecoders[type]!!.invoke(
                             DataInputStream(
                                 ByteArrayInputStream(packet.c)
@@ -248,6 +252,17 @@ object NetInject {
                     if (result) return InterruptResult.Unit
                 }
                 Unit
+            }
+        }
+    }
+
+    @Inject("d", InjectMode.InsertBefore)
+    fun onSendServerInfo(c: com.corrodinggames.rts.gameFramework.j.c) {
+        c.A?.let {
+            if (!cachePlayerSet.contains(it)) {
+                PlayerJoinEvent(it as Player)
+                appKoin.get<Game>().gameRoom.sendMessageToPlayer(it as Player, "RWPP", welcomeMessage)
+                cachePlayerSet.add(it)
             }
         }
     }
@@ -280,15 +295,12 @@ object NetInject {
     ): Any {
         val room = appKoin.get<Game>().gameRoom
 
-        val player = room.getPlayers()
-            .firstOrNull { pVar != null && (it as PlayerImpl?)?.player == pVar }
-
         if ((str2 ?: "").startsWith(commands.prefix)
-            && player != null
-            && player != room.localPlayer
+            && pVar != null
+            && pVar != room.localPlayer
             && room.isHost
         ) {
-            commands.handleCommandMessage(str2 ?: "", player) { room.sendMessageToPlayer(player, "RWPP", it) }
+            commands.handleCommandMessage(str2 ?: "", pVar as Player) { room.sendMessageToPlayer(pVar, "RWPP", it) }
             return InterruptResult.Unit
         } else {
             return Unit
@@ -313,7 +325,7 @@ object NetInject {
         val player = room.getPlayers()
             .firstOrNull {
                 if (gameRoom.isHost)
-                    (c != null && (it.client as ClientImpl?)?.client == c) || (c == null && it.name == room.localPlayer.name && str != null)
+                    (c != null && it.client == c) || (c == null && it.name == room.localPlayer.name && str != null)
                 else it.name == str
             }
 

@@ -10,10 +10,11 @@ package io.github.rwpp.android.impl
 import com.corrodinggames.rts.gameFramework.j.ae
 import io.github.rwpp.game.base.GamePaint
 import io.github.rwpp.game.ui.GUI
+import io.github.rwpp.inject.SetInterfaceOn
 
-
-class GUIImpl : GUI {
-    private val self = GameEngine.t().bP
+@SetInterfaceOn([com.corrodinggames.rts.gameFramework.f.i::class])
+interface GUIImpl : GUI {
+    val self: com.corrodinggames.rts.gameFramework.f.i
 
     override var textPaint: GamePaint
         get() = GamePaintImpl(self.aC)

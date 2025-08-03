@@ -12,12 +12,12 @@ import io.github.rwpp.game.comp.UnitComp
 
 interface GameUnit {
     val player: Player
-    val isDead: Boolean
+    val isDead: Boolean // dead:
     val type: UnitType
-    val x: Float
-    val y: Float
-    val health: Float
-    val maxHealth: Float
+    val x: Float // fastGameObject
+    val y: Float // fastGameObject
+    val health: Float // hp:
+    val maxHealth: Float // showHpChanges
     val maxAttackRange: Float
     val target: GameUnit?
 

@@ -78,7 +78,7 @@ abstract class AbstractGame : Game {
                 singlePlayer = true
             }
 
-            RefreshUIEvent().broadcastIn()
+            RefreshUIEvent().broadcastIn(delay = 200L)
         }
     }
 
@@ -170,7 +170,7 @@ abstract class AbstractGame : Game {
         return list
     }
     @Suppress("UNCHECKED_CAST")
-    override fun getAllUnits(): List<UnitType> {
+    override fun getAllUnitTypes(): List<UnitType> {
         return (com.corrodinggames.rts.game.units.ar.ae as ArrayList<UnitType>)
     }
 
