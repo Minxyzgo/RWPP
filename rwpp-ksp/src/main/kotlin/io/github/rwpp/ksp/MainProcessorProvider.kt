@@ -14,7 +14,6 @@ import io.github.rwpp.inject.BuildLogger
 import io.github.rwpp.inject.GameLibraries
 import io.github.rwpp.inject.PathType
 import io.github.rwpp.inject.runtime.Builder
-import io.github.rwpp.rwpp_ksp.BuildConfig
 
 class MainProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
