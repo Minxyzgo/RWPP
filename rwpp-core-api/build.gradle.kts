@@ -36,6 +36,10 @@ dependencies {
     ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
 }
 
+tasks.kotlinSourcesJar {
+    archiveClassifier.set("sources")
+}
+
 afterEvaluate {
     publishing {
         publications {
@@ -45,6 +49,7 @@ afterEvaluate {
                 version = rootProject.version.toString()
 
                 from(components.getByName("kotlin"))
+                artifact(tasks.kotlinSourcesJar)
             }
         }
     }
