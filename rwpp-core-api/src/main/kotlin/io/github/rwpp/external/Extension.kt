@@ -91,11 +91,13 @@ abstract class Extension(
      */
     @Suppress("unused")
     fun openInputStream(entryName: String): InputStream? {
-        return if (zipFile != null) {
-            logger.debug("Opening input stream for $entryName from zip file")
-            zipFile.getInputStream(zipFile.getEntry(entryName))
-        } else {
-            File(file, entryName).inputStream()
-        }
+        return runCatching {
+            if (zipFile != null) {
+                logger.debug("Opening input stream for $entryName from zip file")
+                zipFile.getInputStream(zipFile.getEntry(entryName))
+            } else {
+                File(file, entryName).inputStream()
+            }
+        }.getOrNull()
     }
 }
