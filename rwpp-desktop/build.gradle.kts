@@ -6,7 +6,6 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-import com.google.devtools.ksp.processing.kspJvmArgParser
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -20,6 +19,7 @@ plugins {
 ksp {
     arg("outputDir", project.buildDir.absolutePath + "/generated")
     arg("lib", "game-lib")
+    arg("libDir", "$rootDir/lib")
     arg("pathType", "Path")
 }
 

@@ -18,7 +18,7 @@ import io.github.rwpp.rwpp_ksp.BuildConfig
 
 class MainProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
-        Builder.libDir = BuildConfig.DEFAULT_LIB_DIR
+        Builder.libDir = environment.options["libDir"].toString()
         Builder.outputDir = environment.options["outputDir"].toString()
         Builder.logger = object : BuildLogger {
             override fun logging(message: String) {

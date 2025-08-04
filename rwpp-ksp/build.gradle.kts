@@ -14,10 +14,6 @@ plugins {
 
 group = "io.github.rwpp"
 
-buildConfig {
-    buildConfigField("DEFAULT_LIB_DIR", rootDir.absolutePath.replace("\\", "/") + "/lib")
-}
-
 kotlin {
 
     jvm()
