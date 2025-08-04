@@ -101,9 +101,6 @@ object UI : Initialization, IUserInterface {
 
     var receivingNetworkDialogTitle by mutableStateOf("")
     var showNetworkDialog by mutableStateOf(false)
-
-
-
     var UiProvider: UIProvider = UIProvider()
 
     private val relayRegex = Regex("""R\d+""")
@@ -178,7 +175,7 @@ object UI : Initialization, IUserInterface {
 }
 
 open class UIProvider {
-    protected val extraMenuList = mutableListOf<Menu>()
+    val extraMenuList = mutableListOf<Menu>()
 
     @Composable
     open fun MainMenu(
