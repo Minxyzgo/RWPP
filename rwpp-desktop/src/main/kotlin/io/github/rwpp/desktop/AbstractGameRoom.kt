@@ -154,6 +154,8 @@ abstract class AbstractGameRoom  : GameRoom {
         get() = _gameSpeed
         set(value) { _gameSpeed = value}
 
+    private var mapIndex = 0
+
     @Suppress("unchecked_cast")
     override fun getPlayers(): List<Player> {
         return (asField.get(GameEngine.B().bX.ay) as Array<Player?>).mapNotNull { it }.toList()
@@ -379,7 +381,7 @@ abstract class AbstractGameRoom  : GameRoom {
             if (!singlePlayer && gameMapTransformer != null) {
                 val xmlMap = XMLMap(selectedMap)
                 gameMapTransformer!!.invoke(xmlMap)
-                val path = "$mapDir/generated_${selectedMap.mapName + selectedMap.getMapSuffix()}"
+                val path = "$mapDir/generated_${mapIndex++}.tmx"
                 val file = xmlMap.saveToFile(path)
                 B.bX.az = path
                 io.github.rwpp.event.GlobalEventChannel.filter(io.github.rwpp.event.events.DisconnectEvent::class)

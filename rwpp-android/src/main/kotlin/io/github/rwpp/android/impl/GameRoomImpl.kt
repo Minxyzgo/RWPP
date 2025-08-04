@@ -32,6 +32,7 @@ import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.map.*
 import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.UnitType
+import io.github.rwpp.mapDir
 import io.github.rwpp.net.packets.GamePacket
 import io.github.rwpp.utils.Reflect
 import org.koin.core.component.get
@@ -123,6 +124,8 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
     override var option: RoomOption = RoomOption()
     override val isConnecting: Boolean
         get() = GameEngine.t().bU.C
+
+    private var mapIndex = 0
 
     @Suppress("UNCHECKED_CAST")
     override fun getPlayers(): List<Player> {
@@ -565,7 +568,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                 if (!isSinglePlayerGame && gameMapTransformer != null) {
                     val xmlMap = XMLMap(selectedMap)
                     gameMapTransformer!!.invoke(xmlMap)
-                    val path = "/storage/emulated/0/rustedWarfare/maps/generated_${LevelSelectActivity.convertLevelFileNameForDisplay(selectedMap.mapName + selectedMap.getMapSuffix()) + selectedMap.getMapSuffix()}"
+                    val path = "$mapDir/generated_${mapIndex++}.tmx"
                     val file = xmlMap.saveToFile(path)
                     GameEngine.t().bU.aB = path
                     GlobalEventChannel.filter(DisconnectEvent::class).subscribeOnce {

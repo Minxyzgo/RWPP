@@ -360,13 +360,7 @@ class GameImpl : AbstractGame() {
                             private val _displayName = ScriptEngine.getInstance().root.convertMapName(name)
 
                             override fun openImageInputStream(): InputStream? {
-                                return if(type == MapType.CustomMap) {
-                                    if (name.contains("MOD|")) //TODO 实现mod图片
-                                        null
-                                    else loadInputStream(
-                                        com.corrodinggames.rts.appFramework.c.c(name)
-                                    )
-                                } else null
+                                return com.corrodinggames.rts.game.b.b.b("/SD/rusted_warfare_maps/${name.replace(".tmx","_map.png")}")
                             }
 
                             override fun openInputStream(): InputStream {
@@ -449,7 +443,6 @@ class GameImpl : AbstractGame() {
 
     private fun loadInputStream(path: String): InputStream? {
         val fileInputStream: InputStream?
-        val bufferedInputStream: BufferedInputStream
         val a2 = ae.a(path)
         if (a2 != null) {
             fileInputStream = a2.b(path, true)

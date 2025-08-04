@@ -8,3 +8,4 @@ typealias GameView = com.corrodinggames.rts.gameFramework.f.a
 typealias FClass = com.corrodinggames.rts.gameFramework.f
 typealias NetPacket = com.corrodinggames.rts.gameFramework.e
 typealias IAClass = com.corrodinggames.rts.gameFramework.i.a
+typealias MapEngine = com.corrodinggames.rts.game.b

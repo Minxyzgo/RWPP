@@ -15,13 +15,17 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 class XMLMap(val map: GameMap) {
+    private val _objects = mutableListOf<MapObject>()
+
     val root: Element
     val objectGroup: Element
     val width: Float
     val height: Float
     val tileWidth: Float
     val tileHeight: Float
-    val objects = mutableListOf<MapObject>()
+    var hasMapInfo: Boolean = false
+    val objects: List<MapObject>
+        get() = _objects
     val document: Document = factory.newDocumentBuilder().parse(map.openInputStream())
 
     init {
@@ -30,8 +34,12 @@ class XMLMap(val map: GameMap) {
         height = root.getAttribute("height").toFloat()
         tileWidth = root.getAttribute("tilewidth").toFloat()
         tileHeight = root.getAttribute("tileheight").toFloat()
-
-        objectGroup = root.getElementsByTagName("objectgroup").item(0) as Element
+        objectGroup = (root.getElementsByTagName("objectgroup").item(0) as Element?) ?: run {
+            val element = document.createElement("objectgroup")
+            element.setAttribute("name", "Triggers")
+            root.appendChild(element)
+            element
+        }
 
         val objects = objectGroup.getElementsByTagName("object")
 
@@ -45,7 +53,10 @@ class XMLMap(val map: GameMap) {
             val type = obj.getAttribute("type")
             val properties = obj.getElementsByTagName("properties")
 
-            this@XMLMap.objects.add(MapObject(id, x, y, width, height, type, properties))
+            if (obj.getAttribute("name") == "map_info")
+                hasMapInfo = true
+
+            _objects.add(MapObject(obj))
         }
     }
 
@@ -57,8 +68,8 @@ class XMLMap(val map: GameMap) {
         width: Float,
         height: Float,
         properties: (MutableList<Pair<String, String>>) -> Unit
-    ) {
-        addMapObject(
+    ): MapObject {
+        return addMapObject(
             id,
             type,
             x,
@@ -77,7 +88,7 @@ class XMLMap(val map: GameMap) {
         width: Float,
         height: Float,
         vararg properties: Pair<String, String>
-    ) {
+    ): MapObject {
         val element = document.createElement("object")
         element.setAttribute("id", id)
         element.setAttribute("x", x.toString())
@@ -95,11 +106,47 @@ class XMLMap(val map: GameMap) {
             properties2.appendChild(prop)
         }
 
+        val mapObject = MapObject(element)
+        _objects.add(mapObject)
         element.appendChild(properties2)
         objectGroup.appendChild(element)
+        return mapObject
+    }
+
+    fun addMapInfo(type: String) {
+        if (!hasMapInfo) {
+            val element = document.createElement("object")
+            element.setAttribute("name", "map_info")
+            element.setAttribute("x", 0.toString())
+            element.setAttribute("y", 0.toString())
+            element.setAttribute("width", tileWidth.toString())
+            element.setAttribute("height", tileHeight.toString())
+            val properties = document.createElement("properties")
+            val typeProperty = document.createElement("property")
+            typeProperty.setAttribute("name", "type")
+            typeProperty.setAttribute("value", type)
+            properties.appendChild(typeProperty)
+            element.appendChild(properties)
+            _objects.add(MapObject(element))
+            objectGroup.appendChild(element)
+            hasMapInfo = true
+        }
+    }
+
+    fun removeMapObject(id: String) {
+        val objects = objectGroup.getElementsByTagName("object")
+        for (i in 0 until objects.length) {
+            val obj = objects.item(i) as Element
+            if (obj.getAttribute("id") == id) {
+                objectGroup.removeChild(obj)
+                _objects.removeIf { it.id == id }
+                break
+            }
+        }
     }
 
     fun saveToFile(path: String): File {
+        addMapInfo("skirmish")
         val file = File(path)
         if (!file.exists()) {
             file.createNewFile()
@@ -112,17 +159,83 @@ class XMLMap(val map: GameMap) {
         return file
     }
 
-    class MapObject(
-        val id: String,
-        val x: Float,
-        val y: Float,
-        val width: Float,
-        val height: Float,
-        val type: String,
-        val properties: NodeList
+    inner class MapObject(
+        val element: Element
     ) {
+        var id: String
+            get() = element.getAttribute("id")
+            set(value) { element.setAttribute("id", value) }
+        var x: Float
+            get() = element.getAttribute("x").toFloat()
+            set(value) { element.setAttribute("x", value.toString()) }
+        var y: Float
+            get() = element.getAttribute("y").toFloat()
+            set(value) { element.setAttribute("y", value.toString()) }
+        var width: Float
+            get() = element.getAttribute("width").toFloat()
+            set(value) { element.setAttribute("width", value.toString()) }
+        var height: Float
+            get() = element.getAttribute("height").toFloat()
+            set(value) { element.setAttribute("height", value.toString()) }
+        var type: String
+            get() = element.getAttribute("type")
+            set(value) { element.setAttribute("type", value) }
+        val properties: NodeList
+            get() = element.getElementsByTagName("properties").item(0).childNodes
+
+        fun appendProperty(name: String, value: String) {
+            val prop = document.createElement("property")
+            prop.setAttribute("name", name)
+            prop.setAttribute("value", value)
+            element.getElementsByTagName("properties").item(0).appendChild(prop)
+        }
+
+        fun removeProperty(name: String) {
+            val properties = element.getElementsByTagName("properties").item(0)
+            for (i in 0 until properties.childNodes.length) {
+                val property = properties.childNodes.item(i) as Element
+                if (property.getAttribute("name") == name) {
+                    properties.removeChild(property)
+                    break
+                }
+            }
+        }
+
+        fun getProperty(name: String): String? {
+            val properties = element.getElementsByTagName("properties").item(0)
+            for (i in 0 until properties.childNodes.length) {
+                val property = properties.childNodes.item(i) as Element
+                if (property.getAttribute("name") == name) {
+                    return property.getAttribute("value")
+                }
+            }
+            return null
+        }
+
+        fun setProperty(name: String, value: String) {
+            val properties = element.getElementsByTagName("properties").item(0)
+            for (i in 0 until properties.childNodes.length) {
+                val property = properties.childNodes.item(i) as Element
+                if (property.getAttribute("name") == name) {
+                    property.setAttribute("value", value)
+                    break
+                }
+            }
+        }
+
+        fun hasProperty(name: String): Boolean {
+            val properties = element.getElementsByTagName("properties").item(0)
+            for (i in 0 until properties.childNodes.length) {
+                val property = properties.childNodes.item(i) as Element
+                if (property.getAttribute("name") == name) {
+                    return true
+                }
+            }
+            return false
+        }
+
         @Suppress("unused")
-        fun parseProperties(): MutableList<Pair<String, String>> {
+        fun parseProperties(): List<Pair<String, String>> {
             val result = mutableListOf<Pair<String, String>>()
             for (i in 0 until properties.length) {
                 val property = properties.item(i) as Element
