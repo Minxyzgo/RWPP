@@ -161,7 +161,7 @@ class MainProcessor(
                     val injectFunctionPath = if (requiredPathType == PathType.Path)
                         "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}"
                     else
-                        "${clazz.qualifiedName!!.asString()}.${declaration.simpleName.asString()}($thisCode$$);"
+                        "${clazz.qualifiedName!!.asString()}.INSTANCE.${declaration.simpleName.asString()}($thisCode$$);"
 
                     val args by lazy {
                         declaration.parameters.map { param ->

@@ -7,6 +7,7 @@
 
 package io.github.rwpp.inject.runtime
 
+import io.github.rwpp.AppContext
 import io.github.rwpp.appKoin
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.inject.*
@@ -15,7 +16,6 @@ import io.github.rwpp.inject.runtime.Builder.libDir
 import io.github.rwpp.inject.runtime.Builder.outputDir
 import javassist.ClassMap
 import javassist.CtClass
-import javassist.LoaderClassPath
 import javassist.bytecode.Descriptor
 import kotlinx.serialization.encodeToString
 import net.peanuuutz.tomlkt.Toml
@@ -48,8 +48,8 @@ object Builder {
         extensions?.forEach {
             if (it.config.hasInjectInfo && it.isEnabled) {
                 checkAndMergeConfig(it.injectInfo!!)
-                val loader = externalHandler.loadExtensionClass(it)
-                GameLibraries.defClassPool.appendClassPath(externalHandler.getMultiplatformClassPath(loader!!))
+                if (it.file.extension == "jar" && appKoin.get<AppContext>().isAndroid())
+                    GameLibraries.defClassPool.appendClassPath(it.file.absolutePath)
             }
         }
         applyConfig()

@@ -8,13 +8,12 @@
 package io.github.rwpp.external
 
 import io.github.rwpp.core.Initialization
-import io.github.rwpp.core.LibClassLoader
 import javassist.ClassPath
 import org.koin.core.component.KoinComponent
 import java.io.File
 
 interface ExternalHandler : KoinComponent, Initialization {
-    val mainLoader: LibClassLoader
+    //val mainLoader: LibClassLoader
 
     fun getAllExtensions(update: Boolean = false): Result<List<Extension>>
 
@@ -31,11 +30,9 @@ interface ExternalHandler : KoinComponent, Initialization {
 
     fun openFileChooser(onChooseFile: (File) -> Unit)
 
-    fun loadExtensionClass(extension: Extension): ClassLoader?
+  //  fun loadExtensionClass(extension: Extension): ClassLoader?
 
-    fun loadJar(jar: File, parent: ClassLoader): ClassLoader
-
-    fun getMultiplatformClassPath(parent: ClassLoader): ClassPath
+    fun loadJarToSystemClassPath(jar: File): ClassLoader
 
     fun newExtension(
         isEnabled: Boolean,

@@ -9,7 +9,6 @@ package io.github.rwpp.impl
 
 import io.github.rwpp.*
 import io.github.rwpp.config.EnabledExtensions
-import io.github.rwpp.core.LibClassLoader
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExtensionConfig
 import io.github.rwpp.external.ExtensionLauncher
@@ -33,7 +32,7 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
     protected var _usingResource: Extension? = null
     protected var extensions: List<Extension>? = null
 
-    override val mainLoader by lazy { LibClassLoader(Thread.currentThread().contextClassLoader) }
+    //override val mainLoader by lazy { LibClassLoader(Thread.currentThread().contextClassLoader) }
     private val fileExists by lazy {
         File(resourceOutputDir).exists()
     }
@@ -229,30 +228,15 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                     logger.error("Load script failed: ${it.message}")
                 }
 
-                val classLoader = loadExtensionClass(extension)
-                val main = classLoader?.loadClass(extension.config.mainClass)
-                if (main != null) {
-                    extension.classLoader = classLoader
+                if (extension.config.mainClass != null) {
+                    if (appKoin.get<AppContext>().isAndroid()) loadJarToSystemClassPath(extension.file)
+                    val main = Class.forName(extension.config.mainClass)
                     extension.launcher = main.getDeclaredConstructor().newInstance() as ExtensionLauncher
                 }
             }
         }
 
         extensions?.filter { it.isEnabled && it.launcher != null }?.forEach { it.launcher?.init() }
-    }
-
-    override fun loadExtensionClass(extension: Extension): ClassLoader? {
-        return if (extension.config.mainClass != null) {
-            runCatching {
-                val classLoader = loadJar(extension.file, mainLoader)
-                mainLoader.addChild(classLoader)
-                classLoader
-            }.onFailure {
-                logger.error("Load main class failed: ${it.stackTraceToString()}")
-            }.getOrNull()
-        } else {
-            null
-        }
     }
 
     private fun isSupportCurrentGamePlatform(platform: String): Boolean {

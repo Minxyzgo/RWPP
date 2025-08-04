@@ -14,10 +14,10 @@ import io.github.rwpp.impl.BaseExternalHandlerImpl
 import io.github.rwpp.io.unzipTo
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
+import io.github.rwpp.utils.Reflect
 import javassist.LoaderClassPath
 import org.koin.core.annotation.Single
 import java.io.File
-import java.net.URL
 import java.net.URLClassLoader
 import javax.swing.JFileChooser
 
@@ -65,31 +65,10 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         }
     }
 
-    override fun loadJar(jar: File, parent: ClassLoader): ClassLoader {
-        return object : URLClassLoader(arrayOf<URL?>(jar.toURI().toURL()), parent) {
-            @Throws(ClassNotFoundException::class)
-            override fun loadClass(name: String?, resolve: Boolean): Class<*>? {
-                //check for loaded state
-                var loadedClass = findLoadedClass(name)
-                if (loadedClass == null) {
-                    try {
-                        //try to load own class first
-                        loadedClass = findClass(name)
-                    } catch (_: ClassNotFoundException) {
-                        //use parent if not found
-                        return parent.loadClass(name)
-                    }
-                }
-
-                if (resolve) {
-                    resolveClass(loadedClass)
-                }
-                return loadedClass
-            }
-        }
-    }
-
-    override fun getMultiplatformClassPath(parent: ClassLoader): javassist.ClassPath {
-        return LoaderClassPath(parent)
+    override fun loadJarToSystemClassPath(jar: File): ClassLoader {
+        val url = jar.toURI().toURL()
+        val classLoader = Thread.currentThread().contextClassLoader as URLClassLoader
+        Reflect.callVoid(classLoader, "addURL", args = listOf(url))
+        return classLoader
     }
 }

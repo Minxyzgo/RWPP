@@ -13,6 +13,7 @@ import dalvik.system.PathClassLoader
 import io.github.rwpp.R
 import io.github.rwpp.android.dexFolder
 import io.github.rwpp.android.fileChooser
+import io.github.rwpp.android.loadDex
 import io.github.rwpp.android.pickFileActions
 import io.github.rwpp.core.Initialization
 import io.github.rwpp.external.Extension
@@ -77,7 +78,7 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         fileChooser.launch(intent)
     }
 
-    override fun loadJar(jar: File, parent: ClassLoader): ClassLoader {
+    override fun loadJarToSystemClassPath(jar: File): ClassLoader {
         val targetFile = File(dexFolder, "classes-${jar.nameWithoutExtension}.dex")
         val zip = ZipFile(jar)
         val dex = zip.getEntry("classes.dex")
@@ -87,7 +88,7 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         }
         targetFile.writeBytes(inputStream.readBytes())
         targetFile.setReadOnly()
-        return object : PathClassLoader(targetFile.absolutePath, parent) {
+        return object : PathClassLoader(targetFile.absolutePath, Thread.currentThread().contextClassLoader) {
             @Throws(ClassNotFoundException::class)
             override fun loadClass(name: String?, resolve: Boolean): Class<*>? {
                 //check for loaded state
@@ -107,13 +108,8 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
                 }
                 return loadedClass
             }
-        }
+        }.also { loadDex(get(), it) }
     }
-
-    override fun getMultiplatformClassPath(parent: ClassLoader): ClassPath {
-        return DalvikClassClassPath(parent)
-    }
-
 
     //private val exFilePicker = ExFilePicker()
 }

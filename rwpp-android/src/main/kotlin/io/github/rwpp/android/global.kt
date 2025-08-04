@@ -67,13 +67,10 @@ val loadingThread by lazy {
     }, "LoadingContextThread").apply { start() }
 }
 
-private var libClassLoader: PathClassLoader? = null
 
-fun loadDex(context: Context) {
+fun loadDex(context: Context, classLoader: BaseDexClassLoader? = null) {
     val pathClassLoader = context.classLoader as PathClassLoader
-    val dexPath = "${dexFolder.absolutePath}/classes.dex"
-
-    val cl = libClassLoader ?: PathClassLoader(dexPath, pathClassLoader)
+    val cl = classLoader ?: PathClassLoader("${dexFolder.absolutePath}/classes.dex", pathClassLoader)
     val systemPathList = Reflect.reifiedGet<BaseDexClassLoader, Any>(pathClassLoader, "pathList")!!
     val pathList = Reflect.reifiedGet<BaseDexClassLoader, Any>(cl, "pathList")!!
 
@@ -90,6 +87,5 @@ fun loadDex(context: Context) {
         .apply { addAll(dexElements) }
         .forEachIndexed { i, v -> java.lang.reflect.Array.set(elements, i, v) }
 
-    libClassLoader = cl
     Reflect.set(systemPathList, "dexElements", elements)
 }
