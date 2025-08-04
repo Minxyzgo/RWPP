@@ -33,12 +33,17 @@ namespace RSetup
             var steamFeature = new Feature("Steam", "RWPP对Steam的支持", false, true);
             
             appFeature.Add(steamFeature);
-            
+
+            var appFiles = new Files($@"{appDir}\app\*");
+            appFiles.Filter = (str) =>
+            {
+                return !str.Contains("skiko-awt-runtime-macos") && !str.Contains("skiko-awt-runtime-linux");
+            };
             var entities = new WixEntity[]
             {
                 new WixSharp.File(appFeature, $@"{appDir}\RWPP.exe"),
                 new WixSharp.File(appFeature, $@"{appDir}\RWPP.ico"),
-                new Dir(appFeature, "app", new Files($@"{appDir}\app\*")),
+                new Dir(appFeature, "app", appFiles),
                 new Dir(jvmFeature, "runtime", new Files($@"{appDir}\runtime\*")),
             };
 
