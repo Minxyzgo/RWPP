@@ -42,6 +42,7 @@ object Logic : Initialization {
         registerListeners()
 
         GlobalEventChannel.filter(PlayerJoinEvent::class).subscribeAlways(priority = EventPriority.MONITOR) { e ->
+            logger.info("New player: ${e.player.name}")
             synchronized(Logic) {
                 val game = appKoin.get<Game>()
                 val room = game.gameRoom
