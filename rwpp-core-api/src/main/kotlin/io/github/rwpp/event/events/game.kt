@@ -29,12 +29,17 @@ class GameLoadedEvent : GameEvent()
 class StartGameEvent : GameEvent()
 
 /**
- * Event that is fired when hosting a game.
+ * Event that is fired when hosting a multiplayer game.
  */
 class HostGameEvent : GameEvent()
 
 /**
- * Event that is fired when joining a game.
+ * Event that is fired when the local player starts hosting a singleplayer game.
+ */
+class HostSinglePlayerGameEvent : GameEvent()
+
+/**
+ * Event that is fired when the local player starts joining a game.
  */
 class JoinGameEvent(val address: String) : GameEvent()
 

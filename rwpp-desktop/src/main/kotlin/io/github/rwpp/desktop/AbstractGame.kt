@@ -19,6 +19,8 @@ import io.github.rwpp.game.map.MissionType
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.logger
 import io.github.rwpp.core.LoadingContext
+import io.github.rwpp.event.events.HostSinglePlayerGameEvent
+import io.github.rwpp.event.events.PlayerJoinEvent
 import kotlinx.coroutines.channels.Channel
 import java.io.IOException
 
@@ -79,6 +81,7 @@ abstract class AbstractGame : Game {
             }
 
             RefreshUIEvent().broadcastIn(delay = 200L)
+            HostSinglePlayerGameEvent().broadcastIn()
         }
     }
 
@@ -98,6 +101,7 @@ abstract class AbstractGame : Game {
             initMap(true)
             MapChangedEvent(gameRoom.selectedMap.displayName()).broadcastIn()
             HostGameEvent().broadcastIn()
+            PlayerJoinEvent(gameRoom.localPlayer).broadcastIn()
         }
     }
 
@@ -129,6 +133,7 @@ abstract class AbstractGame : Game {
             try {
                 l.B().bX.b("staring new")
                 l.B().bX.a(threadConnector!!.g)
+                PlayerJoinEvent(gameRoom.localPlayer).broadcastIn()
             } catch(e: IOException) {
                 logger.error(e.stackTraceToString())
                 result = Result.failure(IOException("Connection failed"))

@@ -18,7 +18,9 @@ import io.github.rwpp.appKoin
 import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.HostGameEvent
+import io.github.rwpp.event.events.HostSinglePlayerGameEvent
 import io.github.rwpp.event.events.MapChangedEvent
+import io.github.rwpp.event.events.PlayerJoinEvent
 import io.github.rwpp.event.events.RefreshUIEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
@@ -83,6 +85,7 @@ class GameImpl : Game, CoroutineScope {
             delay(100)
             RefreshUIEvent().broadcastIn()
             HostGameEvent().broadcastIn()
+            PlayerJoinEvent(gameRoom.localPlayer).broadcastIn()
         }
     }
 
@@ -96,6 +99,7 @@ class GameImpl : Game, CoroutineScope {
         isSinglePlayerGame = true
         initMap(true)
         RefreshUIEvent().broadcastIn(delay = 200L)
+        HostSinglePlayerGameEvent().broadcastIn()
     }
 
     override fun setUserName(name: String) {
@@ -122,6 +126,7 @@ class GameImpl : Game, CoroutineScope {
             result.isSuccess && !isCancellingJob.get() -> {
 //                val t = GameEngine.t()
 //                t.bu = 0
+                PlayerJoinEvent(gameRoom.localPlayer).broadcastIn()
                 Result.success("")
             }
             ae.u() -> {
