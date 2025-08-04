@@ -23,7 +23,12 @@ class XMLMap(val map: GameMap) {
     val height: Float
     val tileWidth: Float
     val tileHeight: Float
-    var hasMapInfo: Boolean = false
+
+    /**
+     * @see addMapInfo
+     */
+    var mapInfoObject: MapObject? = null
+        private set
     val objects: List<MapObject>
         get() = _objects
     val document: Document = factory.newDocumentBuilder().parse(map.openInputStream())
@@ -52,11 +57,11 @@ class XMLMap(val map: GameMap) {
             val height = obj.getAttribute("height").toFloat()
             val type = obj.getAttribute("type")
             val properties = obj.getElementsByTagName("properties")
-
-            if (obj.getAttribute("name") == "map_info")
-                hasMapInfo = true
-
-            _objects.add(MapObject(obj))
+            val mapObject = MapObject(obj)
+            if (obj.getAttribute("name") == "map_info") {
+                mapInfoObject = mapObject
+            }
+            _objects.add(mapObject)
         }
     }
 
@@ -114,7 +119,7 @@ class XMLMap(val map: GameMap) {
     }
 
     fun addMapInfo(type: String) {
-        if (!hasMapInfo) {
+        if (mapInfoObject == null) {
             val element = document.createElement("object")
             element.setAttribute("name", "map_info")
             element.setAttribute("x", 0.toString())
@@ -129,7 +134,7 @@ class XMLMap(val map: GameMap) {
             element.appendChild(properties)
             _objects.add(MapObject(element))
             objectGroup.appendChild(element)
-            hasMapInfo = true
+            mapInfoObject = MapObject(element)
         }
     }
 
@@ -180,6 +185,9 @@ class XMLMap(val map: GameMap) {
         var type: String
             get() = element.getAttribute("type")
             set(value) { element.setAttribute("type", value) }
+        var name: String
+            get() = element.getAttribute("name")
+            set(value) { element.setAttribute("name", value) }
         val properties: NodeList
             get() = element.getElementsByTagName("properties").item(0).childNodes
 
