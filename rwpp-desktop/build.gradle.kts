@@ -84,7 +84,7 @@ compose.desktop {
                 "-Dfile.encoding=UTF-8",
                 "-Djava.library.path=\$ROOTDIR",
                 "--add-opens=java.base/java.net=ALL-UNNAMED",
-                "'-cp \$ROOTDIR/generated_lib/*;\$ROOTDIR/app/*;\$ROOTDIR/libs/*'"
+                "'-cp \$ROOTDIR/generated_lib/*;\$ROOTDIR/extension/*;\$ROOTDIR/app/*;\$ROOTDIR/libs/*'"
             )
 
             windows {

@@ -36,7 +36,7 @@ if %count% GTR 1 (
 )
 
 if %count% EQU 1 (
-	java -D"java.net.preferIPv4Stack=true" -Xmx2000M -D"file.encoding=UTF-8" -D"prism.allowhidpi=false" -D"java.library.path=." -cp "!lastName!;generated_lib/*;libs/*" io.github.rwpp.desktop.MainKt
+	java -D"java.net.preferIPv4Stack=true" -Xmx2000M -D"file.encoding=UTF-8" -D"prism.allowhidpi=false" -D"java.library.path=." -cp "!lastName!;generated_lib/*;extension/*;libs/*" io.github.rwpp.desktop.MainKt
 )
 
 pause
