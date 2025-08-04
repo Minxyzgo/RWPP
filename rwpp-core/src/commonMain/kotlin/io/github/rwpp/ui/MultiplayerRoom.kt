@@ -344,6 +344,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                     }
                                 }
 
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth().then(
                                         if (LocalWindowManager.current == WindowManager.Large)
@@ -519,61 +520,79 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                         val player = players.getOrNull(index)
 
                                         if (player != null) {
-                                            Row(
-                                                modifier = Modifier
-                                                    .then(modifier)
-                                                    .height(IntrinsicSize.Max)
-                                                    .padding(5.dp)
-                                                    .border(
-                                                        BorderStroke(
-                                                            2.dp,
-                                                            MaterialTheme.colorScheme.primary
-                                                        ), CircleShape
-                                                    )
-                                                    .fillMaxWidth()
-                                                    .clickable(room.isHost || room.isHostServer || room.localPlayer == player) {
-                                                        selectedPlayer = player
-                                                        playerOverrideVisible = true
+                                            Box(modifier) {
+                                                ContextMenuArea(
+                                                    items = {
+                                                        if ((room.isHost || room.isHostServer) && room.localPlayer != player) {
+                                                            listOf(
+                                                                ContextMenuItem(
+                                                                    readI18n("multiplayer.room.kick")
+                                                                ) {
+                                                                    room.kickPlayer(player)
+                                                                }
+                                                            )
+                                                        } else {
+                                                            emptyList()
+                                                        }
                                                     }
-                                            ) {
-                                                TableCell(
-                                                    player.name + if (player.startingUnit != -1) " - ${options.first { it.first == player.startingUnit }.second}" else "",
-                                                    color = if (player.color != -1) Player.getTeamColor(
-                                                        player.color
-                                                    ) else MaterialTheme.colorScheme.onSurface,
-                                                    weight = playerNameWeight, drawStroke = false,
-                                                    modifier = Modifier.fillMaxHeight()
                                                 ) {
-                                                if (!player.data.ready) {
-                                                    CircularProgressIndicator(
-                                                        color = MaterialTheme.colorScheme.primary,
-                                                        modifier = Modifier.size(15.dp).padding(0.dp, 2.dp, 0.dp, 2.dp)
-                                                    )
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .height(IntrinsicSize.Max)
+                                                            .padding(5.dp)
+                                                            .border(
+                                                                BorderStroke(
+                                                                    2.dp,
+                                                                    MaterialTheme.colorScheme.primary
+                                                                ), CircleShape
+                                                            )
+                                                            .fillMaxWidth()
+                                                            .clickable(room.isHost || room.isHostServer || room.localPlayer == player) {
+                                                                selectedPlayer = player
+                                                                playerOverrideVisible = true
+                                                            }
+                                                    ) {
+                                                        TableCell(
+                                                            player.name + if (player.startingUnit != -1) " - ${options.first { it.first == player.startingUnit }.second}" else "",
+                                                            color = if (player.color != -1) Player.getTeamColor(
+                                                                player.color
+                                                            ) else MaterialTheme.colorScheme.onSurface,
+                                                            weight = playerNameWeight, drawStroke = false,
+                                                            modifier = Modifier.fillMaxHeight()
+                                                        ) {
+                                                            if (!player.data.ready) {
+                                                                CircularProgressIndicator(
+                                                                    color = MaterialTheme.colorScheme.primary,
+                                                                    modifier = Modifier.size(15.dp)
+                                                                        .padding(0.dp, 2.dp, 0.dp, 2.dp)
+                                                                )
+                                                            }
+                                                        }
+                                                        TableCell(
+                                                            if (player.isSpectator)
+                                                                "S"
+                                                            else (player.spawnPoint + 1).toString(),
+                                                            playerSpawnWeight,
+                                                            color = if (player.isSpectator)
+                                                                Color.Black
+                                                            else Player.getTeamColor(player.spawnPoint),
+                                                            modifier = Modifier.fillMaxHeight()
+                                                        )
+                                                        TableCell(
+                                                            player.teamAlias(),
+                                                            playerTeamWeight,
+                                                            color = Player.getTeamColor(player.team),
+                                                            modifier = Modifier.fillMaxHeight()
+                                                        )
+                                                        val ping = remember(update) { player.ping }
+                                                        TableCell(
+                                                            ping,
+                                                            playerPingWeight,
+                                                            drawStroke = false,
+                                                            modifier = Modifier.fillMaxHeight()
+                                                        )
+                                                    }
                                                 }
-                                                }
-                                                TableCell(
-                                                    if (player.isSpectator)
-                                                        "S"
-                                                    else (player.spawnPoint + 1).toString(),
-                                                    playerSpawnWeight,
-                                                    color = if (player.isSpectator)
-                                                        Color.Black
-                                                    else Player.getTeamColor(player.spawnPoint),
-                                                    modifier = Modifier.fillMaxHeight()
-                                                )
-                                                TableCell(
-                                                    player.teamAlias(),
-                                                    playerTeamWeight,
-                                                    color = Player.getTeamColor(player.team),
-                                                    modifier = Modifier.fillMaxHeight()
-                                                )
-                                                val ping = remember(update) { player.ping }
-                                                TableCell(
-                                                    ping,
-                                                    playerPingWeight,
-                                                    drawStroke = false,
-                                                    modifier = Modifier.fillMaxHeight()
-                                                )
                                             }
                                         }
                                     }
