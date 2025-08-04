@@ -244,7 +244,8 @@ interface Net : KoinComponent, Initialization {
 
                         override fun onResponse(call: Call, response: Response) {
                             if (response.isSuccessful && channel.isEmpty) {
-                                channel.trySend(response)
+                                val result = channel.trySend(response)
+                                if (result.isFailure) response.close()
                             } else response.close()
                         }
                     })
