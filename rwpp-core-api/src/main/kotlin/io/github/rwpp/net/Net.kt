@@ -10,17 +10,15 @@ package io.github.rwpp.net
 import com.eclipsesource.json.Json
 import io.github.rwpp.config.CoreData
 import io.github.rwpp.core.Initialization
-import io.github.rwpp.game.Game
 import io.github.rwpp.io.GameInputStream
 import io.github.rwpp.logger
-import io.github.rwpp.net.packets.ServerPacket
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import okhttp3.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import java.io.*
-import java.util.Locale
+import java.util.*
 import kotlin.reflect.full.createInstance
 
 interface Net : KoinComponent, Initialization {

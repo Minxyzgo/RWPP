@@ -7,11 +7,11 @@
 
 package io.github.rwpp.net.packets
 
-import io.github.rwpp.net.Packet
-import io.github.rwpp.net.ServerStatus
 import io.github.rwpp.io.GameInputStream
 import io.github.rwpp.io.GameOutputStream
 import io.github.rwpp.net.InternalPacketType
+import io.github.rwpp.net.Packet
+import io.github.rwpp.net.ServerStatus
 
 sealed class ServerPacket : Packet() {
     class ServerInfoGetPacket : ServerPacket() {

@@ -10,17 +10,20 @@
 package io.github.rwpp
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,17 +33,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
@@ -56,14 +53,12 @@ import io.github.rwpp.event.broadcast
 import io.github.rwpp.event.events.KeyboardEvent
 import io.github.rwpp.event.events.ReloadModEvent
 import io.github.rwpp.event.events.ReloadModFinishedEvent
-import io.github.rwpp.event.events.ReturnMainMenuEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.Game
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.LatestVersionProfile
 import io.github.rwpp.net.Net
-import io.github.rwpp.rwpp_core.generated.resources.*
 import io.github.rwpp.scripts.Render
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.UI.selectedColorSchemeName
@@ -78,11 +73,9 @@ import io.github.rwpp.ui.UI.showRoomView
 import io.github.rwpp.ui.UI.showSettingsView
 import io.github.rwpp.widget.*
 import io.github.rwpp.widget.v2.LineSpinFadeLoaderIndicator
-import io.github.rwpp.widget.v2.RWIconButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 var LocalWindowManager = staticCompositionLocalOf { WindowManager.Large }

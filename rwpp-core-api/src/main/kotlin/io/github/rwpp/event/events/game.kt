@@ -9,7 +9,6 @@ package io.github.rwpp.event.events
 
 import io.github.rwpp.event.AbstractEvent
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.map.GameMap
 
 sealed class GameEvent : AbstractEvent()
 

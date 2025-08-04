@@ -9,7 +9,6 @@ package io.github.rwpp.event
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import io.github.rwpp.logger
 
 /**
  * Make event listening follow the compose lifecycle.

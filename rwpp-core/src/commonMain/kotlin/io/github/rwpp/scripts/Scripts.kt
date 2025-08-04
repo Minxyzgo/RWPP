@@ -7,7 +7,6 @@
 
 package io.github.rwpp.scripts
 
-import androidx.compose.foundation.Image
 import io.github.rwpp.*
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.core.Initialization
@@ -28,13 +27,11 @@ import io.github.rwpp.ui.Widget
 import io.github.rwpp.utils.parseColorToArgb
 import party.iroiro.luajava.ClassPathLoader.BufferOutputStream
 import party.iroiro.luajava.lua54.Lua54
-import party.iroiro.luajava.value.LuaValue
 import party.iroiro.luajava.value.RefLuaValue
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.File
 import java.nio.ByteBuffer
-import java.util.Objects
 import kotlin.concurrent.timer
 import kotlin.math.roundToInt
 

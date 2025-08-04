@@ -7,6 +7,9 @@
 
 package io.github.rwpp.inject
 
+import io.github.rwpp.inject.InjectMode.Override
+
+
 /**
  * 注入模式，通常默认为[Override]
  */

@@ -16,7 +16,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import net.peanuuutz.tomlkt.Toml
 import org.koin.core.component.get
-import java.util.Locale
+import java.util.*
 
 abstract class BaseGameI18nResolverImpl : GameI18nResolver {
     override fun init() {

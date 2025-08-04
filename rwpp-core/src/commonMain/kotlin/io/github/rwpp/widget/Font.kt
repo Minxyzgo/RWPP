@@ -12,7 +12,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import io.github.rwpp.rwpp_core.generated.resources.*
-import io.github.rwpp.rwpp_core.generated.resources.Res
 import org.jetbrains.compose.resources.Font
 
 @Composable

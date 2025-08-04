@@ -9,12 +9,10 @@ package io.github.rwpp.inject.runtime
 
 import io.github.rwpp.appKoin
 import io.github.rwpp.external.ExternalHandler
-import io.github.rwpp.inject.BuildLogger
-import io.github.rwpp.inject.GameLibraries
-import io.github.rwpp.inject.InjectInfo
-import io.github.rwpp.inject.InjectMode
-import io.github.rwpp.inject.RedirectMethodInfo
-import io.github.rwpp.inject.RootInfo
+import io.github.rwpp.inject.*
+import io.github.rwpp.inject.runtime.Builder.configFile
+import io.github.rwpp.inject.runtime.Builder.libDir
+import io.github.rwpp.inject.runtime.Builder.outputDir
 import javassist.ClassMap
 import javassist.CtClass
 import javassist.LoaderClassPath

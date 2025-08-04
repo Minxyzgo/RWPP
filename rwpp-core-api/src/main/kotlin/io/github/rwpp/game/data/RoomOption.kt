@@ -7,8 +7,8 @@
 
 package io.github.rwpp.game.data
 
-import io.github.rwpp.protocolVersion as version
 import kotlinx.serialization.Serializable
+import io.github.rwpp.protocolVersion as version
 
 @Serializable
 data class RoomOption(

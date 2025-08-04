@@ -7,10 +7,6 @@
 
 package io.github.rwpp.core
 
-import java.io.File
-import java.net.URL
-import java.net.URLClassLoader
-
 /**
  * Adapted from https://github.com/Anuken/Mindustry/tree/master/core/src/mindustry/mod/ModClassLoader.java
  */

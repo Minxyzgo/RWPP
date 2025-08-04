@@ -8,9 +8,9 @@
 
 package io.github.rwpp.event
 
+import io.github.rwpp.event.EventPriority.*
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.Job
-import io.github.rwpp.event.EventPriority.*
 import kotlin.coroutines.CoroutineContext
 
 /**
