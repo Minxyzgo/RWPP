@@ -36,7 +36,7 @@ dependencies {
     ))
 
     runtimeOnly("party.iroiro.luajava:lua54-platform:4.0.2:natives-desktop")
-    runtimeOnly("org.javassist:javassist:3.30.2-GA")
+    implementation("org.javassist:javassist:3.30.2-GA")
     val koinAnnotationsVersion = findProperty("koin.annotations.version") as String
     ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
     ksp(project(":rwpp-ksp"))

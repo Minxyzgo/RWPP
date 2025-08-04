@@ -21,6 +21,8 @@ import io.github.rwpp.impl.BaseExternalHandlerImpl
 import io.github.rwpp.io.unzipTo
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
+import javassist.ClassPath
+import javassist.android.DalvikClassClassPath
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import java.io.File
@@ -106,6 +108,10 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
                 return loadedClass
             }
         }
+    }
+
+    override fun getMultiplatformClassPath(parent: ClassLoader): ClassPath {
+        return DalvikClassClassPath(parent)
     }
 
 

@@ -9,6 +9,7 @@ package io.github.rwpp.external
 
 import io.github.rwpp.core.Initialization
 import io.github.rwpp.core.LibClassLoader
+import javassist.ClassPath
 import org.koin.core.component.KoinComponent
 import java.io.File
 
@@ -33,6 +34,8 @@ interface ExternalHandler : KoinComponent, Initialization {
     fun loadExtensionClass(extension: Extension): ClassLoader?
 
     fun loadJar(jar: File, parent: ClassLoader): ClassLoader
+
+    fun getMultiplatformClassPath(parent: ClassLoader): ClassPath
 
     fun newExtension(
         isEnabled: Boolean,

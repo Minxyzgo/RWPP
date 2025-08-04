@@ -229,8 +229,10 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                     logger.error("Load script failed: ${it.message}")
                 }
 
-                val main = loadExtensionClass(extension)?.loadClass(extension.config.mainClass)
+                val classLoader = loadExtensionClass(extension)
+                val main = classLoader?.loadClass(extension.config.mainClass)
                 if (main != null) {
+                    extension.classLoader = classLoader
                     extension.launcher = main.getDeclaredConstructor().newInstance() as ExtensionLauncher
                 }
             }

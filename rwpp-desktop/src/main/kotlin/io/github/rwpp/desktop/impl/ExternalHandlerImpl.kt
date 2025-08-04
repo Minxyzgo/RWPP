@@ -7,23 +7,18 @@
 
 package io.github.rwpp.desktop.impl
 
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.toPainter
 import io.github.rwpp.core.Initialization
-import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.external.Extension
-import io.github.rwpp.external.ExtensionConfig
-import io.github.rwpp.external.ExtensionLauncher
+import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.impl.BaseExternalHandlerImpl
+import io.github.rwpp.io.unzipTo
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
-import io.github.rwpp.io.unzipTo
+import javassist.LoaderClassPath
 import org.koin.core.annotation.Single
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
-import java.util.zip.ZipFile
-import javax.imageio.ImageIO
 import javax.swing.JFileChooser
 
 @Single(binds = [ExternalHandler::class, Initialization::class])
@@ -92,5 +87,9 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
                 return loadedClass
             }
         }
+    }
+
+    override fun getMultiplatformClassPath(parent: ClassLoader): javassist.ClassPath {
+        return LoaderClassPath(parent)
     }
 }

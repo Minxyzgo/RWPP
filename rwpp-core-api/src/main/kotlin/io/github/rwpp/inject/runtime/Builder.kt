@@ -48,10 +48,10 @@ object Builder {
         extensions?.forEach {
             if (it.config.hasInjectInfo && it.isEnabled) {
                 checkAndMergeConfig(it.injectInfo!!)
-                externalHandler.loadExtensionClass(it)
+                val loader = externalHandler.loadExtensionClass(it)
+                GameLibraries.defClassPool.appendClassPath(externalHandler.getMultiplatformClassPath(loader!!))
             }
         }
-        GameLibraries.defClassPool.appendClassPath(LoaderClassPath(externalHandler.mainLoader))
         applyConfig()
         extensions?.forEach {
             if (it.config.hasInjectInfo && it.isEnabled) {
