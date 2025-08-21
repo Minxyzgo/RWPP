@@ -18,13 +18,20 @@ sealed class InternalTeamMode(name: String) : TeamMode(name) {
 object InternalTeamMode2t : InternalTeamMode("2t") {
     override val displayName: String = "2 Teams (eg 5v5)"
 
+    override fun autoTeamAssign(gameRoom: GameRoom, targetSpawnPoint: Int, player: Player): Int {
+        return targetSpawnPoint % 2
+    }
+
     override fun onPlayerJoin(gameRoom: GameRoom, player: Player) {
-        // normal , do nothing
     }
 }
 
 object InternalTeamMode3t : InternalTeamMode("3t") {
     override val displayName: String = "3 Teams (eg 1v1v1)"
+
+    override fun autoTeamAssign(gameRoom: GameRoom, targetSpawnPoint: Int, player: Player): Int {
+        return targetSpawnPoint % 3
+    }
 
     override fun onPlayerJoin(gameRoom: GameRoom, player: Player) {
         player.applyConfigChange(
@@ -36,6 +43,10 @@ object InternalTeamMode3t : InternalTeamMode("3t") {
 object InternalTeamModeFFA : InternalTeamMode("FFA") {
     override val displayName: String = "No teams (FFA)"
 
+    override fun autoTeamAssign(gameRoom: GameRoom, targetSpawnPoint: Int, player: Player): Int {
+        return targetSpawnPoint
+    }
+
     override fun onPlayerJoin(gameRoom: GameRoom, player: Player) {
         player.applyConfigChange(
             team = player.spawnPoint + 1
@@ -45,6 +56,10 @@ object InternalTeamModeFFA : InternalTeamMode("FFA") {
 
 object InternalTeamModeSpectators : InternalTeamMode("spectators") {
     override val displayName: String = "All spectators"
+
+    override fun autoTeamAssign(gameRoom: GameRoom, targetSpawnPoint: Int, player: Player): Int {
+        return -3
+    }
 
     override fun onPlayerJoin(gameRoom: GameRoom, player: Player) {
         // It doesn't seem necessary
@@ -87,9 +102,14 @@ object RandomTeamMode : TeamMode("random-team") {
 
 object AllVsAI : TeamMode("all-vs-ai") {
     override val displayName: String = "All vs AI"
+
+    override fun autoTeamAssign(gameRoom: GameRoom, targetSpawnPoint: Int, player: Player): Int {
+        return if (player.isAI) 2 else 1
+    }
+
     override fun onPlayerJoin(gameRoom: GameRoom, player: Player) {
         player.applyConfigChange(
-            team = if (player.isAI) 2 else 1,
+            team = if (player.isAI) 1 else 0,
         )
     }
 
@@ -106,6 +126,10 @@ object AllVsAI : TeamMode("all-vs-ai") {
 
 object AllVs2 : TeamMode("all-vs-2") {
     override val displayName: String = "All vs 2 (survival)"
+    override fun autoTeamAssign(gameRoom: GameRoom, targetSpawnPoint: Int, player: Player): Int {
+        return if (player.spawnPoint == 1) 1 else 0
+    }
+
     override fun onPlayerJoin(gameRoom: GameRoom, player: Player) {
         player.applyConfigChange(
             team = if (player.spawnPoint == 1) 2 else 1,

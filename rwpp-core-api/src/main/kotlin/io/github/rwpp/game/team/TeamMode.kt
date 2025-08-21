@@ -19,6 +19,13 @@ abstract class TeamMode(val name: String) {
 
     abstract fun onInit(gameRoom: GameRoom)
 
+    /**
+     * @return the team number of the player will be assigned to.
+     */
+    open fun autoTeamAssign(gameRoom: GameRoom, targetSpawnPoint: Int, player: Player): Int {
+        return player.team
+    }
+
     companion object {
         val modes = mutableListOf<TeamMode>(
             InternalTeamMode2t,
