@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
+import coil3.size.Precision
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
@@ -124,6 +125,7 @@ fun App(
                 add(ImageableFetcherFactory())
                 add(ImageableKeyer())
             }
+            .precision(Precision.EXACT)
             .build()
     }
 
@@ -632,4 +634,3 @@ fun App(
         }
     }
 }
-
