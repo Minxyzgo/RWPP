@@ -63,9 +63,7 @@ import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.platform.readPainterByBytes
 import io.github.rwpp.rwpp_core.generated.resources.*
 import io.github.rwpp.widget.*
-import io.github.rwpp.widget.v2.ExpandedCard
-import io.github.rwpp.widget.v2.LazyColumnScrollbar
-import io.github.rwpp.widget.v2.RWIconButton
+import io.github.rwpp.widget.v2.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -75,7 +73,7 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import kotlin.math.roundToInt
 
-@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter", "RememberReturnType")
 @Composable
 fun MultiplayerView(
     onExit: () -> Unit,
@@ -798,16 +796,17 @@ fun MultiplayerView(
         ) { dismiss ->
             BorderCard(
                 modifier = Modifier
-                    .fillMaxSize(LargeProportion())
+                    .fillMaxSize(GeneralProportion())
                     .padding(10.dp)
                     .autoClearFocus(),
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainer.copy(.6f)
             ) {
                 Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Filter", style = MaterialTheme.typography.headlineMedium)
+                        Text(readI18n("common.filter"), style = MaterialTheme.typography.headlineMedium)
                     }
 
                     LargeDividingLine { 0.dp }
@@ -818,111 +817,85 @@ fun MultiplayerView(
 
                     BlacklistTargetDialog(showBlacklistDialog) { showBlacklistDialog = false }
 
-                    OutlinedTextField(
-                        label = {
-                            Text(
-                                "GameMap Name Filter",
-                                style = MaterialTheme.typography.headlineMedium
-                            )
-                        },
-                        textStyle = MaterialTheme.typography.headlineMedium,
-                        colors = RWOutlinedTextColors,
-                        value = mapNameFilter,
-                        enabled = true,
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().padding(5.dp),
-                        onValueChange =
-                        {
-                            mapNameFilter = it
-                        },
-                    )
-
-                    OutlinedTextField(
-                        label = {
-                            Text(
-                                "Creator Name Filter",
-                                style = MaterialTheme.typography.headlineMedium
-                            )
-                        },
-                        textStyle = MaterialTheme.typography.headlineMedium,
-                        colors = RWOutlinedTextColors,
-                        value = creatorNameFilter,
-                        enabled = true,
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().padding(5.dp, 0.dp, 5.dp, 5.dp),
-                        onValueChange =
-                        {
-                            creatorNameFilter = it
-                        },
-                    )
-
-                    var range by remember(playerLimitRange) { mutableStateOf(playerLimitRange) }
-                    Column(modifier = Modifier.wrapContentSize()) {
-                        Text(
-                            "${readI18n("multiplayer.playerLimit")} : $range",
-                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 5.dp, 0.dp, 5.dp)
-                        )
-                        RangeSlider(
-                            valueRange = 0f..100f,
-                            modifier = Modifier.fillMaxWidth().padding(0.dp, 0.dp, 0.dp, 5.dp),
-                            steps = 101,
-                            value = range.first.toFloat()..range.last.toFloat(),
-                            colors = RWSliderColors,
-                            onValueChange = { range = it.start.roundToInt()..it.endInclusive.roundToInt() },
-                            onValueChangeFinished = { playerLimitRange = range }
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min)
-                            .padding(5.dp)
+                    SettingsTextField(
+                        label = readI18n("multiplayer.filter.gameMapNameFilter"),
+                        mapNameFilter,
                     ) {
-                        Text(
-                            readI18n("multiplayer.enableMods"), style = MaterialTheme.typography.headlineMedium,
-                            modifier = Modifier
-                                .padding(5.dp)
-                                .weight(1f)
-                        )
-                        Switch(
-                            checked = enableModFilter,
-                            onCheckedChange = { enableModFilter = it },
-                            colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary, checkedThumbColor = MaterialTheme.colorScheme.onSurface)
-                        )
+                        mapNameFilter = it
                     }
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min)
-                            .padding(5.dp)
+                    SettingsTextField(
+                        label = readI18n("multiplayer.filter.creatorNameFilter"),
+                        creatorNameFilter,
                     ) {
-                        Text(
-                            readI18n("multiplayer.battleroom"), style = MaterialTheme.typography.headlineMedium,
-                            modifier = Modifier
-                                .padding(5.dp)
-                                .weight(1f)
-                        )
-                        Switch(
-                            checked = battleroom,
-                            onCheckedChange = { battleroom = it },
-                            colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary, checkedThumbColor = MaterialTheme.colorScheme.onSurface)
-                        )
+                        creatorNameFilter = it
                     }
 
-                    RWTextButton("Blacklist",
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            var range by remember(playerLimitRange) { mutableStateOf(playerLimitRange) }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    readI18n("multiplayer.filter.playerLimitRange"),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            RangeSlider(
+                                valueRange = 0f..100f,
+                                modifier = Modifier.width(250.dp).padding(5.dp),
+                             //   steps = 101,
+                                value = range.first.toFloat()..range.last.toFloat(),
+                                colors = RWSliderColors,
+                                onValueChange = { range = it.start.roundToInt()..it.endInclusive.roundToInt() },
+                                onValueChangeFinished = { playerLimitRange = range }
+                            )
+
+                            Text(
+                                "${range.first} ~ ${range.last}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.width(50.dp).padding(5.dp)
+                            )
+                        }
+
+                        HorizontalDivider()
+                    }
+
+                    SettingsSwitchComp(
+                        "",
+                        readI18n("multiplayer.enableMods"),
+                        enableModFilter
+                    ) {
+                        enableModFilter = it
+                    }
+
+                    SettingsSwitchComp(
+                        "",
+                        readI18n("multiplayer.battleroom"),
+                        battleroom
+                    ) {
+                        battleroom = it
+                    }
+
+                    RWTextButton(
+                        readI18n("multiplayer.filter.blacklist"),
                         modifier = Modifier.padding(5.dp)
-                            .fillMaxWidth(0.5f)
-                            .align(Alignment.CenterHorizontally)
                     ) {
                         showBlacklistDialog = true
                     }
 
-                    RWTextButton(readI18n("multiplayer.reset"),
+                    RWTextButton(
+                        readI18n("multiplayer.filter.reset"),
                         modifier = Modifier.padding(5.dp)
-                            .fillMaxWidth(0.5f)
-                            .align(Alignment.CenterHorizontally)
                     ) {
                         resetFilter()
                     }
@@ -941,9 +914,13 @@ fun MultiplayerView(
                 try {
                     val roomList = selectedServerConfig
                     if (isShowingRoomList && roomList != null) {
-                        currentViewList = getRoomListFromSourceUrl(
-                            roomList.ip.split(";")
-                        )
+                        if (roomList.customRoomListProvider != null) {
+                            currentViewList = getRoomListFromSourceUrl(
+                                roomList.ip.split(";")
+                            )
+                        } else {
+                            currentViewList = roomList.customRoomListProvider!!()
+                        }
                     } else {
                         for(s in allServerData) {
                             if (s.config.type == ServerType.Server) {

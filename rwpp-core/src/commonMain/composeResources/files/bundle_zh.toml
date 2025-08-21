@@ -27,6 +27,13 @@ admitting = """
 您是否同意？(该对话框第一次显示后将不再显示，稍后可在 设置 - Show Welcome Message中更改)
 """
 
+[multiplayer.filter]
+gameMapNameFilter = "地图名称"
+creatorNameFilter = "创建者"
+playerLimitRange = "玩家限制范围"
+blacklist = "黑名单"
+reset = "重置"
+
 [multiplayer.room]
 selectMap = "选择地图"
 option = "选项"
@@ -94,6 +101,7 @@ team = "队伍"
 fog = "迷雾"
 mod = "模组"
 map = "地图"
+filter = "过滤器"
 
 [settings]
 setExternalFolder = "设置外部文件权限"
@@ -125,6 +133,9 @@ boldText = "列表粗体文字"
 showExtraButton = "显示额外按钮"
 renderingBackend = "渲染后端 (需要重启)"
 displayUnitGroupXOffset = "编队X轴偏移"
+pathfindingOptimization = "寻路优化"
+mouseMoveView = "鼠标移动视角 (全屏化时)"
+
 
 [extension]
 extension = "扩展"
@@ -135,6 +146,8 @@ denpendencyInfo = "该扩展依赖于以下扩展: {0}"
 minGameVersion = "该扩展要求游戏版本至少为 {0}"
 require = "扩展: {0} 无法被启用，请检查所需的依赖和最小游戏版本是否满足"
 supportedPlatform = "支持的平台: {0}"
+author = "作者: {0}"
+version = "版本: {0}"
 
 [ingame]
 sendMessage = "发送消息"
@@ -146,6 +159,7 @@ importExtension = "成功导入扩展: {0}。请点击`刷新`按钮更新扩展
 importMap = "成功导入地图: {0}。"
 importSave = "成功导入存档: {0}。"
 importReplay = "成功导入回放: {0}。"
+unknownFileTypeError = "未知文件类型: {0}"
 
 [map.type]
 SkirmishMap = "遭遇战地图"
