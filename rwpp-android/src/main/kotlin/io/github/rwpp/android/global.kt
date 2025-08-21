@@ -14,21 +14,17 @@ import android.os.Looper
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import dalvik.system.BaseDexClassLoader
 import dalvik.system.PathClassLoader
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.android.impl.PlayerInternal
-import io.github.rwpp.game.Player
 import io.github.rwpp.utils.Reflect
 import io.github.rwpp.widget.loadingMessage
 import kotlinx.coroutines.channels.Channel
 import org.koin.core.KoinApplication
 import java.io.File
 import java.util.concurrent.CopyOnWriteArraySet
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.getValue
 
 var _gameSpeed = 1f
 
@@ -68,24 +64,30 @@ val loadingThread by lazy {
 }
 
 
-fun loadDex(context: Context, classLoader: BaseDexClassLoader? = null) {
+fun loadDex(context: Context, dexPath: String) {
     val pathClassLoader = context.classLoader as PathClassLoader
-    val cl = classLoader ?: PathClassLoader("${dexFolder.absolutePath}/classes.dex", pathClassLoader)
     val systemPathList = Reflect.reifiedGet<BaseDexClassLoader, Any>(pathClassLoader, "pathList")!!
-    val pathList = Reflect.reifiedGet<BaseDexClassLoader, Any>(cl, "pathList")!!
-
-    val systemDexElements = Reflect.get<Array<*>>(systemPathList, "dexElements")!!
-    val dexElements = Reflect.get<Array<*>>(pathList, "dexElements")!!
-
-    val elements = java.lang.reflect.Array
-        .newInstance(
-            dexElements.javaClass.componentType,
-            systemDexElements.size + dexElements.size
-        )
-
-    systemDexElements.toMutableList()
-        .apply { addAll(dexElements) }
-        .forEachIndexed { i, v -> java.lang.reflect.Array.set(elements, i, v) }
-
-    Reflect.set(systemPathList, "dexElements", elements)
+    systemPathList::class.java.getDeclaredMethod("addDexPath", String::class.java, File::class.java)
+        .apply { isAccessible = true }
+        .invoke(systemPathList, dexPath, null)
+//    会报错 Attempt to register dex file with multiple class loaders， 尝试使用addDexPath方式加载dex文件
+//    val cl = classLoader ?: PathClassLoader("${dexFolder.absolutePath}/classes.dex", pathClassLoader)
+//    val systemPathList = Reflect.reifiedGet<BaseDexClassLoader, Any>(pathClassLoader, "pathList")!!
+//    val pathList = Reflect.reifiedGet<BaseDexClassLoader, Any>(cl, "pathList")!!
+//
+//    val systemDexElements = Reflect.get<Array<*>>(systemPathList, "dexElements")!!
+//    val dexElements = Reflect.get<Array<*>>(pathList, "dexElements")!!
+//
+//    val elements = java.lang.reflect.Array
+//        .newInstance(
+//            dexElements.javaClass.componentType,
+//            systemDexElements.size + dexElements.size
+//        )
+//
+//    systemDexElements.toMutableList()
+//        .apply { addAll(dexElements) }
+//        .forEachIndexed { i, v -> java.lang.reflect.Array.set(elements, i, v) }
+//
+//    Reflect.set(systemPathList, "dexElements", elements)
+    //FileOutputStream(File(dexFolder, "classes.dex")).channel.tryLock()
 }
