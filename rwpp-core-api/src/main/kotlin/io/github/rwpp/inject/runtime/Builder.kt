@@ -86,7 +86,7 @@ object Builder {
             file.exists() && resourceConfig != currentConfig
         }
         rootInfo = resourceConfig
-
+        io.github.rwpp.logger.info("hasUnenabledExtensions: $hasUnenabledExtensions, extensionConfigNotEquals: $extensionConfigNotEquals, gameLibNotExists: $gameLibNotExists, resourceConfigNotEquals: $resourceConfigNotEquals")
         return hasUnenabledExtensions || extensionConfigNotEquals || gameLibNotExists || resourceConfigNotEquals
     }
 
@@ -159,7 +159,6 @@ object Builder {
                     throw IllegalArgumentException("Cannot override ${it.signature()} twice")
                 }
             }
-
             root.redirectToInfos.forEach {
                 if (it.from in redirectToInfos) {
                     throw IllegalArgumentException("redirectToInfo from: ${it.from} is already exists")
@@ -175,7 +174,8 @@ object Builder {
         rootInfo = rootInfo!!.copy(
             injectInfos = rootInfo!!.injectInfos + otherRootInfo.injectInfos,
             redirectToInfos = rootInfo!!.redirectToInfos + otherRootInfo.redirectToInfos,
-            redirectMethodInfos = rootInfo!!.redirectMethodInfos + otherRootInfo.redirectMethodInfos
+            redirectMethodInfos = rootInfo!!.redirectMethodInfos + otherRootInfo.redirectMethodInfos,
+            setInterfaceOnInfos = rootInfo!!.setInterfaceOnInfos + otherRootInfo.setInterfaceOnInfos
         )
     }
 
