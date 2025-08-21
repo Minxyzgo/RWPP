@@ -24,14 +24,11 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import dalvik.system.BaseDexClassLoader
-import dalvik.system.PathClassLoader
 import io.github.rwpp.AppContext
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
-import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.GameLoadedEvent
 import io.github.rwpp.generatedLibDir
@@ -39,7 +36,6 @@ import io.github.rwpp.inject.GameLibraries
 import io.github.rwpp.inject.runtime.Builder
 import io.github.rwpp.inject.runtime.Builder.logger
 import io.github.rwpp.ui.InjectConsole
-import io.github.rwpp.ui.defaultBuildLogger
 import io.github.rwpp.utils.Reflect
 import io.github.rwpp.widget.ConstraintWindowManager
 import io.github.rwpp.widget.MenuLoadingView
@@ -60,17 +56,11 @@ class LoadingScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
         appKoin.declare(this, secondaryTypes = listOf(Context::class))
-
-        appKoin.get<ConfigIO>().readAllConfig()
-        Builder.outputDir = generatedLibDir
-        Builder.logger = defaultBuildLogger
 
         val permissionHelper = appKoin.get<PermissionHelper>()
         var hasPermission by mutableStateOf(permissionHelper.hasManageFilePermission())
         val hasPermissionPast = hasPermission
-        onInit(hasPermission)
 
         setContent {
             KoinContext {
@@ -129,6 +119,7 @@ class LoadingScreen : ComponentActivity() {
 
                                                 val libPath = "$generatedLibDir/android-game-lib.jar"
                                                 logger?.logging("compiling dex: $libPath")
+                                                logger?.logging("Saving dex to ${dexFolder.absolutePath}/classes.dex")
                                                 val dex = DexFile()
                                                 dex.addJarFile(libPath)
                                                 dex.writeFile("${dexFolder.absolutePath}/classes.dex")
@@ -148,9 +139,8 @@ class LoadingScreen : ComponentActivity() {
                                     MenuLoadingView(message)
 
                                     LaunchedEffect(Unit) {
-                                        appKoin.get<AppContext>().init()
-
                                         withContext(Dispatchers.IO) {
+                                            appKoin.get<AppContext>().init()
                                             File("/storage/emulated/0/rustedWarfare/maps/")
                                                 .walk()
                                                 .filter { it.name.startsWith("generated_") }
@@ -184,18 +174,6 @@ class LoadingScreen : ComponentActivity() {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    fun onInit(hasPermission: Boolean) {
-        if (!init) {
-            init = true
-            dexFolder = getDir("odex", MODE_PRIVATE)
-            requireReloadingLib = !hasPermission || Builder.prepareReloadingLib() || !File("${dexFolder.absolutePath}/classes.dex").exists()
-
-            if (!requireReloadingLib) {
-                loadDex(this)
             }
         }
     }

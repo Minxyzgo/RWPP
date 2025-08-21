@@ -50,8 +50,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-       // loadDex(this)
-
         //koinApplication.androidContext(this)
         appKoin.declare(this, secondaryTypes = listOf(Context::class, Activity::class))
 

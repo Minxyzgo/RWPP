@@ -8,6 +8,10 @@
 package io.github.rwpp.android
 
 import android.app.Application
+import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.android.LogcatAppender
@@ -15,16 +19,23 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.FileAppender
 import io.github.rwpp.android.impl.GameSoundPoolImpl
+import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
+import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.game.audio.GameSoundPool
 import io.github.rwpp.game.comp.CompModule
+import io.github.rwpp.generatedLibDir
+import io.github.rwpp.inject.runtime.Builder
 import io.github.rwpp.koinInit
 import io.github.rwpp.logger
+import io.github.rwpp.ui.defaultBuildLogger
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
 import org.slf4j.LoggerFactory
+import java.io.File
+import kotlin.system.exitProcess
 
 
 class MainApplication : Application() {
@@ -39,6 +50,7 @@ class MainApplication : Application() {
         appKoin = koinApplication.koin
 
         appKoin.declare(GameSoundPoolImpl(), secondaryTypes = listOf(GameSoundPool::class))
+        appKoin.declare(this, secondaryTypes = listOf(Context::class))
 
         val lc = LoggerFactory.getILoggerFactory() as LoggerContext
         lc.stop()
@@ -74,6 +86,30 @@ class MainApplication : Application() {
         root.addAppender(fileAppender)
         root.addAppender(logcatAppender)
 
+        Thread.setDefaultUncaughtExceptionHandler { thread, ex ->
+            logger.error("Uncaught exception in thread ${thread.name}", ex)
+            exitProcess(0)
+        }
+
         logger = LoggerFactory.getLogger(packageName)
+
+        onInit()
+    }
+
+    fun onInit() {
+        if (!init) {
+            appKoin.get<ConfigIO>().readAllConfig()
+            val permissionHelper = appKoin.get<PermissionHelper>()
+            var hasPermission by mutableStateOf(permissionHelper.hasManageFilePermission())
+            Builder.outputDir = generatedLibDir
+            Builder.logger = defaultBuildLogger
+            init = true
+            dexFolder = getDir("dexfiles", MODE_PRIVATE)
+            requireReloadingLib = !hasPermission || Builder.prepareReloadingLib() || !File("${dexFolder.absolutePath}/classes.dex").exists()
+            logger.info("hasPermission: $hasPermission, requireReloadingLib: $requireReloadingLib exist: ${File("${dexFolder.absolutePath}/classes.dex").exists()}")
+            if (!requireReloadingLib) {
+                loadDex(this, "${dexFolder.absolutePath}/classes.dex")
+            }
+        }
     }
 }
