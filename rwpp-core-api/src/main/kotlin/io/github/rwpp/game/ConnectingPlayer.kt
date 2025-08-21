@@ -60,6 +60,6 @@ object ConnectingPlayer : Player {
         color: Int?,
         startingUnits: Int?,
         aiDifficulty: Int?,
-        changeTeamFromSpawn: Boolean
+        autoTeamMode: Boolean
     ) {}
 }
