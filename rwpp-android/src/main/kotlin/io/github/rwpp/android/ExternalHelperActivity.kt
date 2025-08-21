@@ -28,78 +28,87 @@ class ExternalHelperActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         try {
-            appKoin.declare(this, secondaryTypes = listOf(Context::class), allowOverride = false)
-        } catch (_: DefinitionOverrideException) {}
-
-        val dataString = intent.dataString
-
-        lateinit var endsAction: () -> Unit
-
-        if (dataString != null) {
-            val fileName = getFileName(intent.data!!)!!
-
-            val path = if (dataString.endsWith(".rwres") || dataString.endsWith(".rwext") || dataString.endsWith(".jar")) {
-                endsAction = {
-                    UI.showExtensionView = true
-                    UI.showWarning(
-                        readI18n("android.importExtension", I18nType.RWPP, fileName)
-                    )
-                }
-                extensionPath
-            } else if (dataString.endsWith(".rwmod")) {
-                endsAction = {
-                    UI.showModsView = true
-                    UI.showWarning(
-                        readI18n("android.importMod", I18nType.RWPP, fileName)
-                    )
-                }
-                "/storage/emulated/0/rustedWarfare/units/"
-            } else if (dataString.endsWith(".rwsave")) {
-                endsAction = {
-                    UI.showWarning(
-                        readI18n("android.importSave", I18nType.RWPP, fileName)
-                    )
-                }
-                "/storage/emulated/0/rustedWarfare/saves/"
-            } else if (dataString.endsWith(".reply")) {
-                endsAction = {
-                    UI.showWarning(
-                        readI18n("android.importReply", I18nType.RWPP, fileName)
-                    )
-                }
-                "/storage/emulated/0/rustedWarfare/replays/"
-            } else if (dataString.endsWith(".tmx")) {
-                endsAction = {
-                    UI.showWarning(
-                        readI18n("android.importMap", I18nType.RWPP, fileName)
-                    )
-                }
-                "/storage/emulated/0/rustedWarfare/maps/"
-            } else {
-                null
+            try {
+                appKoin.declare(this, secondaryTypes = listOf(Context::class), allowOverride = false)
+            } catch (_: DefinitionOverrideException) {
             }
 
-            if (path != null) {
-                appKoin.get<PermissionHelper>().requestManageFilePermission {
-                    contentResolver.openInputStream(intent.data!!).use {
-                        val file = File(path, fileName)
-                        if (!file.exists()) {
-                            file.parentFile?.mkdirs()
-                            file.createNewFile()
+            val dataString = intent.dataString
+
+            lateinit var endsAction: () -> Unit
+
+            if (dataString != null) {
+                val fileName = getFileName(intent.data!!)!!
+
+                val path =
+                    if (dataString.endsWith(".rwres") || dataString.endsWith(".rwext") || dataString.endsWith(".jar")) {
+                        endsAction = {
+                            UI.showExtensionView = true
+                            UI.showWarning(
+                                readI18n("android.importExtension", I18nType.RWPP, fileName)
+                            )
                         }
-
-                        file.writeBytes(it!!.readBytes())
+                        extensionPath
+                    } else if (dataString.endsWith(".rwmod")) {
+                        endsAction = {
+                            UI.showModsView = true
+                            UI.showWarning(
+                                readI18n("android.importMod", I18nType.RWPP, fileName)
+                            )
+                        }
+                        "/storage/emulated/0/rustedWarfare/units/"
+                    } else if (dataString.endsWith(".rwsave")) {
+                        endsAction = {
+                            UI.showWarning(
+                                readI18n("android.importSave", I18nType.RWPP, fileName)
+                            )
+                        }
+                        "/storage/emulated/0/rustedWarfare/saves/"
+                    } else if (dataString.endsWith(".reply")) {
+                        endsAction = {
+                            UI.showWarning(
+                                readI18n("android.importReply", I18nType.RWPP, fileName)
+                            )
+                        }
+                        "/storage/emulated/0/rustedWarfare/replays/"
+                    } else if (dataString.endsWith(".tmx")) {
+                        endsAction = {
+                            UI.showWarning(
+                                readI18n("android.importMap", I18nType.RWPP, fileName)
+                            )
+                        }
+                        "/storage/emulated/0/rustedWarfare/maps/"
+                    } else {
+                        UI.showWarning(
+                            readI18n("android.unknownFileTypeError", I18nType.RWPP, fileName)
+                        )
+                        null
                     }
+
+                if (path != null) {
+                    appKoin.get<PermissionHelper>().requestManageFilePermission {
+                        contentResolver.openInputStream(intent.data!!).use {
+                            val file = File(path, fileName)
+                            if (!file.exists()) {
+                                file.parentFile?.mkdirs()
+                                file.createNewFile()
+                            }
+
+                            file.writeBytes(it!!.readBytes())
+                        }
+                    }
+
+                    endsAction()
                 }
-
-                endsAction()
             }
-        }
 
-        if (gameLoaded) {
-            finish()
-        } else {
-            startActivityForResult(Intent(this, LoadingScreen::class.java), 0)
+            if (gameLoaded) {
+                finish()
+            } else {
+                startActivityForResult(Intent(this, LoadingScreen::class.java), 0)
+            }
+        } catch (e: Exception) {
+            UI.showWarning("无法导入文件: "+ e.message.toString())
         }
     }
 
