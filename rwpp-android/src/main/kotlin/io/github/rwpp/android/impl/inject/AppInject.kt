@@ -8,6 +8,7 @@
 package io.github.rwpp.android.impl.inject
 
 import android.app.Activity
+import android.content.Context
 import android.os.Build
 import android.view.ViewGroup
 import com.corrodinggames.rts.appFramework.GameView
@@ -41,5 +42,15 @@ object AppInject {
             else RWPPGameViewNonSurface(activity, null);
         viewGroup.addView(gameViewThreaded, 0, ViewGroup.LayoutParams(-1, -1));
         return gameViewThreaded
+    }
+
+    @Inject("e", InjectMode.Override, "(Landroid/app/Activity;)Z")
+    fun requestWritePermission(activity: Activity): Boolean {
+        return true
+    }
+
+    @Inject("b", InjectMode.Override, "(Landroid/content/Context;)Z")
+    fun hasWritePermission(context: Context): Boolean {
+        return true
     }
 }
