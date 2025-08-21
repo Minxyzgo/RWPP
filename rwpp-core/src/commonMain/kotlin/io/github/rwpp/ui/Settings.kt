@@ -21,11 +21,8 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.AppContext
 import io.github.rwpp.config.ConfigIO
@@ -39,8 +36,7 @@ import io.github.rwpp.net.LatestVersionProfile
 import io.github.rwpp.net.Net
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.widget.*
-import io.github.rwpp.widget.v2.ExpandedCard
-import io.github.rwpp.widget.v2.LazyColumnScrollbar
+import io.github.rwpp.widget.v2.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -94,6 +90,7 @@ fun SettingsView(
                 Column {
                     Spacer(Modifier.height(30.dp))
                     var selectedItem by remember { mutableIntStateOf(0) }
+                    // 利用前缀来区分从游戏还是rwpp读取i18n
                     val items = listOf(
                         "graphics",
                         "gameplay",
@@ -178,7 +175,7 @@ fun SettingsView(
 
                                             var xOffset by remember { mutableStateOf(settings.displayUnitGroupXOffset) }
                                             SettingsTextField(
-                                                "displayUnitGroupXOffset",
+                                                readI18n("settings.displayUnitGroupXOffset"),
                                                 xOffset.toString(),
                                                 typeInOnlyInteger = true,
                                                 typeInNumberOnly = true,
@@ -224,6 +221,14 @@ fun SettingsView(
                                                 settings.showUnitTargetLine = it
                                             }
 
+//                                            SettingsSwitchComp(
+//                                                "",
+//                                                readI18n("settings.pathfindingOptimization"),
+//                                                settings.pathfindingOptimization
+//                                            ) {
+//                                                settings.pathfindingOptimization = it
+//                                            }
+
                                             if (appContext.isDesktop()) {
                                                 SettingsSwitchComp(
                                                     "",
@@ -231,6 +236,14 @@ fun SettingsView(
                                                     settings.improvedHealthBar
                                                 ) {
                                                     settings.improvedHealthBar = it
+                                                }
+
+                                                SettingsSwitchComp(
+                                                    "",
+                                                    readI18n("settings.mouseMoveView"),
+                                                    settings.mouseMoveView
+                                                ) {
+                                                    settings.mouseMoveView = it
                                                 }
                                             }
                                             var teamUnitCapSinglePlayer by remember {
@@ -241,7 +254,7 @@ fun SettingsView(
                                                 )
                                             }
                                             SettingsTextField(
-                                                "teamUnitCapSinglePlayer",
+                                                readI18n("settings.teamUnitCapSinglePlayer"),
                                                 teamUnitCapSinglePlayer?.toString() ?: "",
                                                 lengthLimitCount = 6,
                                                 typeInNumberOnly = true,
@@ -261,7 +274,7 @@ fun SettingsView(
                                                 )
                                             }
                                             SettingsTextField(
-                                                "teamUnitCapHostedGame",
+                                                readI18n("settings.teamUnitCapHostedGame"),
                                                 teamUnitCapHostedGame?.toString() ?: "",
                                                 lengthLimitCount = 6,
                                                 typeInNumberOnly = true,
@@ -273,6 +286,13 @@ fun SettingsView(
                                                     teamUnitCapHostedGame ?: 100
                                                 )
                                             }
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.showExtraButton"),
+                                                settings.showExtraButton
+                                            ) {
+                                                settings.showExtraButton = it
+                                            }
                                         }
 
                                         SettingsGroup("", readI18n("settings.buildings")) {
@@ -282,13 +302,6 @@ fun SettingsView(
                                                 settings.showBuildingAttackRange
                                             ) {
                                                 settings.showBuildingAttackRange = it
-                                            }
-                                            SettingsSwitchComp(
-                                                "",
-                                                readI18n("settings.showExtraButton"),
-                                                settings.showExtraButton
-                                            ) {
-                                                settings.showExtraButton = it
                                             }
                                         }
 
@@ -392,7 +405,7 @@ fun SettingsView(
                                             val externalHandler = koinInject<ExternalHandler>()
 
                                             SettingsTextField(
-                                                "setBackgroundImagePath",
+                                                readI18n("settings.setBackgroundImagePath"),
                                                 backgroundImagePath,
                                                 onValueChange = {
                                                     backgroundImagePath = it
@@ -456,204 +469,6 @@ private fun LazyItemScope.SettingsGroup(
     }
 }
 
-@Composable
-private fun SettingsSwitchComp(
-    name: String,
-    labelName: String = name,
-    defaultValue: Boolean? = null,
-    customConfigSettingAction: ((Boolean) -> Unit)? = null
-) {
-    val configIO = koinInject<ConfigIO>()
-
-    var state by remember { mutableStateOf(defaultValue ?: configIO.getGameConfig(name)) }
-    val onClick = customConfigSettingAction?.let{
-        {
-            state = !state
-            customConfigSettingAction(state)
-        }
-    } ?: {
-        state = !state
-        configIO.setGameConfig(name, state)
-    }
-    Surface(
-        color = Color.Transparent,
-        modifier = Modifier
-            .fillMaxWidth(),
-        onClick = onClick,
-    ) {
-        Column {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if(customConfigSettingAction != null) labelName else readI18n("menus.settings.option.$labelName", I18nType.RW),
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Start,
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                Switch(
-                    checked = state,
-                    modifier = Modifier.padding(end = 15.dp),
-                    onCheckedChange = { onClick() },
-                    colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary, checkedThumbColor = MaterialTheme.colorScheme.onSurface),
-                )
-            }
-            HorizontalDivider()
-        }
-    }
-}
-
-@Composable
-private fun SettingsTextField(
-    label: String,
-    value: String,
-    trailingIcon: @Composable (() -> Unit)? = null,
-    leadingIcon: @Composable (() -> Unit)? = null,
-    lengthLimitCount: Int = Int.MAX_VALUE,
-    typeInOnlyInteger: Boolean = false,
-    typeInNumberOnly: Boolean = false,
-    enabled: Boolean = true,
-    appendedContent: @Composable (() -> Unit)? = null,
-    onValueChange: (String) -> Unit
-) {
-    Surface(
-        color = Color.Transparent,
-        modifier = Modifier
-            .fillMaxWidth(),
-    ) {
-        Column {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = readI18n("settings.$label"),
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Start,
-                    )
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-                RWSingleOutlinedTextField(
-                    "",
-                    value,
-                    Modifier.width(300.dp).padding(end = 15.dp),
-                    trailingIcon,
-                    leadingIcon,
-                    lengthLimitCount,
-                    typeInOnlyInteger,
-                    typeInNumberOnly,
-                    enabled,
-                    appendedContent,
-                    onValueChange = onValueChange
-                )
-
-            }
-            HorizontalDivider()
-        }
-    }
-}
-
-@Composable
-private fun <T> SettingsDropDown(
-    name: String,
-    items: List<T>,
-    selectedIndex: Int = 0,
-    selectedItemColor: @Composable (T?, Int) -> Color = { _, _ -> MaterialTheme.colorScheme.onSurface },
-    onSelectedItem: (Int, T) -> Unit,
-) {
-    Surface(
-        color = Color.Transparent,
-        modifier = Modifier
-            .fillMaxWidth(),
-    ) {
-        Column {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = readI18n("settings.$name"),
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Start,
-                    )
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                LargeDropdownMenu(
-                    modifier = Modifier.width(300.dp).padding(end = 15.dp),
-                    items = items,
-                    label = "",
-                    selectedIndex = selectedIndex,
-                    onItemSelected = onSelectedItem,
-                    selectedItemColor = selectedItemColor
-                )
-            }
-
-            HorizontalDivider()
-        }
-    }
-}
-
-@Composable
-private fun SettingsSlider(
-    name: String,
-    defaultValue: Float,
-    onValueChange: (Float) -> Unit,
-    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
-    valueFormat: (Float) -> String = { (it * 100).roundToInt().toString() + "%" }
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-
-            var value by remember { mutableStateOf(defaultValue) }
-
-            remember(value) {
-                onValueChange(value)
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Slider(
-                value = value,
-                valueRange = valueRange,
-                modifier = Modifier.width(250.dp).padding(end = 5.dp),
-                onValueChange = { value = it },
-                colors = RWSliderColors
-            )
-
-            Text(valueFormat(value), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(50.dp).padding(top = 6.dp, end = 5.dp))
-        }
-
-        HorizontalDivider()
-    }
-
-}
 
 @Composable
 private fun SettingsSliderRW(
