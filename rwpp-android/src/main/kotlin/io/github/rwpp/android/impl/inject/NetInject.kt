@@ -260,7 +260,7 @@ object NetInject {
     fun onSendServerInfo(c: com.corrodinggames.rts.gameFramework.j.c) {
         c.A?.let {
             if (!cachePlayerSet.contains(it)) {
-                PlayerJoinEvent(it as Player)
+                PlayerJoinEvent(it as Player).broadcastIn()
                 appKoin.get<Game>().gameRoom.sendMessageToPlayer(it as Player, "RWPP", welcomeMessage)
                 cachePlayerSet.add(it)
             }
