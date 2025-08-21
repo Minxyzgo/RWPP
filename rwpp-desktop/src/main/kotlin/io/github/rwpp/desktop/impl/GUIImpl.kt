@@ -8,9 +8,13 @@
 package io.github.rwpp.desktop.impl
 
 import android.graphics.Paint
+import io.github.rwpp.desktop.inGameWidget
+import io.github.rwpp.desktop.inGameWidgetDialog
+import io.github.rwpp.desktop.resetInGameWidgetDialogLocation
 import io.github.rwpp.game.base.GamePaint
 import io.github.rwpp.game.ui.GUI
 import io.github.rwpp.inject.SetInterfaceOn
+import io.github.rwpp.ui.Widget
 
 @SetInterfaceOn([com.corrodinggames.rts.gameFramework.f.g::class])
 interface GUIImpl : GUI {
@@ -19,6 +23,12 @@ interface GUIImpl : GUI {
     override var textPaint: GamePaint
         get() = self.aC as GamePaint
         set(value) { self.aC = value as Paint }
+
+    override fun showWidgetInGame(widget: (dispose: () -> Unit) -> Widget) {
+        inGameWidget = widget { inGameWidgetDialog.isVisible = false }
+        inGameWidgetDialog.pack()
+        inGameWidgetDialog.isVisible = true
+    }
 
     override fun showChatMessage(sender: String, message: String) {
         com.corrodinggames.rts.gameFramework.j.ad.a(sender, message)

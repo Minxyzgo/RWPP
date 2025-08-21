@@ -8,9 +8,12 @@
 package io.github.rwpp.game.ui
 
 import io.github.rwpp.game.base.GamePaint
+import io.github.rwpp.ui.Widget
 
 interface GUI {
     var textPaint: GamePaint
+
+    fun showWidgetInGame(widget: (dispose: () -> Unit) -> Widget)
 
     fun showChatMessage(sender: String, message: String)
 }
