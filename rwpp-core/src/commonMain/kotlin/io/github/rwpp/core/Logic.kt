@@ -15,6 +15,7 @@ import io.github.rwpp.event.events.ModCheckEvent
 import io.github.rwpp.event.events.PlayerJoinEvent
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.mod.ModManager
+import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.io.SizeUtils
 import io.github.rwpp.logger
 import io.github.rwpp.modDir
@@ -31,6 +32,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
+
+//typealias TargetPositionWithUnits = Triple<Double, Double, List<GameUnit>>
 
 object Logic : Initialization {
     private var playerCount = 0
@@ -202,6 +205,34 @@ object Logic : Initialization {
             true
         }
     }
+
+    //经过测试，分组效果不佳，暂时不使用
+    /*
+    fun onPathfindingOptimization(targetX: Float, targetY: Float, selectedUnits: List<GameUnit>): List<TargetPositionWithUnits> {
+//        val leftX = selectedUnits.minOf { it.x }
+//        val rightX = selectedUnits.maxOf { it.x }
+//        val topY = selectedUnits.minOf { it.y }
+//        val bottomY = selectedUnits.maxOf { it.y }
+        // 简单距离迭代，计算每个单位到其他单位的距离，并将距离较短的单位放入同一组
+        val groups = mutableListOf<TargetPositionWithUnits>()
+        val unassignedUnits = selectedUnits.toMutableList()
+        val maxDistance = 10
+        while (unassignedUnits.isNotEmpty()) {
+            val group = mutableListOf<GameUnit>()
+            groups.add(Triple(targetX.toDouble(), targetY.toDouble(), group))
+            group.add(unassignedUnits.removeAt(0))
+            for (i in unassignedUnits.indices) {
+                val unit = unassignedUnits[i]
+                val distance = sqrt((unit.x - group.last().x) * (unit.x - group.last().x) + (unit.y - group.last().y) * (unit.y - group.last().y))
+                if (distance <= maxDistance) {
+                    group.add(unassignedUnits.removeAt(i))
+                }
+            }
+        }
+
+        return groups
+    }
+    */
 
     private fun setDownloadingTitle(index: Int) {
         val totalSize = appKoin.get<Game>().gameRoom.option.allModsSize
