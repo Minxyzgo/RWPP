@@ -79,6 +79,8 @@ object UI : Initialization, IUserInterface {
     var showContributorList by mutableStateOf(false)
     var showResourceBrowser by mutableStateOf(false)
 
+    var roomSelectedPlayer by mutableStateOf<Player?>(null)
+        internal set
     var receivingNetworkDialogTitle by mutableStateOf("")
     var showNetworkDialog by mutableStateOf(false)
     var UiProvider: UIProvider = UIProvider()
