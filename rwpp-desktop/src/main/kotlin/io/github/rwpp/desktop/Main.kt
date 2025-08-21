@@ -32,6 +32,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.*
@@ -49,6 +50,7 @@ import io.github.rwpp.game.sendChatMessageOrCommand
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.inject.GameLibraries
 import io.github.rwpp.inject.runtime.Builder
+import io.github.rwpp.scripts.Render
 import io.github.rwpp.ui.*
 import io.github.rwpp.ui.UI.chatMessages
 import io.github.rwpp.widget.*
@@ -86,6 +88,10 @@ lateinit var displaySize: Dimension
 lateinit var sendMessageDialog: Dialog
 lateinit var rwppVisibleSetter: (Boolean) -> Unit
 lateinit var focusRequester: FocusRequester
+var inGameWidget: Widget? = null
+lateinit var inGameWidgetDialog: Dialog
+var requireReloadingLib = false
+
 //val cacheModSize = AtomicInteger(0)
 
 fun main(array: Array<String>) {
@@ -116,10 +122,6 @@ fun main(array: Array<String>) {
         }
     }
 
-    swingApplication()
-}
-
-fun swingApplication() = SwingUtilities.invokeLater {
     koinInit = true
     appKoin = startKoin {
         logger(org.koin.core.logger.PrintLogger(org.koin.core.logger.Level.ERROR))
@@ -129,7 +131,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
     appKoin.get<ConfigIO>().readAllConfig()
     Builder.outputDir = generatedLibDir
     Builder.logger = defaultBuildLogger
-    val requireReloadingLib = Builder.prepareReloadingLib()
+    requireReloadingLib = Builder.prepareReloadingLib()
 
     if (!requireReloadingLib) {
         val app = appKoin.get<AppContext>()
@@ -146,7 +148,7 @@ fun swingApplication() = SwingUtilities.invokeLater {
 
     val settings = appKoin.get<Settings>()
     if (settings.renderingBackend != "Default") {
-        System.setProperty("SKIKO_RENDER_API", settings.renderingBackend.uppercase())
+        System.setProperty("skiko.renderApi", settings.renderingBackend.uppercase())
     }
 
     displaySize =
@@ -156,6 +158,10 @@ fun swingApplication() = SwingUtilities.invokeLater {
             .displayMode
             .run { Dimension(width, height) }
 
+    swingApplication()
+}
+
+fun swingApplication() = SwingUtilities.invokeLater {
     val panel = ComposePanel()
     panel.isVisible = true
     panel.size = displaySize.size
@@ -464,6 +470,70 @@ fun swingApplication() = SwingUtilities.invokeLater {
             resetSendDialogLocation()
         }
     })
+
+    onInitInGameWidgetDialog()
+}
+
+fun onInitInGameWidgetDialog() = SwingUtilities.invokeLater {
+    val panel = ComposePanel()
+    panel.isOpaque = false
+    panel.isFocusable = true
+   // panel.size = Dimension(550, 540)
+    panel.setContent {
+        RWPPTheme {
+            BorderCard(
+                modifier = Modifier
+                  //  .wrapContentSize()
+                    .onKeyEvent {
+                        if (it.key == Key.Escape && it.type == KeyDown) {
+                            inGameWidgetDialog.isVisible = false
+                            true
+                        } else {
+                            false
+                        }
+                    }.onGloballyPositioned { coordinates ->
+                        SwingUtilities.invokeLater {
+                            val scale = getDPIScale()
+                            inGameWidgetDialog.preferredSize = Dimension(
+                                (coordinates.size.width / scale).toInt(),
+                                (coordinates.size.height / scale).toInt()
+                            )
+                            inGameWidgetDialog.pack()
+                            resetInGameWidgetDialogLocation()
+                        }
+                    },
+                backgroundColor = Color(53, 57, 53),
+                shape = RectangleShape
+            ) {
+                inGameWidget?.Render()
+            }
+        }
+    }
+
+    inGameWidgetDialog = Dialog(mainJFrame).apply {
+        isUndecorated = true
+        isFocusable = true
+        isVisible = false
+        isAlwaysOnTop = true
+        add(panel)
+    }
+
+    mainJFrame.addComponentListener(object : java.awt.event.ComponentAdapter() {
+        override fun componentMoved(e: java.awt.event.ComponentEvent) {
+            resetInGameWidgetDialogLocation()
+        }
+
+        override fun componentResized(e: java.awt.event.ComponentEvent) {
+            resetInGameWidgetDialogLocation()
+        }
+    })
+}
+
+fun resetInGameWidgetDialogLocation() {
+    inGameWidgetDialog.setLocation(
+        mainJFrame.x + mainJFrame.width / 2 - inGameWidgetDialog.width / 2,
+        mainJFrame.y + mainJFrame.height / 2 - inGameWidgetDialog.height / 2
+    )
 }
 
 fun showSendMessageDialog() {
