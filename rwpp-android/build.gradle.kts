@@ -60,6 +60,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            isShrinkResources = false
             // isDebuggable = true
         }
     }
