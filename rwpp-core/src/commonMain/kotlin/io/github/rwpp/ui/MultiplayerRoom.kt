@@ -11,7 +11,6 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -36,6 +35,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.size.Precision
 import io.github.rwpp.AppContext
 import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.appKoin
@@ -57,6 +59,7 @@ import io.github.rwpp.game.team.TeamMode
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
+import io.github.rwpp.platform.KickPlayerContextMenuAreaMultiplatform
 import io.github.rwpp.scripts.Render
 import io.github.rwpp.ui.UI.chatMessages
 import io.github.rwpp.ui.color.getTeamColor
@@ -142,6 +145,10 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     val players = remember(update) { room.getPlayers().sortedBy { it.team } }
     var selectedPlayer by remember { mutableStateOf(players.firstOrNull() ?: ConnectingPlayer) }
     var playerOverrideVisible by remember { mutableStateOf(false) }
+
+    remember(selectedPlayer) {
+        UI.roomSelectedPlayer = selectedPlayer
+    }
 
     PlayerOverrideDialog(
         playerOverrideVisible,
@@ -322,10 +329,13 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 @Composable
                                 fun MapImage(modifier: Modifier = Modifier) {
                                     AsyncImage(
-                                        selectedMap,
+                                        ImageRequest.Builder(LocalPlatformContext.current)
+                                            .data(selectedMap)
+                                            .precision(Precision.INEXACT)
+                                            .build(),
                                         null,
                                         contentScale = ContentScale.Fit,
-                                        modifier = Modifier.then(modifier).padding(10.dp)
+                                        modifier = Modifier.then(modifier).padding(top = 10.dp, bottom = 10.dp, end = 5.dp)
                                             .border(
                                                 BorderStroke(
                                                     2.dp,
@@ -345,20 +355,20 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                 }
 
 
-                                Row(
+                                Box(
                                     modifier = Modifier.fillMaxWidth().then(
                                         if (LocalWindowManager.current == WindowManager.Large)
                                             Modifier.weight(1f) else Modifier
-                                    ), horizontalArrangement = Arrangement.Center
+                                    )
                                 ) {
+                                    if (LocalWindowManager.current == WindowManager.Large) MapImage(
+                                        Modifier.defaultMinSize(minHeight = 200.dp, minWidth = 200.dp).align(Alignment.TopEnd)
+                                    )
                                     Text(
                                         details,
                                         color = MaterialTheme.colorScheme.onSurface,
                                         style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier.padding(10.dp)
-                                    )
-                                    if (LocalWindowManager.current == WindowManager.Large) MapImage(
-                                        Modifier.weight(.8f)
+                                        modifier = Modifier.padding(start = 10.dp, top = 10.dp, bottom = 10.dp, end = 0.dp).align(Alignment.TopStart)
                                     )
                                 }
 
@@ -521,21 +531,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
 
                                         if (player != null) {
                                             Box(modifier) {
-                                                ContextMenuArea(
-                                                    items = {
-                                                        if ((room.isHost || room.isHostServer) && room.localPlayer != player) {
-                                                            listOf(
-                                                                ContextMenuItem(
-                                                                    readI18n("multiplayer.room.kick")
-                                                                ) {
-                                                                    room.kickPlayer(player)
-                                                                }
-                                                            )
-                                                        } else {
-                                                            emptyList()
-                                                        }
-                                                    }
-                                                ) {
+                                                KickPlayerContextMenuAreaMultiplatform(player) {
                                                     Row(
                                                         modifier = Modifier
                                                             .height(IntrinsicSize.Max)
@@ -553,7 +549,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
                                                             }
                                                     ) {
                                                         TableCell(
-                                                            player.name + if (player.startingUnit != -1) " - ${options.first { it.first == player.startingUnit }.second}" else "",
+                                                            player.name + if (player.startingUnit != -1) " - ${options.firstOrNull { it.first == player.startingUnit }?.second ?: "Unknown"}" else "",
                                                             color = if (player.color != -1) Player.getTeamColor(
                                                                 player.color
                                                             ) else MaterialTheme.colorScheme.onSurface,
@@ -768,7 +764,10 @@ private fun MultiplayerOption(
     enabled: Boolean = true,
     onValueChange: (Boolean) -> Unit,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
         RWCheckbox(
             value,
             onCheckedChange = { onValueChange(!value) },
@@ -777,9 +776,9 @@ private fun MultiplayerOption(
         )
         Text(
             label,
-            modifier = Modifier.padding(top = 5.dp),
+            modifier = Modifier.padding(5.dp),
             style = MaterialTheme.typography.headlineMedium,
-            color = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.inversePrimary
+            color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.inversePrimary
         )
     }
 }
@@ -952,7 +951,6 @@ private fun PlayerOverrideDialog(
                 modifier = Modifier.fillMaxWidth().padding(end = 10.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-
                 for (extension in extensions) {
                     if (extension.isEnabled && extension.extraPlayerOptions.isNotEmpty()) {
                         Column {
@@ -985,8 +983,7 @@ private fun PlayerOverrideDialog(
                 RWTextButton(readI18n("multiplayer.room.apply"), Modifier.padding(5.dp)) {
                     player.applyConfigChange(
                         if (playerSpawnPoint == -3) -3 else ((playerSpawnPoint ?: 1) - 1).coerceAtLeast(0),
-                        if (playerTeam == -1) 0 else if ((playerTeam ?: 0) > 10) (playerTeam ?: 0) + 1 else (playerTeam
-                            ?: 1),
+                        if (playerTeam == -1) 0 else playerTeam ?: 1,
                         if (playerColor > -1) playerColor else null,
                         if (playerStartingUnits > 0) items[playerStartingUnits].first else null,
                         aiDifficulty,
@@ -1039,24 +1036,18 @@ private fun MultiplayerOption(
     ) {
         LazyColumn(modifier = Modifier.weight(1f).padding(10.dp)) {
             item {
-                LazyRow(horizontalArrangement = Arrangement.Center) {
-                    item { MultiplayerOption(readI18n("multiplayer.room.noNukes"), noNukes) { noNukes = it } }
-                    item {
-                        MultiplayerOption(
-                            readI18n("multiplayer.room.sharedControl"),
-                            sharedControl
-                        ) { sharedControl = it }
-                    }
-                    item {
-                        MultiplayerOption(
-                            readI18n("multiplayer.room.allowSpectators"),
-                            allowSpectators, room.isHost
-                        ) { allowSpectators = it }
-                    }
-                    item {
-                        MultiplayerOption(readI18n("multiplayer.room.teamLock"), teamLock, room.isHost) {
-                            teamLock = it
-                        }
+                Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                    MultiplayerOption(readI18n("multiplayer.room.noNukes"), noNukes) { noNukes = it }
+                    MultiplayerOption(
+                        readI18n("multiplayer.room.sharedControl"),
+                        sharedControl
+                    ) { sharedControl = it }
+                    MultiplayerOption(
+                        readI18n("multiplayer.room.allowSpectators"),
+                        allowSpectators, room.isHost
+                    ) { allowSpectators = it }
+                    MultiplayerOption(readI18n("multiplayer.room.teamLock"), teamLock, room.isHost) {
+                        teamLock = it
                     }
                 }
             }
@@ -1144,15 +1135,15 @@ private fun MultiplayerOption(
                     var selectedIndex1 by remember(room) { mutableStateOf(room.startingCredits) }
                     val startingCreditList = remember {
                         listOf(
-                            "Default (4000$)",
-                            "0$",
-                            "1000$",
-                            "2000$",
-                            "5000$",
-                            "10000$",
-                            "50000$",
-                            "100000$",
-                            "200000$"
+                            "Default ($4000)",
+                            "$0",
+                            "$1000",
+                            "$2000",
+                            "$5000",
+                            "$10000",
+                            "$50000",
+                            "$100000",
+                            "$200000"
                         )
                     }
                     LargeDropdownMenu(
@@ -1331,6 +1322,7 @@ private fun MultiplayerOption(
                 }
             }
         }
+
         Row(
             modifier = Modifier.fillMaxWidth().padding(5.dp),
             horizontalArrangement = Arrangement.Center
