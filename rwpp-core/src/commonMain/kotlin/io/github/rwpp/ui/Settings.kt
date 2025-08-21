@@ -306,8 +306,8 @@ fun SettingsView(
                                         }
 
                                         SettingsGroup("", readI18n("settings.units")) {
-                                            val list = listOf("Never", "Land", "Air", "All")
-                                            var selectedIndex by remember { mutableStateOf(list.indexOf(settings.showAttackRangeUnit)) }
+                                            val list = Settings.unitAttackRangeTypes
+                                            var selectedIndex by remember { mutableIntStateOf(list.indexOf(settings.showAttackRangeUnit)) }
                                             SettingsDropDown("showAttackRange", list, selectedIndex) { index, type ->
                                                 selectedIndex = index
                                                 settings.showAttackRangeUnit = type

@@ -27,6 +27,7 @@ data class Settings(
     var backgroundImageTransparency: Float = 1f,
     var showBuildingAttackRange: Boolean = false,
     var showExtraButton: Boolean = false,
+    /** @see unitAttackRangeTypes */
     var showAttackRangeUnit: String = "Never",
     var enableAnimations: Boolean = true,
     var maxDisplayUnitGroupCount: Int = 7,
@@ -39,4 +40,8 @@ data class Settings(
     var boldText: Boolean = false,
     var renderingBackend: String = "Default", // Default, Software, OpenGL
     var forceEnglish: Boolean = false,
-) : Config
+) : Config {
+    companion object {
+        val unitAttackRangeTypes = listOf("Never", "Land", "Air", "All")
+    }
+}

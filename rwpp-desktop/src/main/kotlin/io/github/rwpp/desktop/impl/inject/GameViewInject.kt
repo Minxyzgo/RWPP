@@ -18,13 +18,11 @@ import io.github.rwpp.desktop.FClass
 import io.github.rwpp.desktop.GameEngine
 import io.github.rwpp.desktop.GameView
 import io.github.rwpp.game.Game
-import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
-import io.github.rwpp.inject.InterruptResult
 import io.github.rwpp.utils.Reflect
 import kotlin.math.roundToInt
 
@@ -40,16 +38,22 @@ object GameViewInject {
     @Inject("a", InjectMode.InsertAfter)
     fun GameView.onAddGameAction(am: com.corrodinggames.rts.game.units.am?, arrayList: java.util.ArrayList<Any?>?) {
         buttons = buttons ?: Reflect.get(this, "aq")
+
+        if (settings.showExtraButton && GameEngine.B().bS.bZ.isEmpty()) {
+            buttons!!.add(ShowAttackRangeBuilding)
+            buttons!!.add(ShowAttackRangeUnits)
+        }
+
         if (settings.showExtraButton
             && GameEngine.B().bS.bZ.size == 1
             && (GameEngine.B().bS.bZ.first() as GameUnit).player.team != room.localPlayer.team)  {
             buttons!!.add(
-                SelectBuild
+                ShowAttackRange
             )
         }
     }
 
-    object SelectBuild : p("c__cut_enable") {
+    object ShowAttackRange : p("c__cut_enable") {
         // com.corrodinggames.rts.game.units.a.s
         override fun b(): String {
             return readI18n("settings.showAttackRange")
@@ -71,6 +75,49 @@ object GameViewInject {
             if (unit != null) {
                 (unit as GameUnit).comp.showAttackRange = !unit.comp.showAttackRange
             }
+            return true
+        }
+    }
+
+    object ShowAttackRangeBuilding : com.corrodinggames.rts.game.units.a.p("c_show_attack_range_building") {
+        override fun b(): String? {
+            return "显示建筑攻击范围"
+        }
+
+        override fun a(): String? {
+            return "Show Attack Range Building"
+        }
+
+        override fun compareTo(other: Any?): Int {
+            return 0
+        }
+
+        override fun c(amVar: com.corrodinggames.rts.game.units.am?, z: Boolean): Boolean {
+            //GameEngine.B().bS.g.n()
+
+            settings.showBuildingAttackRange = !settings.showBuildingAttackRange
+            return true
+        }
+    }
+
+    object ShowAttackRangeUnits : com.corrodinggames.rts.game.units.a.p("c_show_attack_range_units") {
+
+        override fun b(): String? {
+            return "显示单位攻击范围\n${settings.showAttackRangeUnit}"
+        }
+
+        override fun a(): String? {
+            return "Show Attack Range Units"
+        }
+
+        override fun compareTo(other: Any?): Int {
+            return 0
+        }
+
+        override fun c(amVar: com.corrodinggames.rts.game.units.am?, z: Boolean): Boolean {
+            //GameEngine.B().bS.g.n()
+            val index = Settings.unitAttackRangeTypes.indexOf(settings.showAttackRangeUnit)
+            settings.showAttackRangeUnit = Settings.unitAttackRangeTypes.getOrNull(index + 1) ?: Settings.unitAttackRangeTypes.first()
             return true
         }
     }

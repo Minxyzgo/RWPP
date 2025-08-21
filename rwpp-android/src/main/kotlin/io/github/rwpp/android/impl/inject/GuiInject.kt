@@ -56,6 +56,10 @@ object GuiInject {
     @Inject(method = "a", injectMode = InjectMode.InsertAfter)
     fun GUI.onAddGameActions(unit: ce?, arr: java.util.ArrayList<*>?) {
         buttons = buttons ?: Reflect.get(this, "aq")
+        if (unit == null && settings.showExtraButton) {
+            buttons!!.add(ShowAttackRangeBuilding)
+            buttons!!.add(ShowAttackRangeUnits)
+        }
         if (unit != null && settings.showExtraButton && (unit as GameUnit).player.team != room.localPlayer.team) {
             buttons!!.add(ShowAttackRange)
         }
@@ -250,6 +254,49 @@ object GuiInject {
             if (unit != null) {
                 (unit as GameUnit).comp.showAttackRange = !unit.comp.showAttackRange
             }
+            return true
+        }
+    }
+
+    object ShowAttackRangeBuilding : com.corrodinggames.rts.game.units.a.p("c_show_attack_range_building") {
+        override fun b(): String? {
+            return "显示建筑攻击范围"
+        }
+
+        override fun a(): String? {
+            return "Show Attack Range Building"
+        }
+
+        override fun compareTo(other: Any?): Int {
+            return 0
+        }
+
+        override fun c(unit: com.corrodinggames.rts.game.units.ce, z: Boolean): Boolean {
+            //GameEngine.B().bS.g.n()
+
+            settings.showBuildingAttackRange = !settings.showBuildingAttackRange
+            return true
+        }
+    }
+
+    object ShowAttackRangeUnits : com.corrodinggames.rts.game.units.a.p("c_show_attack_range_units") {
+
+        override fun b(): String? {
+            return "显示单位攻击范围\n${settings.showAttackRangeUnit}"
+        }
+
+        override fun a(): String? {
+            return "Show Attack Range Units"
+        }
+
+        override fun compareTo(other: Any?): Int {
+            return 0
+        }
+
+        override fun c(unit: com.corrodinggames.rts.game.units.ce, z: Boolean): Boolean {
+            //GameEngine.B().bS.g.n()
+            val index = Settings.unitAttackRangeTypes.indexOf(settings.showAttackRangeUnit)
+            settings.showAttackRangeUnit = Settings.unitAttackRangeTypes.getOrNull(index + 1) ?: Settings.unitAttackRangeTypes.first()
             return true
         }
     }
