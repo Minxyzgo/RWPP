@@ -76,7 +76,7 @@ val defaultRWPPColorScheme = darkColorScheme(
         surfaceContainer = Color.DarkGray,
         onSurface = Color.White,
         primaryContainer = Color(151, 188, 98),
-        secondary = Color(44, 95, 45),
+        secondary = Color(95, 190, 95),
         secondaryContainer = Color(151, 188, 98),
         onSecondaryContainer = Color(151, 188, 98),
         primary = Color(151, 188, 98),
@@ -93,7 +93,7 @@ fun RWPPTheme(default: Boolean = false, content: @Composable () -> Unit) {
     val jostFonts = JostFonts()
     val valoraxFont = ValoraxFont()
     val selectedColorScheme = remember(
-        if (default)
+        if (!default)
             UI.selectedColorSchemeName
         else Unit
     ) { themes[if (default) "RWPP" else UI.selectedColorSchemeName]!! }
