@@ -53,6 +53,7 @@ val welcomeMessage =
     """
         这是一个使用[RWPP]所创建的房间
         [RWPP]是在github上开源的多平台RW启动器, 支持多种拓展功能
+        QQ交流群: 927597495
         开源地址请访问 https://github.com/Minxyzgo/RWPP 
         当前版本: $projectVersion (core $coreVersion)
         Copyright 2023-2025 RWPP contributors
