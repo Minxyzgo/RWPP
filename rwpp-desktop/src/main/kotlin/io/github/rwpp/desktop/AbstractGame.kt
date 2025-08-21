@@ -97,8 +97,8 @@ abstract class AbstractGame : Game {
 
         gameRoom.isRWPPRoom = true
 
+        initMap(true)
         if(B.bX.b(false)) {
-            initMap(true)
             MapChangedEvent(gameRoom.selectedMap.displayName()).broadcastIn()
             HostGameEvent().broadcastIn()
             PlayerJoinEvent(gameRoom.localPlayer).broadcastIn()

@@ -389,7 +389,7 @@ abstract class AbstractGameRoom  : GameRoom {
         isGaming = true
 
         if (isHost || singlePlayer) {
-            if (!singlePlayer && gameMapTransformer != null) {
+            if (gameMapTransformer != null) {
                 val xmlMap = XMLMap(selectedMap)
                 gameMapTransformer!!.invoke(xmlMap)
                 val path = "$mapDir/generated_${mapIndex++}.tmx"
