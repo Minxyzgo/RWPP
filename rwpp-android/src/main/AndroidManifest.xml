@@ -82,6 +82,11 @@
             </intent-filter>
         </activity>
         <activity
+                android:name="io.github.rwpp.android.impl.CustomInGameActivity"
+                android:screenOrientation="behind"
+                android:exported="true"
+                android:configChanges="fontScale|uiMode|screenLayout|orientation|navigation|keyboardHidden|keyboard|touchscreen|locale|mnc|mcc"/>
+        <activity
                 android:name="com.corrodinggames.rts.appFramework.MainMenuActivity"
                 android:screenOrientation="behind"
                 android:exported="true"
