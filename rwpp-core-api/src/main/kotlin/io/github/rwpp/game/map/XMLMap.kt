@@ -39,7 +39,8 @@ class XMLMap(val map: GameMap) {
         height = root.getAttribute("height").toFloat()
         tileWidth = root.getAttribute("tilewidth").toFloat()
         tileHeight = root.getAttribute("tileheight").toFloat()
-        objectGroup = (root.getElementsByTagName("objectgroup").item(0) as Element?) ?: run {
+
+        objectGroup = (getTriggers(root.getElementsByTagName("objectgroup"))) ?: run {
             val element = document.createElement("objectgroup")
             element.setAttribute("name", "Triggers")
             root.appendChild(element)
@@ -50,13 +51,6 @@ class XMLMap(val map: GameMap) {
 
         for (i in 0 until objects.length) {
             val obj = objects.item(i) as Element
-            val id = obj.getAttribute("id")
-            val x = obj.getAttribute("x").toFloat()
-            val y = obj.getAttribute("y").toFloat()
-            val width = obj.getAttribute("width").toFloat()
-            val height = obj.getAttribute("height").toFloat()
-            val type = obj.getAttribute("type")
-            val properties = obj.getElementsByTagName("properties")
             val mapObject = MapObject(obj)
             if (obj.getAttribute("name") == "map_info") {
                 mapInfoObject = mapObject
@@ -170,17 +164,17 @@ class XMLMap(val map: GameMap) {
         var id: String
             get() = element.getAttribute("id")
             set(value) { element.setAttribute("id", value) }
-        var x: Float
-            get() = element.getAttribute("x").toFloat()
+        var x: Float?
+            get() = element.getAttribute("x").toFloatOrNull()
             set(value) { element.setAttribute("x", value.toString()) }
-        var y: Float
-            get() = element.getAttribute("y").toFloat()
+        var y: Float?
+            get() = element.getAttribute("y").toFloatOrNull()
             set(value) { element.setAttribute("y", value.toString()) }
-        var width: Float
-            get() = element.getAttribute("width").toFloat()
+        var width: Float?
+            get() = element.getAttribute("width").toFloatOrNull()
             set(value) { element.setAttribute("width", value.toString()) }
-        var height: Float
-            get() = element.getAttribute("height").toFloat()
+        var height: Float?
+            get() = element.getAttribute("height").toFloatOrNull()
             set(value) { element.setAttribute("height", value.toString()) }
         var type: String
             get() = element.getAttribute("type")
@@ -253,6 +247,17 @@ class XMLMap(val map: GameMap) {
             }
             return result
         }
+    }
+
+    private fun getTriggers(list: NodeList): Element? {
+        val length = list.length
+        for (i in 0 until length) {
+            val item = list.item(i) as Element?
+            if (item?.nodeName == "objectgroup" && item.getAttribute("name") == "Triggers") {
+                return item
+            }
+        }
+        return null
     }
 
     companion object {
