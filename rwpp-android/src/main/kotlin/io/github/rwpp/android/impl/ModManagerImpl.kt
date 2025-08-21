@@ -9,9 +9,8 @@ package io.github.rwpp.android.impl
 
 import com.corrodinggames.rts.game.units.custom.ag
 import com.corrodinggames.rts.gameFramework.e.a
-import com.corrodinggames.rts.gameFramework.k.d
-import com.corrodinggames.rts.gameFramework.utility.ah
 import io.github.rwpp.android.MainActivity
+import io.github.rwpp.appKoin
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.ReloadModEvent
 import io.github.rwpp.event.events.ReloadModFinishedEvent
@@ -25,7 +24,6 @@ import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import java.io.File
-import java.util.concurrent.locks.ReentrantLock
 
 @Single
 class ModManagerImpl : ModManager {
@@ -40,6 +38,7 @@ class ModManagerImpl : ModManager {
         aVar.a(false, false)
         t.bo = false
         t.q()
+        appKoin.get<Game>().getAllMaps(true)
         ReloadModFinishedEvent().broadcastIn()
         Unit
     }

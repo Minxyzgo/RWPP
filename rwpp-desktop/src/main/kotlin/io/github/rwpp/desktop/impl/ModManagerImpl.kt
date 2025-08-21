@@ -9,6 +9,7 @@ package io.github.rwpp.desktop.impl
 
 import com.corrodinggames.rts.gameFramework.e.a
 import com.corrodinggames.rts.gameFramework.i.b
+import io.github.rwpp.appKoin
 import io.github.rwpp.desktop.GameEngine
 import io.github.rwpp.desktop.IAClass
 import io.github.rwpp.event.broadcastIn
@@ -47,6 +48,7 @@ class ModManagerImpl : ModManager {
         }
 
         latch.await()
+        appKoin.get<Game>().getAllMaps(true)
         ReloadModFinishedEvent().broadcastIn()
     }
 
