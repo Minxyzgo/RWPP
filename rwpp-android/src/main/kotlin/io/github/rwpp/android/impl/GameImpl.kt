@@ -9,7 +9,10 @@ package io.github.rwpp.android.impl
 
 import android.content.Context
 import android.content.Intent
-import com.corrodinggames.rts.appFramework.*
+import com.corrodinggames.rts.appFramework.LevelGroupSelectActivity
+import com.corrodinggames.rts.appFramework.LevelSelectActivity
+import com.corrodinggames.rts.appFramework.LoadLevelActivity
+import com.corrodinggames.rts.appFramework.ReplaySelectActivity
 import com.corrodinggames.rts.gameFramework.j.ae
 import com.corrodinggames.rts.gameFramework.k
 import io.github.rwpp.android.*
@@ -17,21 +20,15 @@ import io.github.rwpp.android.MainActivity.Companion.gameView
 import io.github.rwpp.appKoin
 import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.event.broadcastIn
-import io.github.rwpp.event.events.HostGameEvent
-import io.github.rwpp.event.events.HostSinglePlayerGameEvent
-import io.github.rwpp.event.events.MapChangedEvent
-import io.github.rwpp.event.events.PlayerJoinEvent
-import io.github.rwpp.event.events.RefreshUIEvent
+import io.github.rwpp.event.events.*
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.base.Difficulty
 import io.github.rwpp.game.map.*
-import io.github.rwpp.game.mod.Mod
-import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.game.ui.GUI
-import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.world.World
+import io.github.rwpp.logger
 import kotlinx.coroutines.*
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
@@ -64,7 +61,7 @@ class GameImpl : Game, CoroutineScope {
         t.bN.aiDifficulty = difficulty.ordinal - 2
         t.bN.save()
         LevelSelectActivity.loadSinglePlayerMapRaw("maps/${mission.type.pathName()}/${mission.mapName}.tmx", false, 0, 0, true, false)
-        val intent = Intent(get(), InGameActivity::class.java)
+        val intent = Intent(get(), CustomInGameActivity::class.java)
         intent.putExtra("level", t.di)
         gameLauncher.launch(intent)
     }
@@ -300,6 +297,11 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override fun getAllReplays(): List<Replay> {
+        val eStr = com.corrodinggames.rts.gameFramework.e.a.e("/SD/rustedWarfare/replays/")
+        logger.info("replay eStr: $eStr")
+        logger.info("b: ${com.corrodinggames.rts.gameFramework.e.a.e()}")
+        logger.info("replay b: ${com.corrodinggames.rts.gameFramework.e.a.c(eStr)}")
+        logger.info("saflink: ${com.corrodinggames.rts.gameFramework.utility.ah.a(eStr)}")
         return ReplaySelectActivity.getGameSaves()?.mapIndexed { i, str ->
             object : Replay {
                 override val id: Int = i
@@ -317,7 +319,7 @@ class GameImpl : Game, CoroutineScope {
     override fun watchReplay(replay: Replay) {
         if (GameEngine.t().bY.b(replay.name)) {
             gameLauncher.launch(
-                Intent(get(), InGameActivity::class.java)
+                Intent(get(), CustomInGameActivity::class.java)
             )
         }
     }
@@ -328,7 +330,7 @@ class GameImpl : Game, CoroutineScope {
     }
 
     override fun continueGame() {
-        val intent = Intent(get(), InGameActivity::class.java)
+        val intent = Intent(get(), CustomInGameActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
         gameLauncher.launch(intent)
     }

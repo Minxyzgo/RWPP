@@ -26,7 +26,6 @@ import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.desktop.*
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.events.StartGameEvent
-import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.base.Difficulty
@@ -40,7 +39,10 @@ import io.github.rwpp.widget.loadingMessage
 import kotlinx.coroutines.channels.Channel
 import org.koin.core.annotation.Single
 import org.lwjgl.opengl.Display
-import java.io.*
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.io.InputStream
 
 @Single(binds = [Game::class])
 class GameImpl : AbstractGame() {
@@ -183,7 +185,8 @@ class GameImpl : AbstractGame() {
                 //返回是否全屏，以便能处理边缘移动
                 override fun f(): Boolean {
                     val B = GameEngine.B()
-                    return B != null && appKoin.get<Settings>().isFullscreen
+                    // 设置确认是否边缘移动
+                    return B != null && appKoin.get<Settings>().isFullscreen && !appKoin.get<Settings>().mouseMoveView
                 }
             }
             val i = com.corrodinggames.rts.java.b.a()
