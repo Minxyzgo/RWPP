@@ -72,9 +72,9 @@ fun MapViewDialog(
                 var mapType = remember { MapType.entries[selectedIndex0] }
 
                 val permissionHelper = koinInject<PermissionHelper>()
-                remember(mapType) {
-                    if (mapType != MapType.SkirmishMap) permissionHelper.requestExternalStoragePermission()
-                }
+//                remember(mapType) {
+//                    if (mapType != MapType.SkirmishMap) permissionHelper.requestExternalStoragePermission()
+//                }
 
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -168,7 +168,7 @@ fun LazyGridItemScope.MapItem(
     ) {
         if(showImage) {
             AsyncImage(
-                model,
+                model = model,
                 contentDescription = null,
                 modifier = Modifier.padding(5.dp).weight(1f).align(Alignment.CenterHorizontally),
             )
