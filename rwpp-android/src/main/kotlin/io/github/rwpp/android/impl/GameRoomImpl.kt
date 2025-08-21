@@ -60,9 +60,12 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         get() = MapType.entries[GameEngine.t().bU.aA.a.ordinal]
     override var selectedMap: GameMap
         get() = game.getAllMaps().firstOrNull {
-            (if (isHost) GameEngine.t().bU.aB else GameEngine.t().bU.aA.b)?.endsWith((it.mapName + it.getMapSuffix()).replace("\\", "/")) == true }
-            ?: NetworkMap(LevelSelectActivity.convertLevelFileNameForDisplay(GameEngine.t().bU.aA.b))
+            if (isHost)
+                (lastMapPath ?: GameEngine.t().bU.aB).endsWith(getMapRealPath(it))
+            else GameEngine.t().bU.aA.b.contains(it.displayName())
+        } ?: NetworkMap(LevelSelectActivity.convertLevelFileNameForDisplay(GameEngine.t().bU.aA.b))
         set(value) {
+            lastMapPath = null
             if (isHostServer) {
                 GameEngine.t().bU.i("-map" + com.corrodinggames.rts.gameFramework.e.a.q(LevelSelectActivity.convertLevelFileNameForDisplay(value.mapName)) + "'")
             } else {
@@ -126,10 +129,16 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         get() = GameEngine.t().bU.C
 
     private var mapIndex = 0
+    private var lastMapPath: String? = null
 
     @Suppress("UNCHECKED_CAST")
     override fun getPlayers(): List<Player> {
         return (PlayerInternal.j as Array<Player?>).mapNotNull { it }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun getAllPlayers(): Array<Player?> {
+        return PlayerInternal.j as Array<Player?>
     }
 
     @SuppressLint("SuspiciousIndentation")
@@ -543,6 +552,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
         gameOver = false
         _gameSpeed = 1f
         cachePlayerSet.clear()
+        lastMapPath = null
 
         MainActivity.activityResume()
 
@@ -570,6 +580,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
                     gameMapTransformer!!.invoke(xmlMap)
                     val path = "$mapDir/generated_${mapIndex++}.tmx"
                     val file = xmlMap.saveToFile(path)
+                    lastMapPath = lastMapPath ?: GameEngine.t().bU.aB
                     GameEngine.t().bU.aB = path
                     GlobalEventChannel.filter(DisconnectEvent::class).subscribeOnce {
                         file.delete()
@@ -587,7 +598,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             MultiplayerBattleroomActivity.startGameCommon()
             if(t.bI != null && t.bI.X) {
                 t.bU.bf = true
-                val intent = Intent(game.get(), InGameActivity::class.java)
+                val intent = Intent(game.get(), CustomInGameActivity::class.java)
                 intent.putExtra("level", t.di)
                 gameLauncher.launch(intent)
                 StartGameEvent().broadcastIn()

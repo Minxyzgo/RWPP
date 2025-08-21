@@ -15,6 +15,7 @@ import io.github.rwpp.desktop.impl.PlayerImpl
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.DisconnectEvent
 import io.github.rwpp.event.events.MapChangedEvent
+import io.github.rwpp.game.ConnectingPlayer
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.GameRoom
 import io.github.rwpp.game.Player
@@ -43,7 +44,7 @@ abstract class AbstractGameRoom  : GameRoom {
         get() = GameEngine.B().bX.H
     override val localPlayer: Player
         get() {
-            return (GameEngine.B().bX.z ?: GameEngine.B().bs) as Player
+            return (GameEngine.B().bX.z ?: GameEngine.B().bs ?: ConnectingPlayer) as Player
         }
     override var sharedControl: Boolean
         get() = GameEngine.B().bX.ay.l
@@ -53,12 +54,15 @@ abstract class AbstractGameRoom  : GameRoom {
     override val randomSeed: Int
         get() = GameEngine.B().bX.ay.q
     override val mapType: MapType
-        get() = io.github.rwpp.game.map.MapType.entries[GameEngine.B().bX.ay.a.ordinal]
+        get() = MapType.entries[GameEngine.B().bX.ay.a.ordinal]
     override var selectedMap: GameMap
-        get() = io.github.rwpp.appKoin.get<Game>().getAllMaps().firstOrNull {
-            (if (isHost) GameEngine.B().bX.az else GameEngine.B().bX.ay.b)?.endsWith((it.mapName + it.getMapSuffix()).replace("\\", "/")) ?: false
+        get() = appKoin.get<Game>().getAllMaps().firstOrNull {
+            if (isHost)
+                (lastMapPath ?: GameEngine.B().bX.az).endsWith((it.mapName + it.getMapSuffix()).replace("\\", "/"))
+            else GameEngine.B().bX.ay.b.contains(it.displayName())
         } ?: NetworkMap(formatMapName(GameEngine.B().bX.ay.b) as String)
         set(value) {
+            lastMapPath = null
             if (isHostServer) {
                 GameEngine.B().bX.a(
                     GameEngine.B().bX.e().apply {
@@ -129,7 +133,7 @@ abstract class AbstractGameRoom  : GameRoom {
         get() = GameEngine.B().bX.ay.p
         set(value) {
             GameEngine.B().bX.ay.p = value
-            if (isHost && value) sendSystemMessage("Room has been locked. Now self can't join the room")
+            if (isHost && value) sendSystemMessage("Room has been locked. Now player can't join the room")
         }
     override var teamLock: Boolean
         get() = GameEngine.B().bX.ay.m
@@ -155,10 +159,16 @@ abstract class AbstractGameRoom  : GameRoom {
         set(value) { _gameSpeed = value}
 
     private var mapIndex = 0
+    private var lastMapPath: String? = null
 
     @Suppress("unchecked_cast")
     override fun getPlayers(): List<Player> {
         return (asField.get(GameEngine.B().bX.ay) as Array<Player?>).mapNotNull { it }.toList()
+    }
+
+    @Suppress("unchecked_cast")
+    override fun getAllPlayers(): Array<Player?> {
+        return asField.get(GameEngine.B().bX.ay) as Array<Player?>
     }
 
     override suspend fun roomDetails(): String {
@@ -345,6 +355,7 @@ abstract class AbstractGameRoom  : GameRoom {
         teamMode = null
         gameOver = false
         _gameSpeed = 1f
+        lastMapPath = null
 
         if (isConnecting) GameEngine.B().bX.b(reason)
         DisconnectEvent(reason).broadcastIn()
@@ -383,6 +394,7 @@ abstract class AbstractGameRoom  : GameRoom {
                 gameMapTransformer!!.invoke(xmlMap)
                 val path = "$mapDir/generated_${mapIndex++}.tmx"
                 val file = xmlMap.saveToFile(path)
+                lastMapPath = lastMapPath ?: B.bX.az
                 B.bX.az = path
                 io.github.rwpp.event.GlobalEventChannel.filter(io.github.rwpp.event.events.DisconnectEvent::class)
                     .subscribeOnce {

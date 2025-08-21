@@ -74,6 +74,11 @@ interface GameRoom {
     fun getPlayers(): List<Player>
 
     /**
+     * Get all players from the room. If a spawn point is not assigned, it will be null.
+     */
+    fun getAllPlayers(): Array<Player?>
+
+    /**
      * Get a player by its client.
      * @param client the client of the player.
      */
@@ -197,6 +202,7 @@ interface GameRoom {
      */
     fun startGame()
 }
+
 
 fun GameRoom.sendChatMessageOrCommand(message: String) {
     if (isHost && message.startsWith(commands.prefix)) {
