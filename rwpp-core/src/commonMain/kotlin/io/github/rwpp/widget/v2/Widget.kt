@@ -14,21 +14,41 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.rwpp.LocalWindowManager
+import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.i18n.I18nType
+import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.ui.UI
+import io.github.rwpp.widget.LargeDropdownMenu
+import io.github.rwpp.widget.RWSingleOutlinedTextField
+import io.github.rwpp.widget.RWSliderColors
 
 import io.github.rwpp.widget.WindowManager
+import org.koin.compose.koinInject
+import kotlin.math.roundToInt
 
 @Composable
 fun ExpandedCard(
@@ -121,3 +141,201 @@ fun LongPressFloatingActionButton(
     }
 }
 
+@Composable
+fun SettingsSwitchComp(
+    name: String,
+    labelName: String = name,
+    defaultValue: Boolean? = null,
+    customConfigSettingAction: ((Boolean) -> Unit)? = null
+) {
+    val configIO = koinInject<ConfigIO>()
+
+    var state by remember { mutableStateOf(defaultValue ?: configIO.getGameConfig(name)) }
+    val onClick = customConfigSettingAction?.let{
+        {
+            state = !state
+            customConfigSettingAction(state)
+        }
+    } ?: {
+        state = !state
+        configIO.setGameConfig(name, state)
+    }
+    Surface(
+        color = Color.Transparent,
+        modifier = Modifier
+            .fillMaxWidth(),
+        onClick = onClick,
+    ) {
+        Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if(customConfigSettingAction != null) labelName else readI18n("menus.settings.option.$labelName", I18nType.RW),
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Start,
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Switch(
+                    checked = state,
+                    modifier = Modifier.padding(end = 15.dp),
+                    onCheckedChange = { onClick() },
+                    colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary, checkedThumbColor = MaterialTheme.colorScheme.onSurface),
+                )
+            }
+            HorizontalDivider()
+        }
+    }
+}
+
+@Composable
+fun SettingsTextField(
+    label: String,
+    value: String,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    lengthLimitCount: Int = Int.MAX_VALUE,
+    typeInOnlyInteger: Boolean = false,
+    typeInNumberOnly: Boolean = false,
+    enabled: Boolean = true,
+    appendedContent: @Composable (() -> Unit)? = null,
+    onValueChange: (String) -> Unit
+) {
+    Surface(
+        color = Color.Transparent,
+        modifier = Modifier
+            .fillMaxWidth(),
+    ) {
+        Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = label,
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Start,
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+                RWSingleOutlinedTextField(
+                    "",
+                    value,
+                    Modifier.width(300.dp).padding(end = 15.dp),
+                    trailingIcon,
+                    leadingIcon,
+                    lengthLimitCount,
+                    typeInOnlyInteger,
+                    typeInNumberOnly,
+                    enabled,
+                    appendedContent,
+                    onValueChange = onValueChange
+                )
+
+            }
+            HorizontalDivider()
+        }
+    }
+}
+
+@Composable
+fun <T> SettingsDropDown(
+    name: String,
+    items: List<T>,
+    selectedIndex: Int = 0,
+    selectedItemColor: @Composable (T?, Int) -> Color = { _, _ -> MaterialTheme.colorScheme.onSurface },
+    onSelectedItem: (Int, T) -> Unit,
+) {
+    Surface(
+        color = Color.Transparent,
+        modifier = Modifier
+            .fillMaxWidth(),
+    ) {
+        Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = readI18n("settings.$name"),
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Start,
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                LargeDropdownMenu(
+                    modifier = Modifier.width(300.dp).padding(end = 15.dp),
+                    items = items,
+                    label = "",
+                    selectedIndex = selectedIndex,
+                    onItemSelected = onSelectedItem,
+                    selectedItemColor = selectedItemColor
+                )
+            }
+
+            HorizontalDivider()
+        }
+    }
+}
+
+@Composable
+fun SettingsSlider(
+    name: String,
+    defaultValue: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    valueFormat: (Float) -> String = { (it * 100).roundToInt().toString() + "%" }
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+
+            var value by remember { mutableStateOf(defaultValue) }
+
+            remember(value) {
+                onValueChange(value)
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Slider(
+                value = value,
+                valueRange = valueRange,
+                modifier = Modifier.width(250.dp).padding(end = 5.dp),
+                onValueChange = { value = it },
+                colors = RWSliderColors
+            )
+
+            Text(valueFormat(value), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(50.dp).padding(top = 6.dp, end = 5.dp))
+        }
+
+        HorizontalDivider()
+    }
+
+}

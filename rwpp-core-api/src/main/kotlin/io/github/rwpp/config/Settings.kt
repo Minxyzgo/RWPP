@@ -34,6 +34,8 @@ data class Settings(
     var changeGameTheme: Boolean = false,
     var showUnitTargetLine: Boolean = false,
     var improvedHealthBar: Boolean = false,
+    var mouseMoveView: Boolean = false,
+    //var pathfindingOptimization: Boolean = false,
     var boldText: Boolean = false,
     var renderingBackend: String = "Default", // Default, Software, OpenGL
     var forceEnglish: Boolean = false,
