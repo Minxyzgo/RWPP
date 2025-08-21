@@ -12,4 +12,7 @@ import org.koin.core.annotation.Single
 
 @Single
 @Serializable
-data class EnabledExtensions(var values: List<String> = listOf()) : Config
+data class EnabledExtensions(
+    var enabledResourceId: String? = null,
+    var values: List<String> = listOf()
+) : Config
