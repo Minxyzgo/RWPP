@@ -116,7 +116,7 @@ interface PlayerImpl : Player {
         color: Int?,
         startingUnits: Int?,
         aiDifficulty: Int?,
-        changeTeamFromSpawn: Boolean
+        autoTeamMode: Boolean
     ) {
         val B = GameEngine.B()
         var intValue: Int = spawnPoint
@@ -140,18 +140,21 @@ interface PlayerImpl : Player {
         if(z2) {
             i = -3
             z = true
-        } else if(changeTeamFromSpawn) {
+        } else if(autoTeamMode) {
             i = intValue % 2
+
+            val p = com.corrodinggames.rts.game.n.k(spawnPoint)
+            if (p != null) {
+                i = p.r
+            } else if (room.teamMode != null) {
+                i = room.teamMode!!.autoTeamAssign(room, spawnPoint, this)
+            }
+
             self.u = false
             z = true
         } else {
             z = false
-            i = this.team
-            try {
-                i = team - 1
-            } catch(e: NumberFormatException) {
-                logger.error(e.stackTraceToString())
-            }
+            i = team - 1
             self.u = true
         }
         if(this.team != i) {

@@ -122,7 +122,7 @@ interface PlayerImpl : Player {
         color: Int?,
         startingUnits: Int?,
         aiDifficulty: Int?,
-        changeTeamFromSpawn: Boolean
+        autoTeamMode: Boolean
     ) {
         val t = GameEngine.t()
         var bl: Boolean
@@ -167,8 +167,14 @@ interface PlayerImpl : Player {
                     }
                     n = team
                     n3 = if(n3 != 0) -3 else n;
-                    if(n3 == 0) {
+                    if(n3 == 0 || autoTeamMode) {
                         n3 = n2 % 2;
+                        val p = PlayerInternal.i(spawnPoint)
+                        if (p != null) {
+                            n3 = p.s
+                        } else if (room.teamMode != null) {
+                            n3 = room.teamMode!!.autoTeamAssign(room, spawnPoint, this)
+                        }
                         bl = true;
                     } else if(n3 != -1) {
                         --n3;

@@ -67,7 +67,7 @@ interface Player {
         color: Int? = null,
         startingUnits: Int? = null,
         aiDifficulty: Int? = null,
-        changeTeamFromSpawn: Boolean = false
+        autoTeamMode: Boolean = false
     )
 
     companion object
@@ -76,5 +76,5 @@ interface Player {
 fun Player.teamAlias() = when {
     team == -3 -> "S"
     team <= 10 -> Char('A'.code + team).toString()
-    else -> team.toString()
+    else -> (team + 1).toString()
 }
