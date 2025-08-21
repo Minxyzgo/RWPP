@@ -84,9 +84,9 @@ fun ModsView(onExit: () -> Unit) {
         filteredMods.filter { !it.isEnabled }
     }
 
-    LaunchedEffect(Unit) {
-        permissionHelper.requestExternalStoragePermission()
-    }
+//    LaunchedEffect(Unit) {
+//        permissionHelper.requestExternalStoragePermission()
+//    }
 
     fun reload() {
         scope.launch(Dispatchers.IO) {
