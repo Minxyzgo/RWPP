@@ -124,18 +124,23 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
                                     logger.info("File: ${fi.absolutePath}")
                                     if (fi.absolutePath == extensionPath) return@forEachIndexed
 
-                                    if (fi.isDirectory) {
-                                        val infoTomlFile = File(fi, "info.toml")
-                                        if (!infoTomlFile.exists()) return@forEachIndexed
-                                        config = Toml.decodeFromNativeReader(infoTomlFile.reader())
-                                    } else {
-                                        val zipFile = ZipFile(fi)
-                                        val entry = zipFile.getEntry("info.toml")
+                                    try {
+                                        if (fi.isDirectory) {
+                                            val infoTomlFile = File(fi, "info.toml")
+                                            if (!infoTomlFile.exists()) return@forEachIndexed
+                                            config = Toml.decodeFromNativeReader(infoTomlFile.reader())
+                                        } else {
+                                            val zipFile = ZipFile(fi)
+                                            val entry = zipFile.getEntry("info.toml")
 
-                                        if (entry != null) {
-                                            val input = zipFile.getInputStream(entry)
-                                            config = Toml.decodeFromNativeReader(input.reader())
+                                            if (entry != null) {
+                                                val input = zipFile.getInputStream(entry)
+                                                config = Toml.decodeFromNativeReader(input.reader())
+                                            }
                                         }
+                                    } catch (e: Exception) {
+                                        logger.error("Load extension failed: ${e.message}")
+                                        return Result.failure(e)
                                     }
 
                                     logger.info("Config: $config")
@@ -177,30 +182,42 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
 
     override fun canEnable(extension: Extension): Boolean {
         return extension.isSupportedForCurrentPlatform &&
-                compareVersions(extension.config.minGameVersion, projectVersion) != -1 &&
+                compareVersions(extension.config.minGameVersion, projectVersion) != 1 &&
                 (extension.config.dependencies.isEmpty() || extension.config.dependencies
                     .all { getExtensionById(it)?.isEnabled == true })
     }
 
     override fun getUsingResource(): Extension? {
+        val enabledExtensions = get<EnabledExtensions>()
         return _usingResource ?: run {
-            val infoTomlFile = File(resourceOutputDir + "info.toml")
-
-            if (!fileExists || !infoTomlFile.exists()) return@run null
-
-            val info = Toml.decodeFromNativeReader<ExtensionConfig>(
-                infoTomlFile.reader()
-            )
-
-            getAllExtensions().getOrNull()?.first { it.config.displayName == info.displayName }
+            getAllExtensions().getOrNull()?.firstOrNull { it.config.id == enabledExtensions.enabledResourceId }
         }.also { _usingResource = it }
     }
 
     override fun init() {
         logger.info("Init extensions...")
-        val extensions =getAllExtensions().onFailure {
+        val extensions = getAllExtensions().onFailure {
             UI.showWarning(it.message ?: "Load extensions failed.")
         }.getOrNull()
+
+        logger.info("Start to init resources...")
+        val usingResource = getUsingResource()
+        logger.info("Using resource: ${usingResource?.config?.id}")
+        val lastResource = File(resourceOutputDir, "info.toml").run {
+            if (exists()) {
+                extensions?.firstOrNull {
+                    it.config.id == Toml.decodeFromNativeReader<ExtensionConfig>(reader()).id
+                }
+            } else {
+                null
+            }
+        }
+        if (lastResource != usingResource) {
+            enableResource(usingResource)
+        } else {
+            logger.info("Resource is not changed. Skip.")
+        }
+        logger.info("Init resources finished.")
 
         extensions?.forEach { extension ->
             if (extension.isEnabled) {
@@ -237,6 +254,7 @@ abstract class BaseExternalHandlerImpl : ExternalHandler {
         }
 
         extensions?.filter { it.isEnabled && it.launcher != null }?.forEach { it.launcher?.init() }
+        logger.info("Init extensions finished.")
     }
 
     private fun isSupportCurrentGamePlatform(platform: String): Boolean {
