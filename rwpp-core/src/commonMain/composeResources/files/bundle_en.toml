@@ -21,6 +21,13 @@ password = "password"
 hostPublic = "Host Public"
 hostPrivate = "Host Private"
 port = "port"
+roomInfo = """
+creator: {0}
+    map: {1}
+players: {2}/{3}
+version: {4}
+   mods: {5}
+"""
 admitting = """
 In order to make RWPP even better, we want you to send a message to joining players to promote RWPP when you are a host
 Do you agree? (The dialog will no longer be displayed, and can be changed later in Settings - Show Welcome Message)

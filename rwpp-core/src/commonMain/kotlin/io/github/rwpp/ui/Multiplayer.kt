@@ -52,6 +52,7 @@ import io.github.rwpp.game.Game
 import io.github.rwpp.game.data.RoomOption
 import io.github.rwpp.game.mod.ModManager
 import io.github.rwpp.gameVersion
+import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.io.SizeUtils
 import io.github.rwpp.logger
@@ -914,7 +915,7 @@ fun MultiplayerView(
                 try {
                     val roomList = selectedServerConfig
                     if (isShowingRoomList && roomList != null) {
-                        if (roomList.customRoomListProvider != null) {
+                        if (roomList.customRoomListProvider == null) {
                             currentViewList = getRoomListFromSourceUrl(
                                 roomList.ip.split(";")
                             )
@@ -1418,12 +1419,24 @@ private fun JoinServerRequestDialog(
 
             LargeDividingLine { 0.dp }
 
-            Text("creator: ${roomDescription.creator}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-            Text("map: ${roomDescription.mapName}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-            Text("players: ${roomDescription.playerCurrentCount ?: ""}/${roomDescription.playerMaxCount ?: ""}" , modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-            Text("version: ${roomDescription.version}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-            Text("mods: ${roomDescription.mods}", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                readI18n(
+                    "multiplayer.roomInfo",
+                    I18nType.RWPP,
+                    roomDescription.creator,
+                    roomDescription.mapName,
+                    roomDescription.playerCurrentCount?.toString() ?: "",
+                    roomDescription.playerMaxCount?.toString() ?: "",
+                    roomDescription.version,
+                    roomDescription.mods
+                ),
+                modifier = Modifier.padding(5.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
             Spacer(modifier = Modifier.weight(1f))
+
             Row(
                 modifier = Modifier.fillMaxWidth()
                     .height(IntrinsicSize.Min)

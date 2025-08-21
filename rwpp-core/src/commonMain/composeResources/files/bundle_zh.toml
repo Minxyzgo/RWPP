@@ -22,6 +22,13 @@ password = "密码"
 hostPublic = "创建公开"
 hostPrivate = "创建私有"
 port = "端口"
+roomInfo = """
+房主: {0}
+地图: {1}
+玩家: {2}/{3}
+版本: {4}
+模组: {5}
+"""
 admitting = """
 为了使RWPP能变得更好，我们希望您在开房时向进入的玩家发送一条消息用以推广RWPP
 您是否同意？(该对话框第一次显示后将不再显示，稍后可在 设置 - Show Welcome Message中更改)
