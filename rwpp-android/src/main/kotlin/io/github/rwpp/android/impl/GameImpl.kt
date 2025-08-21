@@ -76,8 +76,8 @@ class GameImpl : Game, CoroutineScope {
         t.bU.o = useMods
         t.bU.q = isPublic
         launch(Dispatchers.IO) {
+            initMap(true)
             t.bU.t()
-            initMap()
             MapChangedEvent(gameRoom.selectedMap.displayName()).broadcastIn()
             delay(100)
             RefreshUIEvent().broadcastIn()

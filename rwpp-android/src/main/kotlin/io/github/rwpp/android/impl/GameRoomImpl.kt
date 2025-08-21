@@ -575,7 +575,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
             isGaming = true
 
             if(isHost || isSinglePlayerGame) {
-                if (!isSinglePlayerGame && gameMapTransformer != null) {
+                if (gameMapTransformer != null) {
                     val xmlMap = XMLMap(selectedMap)
                     gameMapTransformer!!.invoke(xmlMap)
                     val path = "$mapDir/generated_${mapIndex++}.tmx"
