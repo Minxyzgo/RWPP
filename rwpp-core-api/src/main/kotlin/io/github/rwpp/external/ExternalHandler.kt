@@ -32,7 +32,7 @@ interface ExternalHandler : KoinComponent, Initialization {
 
   //  fun loadExtensionClass(extension: Extension): ClassLoader?
 
-    fun loadJarToSystemClassPath(jar: File): ClassLoader
+    fun loadJarToSystemClassPath(jar: File)
 
     fun newExtension(
         isEnabled: Boolean,

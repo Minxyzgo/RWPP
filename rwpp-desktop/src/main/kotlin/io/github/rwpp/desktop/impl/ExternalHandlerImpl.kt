@@ -26,17 +26,15 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
     override fun enableResource(resource: Extension?) {
         if (resource?.config?.hasResource == false) return
         _usingResource = resource
-        resource ?: run {
-            File(resourceOutputDir).let {
-                it.setWritable(true)
-                if (it.exists()) it.deleteRecursively()
-            }
-            File(resOutputDir).let {
-                it.setWritable(true)
-                if (it.exists()) it.deleteRecursively()
-            }
-            return
+
+        File(resourceOutputDir).let {
+            if (it.exists()) it.deleteRecursively()
         }
+        File(resOutputDir).let {
+            if (it.exists()) it.deleteRecursively()
+        }
+
+        if (resource == null) return
 
         val resourceList = listOf("gui", "units", "tilesets", "music", "shaders")
         resourceList.forEach {
@@ -65,10 +63,9 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         }
     }
 
-    override fun loadJarToSystemClassPath(jar: File): ClassLoader {
+    override fun loadJarToSystemClassPath(jar: File) {
         val url = jar.toURI().toURL()
         val classLoader = Thread.currentThread().contextClassLoader as URLClassLoader
         Reflect.callVoid(classLoader, "addURL", args = listOf(url))
-        return classLoader
     }
 }

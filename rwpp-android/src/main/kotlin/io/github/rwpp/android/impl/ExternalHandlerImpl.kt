@@ -33,16 +33,17 @@ import java.util.zip.ZipFile
 @Single(binds = [ExternalHandler::class, Initialization::class])
 class ExternalHandlerImpl : BaseExternalHandlerImpl() {
     override fun enableResource(resource: Extension?) {
+        if (resource?.config?.hasResource == false) return
         _usingResource = resource
-        resource ?: run {
-            File(resourceOutputDir).let {
-                if (it.exists()) it.deleteRecursively()
-            }
-            File(resOutputDir).let {
-                if (it.exists()) it.deleteRecursively()
-            }
-            return
+
+        File(resourceOutputDir).let {
+            if (it.exists()) it.deleteRecursively()
         }
+        File(resOutputDir).let {
+            if (it.exists()) it.deleteRecursively()
+        }
+
+        if (resource == null) return
 
         val resourceList = listOf("units", "tilesets", "music", "shaders")
         resourceList.forEach {
@@ -78,7 +79,7 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         fileChooser.launch(intent)
     }
 
-    override fun loadJarToSystemClassPath(jar: File): ClassLoader {
+    override fun loadJarToSystemClassPath(jar: File) {
         val targetFile = File(dexFolder, "classes-${jar.nameWithoutExtension}.dex")
         val zip = ZipFile(jar)
         val dex = zip.getEntry("classes.dex")
@@ -88,27 +89,7 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
         }
         targetFile.writeBytes(inputStream.readBytes())
         targetFile.setReadOnly()
-        return object : PathClassLoader(targetFile.absolutePath, Thread.currentThread().contextClassLoader) {
-            @Throws(ClassNotFoundException::class)
-            override fun loadClass(name: String?, resolve: Boolean): Class<*>? {
-                //check for loaded state
-                var loadedClass = findLoadedClass(name)
-                if (loadedClass == null) {
-                    try {
-                        //try to load own class first
-                        loadedClass = findClass(name)
-                    } catch (_: ClassNotFoundException) {
-                        //use parent if not found
-                        return parent.loadClass(name)
-                    }
-                }
-
-                if (resolve) {
-                    resolveClass(loadedClass)
-                }
-                return loadedClass
-            }
-        }.also { loadDex(get(), it) }
+        loadDex(get(), targetFile.absolutePath)
     }
 
     //private val exFilePicker = ExFilePicker()
