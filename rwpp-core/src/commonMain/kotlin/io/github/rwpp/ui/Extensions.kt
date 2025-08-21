@@ -50,8 +50,6 @@ import io.github.rwpp.scripts.Render
 import io.github.rwpp.utils.compareVersions
 import io.github.rwpp.widget.*
 import io.github.rwpp.widget.v2.LazyColumnScrollbar
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
@@ -119,18 +117,15 @@ fun ExtensionView(
             .filter { it.isEnabled }
             .map {
                 if (!externalHandler.canEnable(it)) {
-                    result = readI18n("extension.require")
+                    result = readI18n("extension.require", I18nType.RWPP, it.config.displayName)
                     return@LoadingView true
                 }
                 it.config.id
             }
         result = kotlin.runCatching {
-            appKoin.get<EnabledExtensions>().values = enabledExtensions
-            if (defaultResource != selectedResource) {
-                withContext(Dispatchers.IO) {
-                    externalHandler.enableResource(selectedResource)
-                }
-            }
+            val enabledExtensionsConfig = appKoin.get<EnabledExtensions>()
+            enabledExtensionsConfig.values = enabledExtensions
+            enabledExtensionsConfig.enabledResourceId = selectedResource?.config?.id
         }.exceptionOrNull()?.stackTraceToString() ?: readI18n("extension.loadedInfo")
         true
     }
@@ -271,7 +266,11 @@ fun ExtensionView(
                                 },
                                 selectedResource,
                                 onCheckedChange = {
-                                    selectedResource = resource
+                                    selectedResource = if (it) {
+                                        resource
+                                    } else {
+                                        null
+                                    }
                                 }
                             )
                         }
@@ -354,17 +353,17 @@ private fun LazyItemScope.ExtensionCard(
                     }
 
                     Text(
-                        "Author: ${extension.config.author}",
+                        readI18n("extension.author", I18nType.RWPP, extension.config.author),
                         modifier = Modifier.padding(2.dp),
                         style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.secondary
                     )
 
                     Text(
-                        "Version: ${extension.config.version}",
-                        modifier = Modifier.padding(top = 0.dp, bottom = 2.dp),
+                        readI18n("extension.version", I18nType.RWPP, extension.config.version),
+                        modifier = Modifier.padding(2.dp),
                         style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 }
             }
