@@ -29,6 +29,7 @@ import io.github.rwpp.LocalWindowManager
 import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.app.PermissionHelper
 import io.github.rwpp.appKoin
+import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.GameLoadedEvent
 import io.github.rwpp.generatedLibDir
@@ -154,6 +155,11 @@ class LoadingScreen : ComponentActivity() {
                                                     Reflect.reifiedSet<GameEngine>(null, "ak", engineImpl)
                                                     loadingThread
                                                     engineImpl.a(this@LoadingScreen as Context)
+                                                    val configIO = appKoin.get<ConfigIO>()
+                                                    if (!configIO.getGameConfig<Boolean>("hasSelectedAStorageType")) {
+                                                        configIO.setGameConfig("hasSelectedAStorageType", true)
+                                                        configIO.setGameConfig("storageType", 0)
+                                                    }
                                                 } catch (e: Exception) {
                                                     e.printStackTrace()
                                                 }
