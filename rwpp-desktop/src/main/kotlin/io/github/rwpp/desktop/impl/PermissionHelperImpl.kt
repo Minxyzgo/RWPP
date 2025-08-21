@@ -13,6 +13,7 @@ import org.koin.core.annotation.Single
 @Single
 class PermissionHelperImpl : PermissionHelper {
 
+    @Deprecated("Useless")
     override fun requestExternalStoragePermission() {
         //do nothing
     }

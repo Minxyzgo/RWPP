@@ -18,6 +18,7 @@ import org.koin.core.component.get
 
 @Single
 class PermissionHelperImpl : PermissionHelper {
+    @Deprecated("Useless")
     override fun requestExternalStoragePermission() {
         d.c(get<Context>() as Activity)
     }

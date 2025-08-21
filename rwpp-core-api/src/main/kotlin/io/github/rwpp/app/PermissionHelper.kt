@@ -14,6 +14,7 @@ interface PermissionHelper : KoinComponent {
     /**
      * Request external storage permission. (Only Android need to implement it)
      */
+    @Deprecated("Useless")
     fun requestExternalStoragePermission()
 
     /**
@@ -25,5 +26,4 @@ interface PermissionHelper : KoinComponent {
      * Check if the app has manage file permission. (Only Android 11+)
      */
     fun hasManageFilePermission(): Boolean
-
 }
