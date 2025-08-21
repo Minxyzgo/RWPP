@@ -66,7 +66,7 @@ fun ContributorList(
             Text(header1, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
             LargeDividingLine { 5.dp }
 
-            val sponsors = "铁锈盒子 (ww.rtsbox.cn);亚托莉;AABBRST"
+            val sponsors = "铁锈盒子 (ww.rtsbox.cn);亚托莉;AABBRST;Toledo;猫猫"
             BorderCard(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
                 sponsors.split(";").forEach {
                     Text(
