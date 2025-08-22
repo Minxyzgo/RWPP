@@ -218,18 +218,25 @@ fun MultiplayerView(
                 .padding(10.dp)
                 .autoClearFocus(),
         ) {
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .height(75.dp)
-                .background(
-                    brush = Brush.linearGradient(
-                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary))
-                ),
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(75.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+                        )
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text("Host Game", modifier = Modifier.padding(5.dp), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onSurface)
+                        Text(
+                            "Host Game",
+                            modifier = Modifier.padding(5.dp),
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
@@ -238,52 +245,90 @@ fun MultiplayerView(
 
             val modManager = koinInject<ModManager>()
             var enableMods by remember { mutableStateOf(false) }
-            var hostByRCN by remember { mutableStateOf(false) }
+            var hostByProtocol by remember { mutableStateOf(false) }
             var transferMod by remember { mutableStateOf(false) }
+            val selectedRoomListHostProtocol =
+                remember(selectedServerConfig) {
+                    selectedServerConfig.takeIf { it?.type == ServerType.RoomList }?.customRoomHostProtocol ?: "RCN"
+                }
             val modSize by remember {
-                mutableStateOf(
+                mutableLongStateOf(
                     modManager.getAllMods()
                         .filter { it.isEnabled }
                         .sumOf { it.getSize() }
                 )
             }
 
-
-            remember(enableMods, hostByRCN) {
-                if(!enableMods || hostByRCN) transferMod = false
+            remember(enableMods) {
+                if (!enableMods) transferMod = false
             }
 
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    RWCheckbox(enableMods, onCheckedChange = { enableMods = !enableMods }, modifier = Modifier.padding(5.dp))
-                    Text(readI18n("multiplayer.enableMods"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 5.dp))
+                    RWCheckbox(
+                        enableMods,
+                        onCheckedChange = { enableMods = !enableMods },
+                        modifier = Modifier.padding(5.dp)
+                    )
+                    Text(
+                        readI18n("multiplayer.enableMods"),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(top = 5.dp)
+                    )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RWCheckbox(hostByRCN, onCheckedChange = { hostByRCN = !hostByRCN }, modifier = Modifier.padding(5.dp))
-                    Text(readI18n("multiplayer.hostByRCN"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 5.dp))
-                }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    RWCheckbox(transferMod,
+                    RWCheckbox(
+                        hostByProtocol,
+                        onCheckedChange = { hostByProtocol = !hostByProtocol },
+                        modifier = Modifier.padding(5.dp)
+                    )
+                    Text(
+                        readI18n("multiplayer.hostByProtocol", I18nType.RWPP, selectedRoomListHostProtocol),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(top = 5.dp)
+                    )
+                }
+
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RWCheckbox(
+                        transferMod,
                         onCheckedChange = { transferMod = !transferMod },
                         modifier = Modifier.padding(5.dp),
-                        enabled = enableMods && modSize <= maxModSize && !hostByRCN
+                        enabled = enableMods && modSize <= maxModSize
                     )
-                    Text("${readI18n("multiplayer.transferMod")} ${if(modSize > maxModSize) "(Disabled for total mods size: ${SizeUtils.byteToMB(modSize)}MB > ${SizeUtils.byteToMB(maxModSize)}MB)" else ""}",
+                    Text(
+                        "${readI18n("multiplayer.transferMod")} ${
+                            if (modSize > maxModSize) "(Disabled for total mods size: ${
+                                SizeUtils.byteToMB(
+                                    modSize
+                                )
+                            }MB > ${SizeUtils.byteToMB(maxModSize)}MB)" else ""
+                        }",
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(top = 5.dp),
                     )
                 }
-
 
                 var password by remember { mutableStateOf("") }
                 RWSingleOutlinedTextField(
                     readI18n("multiplayer.password"),
                     password,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 2.dp),
-                    enabled = !hostByRCN,
+                    enabled = !hostByProtocol,
                 ) { password = it }
+
+                var maxPlayer: Int? by remember { mutableStateOf(10) }
+                RWSingleOutlinedTextField(
+                    readI18n("multiplayer.room.maxPlayer"),
+                    maxPlayer?.toString() ?: "",
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 2.dp),
+                    enabled = hostByProtocol,
+                    typeInNumberOnly = true,
+                    typeInOnlyInteger = true,
+                ) { maxPlayer = it.toIntOrNull()?.coerceAtMost(100) }
 
                 var port by remember { mutableStateOf(configIO.getGameConfig<Int?>("networkPort")) }
                 RWSingleOutlinedTextField(
@@ -292,20 +337,20 @@ fun MultiplayerView(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp),
                     lengthLimitCount = 5,
                     typeInNumberOnly = true,
-                    enabled = !hostByRCN,
+                    enabled = !hostByProtocol,
                 ) {
                     port = it.toIntOrNull()
                     configIO.setGameConfig("networkPort", port ?: 5123)
                 }
 
-                val rcnAddress = "36.151.65.203:5123"
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                     RWTextButton(readI18n("multiplayer.hostPrivate"), modifier = Modifier.padding(5.dp)) {
                         dismiss()
                         game.gameRoom.option = RoomOption(transferMod, modSize.toInt())
-                        if (hostByRCN) {
-                            game.onQuestionCallback(if (enableMods) "smod" else "snew")
-                            serverAddress = rcnAddress
+                        if (hostByProtocol) {
+                            serverAddress = net.roomListHostProtocol[selectedRoomListHostProtocol]!!(
+                                maxPlayer?.coerceAtMost(100)?.coerceAtLeast(10) ?: 10, false
+                                    )
                             isConnecting = true
                         } else {
                             onHost()
@@ -317,9 +362,10 @@ fun MultiplayerView(
                     RWTextButton(readI18n("multiplayer.hostPublic"), modifier = Modifier.padding(5.dp)) {
                         dismiss()
                         game.gameRoom.option = RoomOption(transferMod, modSize.toInt())
-                        if (hostByRCN) {
-                            game.onQuestionCallback(if (enableMods) "smodup" else "snewup")
-                            serverAddress = rcnAddress
+                        if (hostByProtocol) {
+                            serverAddress = net.roomListHostProtocol[selectedRoomListHostProtocol]!!(
+                                maxPlayer?.coerceAtMost(100)?.coerceAtLeast(10) ?: 10, true
+                                    )
                             isConnecting = true
                         } else {
                             onHost()
@@ -330,8 +376,6 @@ fun MultiplayerView(
                     }
                 }
             }
-
-
         }
     }
 
@@ -920,7 +964,7 @@ fun MultiplayerView(
                                 roomList.ip.split(";")
                             )
                         } else {
-                            currentViewList = roomList.customRoomListProvider!!()
+                            currentViewList = net.roomListProvider[roomList.customRoomListProvider!!]!!()
                         }
                     } else {
                         for(s in allServerData) {

@@ -10,10 +10,8 @@ package io.github.rwpp.config
 import io.github.rwpp.io.GameInputStream
 import io.github.rwpp.io.SizeUtils
 import io.github.rwpp.net.InternalPacketType
-import io.github.rwpp.net.RoomDescription
 import io.github.rwpp.net.packets.ServerPacket
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import okio.buffer
 import okio.source
 import java.io.ByteArrayInputStream
@@ -36,12 +34,9 @@ data class ServerConfig @JvmOverloads constructor(
     var type: ServerType,
     var useAsDefaultList: Boolean = false,
     var editable: Boolean = true,
+    var customRoomListProvider: String? = null,
+    var customRoomHostProtocol: String? = null
 ) {
-    /**
-     * Custom room list provider.
-     */
-    @Transient
-    var customRoomListProvider: (() -> List<RoomDescription>)? = null
 
     /**
      * Get a server information.

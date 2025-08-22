@@ -11,31 +11,32 @@ import io.github.rwpp.gameVersion
 
 data class RoomDescription(
     val uuid: String,
-    val roomOwner: String, // ? for official server and custom client is always 'Unnamed'
-    val gameVersion: Int,
-    val netWorkAddress: String,
-    val localAddress: String,
-    val port: Long,
-    val isOpen: Boolean,
-    val creator: String,
-    val requiredPassword: Boolean,
-    val mapName: String,
-    val mapType: String,
-    val status: String,
-    val version: String,
-    val isLocal: Boolean,
-    val displayMapName: String, // not sure, source code doesn't use this
-    val playerCurrentCount: Int?, // may be blank
-    val playerMaxCount: Int?,
-    val isUpperCase: Boolean, // ???
-    val uuid2: String, // use to get real ip from list??
-    val unknown: Boolean, // it is unused in source code
-    val mods: String, // even though, this cannot be evidence that the mod has been enabled
-    val roomId: Int,
+    val roomOwner: String = "Unnamed", // ? for official server and custom client is always 'Unnamed'
+    val gameVersion: Int = io.github.rwpp.gameVersion,
+    val netWorkAddress: String = "unknown",
+    val localAddress: String = "127.0.0.1",
+    val port: Long = 5123,
+    val isOpen: Boolean = false,
+    val creator: String = "Unnamed",
+    val requiredPassword: Boolean = false,
+    val mapName: String = "Unknown",
+    val mapType: String = "Unknown",
+    val status: String = "battleroom",
+    val version: String = "Unknown",
+    val isLocal: Boolean = false,
+    val displayMapName: String = "Unknown", // not sure, source code doesn't use this
+    val playerCurrentCount: Int? = null, // may be blank
+    val playerMaxCount: Int? = null,
+    val isUpperCase: Boolean = false, // ???
+    val uuid2: String = "Unknown", // use to get real ip from list??
+    val unknown: Boolean = false, // it is unused in source code
+    val mods: String = "", // even though, this cannot be evidence that the mod has been enabled
+    val roomId: Int = 0,
+    val customIp: String? = null
 ) {
     fun addressProvider(): String {
         if (this.roomId == 0) {
-            return "$netWorkAddress:$port"
+            return customIp ?: "$netWorkAddress:$port"
         }
         return "get|" + uuid2.replace("|", ".") + "|" + roomId + "|" + requiredPassword + "|" + port
     }

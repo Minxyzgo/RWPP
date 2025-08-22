@@ -22,12 +22,5 @@ data class MultiplayerPreferences(
     var playerLimitRangeTo: Int = 100,
     var joinServerAddress: String = "",
     var battleroom: Boolean = true,
-    var allServerConfig: MutableList<ServerConfig> = mutableListOf(
-        ServerConfig(
-            "http://gs1.corrodinggames.com/masterserver/1.4/interface?action=list&game_version=176&game_version_beta=false;http://gs4.corrodinggames.net/masterserver/1.4/interface?action=list&game_version=176&game_version_beta=false",
-            "Official Room List",
-            ServerType.RoomList,
-            editable = false,
-        )
-    ),
+    var allServerConfig: MutableList<ServerConfig> = mutableListOf(),
 ) : Config

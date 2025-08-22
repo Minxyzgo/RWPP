@@ -50,6 +50,16 @@ interface Net : KoinComponent, Initialization {
     val scope: CoroutineScope
 
     /**
+     * The map of room list providers, key is the name, value is a lambda that returns a list of RoomDescription.
+     */
+    val roomListProvider: MutableMap<String, suspend () -> List<RoomDescription>>
+
+    /**
+     * The map of room list host protocols, key is the name, value is a lambda that returns the host url of the room list.
+     */
+    val roomListHostProtocol: MutableMap<String, (maxPlayer: Int, isPublic: Boolean) -> String>
+
+    /**
      * Send a packet to the server.
      */
     fun sendPacketToServer(packet: Packet)
@@ -61,9 +71,6 @@ interface Net : KoinComponent, Initialization {
     fun sendPacketToClients(packet: Packet)
 
     fun openUriInBrowser(uri: String)
-
-    override fun init() {
-    }
 
     fun getLatestVersionProfile(): LatestVersionProfile? {
         return runCatching {

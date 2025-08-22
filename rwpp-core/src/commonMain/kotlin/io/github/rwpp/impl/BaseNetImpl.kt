@@ -8,12 +8,20 @@
 package io.github.rwpp.impl
 
 import com.eclipsesource.json.Json
+import io.github.rwpp.appKoin
+import io.github.rwpp.config.MultiplayerPreferences
+import io.github.rwpp.config.ServerConfig
+import io.github.rwpp.config.ServerType
 import io.github.rwpp.net.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.withContext
 import okhttp3.Interceptor
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.koin.core.component.get
 import java.io.DataInputStream
 import java.util.concurrent.TimeUnit
 
@@ -33,6 +41,78 @@ abstract class BaseNetImpl : Net {
 
     override val scope: CoroutineScope = CoroutineScope(SupervisorJob())
     override val bbsProtocols: MutableList<BBSProtocol> = mutableListOf(RTSBoxProtocol, RTSBoxDownloadWeeklyProtocol)
+    override val roomListProvider: MutableMap<String, suspend () -> List<RoomDescription>> = mutableMapOf()
+    override val roomListHostProtocol: MutableMap<String, (maxPlayer: Int, isPublic: Boolean) -> String> = mutableMapOf()
+
+    override fun init() {
+        val allServerConfig = get<MultiplayerPreferences>().allServerConfig
+        if (allServerConfig.none { it.name == "Official Room List" }) {
+            allServerConfig.add(officialRoomList)
+        }
+        if (allServerConfig.none { it.name == "Q Room List" }) {
+            allServerConfig.add(qRoomList)
+        }
+
+        roomListHostProtocol["RCN"] = { maxPlayer, isPublic ->
+            if (isPublic) {
+                "Rnewupp$maxPlayer"
+            } else {
+                "Rnewp$maxPlayer"
+            }
+        }
+
+        roomListHostProtocol["SCN"] = { maxPlayer, isPublic ->
+            if (isPublic) {
+                "Snewupp$maxPlayer"
+            } else {
+                "Snewp$maxPlayer"
+            }
+        }
+
+        roomListHostProtocol["QN"] = { maxPlayer, _ ->
+            "Qnewp$maxPlayer"
+        }
+
+        roomListProvider["qRoomListProvider"] = {
+            withContext(Dispatchers.IO) {
+                val request = Request.Builder()
+                    .url("https://www.rtsbox.cn/api/paiwei/room_last.php")
+                    .get()
+                    .build()
+                val net = appKoin.get<Net>()
+                val response = net.client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    val jsonBody = Json.parse(body)
+                    val data = jsonBody.asObject().get("data").asArray()
+                    buildList {
+                        for (item in data) {
+                            val info = item.asObject()
+                            val roomId = info.getInt("internal_id", -1)
+                            val mapName = info.getString("map_name", "???")
+                            val currentPlayers = info.getInt("current_players", -1)
+                            val maxPlayers = info.getInt("max_players", -1)
+                            val isStarted = info.getInt("is_started", 0) == 1
+                            val hostName = info.getString("host_name", "???")
+                            add(RoomDescription(
+                                roomId.toString(),
+                                creator = hostName,
+                                mapName = mapName,
+                                playerCurrentCount = currentPlayers,
+                                playerMaxCount = maxPlayers,
+                                isOpen = true,
+                                customIp = "Q$roomId",
+                                status = if (isStarted) "ingame" else "battleroom",
+                                version = "1.15-QN"
+                            ))
+                        }
+                    }
+                } else {
+                    listOf()
+                }
+            }
+        }
+    }
 }
 
 
@@ -112,3 +192,22 @@ val RTSBoxDownloadWeeklyProtocol = BBSProtocol(
         }.getOrNull()
     }
 )
+
+
+val officialRoomList: ServerConfig
+    get() = ServerConfig(
+        "http://gs1.corrodinggames.com/masterserver/1.4/interface?action=list&game_version=176&game_version_beta=false;http://gs4.corrodinggames.net/masterserver/1.4/interface?action=list&game_version=176&game_version_beta=false",
+        "Official Room List",
+        ServerType.RoomList,
+        editable = false,
+        customRoomHostProtocol = "RCN"
+    )
+val qRoomList: ServerConfig
+    get() = ServerConfig(
+        "",
+        "Q Room List",
+        ServerType.RoomList,
+        editable = false,
+        customRoomListProvider = "qRoomListProvider",
+        customRoomHostProtocol = "QN"
+    )
