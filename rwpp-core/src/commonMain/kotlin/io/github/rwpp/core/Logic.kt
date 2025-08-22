@@ -176,7 +176,7 @@ object Logic : Initialization {
                         val mods2 = manager.getAllMods()
                         if (requiredMods!!.any { m -> m !in mods2.map { it.name } }) {
                             room.disconnect("Mod download failed.")
-                            UI.showWarning("Mod download failed: required mods were not found. Please make sure you have permission to reload mods.", true)
+                            UI.showWarning("Mod download failed: required mods were not found.", true)
                             return@runCatching
                         }
 
