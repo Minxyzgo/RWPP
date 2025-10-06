@@ -13,11 +13,24 @@ import net.peanuuutz.tomlkt.asTomlLiteral
 import net.peanuuutz.tomlkt.asTomlTable
 import java.text.MessageFormat
 
-lateinit var i18nTable: TomlTable
+ var i18nTable: TomlTable =
+     TomlTable()
+
 private val cacheMap = mutableMapOf<String, String>()
 
 fun readI18n(path: String, i18nType: I18nType = I18nType.RWPP, vararg arg: String): String {
     if (i18nType == I18nType.RWPP) {
+        // Check if i18nTable is empty and try to initialize it
+        if (i18nTable.isEmpty()) {
+            try {
+                val resolver: GameI18nResolver = appKoin.get()
+                resolver.init()
+            } catch (e: Exception) {
+                // If initialization fails, return a fallback value
+                return "[$path]"
+            }
+        }
+
         cacheMap[path]?.let { return MessageFormat.format(it, *arg) }
         val strArray = path.split(".")
         val iterator = strArray.iterator()
