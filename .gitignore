@@ -7,3 +7,6 @@ build/
 /local.properties
 /android/src/main/assets/
 /android/src/main/res/
+
+# Ignore per-module bin output directories
+**/bin/
