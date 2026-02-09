@@ -35,7 +35,25 @@ class MainProcessor(
         if (!init) {
             init = true
             Builder.loadLib()
-            classPool = GameLibraries.includes.first().classTree.defPool
+            val mergedPool = ClassPool(true).apply {
+                appendSystemPath()
+            }
+
+            GameLibraries.includes.forEach { lib ->
+                val classTree = lib.classTree
+                classTree.forEachAllClassesWithTree { ctClass, _ ->
+                    try {
+                        val className = ctClass.name
+                        if (mergedPool.getOrNull(className) != null) return@forEachAllClassesWithTree
+                        if (ctClass.isFrozen) ctClass.defrost()
+                        mergedPool.makeClass(ctClass.classFile)
+                    } catch (e: Exception) {
+                        logger.error("Error merging class: ${e.message}")
+                    }
+                }
+            }
+
+            classPool = mergedPool
         }
 
         for (file in resolver.getSymbolsWithAnnotation(RedirectTo::class.qualifiedName!!)) {

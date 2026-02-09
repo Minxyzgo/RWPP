@@ -9,7 +9,6 @@ package io.github.rwpp.android.impl
 
 import android.content.Context
 import android.content.Intent
-import dalvik.system.PathClassLoader
 import io.github.rwpp.R
 import io.github.rwpp.android.dexFolder
 import io.github.rwpp.android.fileChooser
@@ -20,10 +19,9 @@ import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.impl.BaseExternalHandlerImpl
 import io.github.rwpp.io.unzipTo
+import io.github.rwpp.logger
 import io.github.rwpp.resOutputDir
 import io.github.rwpp.resourceOutputDir
-import javassist.ClassPath
-import javassist.android.DalvikClassClassPath
 import org.koin.core.annotation.Single
 import org.koin.core.component.get
 import java.io.File
@@ -80,17 +78,41 @@ class ExternalHandlerImpl : BaseExternalHandlerImpl() {
     }
 
     override fun loadJarToSystemClassPath(jar: File) {
-        val targetFile = File(dexFolder, "classes-${jar.nameWithoutExtension}.dex")
-        val zip = ZipFile(jar)
-        val dex = zip.getEntry("classes.dex")
-        val inputStream = zip.getInputStream(dex)
-        if (targetFile.exists()) {
-            targetFile.delete()
-        }
-        targetFile.writeBytes(inputStream.readBytes())
-        targetFile.setReadOnly()
-        loadDex(get(), targetFile.absolutePath)
-    }
+        ZipFile(jar).use { zip ->
+            // 查找所有DEX文件
+            val dexEntries = zip.entries().asSequence()
+                .filter { it.name.matches(Regex("classes\\d*\\.dex")) }
+                .sortedBy { entry ->
+                    val match = Regex("classes(\\d*)\\.dex").find(entry.name)
+                    val firstVal=match?.groupValues?.get(1);
+                    if (firstVal?.isEmpty() == true) 0 else (firstVal?.toIntOrNull() ?: 0)
+                }
+                .toList()
+            if (dexEntries.isEmpty()) {
+                logger.warn("No DEX files found in JAR: ${jar.name}")
+                return
+            }
 
-    //private val exFilePicker = ExFilePicker()
+            logger.info("Found ${dexEntries.size} DEX files in JAR: ${jar.name}")
+
+            // 提取并加载每个DEX文件
+            dexEntries.forEach { dexEntry ->
+                val targetFile = File(
+                    dexFolder,
+                    "${dexEntry.name.substringBefore('.')}-${jar.nameWithoutExtension}.dex"
+                )
+
+                zip.getInputStream(dexEntry).use { inputStream ->
+                    if (targetFile.exists()) {
+                        targetFile.delete()
+                    }
+                    targetFile.writeBytes(inputStream.readBytes())
+                    targetFile.setReadOnly()
+
+                    loadDex(get(), targetFile.absolutePath)
+                }
+            }
+        }
+        //private val exFilePicker = ExFilePicker()
+    }
 }

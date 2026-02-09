@@ -46,7 +46,17 @@ class MainProcessorProvider : SymbolProcessorProvider {
         }
 
         environment.logger.warn("RWPP-KSP: lib: ${environment.options["lib"]} output: ${environment.options["outputDir"]}")
-        GameLibraries.includes.add(GameLibraries.valueOf(environment.options["lib"].toString()))
+
+        val libOption = environment.options["lib"]
+        if (libOption != null && libOption != "null") {
+            val libs = libOption.split(";")
+            for (lib in libs) {
+                val trimmedLib = lib.trim()
+                if (trimmedLib.isNotEmpty()) {
+                    GameLibraries.includes.add(GameLibraries.valueOf(trimmedLib))
+                }
+            }
+        }
         environment.logger.warn("RWPP-KSP: libs: ${GameLibraries.includes.joinToString(",")}")
         val pathType = PathType.valueOf(environment.options["pathType"] ?: "JavaCode")
         return MainProcessor(environment.logger, pathType)
