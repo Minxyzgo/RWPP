@@ -42,7 +42,7 @@ abstract class BaseNetImpl : Net {
     override val scope: CoroutineScope = CoroutineScope(SupervisorJob())
     override val bbsProtocols: MutableList<BBSProtocol> = mutableListOf(RTSBoxProtocol, RTSBoxDownloadWeeklyProtocol)
     override val roomListProvider: MutableMap<String, suspend () -> List<RoomDescription>> = mutableMapOf()
-    override val roomListHostProtocol: MutableMap<String, (maxPlayer: Int, isPublic: Boolean) -> String> = mutableMapOf()
+    override val roomListHostProtocol: MutableMap<String, (maxPlayer: Int, enableMods: Boolean, isPublic: Boolean) -> String> = mutableMapOf()
 
     override fun init() {
         val allServerConfig = get<MultiplayerPreferences>().allServerConfig
@@ -53,24 +53,40 @@ abstract class BaseNetImpl : Net {
             allServerConfig.add(qRoomList)
         }
 
-        roomListHostProtocol["RCN"] = { maxPlayer, isPublic ->
-            if (isPublic) {
+        roomListHostProtocol["RCN"] = { maxPlayer, enableMods, isPublic ->
+            if (enableMods) {
+                if (isPublic) {
+                    "Rmodupp$maxPlayer"
+                } else {
+                    "Rmodp$maxPlayer"
+                }
+            } else if (isPublic) {
                 "Rnewupp$maxPlayer"
             } else {
                 "Rnewp$maxPlayer"
             }
         }
 
-        roomListHostProtocol["SCN"] = { maxPlayer, isPublic ->
-            if (isPublic) {
+        roomListHostProtocol["SCN"] = { maxPlayer, enableMods, isPublic ->
+            if (enableMods) {
+                if (isPublic) {
+                    "Smodupp$maxPlayer"
+                } else {
+                    "Smodp$maxPlayer"
+                }
+            } else if (isPublic) {
                 "Snewupp$maxPlayer"
             } else {
                 "Snewp$maxPlayer"
             }
         }
 
-        roomListHostProtocol["QN"] = { maxPlayer, _ ->
-            "Qnewp$maxPlayer"
+        roomListHostProtocol["QN"] = { maxPlayer, enableMods, _ ->
+            if (enableMods) {
+                "Qmodp$maxPlayer"
+            } else {
+                "Qnewp$maxPlayer"
+            }
         }
 
         roomListProvider["qRoomListProvider"] = {
