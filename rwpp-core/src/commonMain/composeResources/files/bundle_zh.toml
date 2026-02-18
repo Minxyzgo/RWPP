@@ -155,6 +155,7 @@ require = "扩展: {0} 无法被启用，请检查所需的依赖和最小游戏
 supportedPlatform = "支持的平台: {0}"
 author = "作者: {0}"
 version = "版本: {0}"
+loadInfo = "请导入rwres|rwext文件"
 
 [ingame]
 sendMessage = "发送消息"

@@ -57,7 +57,7 @@ interface Net : KoinComponent, Initialization {
     /**
      * The map of room list host protocols, key is the name, value is a lambda that returns the host url of the room list.
      */
-    val roomListHostProtocol: MutableMap<String, (maxPlayer: Int, isPublic: Boolean) -> String>
+    val roomListHostProtocol: MutableMap<String, (maxPlayer: Int, enableMods: Boolean, isPublic: Boolean) -> String>
 
     /**
      * Send a packet to the server.

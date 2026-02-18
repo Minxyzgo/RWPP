@@ -116,7 +116,7 @@ fun MapViewDialog(
                 LargeDividingLine { 0.dp }
 
                 with(game) {
-                    remember(selectedIndex0, filter) {
+                    LaunchedEffect(selectedIndex0, filter) {
                         mapType = MapType.entries[selectedIndex0]
                         maps = getAllMapsByMapType(mapType).filter {
                             it.displayName().contains(filter, true)

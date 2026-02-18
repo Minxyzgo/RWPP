@@ -153,6 +153,7 @@ require = "Extension: {0} unable to be enabled, please check if the required dep
 supportedPlatform = "Supported Platforms: {0}"
 author = "Author: {0}"
 version = "Version: {0}"
+loadInfo = "Please load file with extension '.rwres' or '.rwext'"
 
 [ingame]
 sendMessage = "Send Message"

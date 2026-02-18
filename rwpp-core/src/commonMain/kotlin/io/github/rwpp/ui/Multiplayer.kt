@@ -349,7 +349,7 @@ fun MultiplayerView(
                         game.gameRoom.option = RoomOption(transferMod, modSize.toInt())
                         if (hostByProtocol) {
                             serverAddress = net.roomListHostProtocol[selectedRoomListHostProtocol]!!(
-                                maxPlayer?.coerceAtMost(100)?.coerceAtLeast(10) ?: 10, false
+                                maxPlayer?.coerceAtMost(100)?.coerceAtLeast(10) ?: 10, enableMods, false
                                     )
                             isConnecting = true
                         } else {
@@ -364,7 +364,7 @@ fun MultiplayerView(
                         game.gameRoom.option = RoomOption(transferMod, modSize.toInt())
                         if (hostByProtocol) {
                             serverAddress = net.roomListHostProtocol[selectedRoomListHostProtocol]!!(
-                                maxPlayer?.coerceAtMost(100)?.coerceAtLeast(10) ?: 10, true
+                                maxPlayer?.coerceAtMost(100)?.coerceAtLeast(10) ?: 10,  enableMods,true
                                     )
                             isConnecting = true
                         } else {

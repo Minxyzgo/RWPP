@@ -85,7 +85,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     val room = game.gameRoom
 
     var update by remember { mutableStateOf(false) }
-    var lastSelectedIndex by remember { mutableStateOf(0) }
+    var lastSelectedIndex by remember { mutableIntStateOf(0) }
     var selectedMap by remember(update) { mutableStateOf(room.selectedMap) }
     val displayMapName = remember(update) { room.displayMapName }
 

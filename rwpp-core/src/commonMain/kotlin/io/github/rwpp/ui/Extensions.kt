@@ -40,17 +40,22 @@ import io.github.rwpp.config.EnabledExtensions
 import io.github.rwpp.config.Settings
 import io.github.rwpp.event.broadcastIn
 import io.github.rwpp.event.events.CloseUIPanelEvent
+import io.github.rwpp.extensionPath
 import io.github.rwpp.external.Extension
 import io.github.rwpp.external.ExternalHandler
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.platform.BackHandler
 import io.github.rwpp.projectVersion
+import io.github.rwpp.rwpp_core.generated.resources.Res
+import io.github.rwpp.rwpp_core.generated.resources.file_open
 import io.github.rwpp.scripts.Render
 import io.github.rwpp.utils.compareVersions
 import io.github.rwpp.widget.*
 import io.github.rwpp.widget.v2.LazyColumnScrollbar
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
+import java.io.File
 
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -177,6 +182,31 @@ fun ExtensionView(
         containerColor = Color.Transparent,
         bottomBar = {
             Row(modifier = Modifier.fillMaxWidth().padding(10.dp), horizontalArrangement = Arrangement.Center) {
+                RWTextButton(
+                    readI18n("mod.inputFile"),
+                    leadingIcon = {
+                        Icon(
+                            painterResource(Res.drawable.file_open),
+                            null,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    },
+                    modifier = Modifier.padding(5.dp)
+                ) {
+                    appKoin.get<ExternalHandler>().openFileChooser { file ->
+                        runCatching {
+                            if (file.extension == "rwres" || file.extension == "rwext") {
+                                file.copyTo(File("$extensionPath/${file.name}"))
+                                updateExtensions = !updateExtensions
+                            } else {
+                                UI.showWarning(readI18n("extension.loadInfo"))
+                            }
+                        }.onFailure {
+                            UI.showWarning(it.message ?: "Unknown error")
+                        }
+                    }
+                }
+
                 RWTextButton(
                     readI18n("mod.update"),
                     modifier = Modifier.padding(5.dp),
