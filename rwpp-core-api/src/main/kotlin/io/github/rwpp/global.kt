@@ -87,7 +87,7 @@ val commands = CommandHandler("/").apply {
 
         page--
 
-        if (page >= pages || page < 0) {
+        if (page !in 0..<pages) {
             room.sendMessageToPlayer(player, "RWPP", "'page' must be a number between 1 and $pages.")
             return@register
         }
@@ -107,37 +107,25 @@ val commands = CommandHandler("/").apply {
 
 
 val extensionPath by lazy {
-    if (appKoin.get<AppContext>().isAndroid()) {
-        "/storage/emulated/0/rustedWarfare/extension/"
-    } else System.getProperty("user.dir") + "/extension/"
+    appKoin.get<AppContext>().externalStoragePath("extension/")
 }
 
 val resourceOutputDir by lazy {
-    if (appKoin.get<AppContext>().isAndroid()) {
-        "/storage/emulated/0/rustedWarfare/resource_generated/"
-    } else System.getProperty("user.dir") + "/resource_generated/"
+    appKoin.get<AppContext>().externalStoragePath("resource_generated/")
 }
 
 val resOutputDir by lazy {
-    if (appKoin.get<AppContext>().isAndroid()) {
-        "/storage/emulated/0/rustedWarfare/resource_generated/res/"
-    } else System.getProperty("user.dir") + "/resource_generated/res/"
+    appKoin.get<AppContext>().externalStoragePath("resource_generated/res/")
 }
 
 val mapDir by lazy {
-    if (appKoin.get<AppContext>().isAndroid()) {
-        "/storage/emulated/0/rustedWarfare/maps"
-    } else System.getProperty("user.dir") + "/mods/maps"
+    appKoin.get<AppContext>().externalStoragePath("maps/")
 }
 
 val modDir by lazy {
-    if (appKoin.get<AppContext>().isAndroid()) {
-        "/storage/emulated/0/rustedWarfare/units"
-    } else System.getProperty("user.dir") + "/mods/units"
+    appKoin.get<AppContext>().externalStoragePath("units/")
 }
 
 val generatedLibDir by lazy {
-    if (appKoin.get<AppContext>().isAndroid()) {
-        "/storage/emulated/0/rustedWarfare/generated_lib"
-    } else System.getProperty("user.dir") + "/generated_lib"
+    appKoin.get<AppContext>().externalStoragePath("generated_lib/")
 }

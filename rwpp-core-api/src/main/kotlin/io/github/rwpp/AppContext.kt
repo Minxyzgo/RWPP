@@ -18,5 +18,7 @@ interface AppContext : KoinComponent {
 
     fun isDesktop(): Boolean
 
+    fun externalStoragePath(path: String): String
+
     fun exit()
 }
