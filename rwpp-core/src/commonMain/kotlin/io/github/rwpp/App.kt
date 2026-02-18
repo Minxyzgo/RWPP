@@ -338,7 +338,7 @@ fun App(
 
                 var warningDialogVisible by remember { mutableStateOf(false) }
 
-                remember(UI.warning) {
+                LaunchedEffect(UI.warning) {
                     if (UI.warning != null) {
                         warningDialogVisible = true
                         if (UI.warning?.isKicked == true) {
@@ -490,7 +490,7 @@ fun App(
                 }
 
                 var questionDialogVisible by remember { mutableStateOf(false) }
-                remember(UI.question) {
+                LaunchedEffect(UI.question) {
                     questionDialogVisible = UI.question != null
                 }
 
