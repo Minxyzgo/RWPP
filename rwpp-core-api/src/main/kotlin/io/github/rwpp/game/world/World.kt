@@ -9,14 +9,27 @@ package io.github.rwpp.game.world
 
 import io.github.rwpp.game.base.GamePaint
 import io.github.rwpp.game.base.Rect
+import io.github.rwpp.game.units.GameUnit
 
 interface World {
-    //暂且未知
+    // 暂且未知
     val cx: Float
 
     val cy: Float
 
-    fun getAllUnits(): List<Unit>
+    val cameraX: Float
+
+    val cameraY: Float
+
+    val flame: Int
+
+    val displayWidth: Int
+
+    val displayHeight: Int
+
+    val zoom: Float
+
+    fun getAllUnits(): List<GameUnit>
 
     fun drawText(text: String, x: Float, y: Float, paint: GamePaint)
 

@@ -24,7 +24,7 @@ import io.github.rwpp.appKoin
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.game.audio.GameSoundPool
-import io.github.rwpp.game.comp.CompModule
+import io.github.rwpp.game.units.comp.CompModule
 import io.github.rwpp.generatedLibDir
 import io.github.rwpp.inject.runtime.Builder
 import io.github.rwpp.koinInit

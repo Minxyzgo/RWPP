@@ -10,8 +10,10 @@ package io.github.rwpp.desktop.impl
 import android.graphics.Paint
 import android.graphics.RectF
 import io.github.rwpp.desktop.GameEngine
+import io.github.rwpp.desktop.displaySize
 import io.github.rwpp.game.base.GamePaint
 import io.github.rwpp.game.base.Rect
+import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.world.World
 
 class WorldImpl : World {
@@ -20,8 +22,23 @@ class WorldImpl : World {
     override val cy: Float
         get() = GameEngine.B().cx
 
-    override fun getAllUnits(): List<Unit> {
-        TODO("Not yet implemented")
+    override val cameraX: Float
+        get() = GameEngine.B().cy
+    override val cameraY: Float
+        get() = GameEngine.B().cz
+    override val flame: Int
+        get() = GameEngine.B().bx
+    override val displayWidth: Int
+        get() = displaySize.width
+    override val displayHeight: Int
+        get() = displaySize.height
+    override val zoom: Float
+        get() = GameEngine.B().cV
+
+
+    @Suppress("unchecked_cast")
+    override fun getAllUnits(): List<GameUnit> {
+        return com.corrodinggames.rts.gameFramework.w.er.filterIsInstance<GameUnit>()
     }
 
     override fun drawText(text: String, x: Float, y: Float, paint: GamePaint) {

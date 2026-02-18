@@ -10,7 +10,6 @@ package io.github.rwpp.desktop.impl
 import android.graphics.Paint
 import io.github.rwpp.desktop.inGameWidget
 import io.github.rwpp.desktop.inGameWidgetDialog
-import io.github.rwpp.desktop.resetInGameWidgetDialogLocation
 import io.github.rwpp.game.base.GamePaint
 import io.github.rwpp.game.ui.GUI
 import io.github.rwpp.inject.SetInterfaceOn

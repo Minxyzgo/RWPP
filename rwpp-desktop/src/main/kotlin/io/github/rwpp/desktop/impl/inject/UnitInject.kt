@@ -23,8 +23,10 @@ import io.github.rwpp.inject.RedirectMethod
 object UnitInject {
     @Inject("p", InjectMode.InsertBefore)
     fun am.onDraw(delta: Float) {
-        (this as GameUnit).comp.onDraw(this, delta)
+        (this@onDraw as GameUnit).comp.forEach { it.onDraw(this@onDraw, delta) }
     }
+
+
 
     @RedirectMethod(
         "a",
@@ -36,7 +38,7 @@ object UnitInject {
     fun am.onDrawStoke(
         rectF: RectF, param: Paint
     ) {
-        (this as GameUnit).comp.onDrawBar(this, rectF as Rect, param as GamePaint)
+        (this as GameUnit).comp.forEach { it.onDrawBar(this, rectF as Rect, param as GamePaint) }
     }
 
 }

@@ -9,5 +9,5 @@ package io.github.rwpp.core
 
 
 fun interface LoadingContext {
-    fun message(str: String): Unit
+    fun message(str: String)
 }

@@ -79,7 +79,9 @@ enum class GameInternalUnits {
         }
 
         // 进行全匹配 查看是否在游戏内置列表中
-        fun from(type: String?): GameInternalUnits? = entries.find { it.name == type || it.name.lowercase() == type?.lowercase() }
+        fun from(type: String?): GameInternalUnits? = entries.find {
+            it.name == type || it.name.equals(type, ignoreCase = true)
+        }
 
         fun from(type: Int): GameInternalUnits = unitMap[type] ?: UNKNOWN
     }

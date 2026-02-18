@@ -16,7 +16,7 @@ import io.github.rwpp.inject.InjectMode
 object GameUnitInject {
     @Inject("n", InjectMode.InsertBefore)
     fun com.corrodinggames.rts.game.units.ce.onDraw(delta: Float) {
-        (this as GameUnit).comp.onDraw(this, delta)
+        (this as GameUnit).comp.forEach { it.onDraw(this, delta) }
     }
 
 //    @RedirectMethod(

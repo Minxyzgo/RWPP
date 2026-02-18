@@ -13,7 +13,6 @@ import android.graphics.Rect
 import com.corrodinggames.rts.game.units.ce
 import com.corrodinggames.rts.game.units.custom.logicBooleans.VariableScope
 import com.corrodinggames.rts.gameFramework.ah
-import com.corrodinggames.rts.gameFramework.f.a
 import com.corrodinggames.rts.gameFramework.f.a.i
 import com.corrodinggames.rts.gameFramework.f.av
 import com.corrodinggames.rts.gameFramework.utility.`SlickToAndroidKeycodes$AndroidCodes`
@@ -22,6 +21,7 @@ import io.github.rwpp.appKoin
 import io.github.rwpp.config.Settings
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.comp.EntityRangeUnitComp
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.inject.Accessor
 import io.github.rwpp.inject.Inject
@@ -252,7 +252,8 @@ object GuiInject {
             //GameEngine.B().bS.g.n()
             val unit = GameEngine.t().bP.bZ.firstOrNull()
             if (unit != null) {
-                (unit as GameUnit).comp.showAttackRange = !unit.comp.showAttackRange
+                val comp = (unit as GameUnit).comp.first { it is EntityRangeUnitComp } as EntityRangeUnitComp
+                comp.showAttackRange = !comp.showAttackRange
             }
             return true
         }
