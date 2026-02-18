@@ -38,7 +38,7 @@ data class Settings(
     var mouseMoveView: Boolean = false,
     //var pathfindingOptimization: Boolean = false,
     var boldText: Boolean = false,
-    var renderingBackend: String = "Default", // Default, Software, OpenGL
+    var renderingBackend: String = "OpenGL", // Default, Software, OpenGL
     var forceEnglish: Boolean = false,
 ) : Config {
     companion object {
