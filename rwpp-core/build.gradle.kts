@@ -63,6 +63,10 @@ kotlin {
 
         val desktopMain by getting {
             dependencies {
+                compileOnly(fileTree(
+                    "dir" to "$rootDir/lib",
+                    "include" to "lwjgl.jar"
+                ))
                 implementation(compose.desktop.common)
             }
         }

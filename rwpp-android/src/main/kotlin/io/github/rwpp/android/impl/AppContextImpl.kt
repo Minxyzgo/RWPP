@@ -7,6 +7,7 @@
 
 package io.github.rwpp.android.impl
 
+import android.os.Environment
 import io.github.rwpp.AppContext
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.impl.BaseAppContextImpl
@@ -32,6 +33,9 @@ class AppContextImpl : BaseAppContextImpl() {
     override fun isAndroid(): Boolean = true
 
     override fun isDesktop(): Boolean = false
+    override fun externalStoragePath(path: String): String {
+        return Environment.getExternalStorageDirectory().absolutePath + "/rustedWarfare/$path"
+    }
 
     override fun exit() {
         get<ConfigIO>().saveAllConfig()

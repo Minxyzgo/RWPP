@@ -29,6 +29,9 @@ class AppContextImpl : BaseAppContextImpl() {
     override fun isAndroid(): Boolean = false
 
     override fun isDesktop(): Boolean = true
+    override fun externalStoragePath(path: String): String {
+        return System.getProperty("user.dir") + "/$path"
+    }
 
 
     override fun exit() {
