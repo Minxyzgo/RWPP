@@ -19,6 +19,7 @@ import io.github.rwpp.desktop.GameEngine
 import io.github.rwpp.desktop.GameView
 import io.github.rwpp.game.Game
 import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.comp.EntityRangeUnitComp
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
@@ -73,7 +74,8 @@ object GameViewInject {
             //GameEngine.B().bS.g.n()
             val unit = GameEngine.B().bS.bZ.firstOrNull()
             if (unit != null) {
-                (unit as GameUnit).comp.showAttackRange = !unit.comp.showAttackRange
+                val comp = (unit as GameUnit).comp.first { it is EntityRangeUnitComp } as EntityRangeUnitComp
+                comp.showAttackRange = !comp.showAttackRange
             }
             return true
         }
