@@ -9,9 +9,10 @@ package io.github.rwpp.android.impl
 
 import io.github.rwpp.appKoin
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.comp.UnitComp
+import io.github.rwpp.game.units.comp.EntityRangeUnitComp
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.UnitType
+import io.github.rwpp.game.units.comp.UnitComp
 import io.github.rwpp.inject.NewField
 import io.github.rwpp.inject.SetInterfaceOn
 
@@ -20,14 +21,13 @@ interface GameUnitImpl : GameUnit {
     val self: com.corrodinggames.rts.game.units.ce
 
     @NewField
-    var _comp: UnitComp?
+    var _comp: List<UnitComp>?
 
-    override var comp: UnitComp
+    override val comp: List<UnitComp>
         get(){
-            _comp = _comp ?: appKoin.get<UnitComp>()
+            _comp = _comp ?: appKoin.getAll<UnitComp>()
             return _comp!!
         }
-        set(value) { _comp = value }
 
     override val player: Player
         get() = self.bZ as Player

@@ -8,7 +8,7 @@
 package io.github.rwpp.game.units
 
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.comp.UnitComp
+import io.github.rwpp.game.units.comp.UnitComp
 
 interface GameUnit {
     val player: Player
@@ -21,5 +21,5 @@ interface GameUnit {
     val maxAttackRange: Float
     val target: GameUnit?
 
-    var comp: UnitComp
+    val comp: List<UnitComp>
 }
