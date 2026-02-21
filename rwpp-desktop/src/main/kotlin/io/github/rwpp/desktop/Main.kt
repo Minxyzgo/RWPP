@@ -10,14 +10,25 @@ package io.github.rwpp.desktop
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
@@ -36,8 +47,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import io.github.rwpp.*
+import io.github.rwpp.App
+import io.github.rwpp.AppContext
+import io.github.rwpp.appKoin
 import io.github.rwpp.config.ConfigIO
 import io.github.rwpp.config.ConfigModule
 import io.github.rwpp.config.Settings
@@ -47,24 +59,39 @@ import io.github.rwpp.event.events.GameLoadedEvent
 import io.github.rwpp.event.events.QuitGameEvent
 import io.github.rwpp.event.onDispose
 import io.github.rwpp.game.Game
-import io.github.rwpp.game.units.comp.CompModule
 import io.github.rwpp.game.sendChatMessageOrCommand
+import io.github.rwpp.game.units.comp.CompModule
+import io.github.rwpp.generatedLibDir
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.inject.GameLibraries
 import io.github.rwpp.inject.runtime.Builder
+import io.github.rwpp.koinInit
+import io.github.rwpp.logger
+import io.github.rwpp.packageName
 import io.github.rwpp.scripts.Render
-import io.github.rwpp.ui.*
+import io.github.rwpp.ui.InjectConsole
 import io.github.rwpp.ui.UI.chatMessages
-import io.github.rwpp.widget.*
+import io.github.rwpp.ui.Widget
+import io.github.rwpp.ui.defaultBuildLogger
+import io.github.rwpp.widget.BorderCard
+import io.github.rwpp.widget.ExitButton
+import io.github.rwpp.widget.MenuLoadingView
+import io.github.rwpp.widget.RWPPTheme
+import io.github.rwpp.widget.RWSingleOutlinedTextField
+import io.github.rwpp.widget.RWTextButton
+import io.github.rwpp.widget.RWTextFieldColors
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.koin.compose.koinInject
 import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
 import org.slf4j.LoggerFactory
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Canvas
+import java.awt.Dialog
+import java.awt.Dimension
+import java.awt.GraphicsEnvironment
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
@@ -78,7 +105,6 @@ import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
-import kotlin.concurrent.timer
 import kotlin.system.exitProcess
 
 
@@ -89,7 +115,7 @@ var isSendingTeamChat by mutableStateOf(false)
 lateinit var mainJFrame: JFrame
 lateinit var gameCanvas: Canvas
 //lateinit var inGameComposePanel: ComposePanel
-lateinit var offscreenComposeRenderer: OffscreenComposeRenderer
+var offscreenComposeRenderer: OffscreenComposeRenderer? = null
 lateinit var displaySize: Dimension
 lateinit var sendMessageDialog: Dialog
 lateinit var rwppVisibleSetter: (Boolean) -> Unit
@@ -469,6 +495,8 @@ fun swingApplication() = SwingUtilities.invokeLater {
                 logicalHeight
             )
 
+            offscreenComposeRenderer?.updateWindowSize(window.contentPane.width, window.contentPane.height)
+
             resetSendDialogLocation()
         }
 
@@ -523,34 +551,6 @@ fun onInitInGameWidgetDialog() = SwingUtilities.invokeLater {
         isAlwaysOnTop = true
         add(panel)
     }
-
-    var text by mutableStateOf("1")
-    timer(period = 100L) {
-        val B = GameEngine.B()
-        B ?: return@timer
-        val a = GameEngine.B().cL.a
-        val b = GameEngine.B().cL.b
-        val c = GameEngine.B().cL.c
-        val d = GameEngine.B().cL.d
-
-        text = "cx: ${B.cw} cy: ${B.cx} cameraX: ${B.cy}  cameraX: ${B.cz} Rect cL: {$a $b $c $d}"
-    }
-
-    offscreenComposeRenderer = OffscreenComposeRenderer(displaySize.width, displaySize.height).apply {
-        setContent {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-//
-//                LaunchedEffect(Unit) {
-//                    while (true) {
-//                        delay(100L)
-//
-//                    }
-//                }
-                Text(text, color = Color.White, fontSize = 30.sp)
-            }
-        }
-    }
-
 
     mainJFrame.addComponentListener(object : java.awt.event.ComponentAdapter() {
         override fun componentMoved(e: java.awt.event.ComponentEvent) {

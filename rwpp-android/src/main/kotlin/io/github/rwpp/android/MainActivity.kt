@@ -150,8 +150,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-
-
                     App(isPremium = isPremium) {
                         backgroundImagePath = it
                     }
@@ -185,13 +183,15 @@ class MainActivity : ComponentActivity() {
         var gameView: com.corrodinggames.rts.appFramework.ab? = null
 
         fun activityResume() {
-            GameEngine.t()?.let {
-                gameView = d.a(appKoin.get(), gameView)
-                it.a(appKoin.get(), gameView, true)
-            }
+            uiHandler.post {
+                GameEngine.t()?.let {
+                    gameView = d.a(appKoin.get(), gameView)
+                    it.a(appKoin.get(), gameView, true)
+                }
 
-            d.a(appKoin.get(), true)
-            com.corrodinggames.rts.gameFramework.h.a.c()
+                d.a(appKoin.get(), true)
+                com.corrodinggames.rts.gameFramework.h.a.c()
+            }
         }
     }
 }
