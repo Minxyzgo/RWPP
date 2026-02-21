@@ -8,10 +8,25 @@
 package io.github.rwpp.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlayArrow
@@ -26,11 +41,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.text.*
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.rwpp.AppContext
@@ -42,12 +63,27 @@ import io.github.rwpp.coreVersion
 import io.github.rwpp.event.EventPriority
 import io.github.rwpp.event.GlobalEventChannel
 import io.github.rwpp.event.events.DisconnectEvent
+import io.github.rwpp.game.Game
 import io.github.rwpp.game.Player
+import io.github.rwpp.game.units.GameUnit
+import io.github.rwpp.game.units.MovementType
+import io.github.rwpp.game.world.World
 import io.github.rwpp.i18n.I18nType
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.net.Net
 import io.github.rwpp.projectVersion
-import io.github.rwpp.rwpp_core.generated.resources.*
+import io.github.rwpp.rwpp_core.generated.resources.Res
+import io.github.rwpp.rwpp_core.generated.resources.destruction_30
+import io.github.rwpp.rwpp_core.generated.resources.dns_30
+import io.github.rwpp.rwpp_core.generated.resources.edit_square_30
+import io.github.rwpp.rwpp_core.generated.resources.exit_30
+import io.github.rwpp.rwpp_core.generated.resources.extension_30
+import io.github.rwpp.rwpp_core.generated.resources.group_30
+import io.github.rwpp.rwpp_core.generated.resources.library_30
+import io.github.rwpp.rwpp_core.generated.resources.octocat_30
+import io.github.rwpp.rwpp_core.generated.resources.public_30
+import io.github.rwpp.rwpp_core.generated.resources.qq
+import io.github.rwpp.rwpp_core.generated.resources.swords_30
 import io.github.rwpp.ui.UI.showQuestion
 import io.github.rwpp.ui.UI.showWarning
 import io.github.rwpp.ui.color.getTeamColor
@@ -317,6 +353,120 @@ open class UIProvider {
             }
 
             Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+
+    @Composable
+    open fun InGameComposeContent() {
+        val settings = koinInject<Settings>()
+        if (settings.enableQuickSelectMenu) {
+            TinyQuickSelectMenu()
+        }
+    }
+    @Composable
+    fun TinyQuickSelectMenu() {
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            val scaleFactor = when {
+                maxHeight > 1200.dp -> 2.5f
+                maxHeight > 600.dp -> 1.5f
+                else -> 1.0f
+            }
+
+            Column(
+                modifier = Modifier
+                    .padding(8.dp * scaleFactor)
+                    .offset(x = if (scaleFactor == 1.0f) (-40).dp else 0.dp)
+                    .scale(scaleFactor)
+                    .width(IntrinsicSize.Min)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0x99000000))
+                    .padding(4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "快速选择",
+                    color = Color.LightGray,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+
+                val game = koinInject<Game>()
+                val world = game.world
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    MiniSelectButton("全", Color(0xFF9C27B0)) {
+                        selectUnitByMovementType(
+                            world,
+                            game,
+                            null
+                        )
+                    }
+                    MiniSelectButton("建", Color(0xFF795548)) {
+                        selectUnitByMovementType(
+                            world,
+                            game,
+                            setOf(MovementType.NONE)
+                        )
+                    }
+                    MiniSelectButton("海", Color(0xFF1E88E5)) {
+                        selectUnitByMovementType(world, game,
+                            setOf(
+                                MovementType.WATER,
+                                MovementType.OVER_CLIFF_WATER,
+                                MovementType.HOVER
+                            )
+                        )
+                    }
+                    MiniSelectButton("空", Color(0xFF4FC3F7)) {
+                        selectUnitByMovementType(world, game, setOf(MovementType.AIR))
+                    }
+                    MiniSelectButton("陆", Color(0xFF43A047)) {
+                        selectUnitByMovementType(world, game,
+                            setOf(
+                                MovementType.LAND,
+                                MovementType.HOVER,
+                                MovementType.OVER_CLIFF,
+                                MovementType.OVER_CLIFF_WATER
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun selectUnitByMovementType(world: World, game: Game, typeSet: Set<MovementType>?) {
+        world.clearSelectedUnits()
+        world.getAllObject().forEach {
+            if (it is GameUnit &&
+                !it.isDead &&
+                !it.type.isBuilder &&
+                (typeSet?.contains(it.type.movementType) ?:
+                (it.type.movementType != MovementType.NONE)) &&
+                it.player == game.gameRoom.localPlayer
+            ) world.selectUnit(it)
+        }
+    }
+
+    @Composable
+    fun MiniSelectButton(label: String, color: Color, onClick: () -> Unit) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(color.copy(alpha = 0.7f))
+                .clickable { onClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 
