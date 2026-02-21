@@ -23,8 +23,6 @@ interface Game : KoinComponent {
 
     val gui: GUI
 
-
-    //TODO Not Implemented
     val world: World
 
     /**
@@ -145,6 +143,11 @@ interface Game : KoinComponent {
      * Watch the given replay.
      */
     fun watchReplay(replay: Replay)
+
+    /**
+     * Set effect limit for all effects (low, high, etc.).
+     */
+    fun setEffectLimitForAllEffects(limit: Int)
 
     /**
      * Describe if the game could continue.

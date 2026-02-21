@@ -39,12 +39,6 @@ interface GameUnitImpl : GameUnit {
     override val type: UnitType
         get() = self.dz as UnitType
 
-    override val x: Float
-        get() = self.eo
-
-    override val y: Float
-        get() = self.ep
-
     override val target: GameUnit?
         get() = (this as? com.corrodinggames.rts.game.units.y)?.R as? GameUnit
 

@@ -5,7 +5,9 @@
  * https://github.com/Minxyzgo/RWPP/blob/main/LICENSE
  */
 
-package io.github.rwpp.graphics
+package io.github.rwpp.game.units
 
-object GL10 {
+interface GameObject {
+    val x: Float // fastGameObject
+    val y: Float // fastGameObject
 }

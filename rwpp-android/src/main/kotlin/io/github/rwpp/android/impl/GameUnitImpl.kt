@@ -9,7 +9,6 @@ package io.github.rwpp.android.impl
 
 import io.github.rwpp.appKoin
 import io.github.rwpp.game.Player
-import io.github.rwpp.game.units.comp.EntityRangeUnitComp
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.UnitType
 import io.github.rwpp.game.units.comp.UnitComp
@@ -49,10 +48,4 @@ interface GameUnitImpl : GameUnit {
 
     override val target: GameUnit?
         get() = (self as? com.corrodinggames.rts.game.units.bp)?.T as GameUnit?
-
-    override val x: Float
-        get() = self.eq
-
-    override val y: Float
-        get() = self.er
 }
