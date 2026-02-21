@@ -7,19 +7,60 @@
 
 package io.github.rwpp.android.impl
 
+import android.graphics.Paint
+import android.graphics.RectF
+import com.corrodinggames.rts.game.i
 import io.github.rwpp.game.base.GamePaint
 import io.github.rwpp.game.base.Rect
+import io.github.rwpp.game.units.GameObject
+import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.world.World
+import io.github.rwpp.utils.Reflect
 
 class WorldImpl : World {
-    override val cx: Float
+    override val cameraX: Float
         get() = GameEngine.t().ct
-    override val cy: Float
+    override val cameraY: Float
         get() = GameEngine.t().cu
+    override val flame: Int
+        get() = GameEngine.t().bu
+    override val zoom: Float
+        get() = GameEngine.t().cS
+    override val gameScale: Float
+        get() = GameEngine.t().cU
+    override val selectedUnits: List<GameUnit>
+        get() = GameEngine.t().bP.bZ as List<GameUnit>
 
-    override fun getAllUnits(): List<Unit> {
-        TODO("Not yet implemented")
+    override fun selectUnit(unit: GameUnit) {
+        GameEngine.t().bP.c(unit as com.corrodinggames.rts.game.units.ce)
     }
+
+    override fun unselectUnit(unit: GameUnit) {
+        GameEngine.t().bP.d(unit as com.corrodinggames.rts.game.units.ce)
+    }
+
+    override fun clearSelectedUnits() {
+        GameEngine.t().bP.h()
+    }
+
+    private val allOnScreenUnits: com.corrodinggames.rts.gameFramework.utility.v by lazy {
+        Reflect.reifiedGet<i, com.corrodinggames.rts.gameFramework.utility.v>(GameEngine.t() as i?, "V")!!
+    }
+
+    override fun projectionCamera() {
+        GameEngine.t().I()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun getAllObjectOnScreen(): List<GameObject> {
+        return allOnScreenUnits as List<GameObject>
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun getAllObject(): List<GameObject> {
+        return com.corrodinggames.rts.gameFramework.ah.et as List<GameObject>
+    }
+
 
     override fun drawText(
         text: String,
@@ -27,11 +68,11 @@ class WorldImpl : World {
         y: Float,
         paint: GamePaint
     ) {
-        TODO("Not yet implemented")
+        GameEngine.t().bL.a(text, x, y, paint as Paint)
     }
 
     override fun drawRect(rect: Rect, paint: GamePaint) {
-        TODO("Not yet implemented")
+        GameEngine.t().bL.a(rect as RectF, paint as Paint)
     }
 
     override fun drawCircle(

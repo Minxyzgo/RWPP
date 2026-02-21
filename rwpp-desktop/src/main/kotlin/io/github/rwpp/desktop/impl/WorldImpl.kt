@@ -9,36 +9,58 @@ package io.github.rwpp.desktop.impl
 
 import android.graphics.Paint
 import android.graphics.RectF
+import com.corrodinggames.rts.game.i
 import io.github.rwpp.desktop.GameEngine
-import io.github.rwpp.desktop.displaySize
 import io.github.rwpp.game.base.GamePaint
 import io.github.rwpp.game.base.Rect
+import io.github.rwpp.game.units.GameObject
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.world.World
+import io.github.rwpp.utils.Reflect
 
 class WorldImpl : World {
-    override val cx: Float
-        get() = GameEngine.B().cw
-    override val cy: Float
-        get() = GameEngine.B().cx
 
     override val cameraX: Float
-        get() = GameEngine.B().cy
+        get() = GameEngine.B().cw
     override val cameraY: Float
-        get() = GameEngine.B().cz
+        get() = GameEngine.B().cx
     override val flame: Int
         get() = GameEngine.B().bx
-    override val displayWidth: Int
-        get() = displaySize.width
-    override val displayHeight: Int
-        get() = displaySize.height
     override val zoom: Float
         get() = GameEngine.B().cV
+    override val gameScale: Float
+        get() = GameEngine.B().cX
+    override val selectedUnits: List<GameUnit>
+        get() = GameEngine.B().bS.bZ as List<GameUnit>
 
+    override fun selectUnit(unit: GameUnit) {
+        GameEngine.B().bS.k(unit as com.corrodinggames.rts.game.units.am)
+    }
+
+    override fun unselectUnit(unit: GameUnit) {
+        GameEngine.B().bS.l(unit as com.corrodinggames.rts.game.units.am)
+    }
+
+    override fun clearSelectedUnits() {
+        GameEngine.B().bS.y()
+    }
+
+    private val allOnScreenUnits: com.corrodinggames.rts.gameFramework.utility.s by lazy {
+        Reflect.reifiedGet<i, com.corrodinggames.rts.gameFramework.utility.s>(GameEngine.B() as i?, "W")!!
+    }
+
+    override fun projectionCamera() {
+        GameEngine.B().R()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun getAllObjectOnScreen(): List<GameObject> {
+        return allOnScreenUnits as List<GameObject>
+    }
 
     @Suppress("unchecked_cast")
-    override fun getAllUnits(): List<GameUnit> {
-        return com.corrodinggames.rts.gameFramework.w.er.filterIsInstance<GameUnit>()
+    override fun getAllObject(): List<GameObject> {
+        return com.corrodinggames.rts.gameFramework.w.er as List<GameObject>
     }
 
     override fun drawText(text: String, x: Float, y: Float, paint: GamePaint) {
