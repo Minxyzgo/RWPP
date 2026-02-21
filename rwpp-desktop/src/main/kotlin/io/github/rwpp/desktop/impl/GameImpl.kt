@@ -58,9 +58,12 @@ import io.github.rwpp.widget.loadingMessage
 import kotlinx.coroutines.channels.Channel
 import org.koin.core.annotation.Single
 import org.lwjgl.BufferUtils
+import org.lwjgl.input.Cursor
 import org.lwjgl.opengl.Display
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL12
+import org.newdawn.slick.Image
+import org.newdawn.slick.opengl.ImageData
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferInt
 import java.io.File
@@ -533,6 +536,22 @@ class GameImpl : AbstractGame() {
                 ec.trySend(Unit)
             }
             ec.receive()
+        }
+
+        override fun setMouseCursor(cursor: Cursor?, hotSpotX: Int, hotSpotY: Int) {
+            runCatching { super.setMouseCursor(cursor, hotSpotX, hotSpotY) }
+        }
+
+        override fun setMouseCursor(data: ImageData?, hotSpotX: Int, hotSpotY: Int) {
+            runCatching { super.setMouseCursor(data, hotSpotX, hotSpotY) }
+        }
+
+        override fun setMouseCursor(image: Image?, hotSpotX: Int, hotSpotY: Int) {
+            runCatching { super.setMouseCursor(image, hotSpotX, hotSpotY) }
+        }
+
+        override fun setMouseCursor(ref: String?, hotSpotX: Int, hotSpotY: Int) {
+            runCatching { super.setMouseCursor(ref, hotSpotX, hotSpotY) }
         }
 
         override fun updateAndRender(p0: Int) {
