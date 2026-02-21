@@ -200,16 +200,8 @@ actual object GL20 {
         GL11.glCullFace(mode)
     }
 
-    actual fun glDeleteBuffers(n: Int, buffers: IntBuffer?) {
-        GL15.glDeleteBuffers(buffers)
-    }
-
     actual fun glDeleteBuffer(buffer: Int) {
         GL15.glDeleteBuffers(buffer)
-    }
-
-    actual fun glDeleteFramebuffers(n: Int, framebuffers: IntBuffer?) {
-        EXTFramebufferObject.glDeleteFramebuffersEXT(framebuffers)
     }
 
     actual fun glDeleteFramebuffer(framebuffer: Int) {
@@ -220,20 +212,12 @@ actual object GL20 {
         JL20.glDeleteProgram(program)
     }
 
-    actual fun glDeleteRenderbuffers(n: Int, renderbuffers: IntBuffer?) {
-        EXTFramebufferObject.glDeleteRenderbuffersEXT(renderbuffers)
-    }
-
     actual fun glDeleteRenderbuffer(renderbuffer: Int) {
         EXTFramebufferObject.glDeleteRenderbuffersEXT(renderbuffer)
     }
 
     actual fun glDeleteShader(shader: Int) {
         JL20.glDeleteShader(shader)
-    }
-
-    actual fun glDeleteTextures(n: Int, textures: IntBuffer?) {
-        GL11.glDeleteTextures(textures)
     }
 
     actual fun glDeleteTexture(texture: Int) {
@@ -346,32 +330,18 @@ actual object GL20 {
         GL11.glFrontFace(mode)
     }
 
-    actual fun glGenBuffers(n: Int, buffers: IntBuffer?) {
-        GL15.glGenBuffers(buffers)
-    }
 
     actual fun glGenBuffer(): Int {
         return GL15.glGenBuffers()
     }
 
-    actual fun glGenFramebuffers(n: Int, framebuffers: IntBuffer?) {
-        EXTFramebufferObject.glGenFramebuffersEXT(framebuffers)
-    }
 
     actual fun glGenFramebuffer(): Int {
         return EXTFramebufferObject.glGenFramebuffersEXT()
     }
 
-    actual fun glGenRenderbuffers(n: Int, renderbuffers: IntBuffer?) {
-        EXTFramebufferObject.glGenRenderbuffersEXT(renderbuffers)
-    }
-
     actual fun glGenRenderbuffer(): Int {
         return EXTFramebufferObject.glGenRenderbuffersEXT()
-    }
-
-    actual fun glGenTextures(n: Int, textures: IntBuffer?) {
-        GL11.glGenTextures(textures)
     }
 
     actual fun glGenTexture(): Int {
@@ -404,10 +374,6 @@ actual object GL20 {
         val nameBytes = ByteArray(length)
         nameBuffer.get(nameBytes)
         return String(nameBytes, Charset.forName("UTF-8"))
-    }
-
-    actual fun glGetAttachedShaders(program: Int, maxcount: Int, count: Buffer?, shaders: IntBuffer?) {
-        JL20.glGetAttachedShaders(program, count as IntBuffer?, shaders)
     }
 
     actual fun glGetAttribLocation(program: Int, name: String?): Int {

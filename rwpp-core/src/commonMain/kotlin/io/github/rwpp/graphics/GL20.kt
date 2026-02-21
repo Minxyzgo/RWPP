@@ -238,16 +238,6 @@ expect object GL20 {
         stride: Int,
         ptr: Int
     )
-
-    fun glDeleteBuffers(n: Int, buffers: IntBuffer?)
-    fun glDeleteFramebuffers(n: Int, framebuffers: IntBuffer?)
-    fun glDeleteRenderbuffers(n: Int, renderbuffers: IntBuffer?)
-    fun glDeleteTextures(n: Int, textures: IntBuffer?)
-    fun glGenBuffers(n: Int, buffers: IntBuffer?)
-    fun glGenFramebuffers(n: Int, framebuffers: IntBuffer?)
-    fun glGenRenderbuffers(n: Int, renderbuffers: IntBuffer?)
-    fun glGenTextures(n: Int, textures: IntBuffer?)
-    fun glGetAttachedShaders(program: Int, maxcount: Int, count: Buffer?, shaders: IntBuffer?)
     fun glGetShaderi(shader: Int, pname: Int): Int
 
 }
