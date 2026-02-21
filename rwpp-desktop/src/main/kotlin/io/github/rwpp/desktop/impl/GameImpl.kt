@@ -9,6 +9,8 @@ package io.github.rwpp.desktop.impl
 
 import android.content.ServerContext
 import android.graphics.Point
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.nativeCanvas
 import com.corrodinggames.librocket.scripts.ScriptContext
 import com.corrodinggames.librocket.scripts.ScriptEngine
 import com.corrodinggames.rts.gameFramework.ac
@@ -26,6 +28,7 @@ import io.github.rwpp.core.LoadingContext
 import io.github.rwpp.desktop.AbstractGame
 import io.github.rwpp.desktop.AbstractGameRoom
 import io.github.rwpp.desktop.GameEngine
+import io.github.rwpp.desktop.OffscreenComposeRenderer
 import io.github.rwpp.desktop.displaySize
 import io.github.rwpp.desktop.gameCanvas
 import io.github.rwpp.desktop.gameOver
@@ -46,6 +49,8 @@ import io.github.rwpp.game.map.MissionType
 import io.github.rwpp.game.map.Replay
 import io.github.rwpp.game.ui.GUI
 import io.github.rwpp.game.world.World
+import io.github.rwpp.graphics.GL20
+import io.github.rwpp.graphics.GLConstants
 import io.github.rwpp.logger
 import io.github.rwpp.ui.UI
 import io.github.rwpp.utils.Reflect
@@ -95,6 +100,7 @@ class GameImpl : AbstractGame() {
     }
 
     override fun startNewMissionGame(difficulty: Difficulty, mission: Mission) {
+        GameEngine.B().bX.b("starting singleplayer")
         rwppVisibleSetter(false)
         gameCanvas.isVisible = true
         gameCanvas.requestFocus()
@@ -205,7 +211,7 @@ class GameImpl : AbstractGame() {
                 override fun f(): Boolean {
                     val B = GameEngine.B()
                     // 设置确认是否边缘移动
-                    return B != null && appKoin.get<Settings>().isFullscreen && !appKoin.get<Settings>().mouseMoveView
+                    return B != null && appKoin.get<Settings>().isFullscreen && appKoin.get<Settings>().mouseMoveView
                 }
             }
             val i = com.corrodinggames.rts.java.b.a()
@@ -443,6 +449,16 @@ class GameImpl : AbstractGame() {
         }
     }
 
+    override fun setEffectLimitForAllEffects(limit: Int) {
+        val effectEngine = GameEngine.B().bR
+        effectEngine.apply {
+            b = limit
+            c = limit
+            d = limit
+            e = limit
+        }
+    }
+
     override fun isGameCouldContinue(): Boolean {
         return kotlin.runCatching { ScriptEngine.getInstance().root.canResume() }.getOrDefault(false)
     }
@@ -460,9 +476,6 @@ class GameImpl : AbstractGame() {
             ScriptEngine.getInstance().root.resumeNonMenu()
         }
     }
-
-
-
 
     private fun loadInputStream(path: String): InputStream? {
         val fileInputStream: InputStream?
@@ -501,6 +514,7 @@ class GameImpl : AbstractGame() {
 
         private val intBuffer = BufferUtils.createIntBuffer(width * height)
 
+        private val settings by lazy { appKoin.get<Settings>() }
 
         /**
          * try to post an action to the game thread (running in Opengl context)
@@ -525,32 +539,49 @@ class GameImpl : AbstractGame() {
             val f = channel.tryReceive()
             f.getOrNull()?.invoke()
 
+            GL20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f) // 清屏颜色（按需设置）
+            // 清空颜色+深度缓冲区（只在帧开头执行，保留这一步，否则深度缓冲区有残留）
+            GL20.glClear(GLConstants.GL_COLOR_BUFFER_BIT or GLConstants.GL_DEPTH_BUFFER_BIT)
+
             super.updateAndRender(p0)
 
-            if (uiTextureID == -1) {
-                uiTextureID = GL11.glGenTextures()
-                setupTexture(uiTextureID, displaySize.width, displaySize.height)
-            }
-            val nowNs = System.nanoTime()
+            if (settings.enableOffscreenPanel) {
+                if (uiTextureID == -1) {
+                    uiTextureID = GL11.glGenTextures()
+                    setupTexture(uiTextureID, displaySize.width, displaySize.height)
+                }
+                val nowNs = System.nanoTime()
 
-            if (nowNs - lastUpdateNs >= targetFrameDurationNs) {
-                if (offscreenComposeRenderer.shouldUpdate()) {
-                    val image = offscreenComposeRenderer.render()
-                    updateOpenGLTexture(uiTextureID, image)
+                if (nowNs - lastUpdateNs >= targetFrameDurationNs) {
+                    if (offscreenComposeRenderer!!.shouldUpdate()) {
+                        val image = offscreenComposeRenderer!!.render()
+                        updateOpenGLTexture(uiTextureID, image)
 
-                    if (lastUpdateNs == 0L) {
-                        lastUpdateNs = nowNs
-                    } else {
-                        lastUpdateNs += targetFrameDurationNs
-                    }
+                        if (lastUpdateNs == 0L) {
+                            lastUpdateNs = nowNs
+                        } else {
+                            lastUpdateNs += targetFrameDurationNs
+                        }
 
-                    if (nowNs - lastUpdateNs > targetFrameDurationNs) {
-                        lastUpdateNs = nowNs
+                        if (nowNs - lastUpdateNs > targetFrameDurationNs) {
+                            lastUpdateNs = nowNs
+                        }
                     }
                 }
-            }
 
-            renderFullscreenQuad(uiTextureID, displaySize.width, displaySize.height)
+                renderFullscreenQuad(uiTextureID, displaySize.width, displaySize.height)
+            }
+        }
+
+        override fun initSystem() {
+            super.initSystem()
+
+            offscreenComposeRenderer = OffscreenComposeRenderer(displaySize.width, displaySize.height, input).apply {
+                setContent {
+                    UI.UiProvider.InGameComposeContent()
+                }
+            }
+            input.addListener(offscreenComposeRenderer)
         }
 
         private fun setupTexture(id: Int, w: Int, h: Int) {

@@ -141,6 +141,13 @@ renderingBackend = "Rendering Backend (Requires restart)"
 displayUnitGroupXOffset = "Display Unit Group X Offset"
 pathfindingOptimization = "Pathfinding Optimization"
 mouseMoveView = "Mouse Move View (Fullscreen Only)"
+enableOffscreenPanel = "Enable the in-game off-screen Compose rendering panel (Note: Input in non-fullscreen mode is currently misaligned)"
+displayTimeInGame = "Display the time and the ping in-game"
+effectLimitForAllEffects = "Set the maximum number of in-game effects (restart to take effect)"
+enableVolumeKeyMapping = "Enable volume key mapping (+ for waypoint, - for stop)"
+enableLargerKeys = "Enable larger keys (Guard, Patrol)"
+inGameOffscreenPanel = "In-Game Offscreen Panel (On PC, please enable the Render panel first)"
+enableQuickSelectMenu = "Enable quick select menu"
 
 [extension]
 extension = "Extension"

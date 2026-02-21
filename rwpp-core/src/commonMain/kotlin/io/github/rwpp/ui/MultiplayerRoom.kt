@@ -146,7 +146,7 @@ fun MultiplayerRoomView(isSandboxGame: Boolean = false, onExit: () -> Unit) {
     var selectedPlayer by remember { mutableStateOf(players.firstOrNull() ?: ConnectingPlayer) }
     var playerOverrideVisible by remember { mutableStateOf(false) }
 
-    remember(selectedPlayer) {
+    LaunchedEffect(selectedPlayer) {
         UI.roomSelectedPlayer = selectedPlayer
     }
 
@@ -1063,7 +1063,7 @@ private fun MultiplayerOption(
                         onItemSelected = { index, _ -> selectedIndex1 = index }
                     )
 
-                    remember(selectedIndex1) {
+                    LaunchedEffect(selectedIndex1) {
                         aiDifficulty = selectedIndex1 - 2
                     }
 
@@ -1076,7 +1076,7 @@ private fun MultiplayerOption(
                         onItemSelected = { index, _ -> selectedIndex2 = index }
                     )
 
-                    remember(selectedIndex2) {
+                    LaunchedEffect(selectedIndex2) {
                         fogMode = FogMode.entries[selectedIndex2]
                     }
 
@@ -1094,7 +1094,7 @@ private fun MultiplayerOption(
                         selectedItemToString = { (_, s) -> s }
                     )
 
-                    remember(selectedIndex3) {
+                    LaunchedEffect(selectedIndex3) {
                         startingUnits = startingOptionList[selectedIndex3].first
                     }
                 }
@@ -1154,7 +1154,7 @@ private fun MultiplayerOption(
                         onItemSelected = { index, _ -> selectedIndex1 = index }
                     )
 
-                    remember(selectedIndex1) {
+                    LaunchedEffect(selectedIndex1) {
                         startingCredits = selectedIndex1
                     }
                 }
@@ -1215,13 +1215,13 @@ private fun MultiplayerOption(
                         incomeMultiplier = it
                     }
 
-                    remember(incomeMultiplier) {
+                    LaunchedEffect(incomeMultiplier) {
                         realIncomeMultiplier = incomeMultiplier.toFloatOrNull() ?: 1f
                     }
 
                     var teamUnitCapHostedGame by remember { mutableStateOf(configIO.getGameConfig<Int?>("teamUnitCapHostedGame")) }
                     var expanded1 by remember { mutableStateOf(false) }
-                    remember(teamUnitCapHostedGame) {
+                    LaunchedEffect(teamUnitCapHostedGame) {
                         val count = teamUnitCapHostedGame ?: 100
                         configIO.setGameConfig("teamUnitCapHostedGame", count)
                         game.setTeamUnitCapHostGame(count)

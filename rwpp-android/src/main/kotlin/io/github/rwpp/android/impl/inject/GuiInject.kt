@@ -20,19 +20,26 @@ import io.github.rwpp.android.impl.GameEngine
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.Settings
 import io.github.rwpp.game.Game
+import io.github.rwpp.game.base.BaseFactory
 import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.comp.EntityRangeUnitComp
+import io.github.rwpp.graphics.GL
 import io.github.rwpp.i18n.readI18n
 import io.github.rwpp.inject.Accessor
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
+import io.github.rwpp.inject.InterruptResult
 import io.github.rwpp.inject.SetInterfaceOn
 import io.github.rwpp.utils.Reflect
 
 
 typealias GUI = com.corrodinggames.rts.gameFramework.f.a
 typealias FClass = com.corrodinggames.rts.gameFramework.f
+
+private val factory by lazy { appKoin.get<BaseFactory>() }
+private val room by lazy { appKoin.get<Game>().gameRoom }
+private val settings by lazy { appKoin.get<Settings>() }
 
 @SetInterfaceOn([com.corrodinggames.rts.gameFramework.f.i::class])
 interface RenderAccessor {
@@ -45,8 +52,7 @@ interface RenderAccessor {
 @InjectClass(GUI::class)
 object GuiInject {
     var buttons: java.util.ArrayList<Any?>? = null
-    val room by lazy { appKoin.get<Game>().gameRoom }
-    val settings by lazy { appKoin.get<Settings>() }
+
     var unitGroups: ArrayList<ce>? = null
 
     private val rect = Rect()
@@ -234,6 +240,16 @@ object GuiInject {
         engine.bL.a(str2, i6, i7 + ((render.aC.textSize + 5.0f) * 2.0f), render.aC)
     }
 
+    @Inject("e", InjectMode.InsertAfter)
+    fun onRenderGUI(delta: Float) {
+        val gameEngine = GameEngine.t()
+        if (settings.displayTimeInGame) {
+            GL.showPing()
+            val i4 = (gameEngine.cC / 2.0f)
+            val textSize = (gameEngine.bP.aE.textSize) + 7
+            gameEngine.bL.a(FClass.a((gameEngine.bv / 1000).toLong()), i4, textSize, gameEngine.bP.aE)
+        }
+    }
 
     object ShowAttackRange : com.corrodinggames.rts.game.units.a.p("c_show_attack_range") {
         override fun b(): String? {
@@ -299,6 +315,32 @@ object GuiInject {
             val index = Settings.unitAttackRangeTypes.indexOf(settings.showAttackRangeUnit)
             settings.showAttackRangeUnit = Settings.unitAttackRangeTypes.getOrNull(index + 1) ?: Settings.unitAttackRangeTypes.first()
             return true
+        }
+    }
+}
+
+private val float1fResult = InterruptResult(1.0f)
+
+@InjectClass(com.corrodinggames.rts.game.units.a.f::class)
+object GuardInject {
+    @Inject("l", InjectMode.InsertBefore)
+    fun size(): Any {
+        return if (settings.enableLargerKeys) {
+            float1fResult
+        } else {
+            Unit
+        }
+    }
+}
+
+@InjectClass(com.corrodinggames.rts.game.units.a.i::class)
+object PatrolInject {
+    @Inject("l", InjectMode.InsertBefore)
+    fun size(): Any {
+        return if (settings.enableLargerKeys) {
+            float1fResult
+        } else {
+            Unit
         }
     }
 }

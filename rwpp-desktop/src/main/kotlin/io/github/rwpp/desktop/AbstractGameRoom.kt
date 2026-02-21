@@ -357,7 +357,7 @@ abstract class AbstractGameRoom  : GameRoom {
         _gameSpeed = 1f
         lastMapPath = null
 
-        GameEngine.B().bX.b(reason)
+        if (isConnecting) GameEngine.B().bX.b(reason)
         DisconnectEvent(reason).broadcastIn()
     }
 

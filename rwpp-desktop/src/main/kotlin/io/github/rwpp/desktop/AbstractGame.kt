@@ -41,6 +41,7 @@ abstract class AbstractGame : Game {
 //            } as a
 
             val game = GameEngine.B()
+            game.bX.b("starting singleplayer")
             game.bQ.aiDifficulty = Difficulty.Hard.ordinal - 2 // fuck code
 
 //            guiEngine.b(true)
@@ -91,6 +92,7 @@ abstract class AbstractGame : Game {
         useMods: Boolean,
     ) {
         val B = GameEngine.B()
+        B.bX.b("starting new")
         B.bX.n = password
         B.bX.q = isPublic
         B.bX.o = useMods
@@ -183,6 +185,12 @@ abstract class AbstractGame : Game {
         bannedUnitList = units.map(UnitType::name)
         if(units.isNotEmpty())
             gameRoom.sendSystemMessage("Host has banned these units (房间已经ban以下单位): ${units.map(UnitType::displayName).joinToString(", ")}")
+    }
+
+    private fun clearObjectOnScreen() {
+        //luke 忘记清理replay留下的object，逆天
+        com.corrodinggames.rts.gameFramework.w.er.clear()
+        GameEngine.B().g()
     }
 
     private fun restrictedString(str: String?): String? {

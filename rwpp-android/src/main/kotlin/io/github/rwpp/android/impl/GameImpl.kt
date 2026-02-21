@@ -58,6 +58,7 @@ class GameImpl : Game, CoroutineScope {
 
     override fun startNewMissionGame(difficulty: Difficulty, mission: Mission) {
         val t = GameEngine.t()
+        GameEngine.t().bU.b("starting singleplayer")
         t.bN.aiDifficulty = difficulty.ordinal - 2
         t.bN.save()
         LevelSelectActivity.loadSinglePlayerMapRaw("maps/${mission.type.pathName()}/${mission.mapName}.tmx", false, 0, 0, true, false)
@@ -72,6 +73,7 @@ class GameImpl : Game, CoroutineScope {
 
     override fun hostStartWithPasswordAndMods(isPublic: Boolean, password: String?, useMods: Boolean) {
         val t: k = GameEngine.t()
+        GameEngine.t().bU.b("starting new")
         t.bU.n = password
         t.bU.o = useMods
         t.bU.q = isPublic
@@ -88,6 +90,7 @@ class GameImpl : Game, CoroutineScope {
 
     override fun hostNewSinglePlayer(sandbox: Boolean) {
         val t = GameEngine.t()
+        GameEngine.t().bU.b("starting singleplayer")
         LevelSelectActivity.loadSinglePlayerMapRaw("skirmish/[z;p10]Crossing Large (10p).tmx", true, 3, 1, true, true)
         t.bU.b("starting singleplayer")
         t.bU.y = "You"
@@ -321,6 +324,16 @@ class GameImpl : Game, CoroutineScope {
             gameLauncher.launch(
                 Intent(get(), CustomInGameActivity::class.java)
             )
+        }
+    }
+
+    override fun setEffectLimitForAllEffects(limit: Int) {
+        val effectEngine = GameEngine.t().bO
+        effectEngine.apply {
+            b = limit
+            c = limit
+            d = limit
+            e = limit
         }
     }
 

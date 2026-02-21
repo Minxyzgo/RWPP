@@ -10,6 +10,7 @@ package io.github.rwpp.android.impl
 import android.os.Environment
 import io.github.rwpp.AppContext
 import io.github.rwpp.config.ConfigIO
+import io.github.rwpp.graphics.GL
 import io.github.rwpp.impl.BaseAppContextImpl
 import okhttp3.OkHttpClient
 import org.koin.core.annotation.Single
@@ -35,6 +36,11 @@ class AppContextImpl : BaseAppContextImpl() {
     override fun isDesktop(): Boolean = false
     override fun externalStoragePath(path: String): String {
         return Environment.getExternalStorageDirectory().absolutePath + "/rustedWarfare/$path"
+    }
+
+    override fun init() {
+        super.init()
+        GL.gameCanvas = GameCanvasImpl()
     }
 
     override fun exit() {

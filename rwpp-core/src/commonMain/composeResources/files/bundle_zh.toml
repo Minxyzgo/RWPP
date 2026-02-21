@@ -142,7 +142,13 @@ renderingBackend = "渲染后端 (需要重启)"
 displayUnitGroupXOffset = "编队X轴偏移"
 pathfindingOptimization = "寻路优化"
 mouseMoveView = "鼠标移动视角 (全屏化时)"
-
+enableOffscreenPanel = "启用游戏内离屏Compose渲染面板（注意：非全屏模式下输入目前会错位）"
+displayTimeInGame = "在游戏内显示时间和延迟"
+effectLimitForAllEffects ="设置游戏内Effect上限 (重启生效)"
+enableVolumeKeyMapping = "启用音量按键映射 (+为路径点,-为停止)"
+enableLargerKeys = "启用更大的按键 (保护, 巡逻)"
+inGameOffscreenPanel = "游戏内离屏界面 (PC端请先启用渲染面板)"
+enableQuickSelectMenu = "启用快速选择菜单"
 
 [extension]
 extension = "扩展"

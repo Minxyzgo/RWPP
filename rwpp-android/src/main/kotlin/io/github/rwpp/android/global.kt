@@ -18,7 +18,11 @@ import androidx.compose.runtime.setValue
 import dalvik.system.BaseDexClassLoader
 import dalvik.system.PathClassLoader
 import io.github.rwpp.android.impl.GameEngine
+import io.github.rwpp.android.impl.GamePaintImpl
 import io.github.rwpp.android.impl.PlayerInternal
+import io.github.rwpp.android.impl.RectImpl
+import io.github.rwpp.game.base.GamePaint
+import io.github.rwpp.game.base.Rect
 import io.github.rwpp.utils.Reflect
 import io.github.rwpp.widget.loadingMessage
 import kotlinx.coroutines.channels.Channel
@@ -91,3 +95,6 @@ fun loadDex(context: Context, dexPath: String) {
 //    Reflect.set(systemPathList, "dexElements", elements)
     //FileOutputStream(File(dexFolder, "classes.dex")).channel.tryLock()
 }
+
+internal fun getRect(rect: Rect) = (rect as RectImpl).rect
+internal fun getPaint(paint: GamePaint) = (paint as GamePaintImpl).paint

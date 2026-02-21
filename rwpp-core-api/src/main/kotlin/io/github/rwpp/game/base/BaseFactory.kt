@@ -16,7 +16,10 @@ interface BaseFactory {
         return createPaint(argb, style)
     }
 
-    fun createPaint(a: Int, r: Int, g: Int, b: Int, style: GamePaint.Style): GamePaint {
+    fun createPaint(
+        a: Int, r: Int, g: Int, b: Int,
+        style: GamePaint.Style
+    ): GamePaint {
         val argb = a shl 24 or (r shl 16) or (g shl 8) or b
         return createPaint(argb, style)
     }

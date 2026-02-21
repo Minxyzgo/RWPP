@@ -16,7 +16,6 @@ import io.github.rwpp.game.Game
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
-import io.github.rwpp.utils.Reflect
 
 @InjectClass(com.corrodinggames.rts.game.i::class)
 object BaseEngineInject {
