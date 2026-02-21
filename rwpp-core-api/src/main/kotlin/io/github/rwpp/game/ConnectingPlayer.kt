@@ -25,6 +25,8 @@ object ConnectingPlayer : Player {
     override var team: Int
         get() = 0
         set(_) {}
+    override val pingNumber: Int
+        get() = 0
     override var startingUnit: Int
         get() = 0
         set(_) {}

@@ -43,7 +43,6 @@ fun ContributorList(
     Box {
         ExitButton(onExit)
         Column {
-
             BackHandler(true, onExit)
 
             val net = koinInject<Net>()
@@ -66,7 +65,7 @@ fun ContributorList(
             Text(header1, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
             LargeDividingLine { 5.dp }
 
-            val sponsors = "铁锈盒子 (ww.rtsbox.cn);亚托莉;AABBRST;Toledo;猫猫"
+            val sponsors = "铁锈盒子 (ww.rtsbox.cn);亚托莉;AABBRST;Toledo;猫猫;cheems;Eresta;zhou"
             BorderCard(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
                 sponsors.split(";").forEach {
                     Text(
@@ -82,7 +81,7 @@ fun ContributorList(
 
             LargeDividingLine { 5.dp }
 
-            val contributors = "Minxyzgo;Dr"
+            val contributors = "Minxyzgo;Dr;wty-hub;eam2539"
             BorderCard(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
                 contributors.split(";").forEach {
                     Text(it, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.align(Alignment.CenterHorizontally))
