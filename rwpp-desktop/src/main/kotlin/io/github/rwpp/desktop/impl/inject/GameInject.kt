@@ -12,32 +12,18 @@ import io.github.rwpp.appKoin
 import io.github.rwpp.desktop.GameEngine
 import io.github.rwpp.desktop._gameSpeed
 import io.github.rwpp.game.Game
-import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.comp.EntityRangeUnitComp
-import io.github.rwpp.game.units.comp.EntityRangeUnitComp.Companion.entityRangeShader
-import io.github.rwpp.game.world.World
-import io.github.rwpp.graphics.ShaderProgram
+import io.github.rwpp.graphics.GL
+import io.github.rwpp.graphics.GL20
+import io.github.rwpp.graphics.GLConstants
 import io.github.rwpp.inject.Inject
 import io.github.rwpp.inject.InjectClass
 import io.github.rwpp.inject.InjectMode
-import io.github.rwpp.utils.Reflect
-import org.lwjgl.opengl.GL11
 
 @InjectClass(i::class)
 object GameInject {
     val room by lazy {
         appKoin.get<Game>().gameRoom
-    }
-
-    private val game: Game by lazy { appKoin.get<Game>() }
-
-    private val world: World by lazy { appKoin.get<Game>().world }
-
-    private val allyUnitToDrawListCache: MutableList<GameUnit> = mutableListOf()
-    private val enemyUnitToDrawListCache: MutableList<GameUnit> = mutableListOf()
-
-    val allOnScreenUnits: com.corrodinggames.rts.gameFramework.utility.s by lazy {
-        Reflect.reifiedGet<i, com.corrodinggames.rts.gameFramework.utility.s>(GameEngine.B() as i?, "W")!!
     }
 
     @Inject("x", InjectMode.Override)
@@ -59,37 +45,22 @@ object GameInject {
 
     @Inject("b", InjectMode.InsertAfter)
     fun injectRenderObject(draw: com.corrodinggames.rts.gameFramework.m.l, delta: Float) {
-        val engine =  GameEngine.B()
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
-        GL11.glDepthMask(true)
-        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT)
+        with(EntityRangeUnitComp) {
+            GL20.glEnable(GLConstants.GL_DEPTH_TEST)
+            GL20.glDepthMask(true)
+            GL20.glClear(GLConstants.GL_DEPTH_BUFFER_BIT)
 
-        GL11.glDepthRange(0.0, 0.01)
-        GL11.glDepthFunc(GL11.GL_LESS)
-
-        val unitsSnapShot = allOnScreenUnits.a()
-
-        engine.R() //project camera
-
-        allyUnitToDrawListCache.clear()
-        enemyUnitToDrawListCache.clear()
-
-        entityRangeShader.bind()
-        unitsSnapShot.forEach { unit ->
-            if (unit is GameUnit) {
-                if (game.gameRoom.localPlayer.team == unit.player.team) {
-                    allyUnitToDrawListCache.add(unit)
-                } else {
-                    enemyUnitToDrawListCache.add(unit)
-                }
+            GL20.glDepthRange(0.0, 1.0)
+            GL20.glDepthFunc(GLConstants.GL_LESS)
+            beforeDrawRange()
+            entityRangeShader?.bind()
+            GL.gameCanvas.scale(world.gameScale, world.gameScale)
+            layerGroups.values.forEach { group ->
+                group.forEach { GL.gameCanvas.drawRange(it, getTeamPaint(it.player.team), it.maxAttackRange) }
             }
+            entityRangeShader?.unbind()
+            GL20.glDepthFunc(GLConstants.GL_LEQUAL) // 还原默认
+            GL20.glDisable(GLConstants.GL_DEPTH_TEST)
         }
-        allyUnitToDrawListCache.forEach { EntityRangeUnitComp.drawRange(it, it.maxAttackRange) }
-        enemyUnitToDrawListCache.forEach { EntityRangeUnitComp.drawRange(it, it.maxAttackRange) }
-        ShaderProgram.unbind()
-
-        GL11.glDepthRange(0.0, 1.0)
-        GL11.glDepthFunc(GL11.GL_LEQUAL) // 还原默认
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
     }
 }

@@ -7,9 +7,14 @@
 
 package io.github.rwpp.game.units.comp
 
+import GameCanvas
+import io.github.rwpp.AppContext
 import io.github.rwpp.appKoin
 import io.github.rwpp.config.Settings
+import io.github.rwpp.event.GlobalEventChannel
+import io.github.rwpp.event.events.DisconnectEvent
 import io.github.rwpp.game.Game
+import io.github.rwpp.game.Player
 import io.github.rwpp.game.base.BaseFactory
 import io.github.rwpp.game.base.GamePaint
 import io.github.rwpp.game.base.Rect
@@ -17,7 +22,9 @@ import io.github.rwpp.game.units.GameUnit
 import io.github.rwpp.game.units.MovementType
 import io.github.rwpp.game.world.World
 import io.github.rwpp.graphics.ShaderProgram
+import io.github.rwpp.impl.createPaint
 import io.github.rwpp.logger
+import io.github.rwpp.ui.color.getTeamColor
 import io.github.rwpp.utils.argb
 import org.koin.core.annotation.Factory
 import kotlin.math.ceil
@@ -25,6 +32,8 @@ import kotlin.math.ceil
 @Factory(binds = [UnitComp::class])
 open class EntityRangeUnitComp : UnitComp {
     var showAttackRange: Boolean = false
+
+    // TODO 统一 GamePaint和Paint
 
     // showUnitWayPoint
     override fun onDraw(unit: GameUnit, delta: Float) {
@@ -35,11 +44,11 @@ open class EntityRangeUnitComp : UnitComp {
                 && unit.target?.isDead != true
             ) {
                 world.drawLine(
-                    unit.x - world.cx,
-                    unit.y - world.cy,
-                    unit.target!!.x - world.cx,
-                    unit.target!!.y - world.cy,
-                    getTeamPaint(unit)
+                    unit.x - world.cameraX,
+                    unit.y - world.cameraY,
+                    unit.target!!.x - world.cameraX,
+                    unit.target!!.y - world.cameraY,
+                    paintBlack
                 )
             }
         }
@@ -62,31 +71,25 @@ open class EntityRangeUnitComp : UnitComp {
     }
 
     companion object {
-        private var lastRenderFrame: Int = -1
         val paintBlack by lazy { factory.createPaint(255, 0, 0, 0, GamePaint.Style.FILL) }
         val paintYellow by lazy { factory.createPaint(200, 237, 145, 33, GamePaint.Style.FILL) }
-        val paintGreenStroke by lazy {
-            factory.createPaint(
-                50,
-                144,
-                238,
-                144,
-                GamePaint.Style.FILL
-            )
-        }
-        val paintRedStroke by lazy { factory.createPaint(50, 255, 0, 0, GamePaint.Style.FILL) }
 
-        // 单位血条 敌我的颜色
         private val argb1 = argb(200, 183, 44, 44)
         private val argb2 = argb(200, 0, 150, 0)
 
-        private val game: Game by lazy { appKoin.get<Game>() }
-        private val world: World by lazy { game.world }
-        private val settings by lazy { appKoin.get<Settings>() }
-        private val factory by lazy { appKoin.get<BaseFactory>() }
+        val game: Game by lazy { appKoin.get<Game>() }
+        val world: World by lazy { game.world }
+        val settings by lazy { appKoin.get<Settings>() }
+        val factory by lazy { appKoin.get<BaseFactory>() }
+        val app by lazy { appKoin.get<AppContext>() }
 
-        val entityRangeShader: ShaderProgram
+        val layerGroups: MutableMap<Int, ArrayList<GameUnit>> = mutableMapOf()
 
+        var entityRangeShader: ShaderProgram? = null
+
+        val teamPaintMap = mutableMapOf<Int, GamePaint>()
+
+        // 目前仅PC可跑
         val vertexSource = """
             #version 120
 
@@ -102,7 +105,7 @@ open class EntityRangeUnitComp : UnitComp {
             }
         """.trimIndent()
 
-        fun drawRange(unit: GameUnit, range: Float) {
+        fun GameCanvas.drawRange(unit: GameUnit, paint: GamePaint, range: Float) {
             if (!unit.isDead && unit.maxAttackRange > 70) {
                 val condition = when (unit.type.movementType) {
                     MovementType.BUILDING, MovementType.NONE -> {
@@ -125,25 +128,45 @@ open class EntityRangeUnitComp : UnitComp {
                 if (condition || comp.showAttackRange) {
                     val priority =
                         if (game.gameRoom.localPlayer.team != unit.player.team) 0.1f else 0.8f
-                    entityRangeShader.setUniform1f("uPriority", priority)
-                    world.drawCircle(
-                        unit.x - world.cx,
-                        unit.y - world.cy,
+                    entityRangeShader?.setUniform1f("uPriority", priority)
+                    drawCircle(
+                        unit.x - world.cameraX,
+                        unit.y - world.cameraY,
                         range,
-                        getTeamPaint(unit)
+                        paint
                     )
                 }
             }
         }
 
+        fun beforeDrawRange() {
+            val unitsSnapShot = world.getAllObjectOnScreen()
+            layerGroups.values.forEach { it.clear() }
+            unitsSnapShot.forEach { unit ->
+                if (unit is GameUnit) {
+                    layerGroups.getOrPut(unit.player.team, { arrayListOf() }).add(unit)
+                }
+            }
+        }
+
         @Suppress("MemberVisibilityCanBePrivate")
-        fun getTeamPaint(target: GameUnit): GamePaint {
-            return if (game.gameRoom.localPlayer.team != target.player.team) paintRedStroke else paintGreenStroke
+        fun getTeamPaint(team: Int): GamePaint {
+            val teamPaint = teamPaintMap.getOrPut(
+                team
+            ) {
+                factory.createPaint(Player.getTeamColor(team % 10).copy(alpha = .2f), GamePaint.Style.FILL)
+            }
+            return teamPaint
         }
 
         init {
             logger.info("try loading shaders")
-            entityRangeShader = ShaderProgram.loadShaderFragFromString(null, vertexSource)
+            if (app.isDesktop()) {
+                entityRangeShader = ShaderProgram.loadShaderFragFromString(null, vertexSource)
+            }
+            GlobalEventChannel.filter(DisconnectEvent::class).subscribeAlways {
+                layerGroups.clear()
+            }
         }
     }
 }

@@ -543,7 +543,7 @@ class GameRoomImpl(private val game: GameImpl) : GameRoom {
 
     override fun disconnect(reason: String) {
         io.github.rwpp.android.isSinglePlayerGame = false
-        GameEngine.t().bU.b(reason)
+        if (isConnecting) GameEngine.t().bU.b(reason)
         isRWPPRoom = false
         option = RoomOption()
         roomMods = arrayOf()
