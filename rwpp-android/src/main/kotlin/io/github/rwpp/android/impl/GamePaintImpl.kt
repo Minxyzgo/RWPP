@@ -22,4 +22,7 @@ class GamePaintImpl(internal val paint: Paint) : GamePaint {
             Paint.Style.STROKE -> GamePaint.Style.STROKE
             else -> GamePaint.Style.FILL
         }
+    override var textSize: Float
+        get() = paint.textSize
+        set(value) { paint.textSize = value }
 }

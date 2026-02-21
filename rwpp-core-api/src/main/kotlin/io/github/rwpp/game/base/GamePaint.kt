@@ -11,6 +11,8 @@ interface GamePaint {
     var argb: Int
     val style: Style
 
+    var textSize: Float
+
     enum class Style {
         FILL, STROKE, FILL_AND_STROKE
     }

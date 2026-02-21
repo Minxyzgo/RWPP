@@ -20,4 +20,8 @@ interface PaintImpl : GamePaint {
 
     override val style: GamePaint.Style
         get() = GamePaint.Style.entries[(self.d() as Enum<*>).ordinal]
+
+    override var textSize: Float
+        get() = self.k()
+        set(value) { self.b(value) }
 }
