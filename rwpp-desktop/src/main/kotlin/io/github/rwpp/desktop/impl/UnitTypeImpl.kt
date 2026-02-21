@@ -37,6 +37,10 @@ interface UnitTypeImpl : UnitType {
 //                        }
     override val movementType: MovementType
         get() = MovementType.valueOf(self.o().name)
+
+    override val isBuilder: Boolean
+        get() = self.l()
+
     override val mod: Mod?
         get() = (self as? l)?.J?.s?.let(appKoin.get<ModManager>()::getModByName)
 }

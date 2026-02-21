@@ -14,5 +14,6 @@ interface UnitType {
     val displayName: String
     val description: String
     val movementType: MovementType
+    val isBuilder: Boolean
     val mod: Mod?
 }
