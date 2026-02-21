@@ -17,6 +17,7 @@ interface Player {
     var name: String
     val ping: String
     var team: Int
+    val pingNumber: Int
 
     /**
      * Set player's starting unit.

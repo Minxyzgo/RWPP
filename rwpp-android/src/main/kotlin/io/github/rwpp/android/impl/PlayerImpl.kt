@@ -114,6 +114,8 @@ interface PlayerImpl : Player {
         }
     override val client: Client?
         get() = GameEngine.t().bU.c(self) as? Client
+    override val pingNumber: Int
+        get() = self.t()
 
 
     override fun applyConfigChange(

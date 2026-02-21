@@ -103,6 +103,8 @@ interface PlayerImpl : Player {
         get() = self.G
     override val client: Client?
         get() = GameEngine.B().bX.c(self) as Client?
+    override val pingNumber: Int
+        get() = self.A()
 
     override val data: PlayerData
         get() = _data ?: run {
