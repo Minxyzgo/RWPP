@@ -155,6 +155,14 @@ fun SettingsView(
                                                     settings.isFullscreen = it
                                                 }
                                             )
+
+                                            SettingsSwitchComp(
+                                                readI18n("settings.enableOffscreenPanel"),
+                                                defaultValue = settings.enableOffscreenPanel,
+                                                customConfigSettingAction = {
+                                                    settings.enableOffscreenPanel = it
+                                                }
+                                            )
                                         }
                                     }
 
@@ -204,6 +212,14 @@ fun SettingsView(
                                                     selectedIndex = index
                                                 }
                                             }
+
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.displayTimeInGame"),
+                                                settings.displayTimeInGame
+                                            ) {
+                                                settings.displayTimeInGame = it
+                                            }
                                             SettingsSwitchComp(
                                                 "",
                                                 readI18n("settings.enhancedReinforceTroops"),
@@ -221,6 +237,13 @@ fun SettingsView(
                                                 settings.showUnitTargetLine = it
                                             }
 
+                                            val list = listOf("Zero", "Keep", "Unlimited")
+                                            var selectedIndex by remember { mutableIntStateOf(list.indexOf(settings.effectLimitForAllEffects)) }
+                                            SettingsDropDown("effectLimitForAllEffects", list, selectedIndex) { index, type ->
+                                                selectedIndex = index
+                                                settings.effectLimitForAllEffects = type
+                                            }
+
 //                                            SettingsSwitchComp(
 //                                                "",
 //                                                readI18n("settings.pathfindingOptimization"),
@@ -228,6 +251,24 @@ fun SettingsView(
 //                                            ) {
 //                                                settings.pathfindingOptimization = it
 //                                            }
+
+                                            if (appContext.isAndroid()) {
+                                                SettingsSwitchComp(
+                                                    "",
+                                                    readI18n("settings.enableVolumeKeyMapping"),
+                                                    settings.enableVolumeKeyMapping
+                                                ) {
+                                                    settings.enableVolumeKeyMapping = it
+                                                }
+
+                                                SettingsSwitchComp(
+                                                    "",
+                                                    readI18n("settings.enableLargerKeys"),
+                                                    settings.enableLargerKeys
+                                                ) {
+                                                    settings.enableLargerKeys = it
+                                                }
+                                            }
 
                                             if (appContext.isDesktop()) {
                                                 SettingsSwitchComp(
@@ -311,6 +352,16 @@ fun SettingsView(
                                             SettingsDropDown("showAttackRange", list, selectedIndex) { index, type ->
                                                 selectedIndex = index
                                                 settings.showAttackRangeUnit = type
+                                            }
+                                        }
+
+                                        SettingsGroup("", readI18n("settings.inGameOffscreenPanel")) {
+                                            SettingsSwitchComp(
+                                                "",
+                                                readI18n("settings.enableQuickSelectMenu"),
+                                                settings.enableQuickSelectMenu
+                                            ) {
+                                                settings.enableQuickSelectMenu = it
                                             }
                                         }
                                     }

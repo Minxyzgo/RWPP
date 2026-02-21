@@ -87,6 +87,10 @@ class ShaderProgram(val programID: Int, val fragID: Int?, val vertexID: Int?) {
         GL20.glDeleteProgram(programID)
     }
 
+    fun unbind() {
+        ShaderProgram.unbind()
+    }
+
     companion object {
         fun unbind() {
             GL20.glUseProgram(0)

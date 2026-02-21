@@ -13,10 +13,6 @@ import org.koin.core.annotation.Single
 @Single
 @Serializable
 data class Settings(
-    /**
-     * Decide whether to allow game in full screen (Only PC)
-     */
-    var isFullscreen: Boolean = true,
     var showWelcomeMessage: Boolean? = null,
     var ignoreVersion: String? = null,
     var autoCheckUpdate: Boolean = true,
@@ -38,8 +34,26 @@ data class Settings(
     var mouseMoveView: Boolean = false,
     //var pathfindingOptimization: Boolean = false,
     var boldText: Boolean = false,
-    var renderingBackend: String = "OpenGL", // Default, Software, OpenGL
     var forceEnglish: Boolean = false,
+    var enableOffscreenPanel: Boolean = false,
+    var displayTimeInGame: Boolean = false,
+    var effectLimitForAllEffects: String = "Keep", // Zero, Keep, Unlimited
+
+    // --- Android ---
+    var enableVolumeKeyMapping: Boolean = false,
+    var enableLargerKeys: Boolean = false,
+    // ---------------
+
+    // --- Desktop ---
+    var renderingBackend: String = "OpenGL", // Default, Software, OpenGL
+    /**
+     * Decide whether to allow game in full screen (Only PC)
+     */
+    var isFullscreen: Boolean = true,
+    // ---------------
+
+    // Offscreen Panel
+    var enableQuickSelectMenu: Boolean = false
 ) : Config {
     companion object {
         val unitAttackRangeTypes = listOf("Never", "Land", "Air", "All")
